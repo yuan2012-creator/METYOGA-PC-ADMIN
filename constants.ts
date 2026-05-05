@@ -1,7 +1,31 @@
 
-import { StageConfig, Member, MHSData, AlertItem, TeamTask, Staff, StoreInfo, Card, PointProduct } from './types';
+import {
+  Attendance,
+  Booking,
+  CardProduct,
+  Contract,
+  Course,
+  CourseSession,
+  FinanceLedgerEntry,
+  Member,
+  MemberAsset,
+  MHSData,
+  AlertItem,
+  Order,
+  Payment,
+  PointProduct,
+  Refund,
+  StageConfig,
+  Staff,
+  StoreInfo,
+  TeamTask,
+  TtcProduct,
+} from './types';
 
-export const MOCK_CARDS: Card[] = [
+// P0 canonical card product mock.
+// Legacy compatibility: MOCK_CARDS is kept below for pages still importing the old name.
+// Legacy compatibility: card rows still keep noShowDeductCurrent for current card editors.
+export const MOCK_CARD_PRODUCTS: CardProduct[] = [
   {
     id: 'c1', type: 'stored_value', name: '初遇卡', slogan: '初遇相逢皆有意', guide: '100天的约定\n开启新可能',
     price: 4990, points: 40, openingPoints: 87, exchangeRatio: 0.7,
@@ -103,6 +127,13 @@ export const MOCK_CARDS: Card[] = [
   }
 ];
 
+// Legacy compatibility: Shop.tsx and Mall.tsx still import MOCK_CARDS.
+export const MOCK_CARDS = MOCK_CARD_PRODUCTS;
+
+// P0 canonical point product mock.
+// Legacy compatibility: PointProduct type still accepts Mall.tsx local aliases
+// such as allowPointsOnly, stock and exchangedCount, but this shared mock uses
+// the canonical enablePurePoints, inventory and exchangeCount fields.
 export const MOCK_POINT_PRODUCTS: PointProduct[] = [
   {
     id: 'p1', name: '普拉提私教体验课', type: 'course', cover: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&q=80&w=400', 
@@ -179,6 +210,327 @@ export const MOCK_POINT_PRODUCTS: PointProduct[] = [
   }
 ];
 
+// P0 canonical TTC product mock. Mall.tsx still keeps richer local demo data for now.
+export const MOCK_TTC_PRODUCTS: TtcProduct[] = [
+  {
+    id: 'ttc1',
+    name: 'RYT 200 瑜伽导师认证',
+    price: 16800,
+    depositAmount: 5000,
+    durationDays: 30,
+    status: 'active',
+    cover: 'https://images.unsplash.com/photo-1599447292180-45fd84092ef4?auto=format&fit=crop&q=80&w=400',
+    description: '面向进阶练习者和准老师的系统培训课程。',
+    listingVenues: ['西湖旗舰馆'],
+    schedules: [
+      { id: 'ttc1-b1', batchName: '2026 春季周末班', startDate: '2026-05-09T09:00:00+08:00', endDate: '2026-06-07T18:00:00+08:00', enrolled: 18, max: 24, status: 'open' },
+    ],
+  },
+];
+
+// P0 canonical member assets. Legacy member cards are still embedded in MOCK_MEMBERS for display.
+export const MOCK_MEMBER_ASSETS: MemberAsset[] = [
+  {
+    id: 'asset-1-card-c4',
+    memberId: '1',
+    name: '硬核年卡',
+    status: 'effective',
+    sourceOrderId: 'ord-001',
+    contractId: 'contract-001',
+    productId: 'c4',
+    productType: 'card',
+    balanceType: 'time',
+    totalAmount: 760,
+    remainingAmount: 320,
+    effectiveDate: '2023-01-15T00:00:00+08:00',
+    expiryDate: '2026-01-15T23:59:59+08:00',
+    createdAt: '2023-01-15T10:20:00+08:00',
+  },
+  {
+    id: 'asset-1-private-20',
+    memberId: '1',
+    name: '常规私教 20 次',
+    status: 'effective',
+    sourceOrderId: 'ord-002',
+    productType: 'course',
+    balanceType: 'count',
+    totalAmount: 20,
+    remainingAmount: 12,
+    effectiveDate: '2026-01-01T00:00:00+08:00',
+    expiryDate: '2026-12-31T23:59:59+08:00',
+    createdAt: '2026-01-01T12:00:00+08:00',
+  },
+  {
+    id: 'asset-3-card-50',
+    memberId: '3',
+    name: '50次次卡',
+    status: 'frozen',
+    sourceOrderId: 'ord-003',
+    productId: 'c5',
+    productType: 'card',
+    balanceType: 'count',
+    totalAmount: 50,
+    remainingAmount: 3,
+    frozenUntil: '2026-05-20T23:59:59+08:00',
+    effectiveDate: '2025-01-01T00:00:00+08:00',
+    expiryDate: '2026-12-31T23:59:59+08:00',
+  },
+  {
+    id: 'asset-5-card-c8',
+    memberId: '5',
+    name: '瑜伽季卡',
+    status: 'effective',
+    sourceOrderId: 'ord-004',
+    productId: 'c8',
+    productType: 'card',
+    balanceType: 'time',
+    totalAmount: 90,
+    remainingAmount: 45,
+    effectiveDate: '2026-03-01T00:00:00+08:00',
+    expiryDate: '2026-06-01T23:59:59+08:00',
+  },
+  {
+    id: 'asset-4-private-expired',
+    memberId: '4',
+    name: '私教年卡',
+    status: 'expired',
+    sourceOrderId: 'ord-005',
+    productType: 'course',
+    balanceType: 'count',
+    totalAmount: 60,
+    remainingAmount: 0,
+    effectiveDate: '2022-01-01T00:00:00+08:00',
+    expiryDate: '2023-12-31T23:59:59+08:00',
+  },
+];
+
+// P0 canonical course and schedule mocks. Courses.tsx still has local demo rows for now.
+export const MOCK_COURSES: Course[] = [
+  { id: 'course-flow-yoga', name: '流瑜伽', type: 'group', durationMinutes: 60, category: '瑜伽', difficulty: 'all_levels', status: 'active' },
+  { id: 'course-pilates-reformer', name: '普拉提大器械', type: 'small_group', durationMinutes: 50, category: '普拉提', difficulty: 'intermediate', status: 'active' },
+  { id: 'course-private-core', name: '核心稳定私教', type: 'private', durationMinutes: 60, category: '私教', difficulty: 'all_levels', status: 'active' },
+  { id: 'course-ryt200', name: 'RYT 200 导师培训', type: 'ttc', durationMinutes: 360, category: '教培', difficulty: 'advanced', status: 'active' },
+];
+
+export const MOCK_COURSE_SESSIONS: CourseSession[] = [
+  {
+    id: 'session-20260505-1000',
+    courseId: 'course-pilates-reformer',
+    title: '普拉提大器械',
+    status: 'completed',
+    storeId: '1',
+    roomId: '102',
+    teacherId: '2',
+    startAt: '2026-05-05T10:00:00+08:00',
+    endAt: '2026-05-05T10:50:00+08:00',
+    capacity: 6,
+    bookedCount: 5,
+  },
+  {
+    id: 'session-20260505-1900',
+    courseId: 'course-flow-yoga',
+    title: '流瑜伽',
+    status: 'published',
+    storeId: '1',
+    roomId: '101',
+    teacherId: '4',
+    startAt: '2026-05-05T19:00:00+08:00',
+    endAt: '2026-05-05T20:00:00+08:00',
+    capacity: 12,
+    bookedCount: 8,
+    waitlistCount: 1,
+  },
+  {
+    id: 'session-20260506-1100',
+    courseId: 'course-private-core',
+    title: '核心稳定私教',
+    status: 'scheduled',
+    storeId: '1',
+    roomId: '201',
+    teacherId: '2',
+    startAt: '2026-05-06T11:00:00+08:00',
+    endAt: '2026-05-06T12:00:00+08:00',
+    capacity: 1,
+    bookedCount: 1,
+  },
+];
+
+export const MOCK_BOOKINGS: Booking[] = [
+  { id: 'booking-001', memberId: '1', courseSessionId: 'session-20260505-1000', status: 'booked', bookedAt: '2026-05-04T14:20:00+08:00', source: 'front_desk' },
+  { id: 'booking-002', memberId: '5', courseSessionId: 'session-20260505-1900', status: 'booked', bookedAt: '2026-05-05T09:10:00+08:00', source: 'member_app' },
+  { id: 'booking-003', memberId: '2', courseSessionId: 'session-20260506-1100', status: 'booked', bookedAt: '2026-05-05T10:30:00+08:00', source: 'admin' },
+  { id: 'booking-004', memberId: '3', courseSessionId: 'session-20260505-1900', status: 'late_cancelled', bookedAt: '2026-05-04T18:00:00+08:00', cancelledAt: '2026-05-05T18:10:00+08:00', cancelReason: '临时加班' },
+];
+
+export const MOCK_ATTENDANCES: Attendance[] = [
+  {
+    id: 'attendance-001',
+    memberId: '1',
+    courseSessionId: 'session-20260505-1000',
+    bookingId: 'booking-001',
+    memberAssetId: 'asset-1-card-c4',
+    status: 'consumed',
+    checkedInAt: '2026-05-05T09:50:00+08:00',
+    attendedAt: '2026-05-05T10:00:00+08:00',
+    consumedAt: '2026-05-05T10:55:00+08:00',
+  },
+  {
+    id: 'attendance-002',
+    memberId: '5',
+    courseSessionId: 'session-20260505-1900',
+    bookingId: 'booking-002',
+    memberAssetId: 'asset-5-card-c8',
+    status: 'pending_checkin',
+  },
+];
+
+export const MOCK_ORDERS: Order[] = [
+  {
+    id: 'ord-001',
+    memberId: '1',
+    status: 'fulfilled',
+    items: [
+      { id: 'ord-001-item-1', orderId: 'ord-001', productType: 'card', productId: 'c4', productName: '硬核卡', quantity: 1, unitPrice: 39990, totalAmount: 39990, memberAssetId: 'asset-1-card-c4' },
+    ],
+    totalAmount: 39990,
+    paidAmount: 39990,
+    contractId: 'contract-001',
+    createdAt: '2023-01-15T10:20:00+08:00',
+    updatedAt: '2023-01-15T10:25:00+08:00',
+    salesId: '5',
+    storeId: '1',
+  },
+  {
+    id: 'ord-006',
+    memberId: '2',
+    status: 'pending_payment',
+    items: [
+      { id: 'ord-006-item-1', orderId: 'ord-006', productType: 'ttc', productId: 'ttc1', productName: 'RYT 200 瑜伽导师认证', quantity: 1, unitPrice: 16800, totalAmount: 16800 },
+    ],
+    totalAmount: 16800,
+    paidAmount: 5000,
+    contractId: 'contract-006',
+    createdAt: '2026-05-05T10:35:00+08:00',
+    salesId: '1',
+    storeId: '1',
+  },
+  {
+    id: 'ord-005',
+    memberId: '4',
+    status: 'partially_refunded',
+    items: [
+      { id: 'ord-005-item-1', orderId: 'ord-005', productType: 'course', productId: 'course-private-core', productName: '私教年卡', quantity: 1, unitPrice: 56000, totalAmount: 56000, memberAssetId: 'asset-4-private-expired' },
+    ],
+    totalAmount: 56000,
+    paidAmount: 56000,
+    createdAt: '2022-01-01T11:00:00+08:00',
+    updatedAt: '2023-09-03T16:00:00+08:00',
+    salesId: '1',
+    storeId: '1',
+  },
+];
+
+export const MOCK_CONTRACTS: Contract[] = [
+  {
+    id: 'contract-001',
+    memberId: '1',
+    orderId: 'ord-001',
+    status: 'effective',
+    title: '硬核卡会员服务协议',
+    templateId: 'template-card-standard',
+    sentAt: '2023-01-15T10:21:00+08:00',
+    signedAt: '2023-01-15T10:23:00+08:00',
+    effectiveAt: '2023-01-15T10:25:00+08:00',
+    expiresAt: '2026-01-15T23:59:59+08:00',
+  },
+  {
+    id: 'contract-006',
+    memberId: '2',
+    orderId: 'ord-006',
+    status: 'pending_signature',
+    title: 'RYT 200 培训报名协议',
+    templateId: 'template-ttc-standard',
+    sentAt: '2026-05-05T10:36:00+08:00',
+  },
+];
+
+export const MOCK_PAYMENTS: Payment[] = [
+  {
+    id: 'pay-001',
+    orderId: 'ord-001',
+    memberId: '1',
+    status: 'reconciled',
+    amount: 39990,
+    method: 'wechat',
+    transactionNo: 'wx202301151020001',
+    initiatedAt: '2023-01-15T10:20:00+08:00',
+    paidAt: '2023-01-15T10:22:00+08:00',
+    reconciledAt: '2023-01-16T09:00:00+08:00',
+  },
+  {
+    id: 'pay-006-deposit',
+    orderId: 'ord-006',
+    memberId: '2',
+    status: 'paid',
+    amount: 5000,
+    method: 'bank_transfer',
+    transactionNo: 'bank202605051035001',
+    initiatedAt: '2026-05-05T10:35:00+08:00',
+    paidAt: '2026-05-05T10:40:00+08:00',
+  },
+];
+
+export const MOCK_REFUNDS: Refund[] = [
+  {
+    id: 'refund-001',
+    orderId: 'ord-005',
+    memberId: '4',
+    status: 'completed',
+    amount: 2400,
+    reason: '会员搬家，退还剩余私教课价值',
+    requestedAt: '2023-09-01T12:00:00+08:00',
+    approvedAt: '2023-09-02T10:00:00+08:00',
+    completedAt: '2023-09-03T16:00:00+08:00',
+  },
+];
+
+export const MOCK_FINANCE_LEDGER_ENTRIES: FinanceLedgerEntry[] = [
+  {
+    id: 'ledger-001',
+    sourceType: 'payment',
+    sourceId: 'pay-001',
+    paymentId: 'pay-001',
+    orderId: 'ord-001',
+    memberId: '1',
+    amount: 39990,
+    direction: 'income',
+    occurredAt: '2023-01-15T10:22:00+08:00',
+    description: '硬核卡收款',
+  },
+  {
+    id: 'ledger-002',
+    sourceType: 'course_consumption',
+    sourceId: 'attendance-001',
+    orderId: 'ord-001',
+    memberId: '1',
+    amount: 125,
+    direction: 'liability_decrease',
+    occurredAt: '2026-05-05T10:55:00+08:00',
+    description: '普拉提大器械消课确认',
+  },
+  {
+    id: 'ledger-003',
+    sourceType: 'refund',
+    sourceId: 'refund-001',
+    orderId: 'ord-005',
+    memberId: '4',
+    amount: 2400,
+    direction: 'expense',
+    occurredAt: '2023-09-03T16:00:00+08:00',
+    description: '私教课退款',
+  },
+];
+
 export const STAGE_CONFIG: Record<string, StageConfig> = {
   S0: { label: '线索 Lead', color: '#6B7280', bgColor: '#F3F4F6', desc: '留资未付费', strategy: '🎯 目标: 邀约首次体验，破冰建立信任' },
   S1: { label: '新会员 New', color: '#10B981', bgColor: '#D1FAE5', desc: '首购 ≤ 14天', strategy: '🎯 目标: 新手关怀，建立约课习惯' },
@@ -189,7 +541,28 @@ export const STAGE_CONFIG: Record<string, StageConfig> = {
   S6: { label: '流失 Churn', color: '#EF4444', bgColor: '#FEE2E2', desc: '卡过期 / 90天无课', strategy: '🎯 目标: 调研流失原因，尝试召回' },
 };
 
-export const MOCK_MEMBERS: Member[] = [
+const MEMBER_LIFECYCLE_BY_STAGE: Record<Member['stage'], NonNullable<Member['lifecycleStatus']>> = {
+  S0: 'lead',
+  S1: 'active',
+  S2: 'trial_attended',
+  S3: 'active',
+  S4: 'active',
+  S5: 'warning',
+  S6: 'churned',
+};
+
+const withP0MemberFields = (member: Member): Member => ({
+  ...member,
+  // New P0 field: canonical lifecycle status for future member workflows.
+  lifecycleStatus: member.lifecycleStatus ?? MEMBER_LIFECYCLE_BY_STAGE[member.stage],
+  // New P0 field: canonical member asset list.
+  // Legacy compatibility: existing pages still render member.cards.
+  assets: member.assets ?? MOCK_MEMBER_ASSETS.filter(asset => asset.memberId === member.id),
+});
+
+// Legacy compatibility: stage/cards/timeline display fields are retained.
+// P0 canonical additions are injected through withP0MemberFields.
+const MOCK_MEMBER_ROWS: Member[] = [
   // --- Active Members with Risks ---
   {
     id: '1',
@@ -362,6 +735,8 @@ export const MOCK_MEMBERS: Member[] = [
   },
 ];
 
+export const MOCK_MEMBERS: Member[] = MOCK_MEMBER_ROWS.map(withP0MemberFields);
+
 // --- Mock Data for Dashboard ---
 
 export const MOCK_MHS_DATA: Record<string, MHSData> = {
@@ -469,4 +844,3 @@ export const MOCK_STAFF_LIST: Staff[] = [
     members: [] 
   }
 ];
-
