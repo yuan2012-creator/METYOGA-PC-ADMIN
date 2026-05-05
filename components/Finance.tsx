@@ -1,0 +1,584 @@
+
+import React, { useState, useMemo } from 'react';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement,
+  Filler
+} from 'chart.js';
+import { Line, Doughnut } from 'react-chartjs-2';
+
+// Register ChartJS components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement,
+  Filler
+);
+
+interface Order {
+  id: string;
+  date: string;
+  type: string;
+  content: string;
+  amount: number;
+  customer: string;
+  method: string;
+  status: string;
+  statusTag: string;
+  isRefund: boolean;
+  integral?: number;
+}
+
+interface StaffPerformance {
+  name: string;
+  role: string;
+  target: number;
+  actual: number;
+  progress: number;
+}
+
+const Finance: React.FC = () => {
+  const [subTab, setSubTab] = useState('overview');
+  const [dateRange, setDateRange] = useState({ start: '2023-11-01', end: '2023-11-30' });
+  const [orderFilter, setOrderFilter] = useState('all');
+
+  // --- Mock Data ---
+  const orders: Order[] = [
+    { id: 'ORD-20231125-01', date: '11-25 10:20', type: '卡项', content: '硬核年卡', amount: 39990.00, customer: '王女士', method: '微信支付', status: '已支付', statusTag: 'bg-green-50 text-green-700 border-green-200', isRefund: false },
+    { id: 'ORD-20231125-02', date: '11-25 09:15', type: '私教', content: '私教50次包', amount: 22000.00, customer: '张先生', method: '支付宝', status: '已支付', statusTag: 'bg-green-50 text-green-700 border-green-200', isRefund: false },
+    { id: 'RFD-20231120-03', date: '11-20 16:00', type: '退款', content: '私教包 (剩余)', amount: -8000.00, customer: '赵先生', method: '原路返回', status: '已退款', statusTag: 'bg-red-50 text-red-700 border-red-200', isRefund: true },
+    { id: 'ORD-20231118-04', date: '11-18 12:00', type: '团课', content: '体验卡升级', amount: 999.00, customer: '李小姐', method: '现金', status: '已支付', statusTag: 'bg-green-50 text-green-700 border-green-200', isRefund: false },
+    { id: 'RFD-20231115-05', date: '11-15 14:30', type: '退款', content: '年卡尾款', amount: -1500.00, customer: '吴女士', method: '微信支付', status: '待审核', statusTag: 'bg-orange-50 text-orange-700 border-orange-200', isRefund: true },
+    { id: 'ORD-20231110-06', date: '11-10 18:00', type: '积分', content: '瑜伽铺巾', amount: 0.00, customer: '周先生', method: '积分核销', status: '已核销', statusTag: 'bg-orange-50 text-orange-700 border-orange-200', isRefund: false, integral: 2000 },
+    { id: 'ORD-20231105-07', date: '11-05 11:30', type: '周边', content: '运动水杯', amount: 199.00, customer: '钱女士', method: '微信支付', status: '已支付', statusTag: 'bg-green-50 text-green-700 border-green-200', isRefund: false }
+  ];
+
+  const staffPerformance: StaffPerformance[] = [
+    { name: 'Eva', role: '销售管家', target: 150000, actual: 120000, progress: 80 },
+    { name: 'Mike', role: '教练/销售', target: 120000, actual: 85000, progress: 71 },
+    { name: 'Sarah', role: '教练/销售', target: 120000, actual: 110000, progress: 92 },
+    { name: 'Leo', role: '店长/行政', target: 150000, actual: 143000, progress: 95 }
+  ];
+
+  const annualTarget = 6000000;
+  const annualActual = 4200000;
+  const monthlyTarget = 540000;
+  const monthlyActual = 458000;
+
+  // --- Computed ---
+  const filteredOrders = useMemo(() => {
+    if (orderFilter === 'all') return orders;
+    if (orderFilter === 'refund') return orders.filter(o => o.isRefund);
+    if (orderFilter === 'integral') return orders.filter(o => o.amount === 0 && o.integral);
+    if (orderFilter === 'card') return orders.filter(o => !o.isRefund && o.amount > 0);
+    return orders;
+  }, [orderFilter]);
+
+  const annualProgress = Math.min(100, Math.round((annualActual / annualTarget) * 100));
+  const monthlyProgress = Math.min(100, Math.round((monthlyActual / monthlyTarget) * 100));
+
+  // --- Charts Config ---
+  const cashFlowData = {
+    labels: ['1日', '5日', '10日', '15日', '20日', '25日'],
+    datasets: [
+      {
+        label: '总营收 (现金流入)',
+        data: [120, 190, 150, 250, 220, 300],
+        borderColor: '#000',
+        backgroundColor: 'rgba(0,0,0,0.05)',
+        tension: 0.4,
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+      },
+      {
+        label: '净现金流',
+        data: [50, 90, 80, 150, 110, 120],
+        borderColor: '#4ADE80',
+        backgroundColor: 'rgba(74, 222, 128, 0.1)',
+        fill: true,
+        tension: 0.4,
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+      }
+    ]
+  };
+
+  const cashFlowOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'top' as const, labels: { usePointStyle: true, boxWidth: 6 } },
+      tooltip: { 
+        backgroundColor: 'rgba(0,0,0,0.8)',
+        padding: 12,
+        cornerRadius: 8,
+        displayColors: false,
+      }
+    },
+    scales: {
+      y: { 
+        beginAtZero: false, 
+        grid: { display: true, color: '#f3f4f6' }, 
+        ticks: { callback: (value: any) => '¥' + value + 'k', font: { size: 10 } },
+        border: { display: false }
+      },
+      x: { 
+        grid: { display: false },
+        ticks: { font: { size: 10 } },
+        border: { display: false }
+      }
+    },
+    interaction: {
+      mode: 'index' as const,
+      intersect: false,
+    },
+  };
+
+  const incomePieData = {
+    labels: ['年卡 (45%)', '私教 (30%)', '团课 (15%)', '周边 (10%)'],
+    datasets: [{
+      data: [45, 30, 15, 10],
+      backgroundColor: ['#000000', '#4ADE80', '#60A5FA', '#FBBF24'],
+      borderWidth: 0,
+      hoverOffset: 4
+    }]
+  };
+
+  const incomePieOptions = {
+    cutout: '70%',
+    plugins: {
+      legend: {
+        position: 'bottom' as const,
+        labels: {
+          usePointStyle: true,
+          boxWidth: 8,
+          font: { size: 10 }
+        }
+      }
+    }
+  };
+
+  return (
+    <div className="h-full flex flex-col animate-fadeIn relative">
+        
+        {/* Header */}
+        <div className="h-16 border-b border-gray-200 flex items-center justify-between px-8 bg-white/80 backdrop-blur-md sticky top-0 z-20">
+            <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                财务管理中心
+                <button 
+                    onClick={() => alert('Gemini AI 正在生成财务分析报告...')}
+                    className="text-[10px] text-purple-600 font-bold flex items-center gap-1 hover:underline ml-2 bg-purple-50 px-2 py-1 rounded-full border border-purple-100"
+                >
+                    <i className="fa-solid fa-wand-magic-sparkles"></i> AI 财务分析
+                </button>
+            </h2>
+            <div className="flex items-center gap-4">
+                <div className="flex items-center text-xs text-gray-500 bg-white border border-gray-200 pl-4 pr-1 py-1 rounded-lg shadow-sm">
+                    <span className="mr-2 font-medium">查询区间:</span>
+                    <input type="date" value={dateRange.start} onChange={e => setDateRange({...dateRange, start: e.target.value})} className="bg-transparent outline-none w-24 text-black mr-2 font-mono" />
+                    <span className="text-gray-400">-</span>
+                    <input type="date" value={dateRange.end} onChange={e => setDateRange({...dateRange, end: e.target.value})} className="bg-transparent outline-none w-24 text-black ml-2 font-mono" />
+                    <button onClick={() => alert(`数据已更新至 ${dateRange.start} ~ ${dateRange.end}`)} className="bg-black text-white px-3 py-1.5 rounded-lg ml-3 text-xs font-medium hover:opacity-80 transition">查询</button>
+                </div>
+
+                <button className="bg-white border border-gray-200 text-black text-xs px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition flex items-center gap-2">
+                    <i className="fa-solid fa-file-export"></i> 导出报表
+                </button>
+                <button className="bg-black text-white text-xs px-4 py-2 rounded-lg font-medium hover:opacity-80 transition">
+                    + 录入支出
+                </button>
+            </div>
+        </div>
+
+        {/* Sub Navigation (Unified Segmented Control) */}
+        <div className="px-8 py-4 bg-[#F5F5F7]/95 backdrop-blur border-b border-gray-200/50 sticky top-16 z-10 flex justify-start">
+             <div className="bg-gray-100 p-1 rounded-xl inline-flex relative">
+                {[
+                    { id: 'overview', label: '营收总览' },
+                    { id: 'revenue', label: '收入与预收' },
+                    { id: 'expense', label: '支出与薪酬' },
+                    { id: 'target', label: '业绩目标' },
+                    { id: 'report', label: '报表中心' }
+                ].map(tab => (
+                    <button 
+                        key={tab.id}
+                        onClick={() => setSubTab(tab.id)}
+                        className={`relative z-10 px-4 py-2 text-[13px] font-medium text-center rounded-lg transition-all duration-200 ${
+                            subTab === tab.id 
+                            ? 'bg-white text-black shadow-sm font-bold' 
+                            : 'text-gray-500 hover:text-black'
+                        }`}
+                    >
+                        {tab.label}
+                    </button>
+                ))}
+             </div>
+        </div>
+
+        {/* Content Area */}
+        <div className="flex-1 overflow-y-auto p-8 custom-scroll">
+            <div className="max-w-7xl mx-auto space-y-6">
+
+                {/* --- TAB: OVERVIEW --- */}
+                {subTab === 'overview' && (
+                    <div className="space-y-6 animate-fadeIn">
+                        <div className="grid grid-cols-4 gap-6">
+                            <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm border-l-4 border-l-black hover:-translate-y-1 transition duration-200">
+                                <div className="text-xs text-gray-400 mb-1 uppercase font-bold">总现金收入 (Cash In)</div>
+                                <div className="text-3xl font-bold font-mono tracking-tight text-gray-900">¥458,200.00</div>
+                                <div className="text-xs text-green-600 mt-2 font-medium flex items-center"><i className="fa-solid fa-arrow-trend-up mr-1"></i> 环比 +12%</div>
+                            </div>
+                            <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm border-l-4 border-l-blue-500 hover:-translate-y-1 transition duration-200">
+                                <div className="text-xs text-gray-400 mb-1 uppercase font-bold">确认收入 (消课)</div>
+                                <div className="text-3xl font-bold font-mono tracking-tight text-gray-900">¥320,500.00</div>
+                                <div className="text-xs text-blue-600 mt-2 font-medium flex items-center">消课转化率高</div>
+                            </div>
+                            <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm border-l-4 border-l-red-500 hover:-translate-y-1 transition duration-200">
+                                <div className="text-xs text-gray-400 mb-1 uppercase font-bold">总支出</div>
+                                <div className="text-3xl font-bold font-mono tracking-tight text-gray-900">¥185,000.00</div>
+                                <div className="text-xs text-gray-400 mt-2 font-medium">支出占比 40%</div>
+                            </div>
+                            <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm border-l-4 border-l-green-500 hover:-translate-y-1 transition duration-200">
+                                <div className="text-xs text-gray-400 mb-1 uppercase font-bold">净利润 (Net Profit)</div>
+                                <div className="text-3xl font-bold font-mono tracking-tight text-green-600">¥135,500.00</div>
+                                <div className="text-xs text-gray-400 mt-2 font-medium">净利率 29.5%</div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-6">
+                            <div className="col-span-2 bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="font-bold text-lg flex items-center text-gray-900"><i className="fa-solid fa-chart-line mr-2 text-gray-400"></i> 营收与净现金流趋势</h3>
+                                    <div className="text-sm text-gray-500">用于风险控制和流动性分析</div>
+                                </div>
+                                <div className="h-64 w-full">
+                                    <Line data={cashFlowData} options={cashFlowOptions} />
+                                </div>
+                            </div>
+                            <div className="col-span-1 bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                                <h3 className="font-bold text-lg mb-4 flex items-center text-gray-900">待处理事项 <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full ml-2">3</span></h3>
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-center p-3 bg-red-50 rounded-xl border border-red-100 cursor-pointer hover:bg-red-100 transition">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-red-500 shadow-sm"><i className="fa-solid fa-rotate-left"></i></div>
+                                            <div><div className="text-sm font-bold text-gray-900">待审核退款申请</div><div className="text-[10px] text-gray-500">¥1500.00, 吴女士</div></div>
+                                        </div>
+                                        <button className="text-xs text-red-600 hover:underline font-medium">去处理</button>
+                                    </div>
+                                    <div className="flex justify-between items-center p-3 bg-blue-50 rounded-xl border border-blue-100 cursor-pointer hover:bg-blue-100 transition">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-blue-500 shadow-sm"><i className="fa-solid fa-file-invoice-dollar"></i></div>
+                                            <div><div className="text-sm font-bold text-gray-900">待发放薪酬单</div><div className="text-[10px] text-gray-500">11月, 4人</div></div>
+                                        </div>
+                                        <button className="text-xs text-blue-600 hover:underline font-medium">去核对</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-6">
+                             <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm flex flex-col items-center">
+                                <h3 className="font-bold text-lg w-full mb-2 text-gray-900">收入结构 (卡项)</h3>
+                                <div className="h-48 w-full flex justify-center relative">
+                                    <Doughnut 
+                                        data={incomePieData} 
+                                        options={incomePieOptions}
+                                    />
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                        <div className="text-xs text-gray-400 font-bold uppercase">Total</div>
+                                        <div className="text-xl font-bold font-mono">100%</div>
+                                    </div>
+                                </div>
+                             </div>
+                             <div className="col-span-2 bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                                 <h3 className="font-bold text-lg mb-4 text-gray-900">关键财务指标明细</h3>
+                                 <table className="w-full text-sm text-left">
+                                     <thead className="text-gray-400 border-b border-gray-100 text-xs uppercase font-bold">
+                                         <tr><th className="py-2">指标</th><th>金额/数值</th><th>占比/趋势</th></tr>
+                                     </thead>
+                                     <tbody className="divide-y divide-gray-50">
+                                         <tr>
+                                            <td className="py-3 font-bold text-gray-900">预收账款 (期末)</td>
+                                            <td className="font-mono text-gray-900">¥1,337,700.00</td>
+                                            <td className="text-gray-500 text-xs">负债项</td>
+                                        </tr>
+                                         <tr>
+                                            <td className="py-3 font-bold text-gray-900">当月退款总额</td>
+                                            <td className="font-mono text-red-600">-¥9,500.00</td>
+                                            <td className="text-red-500 text-xs">占比 2.07%</td>
+                                        </tr>
+                                         <tr>
+                                            <td className="py-3 font-bold text-gray-900">课时费支出总额</td>
+                                            <td className="font-mono text-gray-900">¥45,000.00</td>
+                                            <td className="text-blue-600 text-xs">支出占比 24.3%</td>
+                                        </tr>
+                                     </tbody>
+                                 </table>
+                             </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* --- TAB: REVENUE --- */}
+                {subTab === 'revenue' && (
+                    <div className="space-y-6 animate-fadeIn">
+                        
+                        {/* Dark Card */}
+                        <div className="rounded-2xl overflow-hidden bg-gradient-to-br from-gray-900 to-black text-white shadow-xl">
+                            <div className="p-6 border-b border-white/10 flex justify-between items-center">
+                                <h3 className="font-bold text-lg flex items-center gap-2"><i className="fa-solid fa-vault text-gray-400"></i> 预收账款资金池 (门店负债)</h3>
+                                <span className="text-xs opacity-60">期初 + 新增 - 确认收入 = 期末负债</span>
+                            </div>
+                            <div className="grid grid-cols-4 divide-x divide-white/10">
+                                <div className="p-6">
+                                    <div className="text-xs opacity-60 mb-1">期初预收款</div>
+                                    <div className="text-2xl font-bold font-mono">¥1,200,000</div>
+                                </div>
+                                <div className="p-6 bg-green-900/20">
+                                    <div className="text-xs opacity-60 mb-1 flex items-center gap-1"><i className="fa-solid fa-plus text-[10px] text-green-400"></i> 本期新增 (销售)</div>
+                                    <div className="text-2xl font-bold font-mono text-green-400">¥458,200</div>
+                                </div>
+                                <div className="p-6 bg-red-900/20">
+                                    <div className="text-xs opacity-60 mb-1 flex items-center gap-1"><i className="fa-solid fa-minus text-[10px] text-orange-400"></i> 本期确认收入 (消课)</div>
+                                    <div className="text-2xl font-bold font-mono text-orange-400">¥320,500</div>
+                                </div>
+                                <div className="p-6 bg-white/5">
+                                    <div className="text-xs opacity-60 mb-1">= 期末预收款余额</div>
+                                    <div className="text-2xl font-bold font-mono">¥1,337,700</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                                <div className="flex gap-2">
+                                    <button className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${orderFilter==='all' ? 'bg-black text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`} onClick={() => setOrderFilter('all')}>全部订单</button>
+                                    <button className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${orderFilter==='card' ? 'bg-black text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`} onClick={() => setOrderFilter('card')}>卡项/课程</button>
+                                    <button className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${orderFilter==='refund' ? 'bg-red-600 text-white' : 'bg-white border border-red-200 text-red-600 hover:bg-red-50'}`} onClick={() => setOrderFilter('refund')}><i className="fa-solid fa-rotate-left mr-1"></i> 退款订单</button>
+                                    <button className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${orderFilter==='integral' ? 'bg-black text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`} onClick={() => setOrderFilter('integral')}>积分兑换</button>
+                                </div>
+                                <div className="relative">
+                                    <input type="text" placeholder="搜索订单号/会员..." className="bg-white border border-gray-200 rounded-lg text-xs py-1.5 pl-8 w-48 focus:border-black focus:ring-1 focus:ring-black outline-none transition" />
+                                    <i className="fa-solid fa-search absolute left-2.5 top-2 text-gray-400 text-xs"></i>
+                                </div>
+                            </div>
+                            <table className="w-full text-sm text-left">
+                                <thead className="bg-gray-50 text-gray-500 border-b border-gray-100 text-xs uppercase font-bold">
+                                    <tr><th className="p-4 pl-6">订单号/时间</th><th className="p-4">客户</th><th className="p-4">类型/内容</th><th className="p-4">金额</th><th className="p-4">支付方式</th><th className="p-4">状态</th><th className="p-4 text-right pr-6">操作</th></tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    {filteredOrders.map(order => (
+                                        <tr key={order.id} className="hover:bg-gray-50 transition">
+                                            <td className="p-4 pl-6"><div className={`font-mono font-bold ${order.isRefund ? 'text-red-600' : 'text-gray-900'}`}>{order.id}</div><div className="text-xs text-gray-400">{order.date}</div></td>
+                                            <td className="p-4 font-bold text-gray-900">{order.customer}</td>
+                                            <td className="p-4"><span className={`px-2 py-1 rounded text-[10px] font-bold mr-2 ${order.statusTag}`}>{order.type}</span> <span className="text-gray-600">{order.content}</span></td>
+                                            <td className={`p-4 font-mono font-bold ${order.isRefund ? 'text-red-600' : order.amount === 0 ? 'text-gray-400' : 'text-gray-900'}`}>
+                                                {order.amount === 0 ? '0.00' : '¥' + order.amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                                                {order.integral && <span className="text-[10px] text-gray-400 block">{order.integral} 积分</span>}
+                                            </td>
+                                            <td className="p-4 text-xs text-gray-500">{order.method}</td>
+                                            <td className="p-4"><span className={`px-2 py-1 rounded text-[10px] font-bold ${order.statusTag}`}>{order.status}</span></td>
+                                            <td className="p-4 text-right pr-6"><button className="text-xs text-blue-600 hover:underline font-bold">详情</button></td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
+                {/* --- TAB: EXPENSE --- */}
+                {subTab === 'expense' && (
+                    <div className="space-y-6 animate-fadeIn">
+                        <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="font-bold text-lg text-gray-900">教练/员工薪酬核算</h3>
+                                <div className="flex gap-2">
+                                    <button className="border border-gray-200 text-gray-600 text-xs px-3 py-1.5 rounded-lg font-bold hover:bg-gray-50 transition">重新计算</button>
+                                    <button className="bg-black text-white text-xs px-3 py-1.5 rounded-lg font-bold hover:opacity-80 transition">一键发放</button>
+                                </div>
+                            </div>
+                            <table className="w-full text-sm text-left">
+                                <thead className="bg-gray-50 text-gray-500 text-xs uppercase font-bold">
+                                    <tr><th className="p-3 pl-4">姓名/职级</th><th className="p-3">基础薪资</th><th className="p-3">课时费 (自动计算)</th><th className="p-3">销售提成</th><th className="p-3">扣除 (个税/社保)</th><th className="p-3">实发金额</th><th className="p-3">状态</th></tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100">
+                                    <tr>
+                                        <td className="p-3 pl-4"><div className="font-bold text-gray-900">Sarah</div><div className="text-[10px] text-gray-400">教学总监</div></td>
+                                        <td className="p-3 font-mono text-gray-600">¥8,000.00</td>
+                                        <td className="p-3 font-mono text-blue-600 font-bold">¥12,500.00 <span className="text-[10px] text-gray-400 block font-normal">50课时 x ¥250</span></td>
+                                        <td className="p-3 font-mono text-gray-600">¥2,000.00</td>
+                                        <td className="p-3 font-mono text-red-500">-¥1,500.00</td>
+                                        <td className="p-3 font-mono font-bold text-lg text-black">¥21,000.00</td>
+                                        <td className="p-3"><span className="bg-orange-50 text-orange-700 border border-orange-200 px-2 py-1 rounded text-[10px] font-bold">待发放</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                            <div className="flex justify-between items-center mb-4">
+                                <h3 className="font-bold text-lg text-gray-900">支出明细</h3>
+                                <button className="bg-black text-white text-xs px-3 py-1.5 rounded-lg font-bold hover:opacity-80 transition">+ 录入支出</button>
+                            </div>
+                            <table className="w-full text-sm text-left">
+                                <thead className="bg-gray-50 text-gray-500 border-b border-gray-100 text-xs uppercase font-bold"><tr><th className="py-3 pl-4">发生日期</th><th>类别</th><th>金额</th><th>凭证</th></tr></thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    <tr><td className="py-3 pl-4 text-gray-500">2023-11-01</td><td className="font-bold text-gray-900">房租水电</td><td className="font-mono font-bold text-gray-900">¥85,000.00</td><td><i className="fa-solid fa-paperclip text-gray-400 cursor-pointer hover:text-black"></i></td></tr>
+                                    <tr><td className="py-3 pl-4 text-gray-500">2023-11-05</td><td className="font-bold text-gray-900">市场推广</td><td className="font-mono font-bold text-gray-900">¥12,000.00</td><td><i className="fa-solid fa-paperclip text-gray-400 cursor-pointer hover:text-black"></i></td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
+                {/* --- TAB: TARGET --- */}
+                {subTab === 'target' && (
+                    <div className="space-y-6 animate-fadeIn">
+                        
+                        <div className="grid grid-cols-2 gap-6">
+                            <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                                <h3 className="font-bold text-lg mb-4 flex items-center text-gray-900"><i className="fa-solid fa-flag-checkered mr-2 text-gray-400"></i> 年度业绩目标 (YTD)</h3>
+                                <div className="relative pt-1">
+                                    <div className="flex mb-2 items-center justify-between">
+                                        <div><span className="text-xs font-bold text-gray-500 uppercase">已完成进度</span></div>
+                                        <div className="text-right"><span className="text-3xl font-bold text-black font-mono">{annualProgress}%</span></div>
+                                    </div>
+                                    <div className="overflow-hidden h-3 mb-4 text-xs flex rounded-full bg-gray-100">
+                                        <div style={{ width: `${annualProgress}%` }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-black rounded-full transition-all duration-1000"></div>
+                                    </div>
+                                    <div className="flex justify-between text-xs text-gray-500 font-mono">
+                                        <span>当前: ¥{annualActual.toLocaleString()}</span>
+                                        <span>目标: ¥{annualTarget.toLocaleString()}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                                <h3 className="font-bold text-lg mb-4 flex items-center text-gray-900"><i className="fa-solid fa-calendar-alt mr-2 text-gray-400"></i> 月度总目标</h3>
+                                <div className="relative pt-1">
+                                    <div className="flex mb-2 items-center justify-between">
+                                        <div><span className="text-xs font-bold text-gray-500 uppercase">剩余完成时间 (30天)</span></div>
+                                        <div className="text-right"><span className="text-3xl font-bold text-black font-mono">{monthlyProgress}%</span></div>
+                                    </div>
+                                    <div className="overflow-hidden h-3 mb-4 text-xs flex rounded-full bg-gray-100">
+                                        <div style={{ width: `${monthlyProgress}%` }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-600 rounded-full transition-all duration-1000"></div>
+                                    </div>
+                                    <div className="flex justify-between text-xs text-gray-500 font-mono">
+                                        <span>当前: ¥{monthlyActual.toLocaleString()}</span>
+                                        <span>目标: ¥{monthlyTarget.toLocaleString()}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="font-bold text-lg flex items-center text-gray-900"><i className="fa-solid fa-user-friends mr-2 text-gray-400"></i> 门店业绩分配与实时进度</h3>
+                                <button className="bg-black text-white text-xs px-3 py-1.5 rounded-lg font-bold hover:opacity-80 transition">重新分配目标</button>
+                            </div>
+                            
+                            <table className="w-full text-sm text-left">
+                                <thead className="bg-gray-50 text-gray-500 text-xs uppercase font-bold">
+                                    <tr>
+                                        <th className="p-3 pl-4">姓名/角色</th>
+                                        <th className="p-3">月度分配目标 (店长分配)</th>
+                                        <th className="p-3">实际完成金额</th>
+                                        <th className="p-3">进度</th>
+                                        <th className="p-3">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    {staffPerformance.map((staff, index) => (
+                                        <tr key={index}>
+                                            <td className="p-3 pl-4"><div className="font-bold text-gray-900">{staff.name}</div><div className="text-[10px] text-gray-400">{staff.role}</div></td>
+                                            <td className="p-3 font-mono text-gray-900">¥{staff.target.toLocaleString()}</td>
+                                            <td className="p-3 font-mono text-green-600 font-bold">¥{staff.actual.toLocaleString()}</td>
+                                            <td className="p-3">
+                                                <div className="relative pt-1">
+                                                    <div className="overflow-hidden h-2 text-xs flex rounded-full bg-gray-100 w-40">
+                                                        <div style={{ width: `${staff.progress}%` }} className={`shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center rounded-full ${staff.progress < 70 ? 'bg-orange-500' : 'bg-black'}`}></div>
+                                                    </div>
+                                                    <span className="text-xs text-gray-600 absolute right-0 top-0 -mt-1 font-mono">{staff.progress}%</span>
+                                                </div>
+                                            </td>
+                                            <td className="p-3"><button className="text-xs text-blue-600 hover:underline font-bold">查看明细</button></td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
+                {/* --- TAB: REPORT --- */}
+                {subTab === 'report' && (
+                    <div className="space-y-6 animate-fadeIn">
+                        <div className="bg-white rounded-2xl p-12 border border-gray-200 shadow-sm text-center">
+                            <h3 className="font-bold text-2xl mb-2 text-gray-900">生成标准财务报表</h3>
+                            <p className="text-sm text-gray-500 mb-10">根据自定义查询日期，导出正式报表文件。</p>
+                            <div className="flex justify-center gap-6">
+                                <div className="p-6 border border-gray-200 rounded-2xl cursor-pointer hover:border-black hover:bg-gray-50 w-56 transition group">
+                                    <i className="fa-solid fa-file-excel text-4xl text-green-600 mb-4 group-hover:scale-110 transition"></i>
+                                    <div className="font-bold text-base text-gray-900">资产负债表</div>
+                                    <div className="text-xs text-gray-400 mt-1">XLSX 格式</div>
+                                </div>
+                                <div className="p-6 border border-gray-200 rounded-2xl cursor-pointer hover:border-black hover:bg-gray-50 w-56 transition group">
+                                    <i className="fa-solid fa-file-invoice text-4xl text-blue-600 mb-4 group-hover:scale-110 transition"></i>
+                                    <div className="font-bold text-base text-gray-900">利润表 (P&L)</div>
+                                    <div className="text-xs text-gray-400 mt-1">PDF / XLSX</div>
+                                </div>
+                                <div className="p-6 border border-gray-200 rounded-2xl cursor-pointer hover:border-black hover:bg-gray-50 w-56 transition group">
+                                    <i className="fa-solid fa-money-bill-transfer text-4xl text-orange-500 mb-4 group-hover:scale-110 transition"></i>
+                                    <div className="font-bold text-base text-gray-900">现金流量表</div>
+                                    <div className="text-xs text-gray-400 mt-1">XLSX 格式</div>
+                                </div>
+                            </div>
+                            <div className="mt-12 pt-8 border-t border-gray-100 w-full max-w-2xl mx-auto">
+                                 <div className="font-bold text-base mb-4 text-gray-700">经营分析报表</div>
+                                 <div className="flex justify-center gap-4">
+                                    <button className="bg-white border border-gray-200 text-black text-sm px-5 py-2.5 rounded-xl font-bold hover:bg-gray-50 transition">
+                                        消课收入明细表
+                                    </button>
+                                    <button className="bg-white border border-gray-200 text-black text-sm px-5 py-2.5 rounded-xl font-bold hover:bg-gray-50 transition">
+                                        卡项销售明细表
+                                    </button>
+                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+            </div>
+        </div>
+
+      <style>{`
+        .custom-scroll::-webkit-scrollbar { width: 5px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #D1D1D6; border-radius: 10px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn {
+            animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+      `}</style>
+    </div>
+  );
+};
+
+export default Finance;
