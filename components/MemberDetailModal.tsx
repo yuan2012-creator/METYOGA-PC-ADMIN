@@ -4,7 +4,13 @@ import {
   PieChart, Pie, Cell, ResponsiveContainer, 
   BarChart, Bar, XAxis, Tooltip 
 } from 'recharts';
-import { Member, TimelineEvent } from '../types';
+import {
+  Member,
+  MemberAsset,
+  MemberAssetStatus,
+  MemberLifecycleStatus,
+  TimelineEvent,
+} from '../types';
 import { STAGE_CONFIG } from '../constants';
 
 interface MemberDetailModalProps {
@@ -12,9 +18,190 @@ interface MemberDetailModalProps {
   onClose: () => void;
 }
 
+type TimelineTab = 'all' | 'class' | 'follow' | 'order' | 'phase';
+type TimelineSourceType = 'legacy_timeline' | 'order' | 'booking' | 'attendance' | 'refund';
+
+type TimelineViewItem = TimelineEvent & {
+  sourceType: TimelineSourceType;
+  sourceId: string;
+};
+
+interface AssetCardView {
+  id: string;
+  name: string;
+  balanceText: string;
+  expiryText?: string;
+  statusLabel: string;
+  colorClass: string;
+  badgeClass: string;
+}
+
+const STAGE_TO_LIFECYCLE: Record<Member['stage'], MemberLifecycleStatus> = {
+  S0: 'lead',
+  S1: 'active',
+  S2: 'trial_attended',
+  S3: 'active',
+  S4: 'active',
+  S5: 'warning',
+  S6: 'churned',
+};
+
+const LIFECYCLE_TO_STAGE: Record<MemberLifecycleStatus, Member['stage']> = {
+  lead: 'S0',
+  contacted: 'S0',
+  trial_booked: 'S0',
+  trial_attended: 'S2',
+  active: 'S3',
+  warning: 'S5',
+  inactive: 'S5',
+  churned: 'S6',
+  reactivated: 'S3',
+};
+
+const LIFECYCLE_LABELS: Record<MemberLifecycleStatus, string> = {
+  lead: '潜在线索',
+  contacted: '已触达',
+  trial_booked: '已约体验',
+  trial_attended: '已体验',
+  active: '正式会员',
+  warning: '风险预警',
+  inactive: '沉睡会员',
+  churned: '流失会员',
+  reactivated: '重新激活',
+};
+
+const MEMBER_ASSET_STATUS_LABELS: Record<MemberAssetStatus, string> = {
+  inactive: '未生效',
+  effective: '使用中',
+  frozen: '冻结中',
+  expired: '已过期',
+  used_up: '已用完',
+  transferred: '已转卡',
+  upgraded: '已升级',
+  cancelled: '已取消',
+};
+
+const TIMELINE_TABS: { id: TimelineTab; label: string }[] = [
+  { id: 'all', label: '全部' },
+  { id: 'class', label: '上课' },
+  { id: 'phase', label: '成果' },
+  { id: 'order', label: '购买' },
+  { id: 'follow', label: '跟进' },
+];
+
+const getLifecycleStatus = (member: Member): MemberLifecycleStatus => (
+  member.lifecycleStatus ?? STAGE_TO_LIFECYCLE[member.stage]
+);
+
+const getLifecycleStage = (member: Member): Member['stage'] => (
+  LIFECYCLE_TO_STAGE[getLifecycleStatus(member)] ?? member.stage
+);
+
+const formatAssetDate = (date?: string) => {
+  if (!date) return undefined;
+  return `${date.slice(0, 10)} 到期`;
+};
+
+const formatAssetBalance = (asset: MemberAsset): string => {
+  if (typeof asset.remainingAmount !== 'number') return MEMBER_ASSET_STATUS_LABELS[asset.status];
+
+  const amount = asset.remainingAmount;
+  switch (asset.balanceType) {
+    case 'value':
+      return `余 ¥${amount.toLocaleString()}`;
+    case 'points':
+      return `余 ${amount} 积分`;
+    case 'time':
+      return `余 ${amount} 天`;
+    case 'course':
+      return `余 ${amount} 课时`;
+    case 'count':
+    default:
+      return `余 ${amount} 次`;
+  }
+};
+
+const getAssetStyle = (status: MemberAssetStatus): Pick<AssetCardView, 'colorClass' | 'badgeClass'> => {
+  switch (status) {
+    case 'effective':
+      return {
+        colorClass: 'bg-gray-900 text-white',
+        badgeClass: 'bg-white/20 px-1.5 py-0.5 rounded text-[9px] backdrop-blur-md font-medium',
+      };
+    case 'frozen':
+      return {
+        colorClass: 'bg-orange-50 text-orange-900 border border-orange-100',
+        badgeClass: 'bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded text-[9px] font-bold',
+      };
+    case 'transferred':
+    case 'upgraded':
+      return {
+        colorClass: 'bg-indigo-50 text-indigo-900 border border-indigo-100',
+        badgeClass: 'bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded text-[9px] font-bold',
+      };
+    case 'expired':
+    case 'used_up':
+    case 'cancelled':
+      return {
+        colorClass: 'bg-gray-100 text-gray-500 border border-gray-200',
+        badgeClass: 'bg-white text-gray-500 px-1.5 py-0.5 rounded text-[9px] font-bold border border-gray-200',
+      };
+    case 'inactive':
+    default:
+      return {
+        colorClass: 'bg-white text-gray-700 border border-gray-200',
+        badgeClass: 'bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded text-[9px] font-bold',
+      };
+  }
+};
+
+const getAssetCards = (member: Member): AssetCardView[] => {
+  if (member.assets && member.assets.length > 0) {
+    return member.assets.map((asset) => ({
+      id: asset.id,
+      name: asset.name,
+      balanceText: formatAssetBalance(asset),
+      expiryText: formatAssetDate(asset.expiryDate),
+      statusLabel: MEMBER_ASSET_STATUS_LABELS[asset.status],
+      ...getAssetStyle(asset.status),
+    }));
+  }
+
+  // Legacy compatibility: old member detail cards remain as display fallback.
+  return member.cards.map((card, idx) => ({
+    id: `legacy-card-${idx}-${card.name}`,
+    name: card.name,
+    balanceText: card.balance,
+    expiryText: `${card.expiry} 到期`,
+    statusLabel: card.status === 'active' ? '使用中' : card.status === 'expiring' ? '即将过期' : '已过期',
+    colorClass: card.color,
+    badgeClass: card.status === 'expiring'
+      ? 'bg-red-500 text-white px-1.5 py-0.5 rounded text-[9px] font-bold'
+      : 'bg-white/20 px-1.5 py-0.5 rounded text-[9px] backdrop-blur-md font-medium',
+  }));
+};
+
+const buildTimelineItems = (member: Member): TimelineViewItem[] => {
+  const legacyTimeline: TimelineViewItem[] = member.timeline.map((event) => ({
+    ...event,
+    sourceType: 'legacy_timeline',
+    sourceId: event.id,
+  }));
+
+  // Future P0 sources can be merged here without changing the render layer:
+  // orders -> purchase, bookings -> class, attendances -> check_in, refunds -> operation.
+  const domainTimeline: TimelineViewItem[] = [];
+
+  return [...legacyTimeline, ...domainTimeline];
+};
+
 const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }) => {
-  const [activeTab, setActiveTab] = useState<'all' | 'class' | 'follow' | 'order' | 'phase'>('all');
-  const stageInfo = STAGE_CONFIG[member.stage];
+  const [activeTab, setActiveTab] = useState<TimelineTab>('all');
+  const lifecycleStatus = getLifecycleStatus(member);
+  const stageInfo = STAGE_CONFIG[getLifecycleStage(member)];
+  const legacyStageInfo = STAGE_CONFIG[member.stage];
+  const assetCards = getAssetCards(member);
+  const timelineItems = buildTimelineItems(member);
 
   // --- Mock Data for Charts ---
   const preferenceData = member.topCourses && member.topCourses.length > 0 
@@ -42,7 +229,7 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }
     }
   };
 
-  const filteredTimeline = member.timeline.filter(t => {
+  const filteredTimeline = timelineItems.filter(t => {
       if (t.type === 'operation' || t.type === 'system') return false; 
       if (activeTab === 'all') return true;
       if (activeTab === 'class') return t.type === 'class' || t.type === 'check_in';
@@ -82,7 +269,8 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }
                                 backgroundColor: stageInfo.bgColor
                             }}
                         >
-                            {stageInfo.label}
+                            {LIFECYCLE_LABELS[lifecycleStatus]}
+                            {legacyStageInfo && <span className="ml-1 opacity-70 normal-case">/ {legacyStageInfo.label}</span>}
                         </span>
                     </div>
                     <div className="flex items-center gap-3 mt-1 text-xs text-gray-400 font-mono">
@@ -205,23 +393,22 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }
                     </div>
 
                     <div className="space-y-3">
-                        {member.cards.map((card, idx) => (
-                            <div key={idx} className={`relative p-4 rounded-xl overflow-hidden shadow-sm ${card.color} min-h-[80px] flex flex-col justify-between transition hover:shadow-md`}>
+                        {assetCards.map((card) => (
+                            <div key={card.id} className={`relative p-4 rounded-xl overflow-hidden shadow-sm ${card.colorClass} min-h-[80px] flex flex-col justify-between transition hover:shadow-md`}>
                                 <div className="flex justify-between items-start relative z-10">
                                     <div className="font-bold text-xs tracking-wide opacity-90">{card.name}</div>
-                                    {card.status === 'active' && <span className="bg-white/20 px-1.5 py-0.5 rounded text-[9px] backdrop-blur-md font-medium">使用中</span>}
-                                    {card.status === 'expiring' && <span className="bg-red-500 text-white px-1.5 py-0.5 rounded text-[9px] font-bold">即将过期</span>}
+                                    <span className={card.badgeClass}>{card.statusLabel}</span>
                                 </div>
                                 <div className="flex justify-between items-end relative z-10 mt-2">
                                     <div className="text-[9px] opacity-70">MetYoga</div>
                                     <div className="text-right">
-                                        <div className="text-base font-bold">{card.balance}</div>
-                                        <div className="text-[9px] opacity-80 font-mono">{card.expiry} 到期</div>
+                                        <div className="text-base font-bold">{card.balanceText}</div>
+                                        {card.expiryText && <div className="text-[9px] opacity-80 font-mono">{card.expiryText}</div>}
                                     </div>
                                 </div>
                             </div>
                         ))}
-                         {member.cards.length === 0 && (
+                         {assetCards.length === 0 && (
                             <div className="p-4 border border-dashed border-gray-200 rounded-xl text-center text-xs text-gray-400 bg-gray-50">
                                 暂无有效会员卡
                             </div>
@@ -291,16 +478,10 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }
                     <div className="flex items-center justify-between mb-6 border-b border-gray-100 pb-4">
                         <h3 className="text-sm font-bold text-gray-900">全景动态追踪</h3>
                         <div className="flex gap-4">
-                            {[
-                                {id: 'all', label: '全部'},
-                                {id: 'class', label: '上课'},
-                                {id: 'phase', label: '成果'},
-                                {id: 'order', label: '购买'},
-                                {id: 'follow', label: '跟进'},
-                            ].map((tab) => (
+                            {TIMELINE_TABS.map((tab) => (
                                 <button 
                                     key={tab.id}
-                                    onClick={() => setActiveTab(tab.id as any)}
+                                    onClick={() => setActiveTab(tab.id)}
                                     className={`text-xs font-medium transition-all relative ${
                                         activeTab === tab.id 
                                         ? 'text-black font-bold' 
@@ -316,7 +497,7 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }
 
                     <div className="relative pl-6 space-y-8 before:content-[''] before:absolute before:left-[11px] before:top-2 before:bottom-0 before:w-[1px] before:bg-gray-200">
                         {filteredTimeline.length > 0 ? filteredTimeline.map((event) => (
-                            <div key={event.id} className="relative group">
+                            <div key={`${event.sourceType}-${event.sourceId}`} className="relative group">
                                 <div className="absolute -left-6 top-1 w-6 h-6 rounded-full bg-white border border-gray-200 flex items-center justify-center z-10 shadow-sm text-xs">
                                     {getTimelineIcon(event.type)}
                                 </div>
