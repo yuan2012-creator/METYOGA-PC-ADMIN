@@ -21,6 +21,7 @@ import {
   TeamTask,
   TtcProduct,
 } from './types';
+import { MEMBER_STAGE_CONFIG, getMemberLifecycleStatus } from './utils/memberLifecycle';
 
 // P0 canonical card product mock.
 // Legacy compatibility: MOCK_CARDS is kept below for pages still importing the old name.
@@ -531,30 +532,13 @@ export const MOCK_FINANCE_LEDGER_ENTRIES: FinanceLedgerEntry[] = [
   },
 ];
 
-export const STAGE_CONFIG: Record<string, StageConfig> = {
-  S0: { label: '线索 Lead', color: '#6B7280', bgColor: '#F3F4F6', desc: '留资未付费', strategy: '🎯 目标: 邀约首次体验，破冰建立信任' },
-  S1: { label: '新会员 New', color: '#10B981', bgColor: '#D1FAE5', desc: '首购 ≤ 14天', strategy: '🎯 目标: 新手关怀，建立约课习惯' },
-  S2: { label: '体验期 Trial', color: '#F59E0B', bgColor: '#FEF3C7', desc: '首购 ≤ 45天', strategy: '🎯 目标: 体验多位老师，找到真爱课' },
-  S3: { label: '稳定期 Stable', color: '#3B82F6', bgColor: '#DBEAFE', desc: '近90天 ≥ 12次', strategy: '🎯 目标: 维持频次，适时扩充卡项' },
-  S4: { label: '深度期 Core', color: '#8B5CF6', bgColor: '#EDE9FE', desc: '私教长期 / 高LTV', strategy: '🎯 目标: 深度身体管理，情感链接' },
-  S5: { label: '休眠 Sleep', color: '#F97316', bgColor: '#FFEDD5', desc: '近30天无到店', strategy: '🎯 目标: 激活唤醒，发送回归福利' },
-  S6: { label: '流失 Churn', color: '#EF4444', bgColor: '#FEE2E2', desc: '卡过期 / 90天无课', strategy: '🎯 目标: 调研流失原因，尝试召回' },
-};
-
-const MEMBER_LIFECYCLE_BY_STAGE: Record<Member['stage'], NonNullable<Member['lifecycleStatus']>> = {
-  S0: 'lead',
-  S1: 'active',
-  S2: 'trial_attended',
-  S3: 'active',
-  S4: 'active',
-  S5: 'warning',
-  S6: 'churned',
-};
+// Legacy compatibility: existing pages still import STAGE_CONFIG from constants.
+export const STAGE_CONFIG: Record<string, StageConfig> = { ...MEMBER_STAGE_CONFIG };
 
 const withP0MemberFields = (member: Member): Member => ({
   ...member,
   // New P0 field: canonical lifecycle status for future member workflows.
-  lifecycleStatus: member.lifecycleStatus ?? MEMBER_LIFECYCLE_BY_STAGE[member.stage],
+  lifecycleStatus: getMemberLifecycleStatus(member),
   // New P0 field: canonical member asset list.
   // Legacy compatibility: existing pages still render member.cards.
   assets: member.assets ?? MOCK_MEMBER_ASSETS.filter(asset => asset.memberId === member.id),

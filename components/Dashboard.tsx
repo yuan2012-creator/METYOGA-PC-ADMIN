@@ -14,11 +14,10 @@ import {
   MOCK_REFUNDS,
   MOCK_TEAM_TASKS,
 } from '../constants';
+import { MEMBER_LIFECYCLE_GROUPS, getMemberLifecycleStatus } from '../utils/memberLifecycle';
 import type {
   Attendance,
   FinanceLedgerEntry,
-  Member,
-  MemberLifecycleStatus,
   MHSData,
   Order,
   Payment,
@@ -73,26 +72,10 @@ const MHS_RADAR_SUBJECTS: Record<MhsDimensionKey, string> = {
   S: '员工 (S)',
 };
 
-const ACTIVE_MEMBER_STATUSES: MemberLifecycleStatus[] = ['trial_attended', 'active', 'warning', 'reactivated'];
-
-const LEGACY_STAGE_TO_LIFECYCLE: Record<Member['stage'], MemberLifecycleStatus> = {
-  S0: 'lead',
-  S1: 'active',
-  S2: 'trial_attended',
-  S3: 'active',
-  S4: 'active',
-  S5: 'warning',
-  S6: 'churned',
-};
-
 const MONEY_FORMATTER = new Intl.NumberFormat('zh-CN');
 const MHS_CIRCLE_LENGTH = 440;
 
 const formatMoney = (amount: number): string => `¥${MONEY_FORMATTER.format(amount)}`;
-
-const getMemberLifecycleStatus = (member: Member): MemberLifecycleStatus => (
-  member.lifecycleStatus ?? LEGACY_STAGE_TO_LIFECYCLE[member.stage]
-);
 
 const sumPayments = (payments: Payment[]): number => (
   payments
@@ -138,7 +121,7 @@ const buildDashboardSummary = (): DashboardSummary => {
   const paidPaymentAmount = sumPayments(MOCK_PAYMENTS);
   const refundAmount = sumRefunds(MOCK_REFUNDS);
   const activeMemberCount = MOCK_MEMBERS.filter(member => (
-    ACTIVE_MEMBER_STATUSES.includes(getMemberLifecycleStatus(member))
+    MEMBER_LIFECYCLE_GROUPS.active.includes(getMemberLifecycleStatus(member))
   )).length;
   const riskMemberCount = MOCK_MEMBERS.filter(member => Boolean(member.riskTag)).length;
   const pendingOrderCount = MOCK_ORDERS.filter((order: Order) => (
