@@ -1,22 +1,65 @@
+import React, { useState } from 'react';
+import {
+  MOCK_ATTENDANCES,
+  MOCK_BOOKINGS,
+  MOCK_COURSE_SESSIONS,
+  MOCK_COURSES,
+} from '../constants';
+import type {
+  Attendance,
+  Booking,
+  Course,
+  CourseSession,
+} from '../types';
 
+// --- View Types ---
+type CourseSubTab = 'schedule' | 'library' | 'ttc' | 'cards' | 'products';
 
-import React, { useState, useRef } from 'react';
-
-// --- Types ---
-interface Course {
-  id: number;
-  name: string;
-  type: '团课' | '私教' | '工作坊';
-  level: string;
-  duration: number;
+type CourseLibraryItem = Course & {
+  levelLabel: string;
   price: number;
   rating: number;
-  suitable: string[]; // Tags
-  desc: string;
+  suitable: string[];
   goals: string;
   notes: string;
-  colorTag: string; // 'blue', 'yellow', 'purple', etc.
-}
+  colorTag: string;
+};
+
+type ScheduleEvent = CourseSession & {
+  name: string;
+  teacher: string;
+  dayIndex: number; // 0 = Mon, 6 = Sun
+  startTime: string; // "10:00"
+  duration: number; // minutes
+  color: string;
+};
+
+type OpsScheduleItem = {
+  id: string;
+  time: string;
+  name: string;
+  type: string;
+  teacher: string;
+  room: string;
+  enrolled: number;
+  capacity: number;
+  status: 'checked_in' | 'upcoming' | 'full';
+  signed: number;
+  state: 'finished' | 'ongoing' | 'upcoming';
+  abnormal: boolean;
+  abnormalReason: string;
+};
+
+type ScheduleFormState = {
+  id: string;
+  dayIndex: number;
+  roomId: string;
+  courseId: string;
+  teacherName: string;
+  startTime: string;
+  duration: number;
+  capacity: number;
+};
 
 interface CardItem {
     id: number;
@@ -35,71 +78,225 @@ interface Room {
     icon: string;
 }
 
-// New Interface for Calendar Events
-interface ScheduleEvent {
-    id: string;
-    courseId: number;
-    name: string;
-    teacher: string;
-    roomId: string;
-    dayIndex: number; // 0 = Mon, 6 = Sun
-    startTime: string; // "10:00"
-    duration: number; // minutes
-    color: string;
-    status: 'planned' | 'published' | 'full';
-    enrolled: number;
-    capacity: number;
-}
+const COURSE_TYPE_LABELS: Record<Course['type'], string> = {
+  group: '团课',
+  small_group: '小班',
+  private: '私教',
+  workshop: '工作坊',
+  ttc: '教培',
+};
+
+const COURSE_DIFFICULTY_LABELS: Record<NonNullable<Course['difficulty']>, string> = {
+  beginner: 'L1 入门',
+  intermediate: 'L2 进阶',
+  advanced: 'L3 强力',
+  all_levels: '全级别',
+};
+
+const COURSE_COLOR_TAGS: Record<Course['type'], string> = {
+  group: 'bg-green-50 text-green-700 border-green-200',
+  small_group: 'bg-gray-100 text-gray-700 border-gray-200',
+  private: 'bg-slate-100 text-slate-700 border-slate-200',
+  workshop: 'bg-zinc-100 text-zinc-700 border-zinc-200',
+  ttc: 'bg-stone-100 text-stone-700 border-stone-200',
+};
+
+const COURSE_ROOMS: Room[] = [
+  { id: '101', name: '瑜伽大教室', type: '团课', capacity: 12, icon: 'fa-om' },
+  { id: '102', name: '普拉提器械室', type: '小班', capacity: 6, icon: 'fa-dumbbell' },
+  { id: '201', name: 'VIP 私教室', type: '私教', capacity: 1, icon: 'fa-user-secret' },
+];
+
+const COURSE_SUB_TABS: { id: CourseSubTab; label: string }[] = [
+  { id: 'schedule', label: '课表与排课' },
+  { id: 'library', label: '课程库' },
+];
+
+const TEACHER_NAMES: Record<string, string> = {
+  '2': 'Mike',
+  '4': 'Leo',
+};
+
+const COURSE_LIBRARY_OVERRIDES: Record<string, Partial<CourseLibraryItem>> = {
+  'course-flow-yoga': {
+    price: 180,
+    rating: 4.9,
+    suitable: ['零基础', '身体僵硬', '亚健康'],
+    goals: '改善身体柔韧性，缓解肩颈腰背酸痛。',
+    notes: '建议饭后1小时进行练习。',
+    description: '以呼吸串联体式，建立稳定、流动、可持续的练习节奏。',
+  },
+  'course-pilates-reformer': {
+    price: 480,
+    rating: 5.0,
+    suitable: ['康复需求', '核心强化', '体态矫正'],
+    goals: '强化核心肌群，改善骨盆前倾/后倾。',
+    notes: '上课必须穿着专业普拉提防滑袜。',
+  },
+  'course-private-core': {
+    price: 680,
+    rating: 4.9,
+    suitable: ['一对一', '核心稳定', '精准训练'],
+    goals: '围绕会员体态问题做个性化核心训练。',
+    notes: '课前需完成身体评估。',
+  },
+  'course-ryt200': {
+    price: 18800,
+    rating: 4.8,
+    suitable: ['教培学员', '进阶习练者'],
+    goals: '完成RYT 200小时系统学习，建立授课能力。',
+    notes: '需完成报名审核与合同签署。',
+  },
+};
+
+const toCourseLibraryItem = (course: Course): CourseLibraryItem => {
+  const override = COURSE_LIBRARY_OVERRIDES[course.id] ?? {};
+
+  return {
+    ...course,
+    levelLabel: override.levelLabel ?? COURSE_DIFFICULTY_LABELS[course.difficulty ?? 'all_levels'],
+    price: override.price ?? 0,
+    rating: override.rating ?? 0,
+    suitable: override.suitable ?? [course.category ?? COURSE_TYPE_LABELS[course.type]],
+    goals: override.goals ?? '',
+    notes: override.notes ?? '',
+    colorTag: override.colorTag ?? COURSE_COLOR_TAGS[course.type],
+    description: override.description ?? course.description ?? '',
+  };
+};
+
+const getRoomName = (roomId?: string): string => (
+  COURSE_ROOMS.find(room => room.id === roomId)?.name ?? '未分配教室'
+);
+
+const getTeacherName = (teacherId?: string): string => (
+  teacherId ? TEACHER_NAMES[teacherId] ?? `老师 ${teacherId}` : '待定'
+);
+
+const getDayIndexFromIso = (iso: string): number => {
+  const day = new Date(iso).getDay();
+  return (day + 6) % 7;
+};
+
+const getTimeFromIso = (iso: string): string => iso.slice(11, 16);
+
+const getDurationMinutes = (startAt: string, endAt: string): number => {
+  const durationMs = new Date(endAt).getTime() - new Date(startAt).getTime();
+  return Math.max(15, Math.round(durationMs / 60000));
+};
+
+const formatSessionTimeRange = (session: CourseSession): string => (
+  `${getTimeFromIso(session.startAt)} - ${getTimeFromIso(session.endAt)}`
+);
+
+const getSessionTimes = (dayIndex: number, startTime: string, duration: number) => {
+  const baseDate = new Date('2026-05-04T00:00:00+08:00');
+  baseDate.setDate(baseDate.getDate() + dayIndex);
+
+  const [hour, minute] = startTime.split(':').map(Number);
+  const start = new Date(baseDate);
+  start.setHours(hour, minute, 0, 0);
+
+  const end = new Date(start);
+  end.setMinutes(end.getMinutes() + duration);
+
+  return {
+    startAt: start.toISOString(),
+    endAt: end.toISOString(),
+  };
+};
+
+const getCourseById = (courses: CourseLibraryItem[], courseId: string): CourseLibraryItem | undefined => (
+  courses.find(course => course.id === courseId)
+);
+
+const getActiveBookings = (sessionId: string, bookings: Booking[]): Booking[] => (
+  bookings.filter(booking => (
+    booking.courseSessionId === sessionId
+    && booking.status !== 'cancelled'
+    && booking.status !== 'late_cancelled'
+  ))
+);
+
+const getSessionAttendances = (sessionId: string, attendances: Attendance[]): Attendance[] => (
+  attendances.filter(attendance => attendance.courseSessionId === sessionId)
+);
+
+const getAttendanceCount = (sessionId: string, attendances: Attendance[]): number => (
+  getSessionAttendances(sessionId, attendances).filter(attendance => (
+    attendance.status === 'checked_in'
+    || attendance.status === 'attended'
+    || attendance.status === 'consumed'
+  )).length
+);
+
+const isEventFull = (event: Pick<CourseSession, 'bookedCount' | 'capacity'>): boolean => (
+  (event.bookedCount ?? 0) >= event.capacity
+);
+
+const toScheduleEvent = (session: CourseSession, courses: CourseLibraryItem[]): ScheduleEvent => {
+  const course = getCourseById(courses, session.courseId);
+
+  return {
+    ...session,
+    name: session.title ?? course?.name ?? '自定义课程',
+    teacher: getTeacherName(session.teacherId),
+    dayIndex: getDayIndexFromIso(session.startAt),
+    startTime: getTimeFromIso(session.startAt),
+    duration: getDurationMinutes(session.startAt, session.endAt),
+    color: course?.colorTag.replace('text-', 'border-').replace('700', '800') ?? 'bg-gray-100 text-gray-800 border-gray-200',
+    bookedCount: session.bookedCount ?? getActiveBookings(session.id, MOCK_BOOKINGS).length,
+  };
+};
+
+const toOpsScheduleItem = (
+  session: CourseSession,
+  courses: CourseLibraryItem[],
+  bookings: Booking[],
+  attendances: Attendance[]
+): OpsScheduleItem => {
+  const course = getCourseById(courses, session.courseId);
+  const activeBookings = getActiveBookings(session.id, bookings);
+  const signed = getAttendanceCount(session.id, attendances);
+  const enrolled = session.bookedCount ?? activeBookings.length;
+  const lateCancelledCount = bookings.filter(booking => (
+    booking.courseSessionId === session.id && booking.status === 'late_cancelled'
+  )).length;
+  const state: OpsScheduleItem['state'] = session.status === 'completed'
+    ? 'finished'
+    : session.status === 'in_progress'
+      ? 'ongoing'
+      : 'upcoming';
+
+  return {
+    id: session.id,
+    time: formatSessionTimeRange(session),
+    name: session.title ?? course?.name ?? '自定义课程',
+    type: course ? COURSE_TYPE_LABELS[course.type] : '课程',
+    teacher: getTeacherName(session.teacherId),
+    room: getRoomName(session.roomId),
+    enrolled,
+    capacity: session.capacity,
+    status: signed >= enrolled && enrolled > 0 ? 'checked_in' : isEventFull(session) ? 'full' : 'upcoming',
+    signed,
+    state,
+    abnormal: lateCancelledCount > 0,
+    abnormalReason: lateCancelledCount > 0 ? `${lateCancelledCount} 个迟取消预约` : '',
+  };
+};
+
+const INITIAL_LIBRARY_LIST = MOCK_COURSES.map(toCourseLibraryItem);
+const INITIAL_SCHEDULE_EVENTS = MOCK_COURSE_SESSIONS.map(session => toScheduleEvent(session, INITIAL_LIBRARY_LIST));
 
 const Courses: React.FC = () => {
-  const [currentSubTab, setCurrentSubTab] = useState<'schedule' | 'library' | 'ttc' | 'cards' | 'products'>('schedule');
+  const [currentSubTab, setCurrentSubTab] = useState<CourseSubTab>('schedule');
   const [opsFilter, setOpsFilter] = useState<'all' | 'group' | 'private'>('all');
   
   // --- Library State (Courses) ---
-  const [libraryList, setLibraryList] = useState<Course[]>([
-    { 
-        id: 1, name: '基础哈他 (Hatha)', type: '团课', level: 'L1 入门', duration: 60, price: 180, rating: 4.9, 
-        suitable: ['零基础', '身体僵硬', '亚健康'], 
-        desc: '哈他瑜伽是所有瑜伽流派的基础，强调体位法（Asana）和呼吸法（Pranayama）的结合。',
-        goals: '改善身体柔韧性，缓解肩颈腰背酸痛。',
-        notes: '建议饭后1小时进行练习。',
-        colorTag: 'bg-green-50 text-green-700 border-green-200' // Changed to green theme
-    },
-    { 
-        id: 2, name: '普拉提核心床 (Reformer)', type: '私教', level: 'L2 进阶', duration: 50, price: 480, rating: 5.0, 
-        suitable: ['康复需求', '核心强化', '体态矫正'], 
-        desc: '利用弹簧阻力和滑板进行的全身抗阻训练。',
-        goals: '强化核心肌群，改善骨盆前倾/后倾。',
-        notes: '上课必须穿着专业普拉提防滑袜。',
-        colorTag: 'bg-gray-100 text-gray-700 border-gray-200'
-    },
-    { 
-        id: 3, name: '空中瑜伽 (Aerial)', type: '团课', level: 'L2 挑战', duration: 60, price: 220, rating: 4.8, 
-        suitable: ['喜欢挑战', '上肢有力', '进阶学员'], 
-        desc: '利用悬垂绢布的反重力练习。',
-        goals: '脊柱减压理疗，增强上肢与核心力量。',
-        notes: '高血压、心脏病、眩晕症患者禁练。',
-        colorTag: 'bg-slate-100 text-slate-700 border-slate-200'
-    },
-    { 
-        id: 4, name: '阴瑜伽与颂钵 (Yin)', type: '团课', level: 'L1 疗愈', duration: 75, price: 200, rating: 4.9, 
-        suitable: ['压力大', '失眠焦虑'], 
-        desc: '长时间保持体式，作用于结缔组织。',
-        goals: '疏通经络，提升关节灵活性，深度解压。',
-        notes: '课程运动量极小，请注意保暖。',
-        colorTag: 'bg-zinc-100 text-zinc-700 border-zinc-200'
-    },
-    { 
-        id: 5, name: '阿斯汤加 (Ashtanga)', type: '团课', level: 'L3 强力', duration: 90, price: 240, rating: 4.7, 
-        suitable: ['体能好', '有瑜伽基础'], 
-        desc: '古老而严格的流瑜伽体系，拥有固定的体式序列。',
-        goals: '建立强大的力量与耐力，极速排毒。',
-        notes: '体力消耗极大，请备好毛巾和水。',
-        colorTag: 'bg-stone-100 text-stone-700 border-stone-200'
-    },
-  ]);
+  const [libraryList, setLibraryList] = useState<CourseLibraryItem[]>(INITIAL_LIBRARY_LIST);
 
-  // --- Other Data States ---
+  // --- Transitional commerce demo states ---
+  // These belong to Mall later; kept here only because hidden legacy tabs still reference them.
   const [cards, setCards] = useState<CardItem[]>([
       { id: 1, name: '全馆通年卡 (Yearly)', type: '期限', price: 12800, value: '365天', sales: 45 },
       { id: 2, name: '50次常规大课卡', type: '次卡', price: 6800, value: '50次', sales: 120 },
@@ -119,56 +316,42 @@ const Courses: React.FC = () => {
       { id: 2, name: '孕产瑜伽修复工作坊', batch: '第5期', dates: '5.1 - 5.3', price: 3800, enrolled: 8, max: 20 },
   ]);
 
-  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [selectedCourse, setSelectedCourse] = useState<CourseLibraryItem | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
 
   // --- Scheduling State ---
-  const rooms: Room[] = [
-      { id: 'room_yoga_1', name: '瑜伽大教室', type: '团课', capacity: 12, icon: 'fa-om' },
-      { id: 'room_pilates_1', name: '普拉提器械室', type: '小班', capacity: 6, icon: 'fa-dumbbell' },
-      { id: 'room_private_1', name: 'VIP 私教室', type: '私教', capacity: 1, icon: 'fa-user-secret' }
-  ];
+  const rooms = COURSE_ROOMS;
   const [activeRoomId, setActiveRoomId] = useState(rooms[0].id);
   
   // DRAG & DROP STATE
-  const [scheduleEvents, setScheduleEvents] = useState<ScheduleEvent[]>([
-      { id: 'evt_1', courseId: 1, name: '基础哈他 (Hatha)', teacher: 'Sarah', roomId: 'room_yoga_1', dayIndex: 0, startTime: '10:00', duration: 60, color: 'bg-green-100 text-green-800 border-green-200', status: 'published', enrolled: 8, capacity: 12 },
-      { id: 'evt_2', courseId: 5, name: '阿斯汤加 (Ashtanga)', teacher: 'Leo', roomId: 'room_yoga_1', dayIndex: 2, startTime: '18:30', duration: 90, color: 'bg-stone-100 text-stone-800 border-stone-200', status: 'full', enrolled: 12, capacity: 12 },
-      { id: 'evt_3', courseId: 4, name: '阴瑜伽 (Yin)', teacher: 'Anna', roomId: 'room_yoga_1', dayIndex: 4, startTime: '14:00', duration: 75, color: 'bg-zinc-100 text-zinc-800 border-zinc-200', status: 'published', enrolled: 5, capacity: 12 },
-  ]);
-  const [draggedCourse, setDraggedCourse] = useState<Course | null>(null);
+  const [scheduleEvents, setScheduleEvents] = useState<ScheduleEvent[]>(INITIAL_SCHEDULE_EVENTS);
+  const [draggedCourse, setDraggedCourse] = useState<CourseLibraryItem | null>(null);
   const [draggedEventId, setDraggedEventId] = useState<string | null>(null);
 
   // Schedule Modal State
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
-  const [scheduleForm, setScheduleForm] = useState({
+  const [scheduleForm, setScheduleForm] = useState<ScheduleFormState>({
       id: '',
       dayIndex: 0,
       roomId: '',
-      courseId: 0,
+      courseId: '',
       teacherName: '',
       startTime: '',
       duration: 60,
       capacity: 0,
   });
 
-  const weekDays = ['Mon 11/20', 'Tue 11/21', 'Wed 11/22', 'Thu 11/23', 'Fri 11/24', 'Sat 11/25', 'Sun 11/26'];
+  const weekDays = ['Mon 05/04', 'Tue 05/05', 'Wed 05/06', 'Thu 05/07', 'Fri 05/08', 'Sat 05/09', 'Sun 05/10'];
   const startHour = 8;
   const endHour = 22;
   const hoursArray = Array.from({ length: endHour - startHour + 1 }, (_, i) => i + startHour);
   const hourHeight = 70; // pixels per hour for a slightly compact view
 
-  // --- Mock Data for TODAY'S OPS ---
-  const todayOpsSchedule = [
-    { id: 101, time: '10:00 - 11:00', name: '哈他瑜伽基础', type: '团课', teacher: 'Sarah', room: '瑜伽大教室', enrolled: 8, capacity: 12, status: 'checked_in', signed: 8, state: 'finished', abnormal: false, abnormalReason: '' },
-    { id: 102, time: '12:30 - 13:30', name: '午间流瑜伽', type: '团课', teacher: 'Leo', room: '瑜伽大教室', enrolled: 5, capacity: 12, status: 'upcoming', signed: 0, state: 'ongoing', abnormal: true, abnormalReason: '老师未签到' },
-    { id: 103, time: '14:00 - 15:00', name: '普拉提大器械', type: '小班', teacher: 'Mike', room: '普拉提器械室', enrolled: 6, capacity: 6, status: 'full', signed: 0, state: 'upcoming', abnormal: false, abnormalReason: '' },
-    { id: 104, time: '15:30 - 16:30', name: '私教：李女士', type: '私教', teacher: 'Mike', room: 'VIP 2', enrolled: 1, capacity: 1, status: 'upcoming', signed: 0, state: 'upcoming', abnormal: false, abnormalReason: '' },
-    { id: 105, time: '16:00 - 17:00', name: '私教：张女士', type: '私教', teacher: 'Anna', room: 'VIP 1', enrolled: 1, capacity: 1, status: 'upcoming', signed: 0, state: 'upcoming', abnormal: true, abnormalReason: '会员未签到' },
-    { id: 106, time: '18:30 - 19:30', name: '燃脂塑形', type: '团课', teacher: 'David', room: '瑜伽大教室', enrolled: 4, capacity: 15, status: 'upcoming', signed: 0, state: 'upcoming', abnormal: false, abnormalReason: '' },
-    { id: 107, time: '19:45 - 20:45', name: '阴瑜伽疗愈', type: '团课', teacher: 'Anna', room: '瑜伽大教室', enrolled: 12, capacity: 15, status: 'upcoming', signed: 0, state: 'upcoming', abnormal: false, abnormalReason: '' },
-  ];
+  // --- Today's Ops: CourseSession + Booking + Attendance ---
+  const todayOpsSchedule = MOCK_COURSE_SESSIONS.map(session => (
+    toOpsScheduleItem(session, libraryList, MOCK_BOOKINGS, MOCK_ATTENDANCES)
+  ));
 
   const filteredOpsSchedule = todayOpsSchedule.filter(cls => {
       if (opsFilter === 'group') return cls.type === '团课' || cls.type === '小班';
@@ -200,24 +383,24 @@ const Courses: React.FC = () => {
 
   // --- Actions ---
   
-  const handleDuplicate = (course: Course, e: React.MouseEvent) => {
+  const handleDuplicate = (course: CourseLibraryItem, e: React.MouseEvent) => {
       e.stopPropagation();
-      const newCourse: Course = { ...course, id: Date.now(), name: `${course.name} (复制)` };
+      const newCourse: CourseLibraryItem = { ...course, id: `course-${Date.now()}`, name: `${course.name} (复制)` };
       setLibraryList([newCourse, ...libraryList]);
   };
 
-  const handleDelete = (id: number, e: React.MouseEvent) => {
+  const handleDelete = (id: string, e: React.MouseEvent) => {
       e.stopPropagation();
       if(confirm('确定要删除该课程吗？此操作不可恢复。')) setLibraryList(libraryList.filter(c => c.id !== id));
   };
 
-  const handleOpenDetail = (course: Course) => {
+  const handleOpenDetail = (course: CourseLibraryItem) => {
       setSelectedCourse(course);
       setEditMode(false);
       setIsDetailModalOpen(true);
   };
 
-  const handleSaveCourse = (updatedCourse: Course) => {
+  const handleSaveCourse = (updatedCourse: CourseLibraryItem) => {
       setLibraryList(libraryList.map(c => c.id === updatedCourse.id ? updatedCourse : c));
       setIsDetailModalOpen(false);
   };
@@ -225,7 +408,23 @@ const Courses: React.FC = () => {
   const handleGlobalCreate = () => {
       switch(currentSubTab) {
           case 'library':
-                const newCourse: Course = { id: Date.now(), name: '新课程', type: '团课', level: 'L1 入门', duration: 60, price: 0, rating: 0, suitable: [], desc: '', goals: '', notes: '', colorTag: 'bg-gray-100 text-gray-700' };
+                const newCourse: CourseLibraryItem = {
+                    id: `course-${Date.now()}`,
+                    name: '新课程',
+                    type: 'group',
+                    durationMinutes: 60,
+                    category: '瑜伽',
+                    difficulty: 'beginner',
+                    status: 'active',
+                    levelLabel: 'L1 入门',
+                    price: 0,
+                    rating: 0,
+                    suitable: [],
+                    description: '',
+                    goals: '',
+                    notes: '',
+                    colorTag: 'bg-gray-100 text-gray-700 border-gray-200'
+                };
                 setSelectedCourse(newCourse);
                 setEditMode(true);
                 setIsDetailModalOpen(true);
@@ -261,7 +460,7 @@ const Courses: React.FC = () => {
 
   // --- Drag & Drop Handlers ---
 
-  const handleCourseDragStart = (e: React.DragEvent, course: Course) => {
+  const handleCourseDragStart = (e: React.DragEvent, course: CourseLibraryItem) => {
       setDraggedCourse(course);
       setDraggedEventId(null);
       e.dataTransfer.effectAllowed = 'copy';
@@ -294,6 +493,8 @@ const Courses: React.FC = () => {
       const dropTime = getClickedTime(e, e.currentTarget as HTMLDivElement);
 
       if (draggedCourse) {
+          const capacity = rooms.find(r => r.id === activeRoomId)?.capacity || 10;
+          const { startAt, endAt } = getSessionTimes(dayIndex, dropTime, draggedCourse.durationMinutes);
           const newEvent: ScheduleEvent = {
               id: `evt_${Date.now()}`,
               courseId: draggedCourse.id,
@@ -302,17 +503,22 @@ const Courses: React.FC = () => {
               roomId: activeRoomId,
               dayIndex: dayIndex,
               startTime: dropTime,
-              duration: draggedCourse.duration,
+              duration: draggedCourse.durationMinutes,
               color: draggedCourse.colorTag.replace('text-', 'border-').replace('100', '100').replace('700', '800'),
-              status: 'planned',
-              enrolled: 0,
-              capacity: rooms.find(r => r.id === activeRoomId)?.capacity || 10
+              status: 'draft',
+              startAt,
+              endAt,
+              capacity,
+              bookedCount: 0
           };
           setScheduleEvents([...scheduleEvents, newEvent]);
           openEditModal(newEvent);
       } else if (draggedEventId) {
           const updatedEvents = scheduleEvents.map(evt => {
-              if (evt.id === draggedEventId) return { ...evt, dayIndex: dayIndex, startTime: dropTime, roomId: activeRoomId };
+              if (evt.id === draggedEventId) {
+                  const { startAt, endAt } = getSessionTimes(dayIndex, dropTime, evt.duration);
+                  return { ...evt, dayIndex: dayIndex, startTime: dropTime, roomId: activeRoomId, startAt, endAt };
+              }
               return evt;
           });
           setScheduleEvents(updatedEvents);
@@ -324,14 +530,16 @@ const Courses: React.FC = () => {
   const handleGridClick = (e: React.MouseEvent, dayIndex: number) => {
       if (e.target === e.currentTarget) {
           const clickedTime = getClickedTime(e, e.currentTarget as HTMLDivElement);
+          const capacity = rooms.find(r => r.id === activeRoomId)?.capacity || 10;
+          const { startAt, endAt } = getSessionTimes(dayIndex, clickedTime, 60);
           const newEvent: ScheduleEvent = {
               id: `evt_${Date.now()}`,
-              courseId: 0,
+              courseId: 'custom-course',
               name: '', teacher: '', roomId: activeRoomId, dayIndex: dayIndex, startTime: clickedTime, duration: 60,
-              color: 'bg-gray-100 text-gray-800 border-gray-200', status: 'planned', enrolled: 0,
-              capacity: rooms.find(r => r.id === activeRoomId)?.capacity || 10
+              color: 'bg-gray-100 text-gray-800 border-gray-200', status: 'draft', startAt, endAt,
+              capacity, bookedCount: 0
           };
-          setScheduleForm({ id: newEvent.id, dayIndex: dayIndex, roomId: activeRoomId, courseId: 0, teacherName: '', startTime: clickedTime, duration: 60, capacity: newEvent.capacity });
+          setScheduleForm({ id: newEvent.id, dayIndex: dayIndex, roomId: activeRoomId, courseId: '', teacherName: '', startTime: clickedTime, duration: 60, capacity: newEvent.capacity });
           setIsScheduleModalOpen(true);
       }
   };
@@ -345,12 +553,13 @@ const Courses: React.FC = () => {
   };
 
   const confirmSchedule = () => {
-      const course = libraryList.find(c => c.id === Number(scheduleForm.courseId));
+      const course = libraryList.find(c => c.id === scheduleForm.courseId);
       const existingIdx = scheduleEvents.findIndex(e => e.id === scheduleForm.id);
+      const { startAt, endAt } = getSessionTimes(scheduleForm.dayIndex, scheduleForm.startTime, scheduleForm.duration);
       
       const newEventData: ScheduleEvent = {
           id: scheduleForm.id || `evt_${Date.now()}`,
-          courseId: Number(scheduleForm.courseId),
+          courseId: scheduleForm.courseId || 'custom-course',
           name: course ? course.name : '自定义课程',
           teacher: scheduleForm.teacherName || '待定',
           roomId: scheduleForm.roomId,
@@ -358,8 +567,10 @@ const Courses: React.FC = () => {
           startTime: scheduleForm.startTime,
           duration: scheduleForm.duration,
           color: course ? course.colorTag.replace('text-', 'border-').replace('100', '100').replace('700', '800') : 'bg-gray-100 text-gray-800 border-gray-200',
-          status: existingIdx >= 0 ? scheduleEvents[existingIdx].status : 'planned',
-          enrolled: existingIdx >= 0 ? scheduleEvents[existingIdx].enrolled : 0,
+          status: existingIdx >= 0 ? scheduleEvents[existingIdx].status : 'draft',
+          startAt,
+          endAt,
+          bookedCount: existingIdx >= 0 ? scheduleEvents[existingIdx].bookedCount : 0,
           capacity: scheduleForm.capacity
       };
 
@@ -409,13 +620,10 @@ const Courses: React.FC = () => {
       {/* Sub Navigation */}
       <div className="px-8 py-4 bg-[#F5F5F7]/95 backdrop-blur border-b border-gray-200/50 sticky top-16 z-10 flex justify-start">
           <div className="bg-gray-100 p-1 rounded-xl inline-flex relative">
-              {[
-                  { id: 'schedule', label: '课表与排课' },
-                  { id: 'library', label: '课程库' }
-              ].map(tab => (
+              {COURSE_SUB_TABS.map(tab => (
                   <button 
                       key={tab.id}
-                      onClick={() => setCurrentSubTab(tab.id as any)}
+                      onClick={() => setCurrentSubTab(tab.id)}
                       className={`relative z-10 px-4 py-2 text-[13px] font-medium text-center rounded-lg transition-all duration-200 ${currentSubTab === tab.id ? 'bg-white text-black shadow-sm font-bold' : 'text-gray-500 hover:text-black'}`}
                   >
                       {tab.label}
@@ -439,7 +647,7 @@ const Courses: React.FC = () => {
                                   <h3 className="font-bold text-lg text-gray-900 flex items-center gap-2">
                                       <i className="fa-solid fa-calendar-day text-black"></i> 今日课程执行面板
                                   </h3>
-                                  <p className="text-xs text-gray-400 mt-1">2023年11月24日 · 星期五</p>
+                                  <p className="text-xs text-gray-400 mt-1">2026年05月05日 · 星期二</p>
                               </div>
                               <div className="flex gap-3">
                                   <button className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg text-xs font-bold transition text-gray-700">
@@ -651,11 +859,11 @@ const Courses: React.FC = () => {
                                               className={`p-3 rounded-xl border border-gray-200 bg-white shadow-sm cursor-move hover:border-black hover:shadow-md transition group active:cursor-grabbing`}
                                           >
                                               <div className="flex justify-between items-start mb-1">
-                                                  <div className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${course.colorTag}`}>{course.type}</div>
-                                                  <span className="text-xs text-gray-400">{course.duration}min</span>
+                                                  <div className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${course.colorTag}`}>{COURSE_TYPE_LABELS[course.type]}</div>
+                                                  <span className="text-xs text-gray-400">{course.durationMinutes}min</span>
                                               </div>
                                               <div className="font-bold text-sm text-gray-900 mb-1">{course.name}</div>
-                                              <div className="text-[10px] text-gray-500">难度: {course.level}</div>
+                                              <div className="text-[10px] text-gray-500">难度: {course.levelLabel}</div>
                                               <div className="mt-2 pt-2 border-t border-gray-50 flex items-center gap-1 text-[10px] text-gray-400">
                                                   <i className="fa-solid fa-grip-vertical"></i> 拖拽至日历
                                               </div>
@@ -691,7 +899,7 @@ const Courses: React.FC = () => {
                                   <div className="flex items-center gap-3">
                                       <div className="flex bg-white rounded-lg border border-gray-200 p-0.5">
                                           <button className="px-3 py-1 text-xs hover:bg-gray-50 text-gray-600"><i className="fa-solid fa-chevron-left"></i></button>
-                                          <span className="px-3 py-1 text-xs font-bold border-x border-gray-100 flex items-center min-w-[100px] justify-center">11.20 - 11.26</span>
+                                          <span className="px-3 py-1 text-xs font-bold border-x border-gray-100 flex items-center min-w-[100px] justify-center">05.04 - 05.10</span>
                                           <button className="px-3 py-1 text-xs hover:bg-gray-50 text-gray-600"><i className="fa-solid fa-chevron-right"></i></button>
                                       </div>
                                       <button className="bg-black text-white text-xs px-3 py-2 rounded-lg font-bold hover:opacity-80 transition shadow">
@@ -764,7 +972,7 @@ const Courses: React.FC = () => {
                                                                       <div className="font-bold truncate">{evt.name}</div>
                                                                       <div className="opacity-80 truncate text-[10px]">{evt.startTime} - {evt.teacher}</div>
                                                                   </div>
-                                                                  {evt.status === 'full' && (
+                                                                  {isEventFull(evt) && (
                                                                       <div className="text-[9px] bg-red-500 text-white px-1 rounded w-fit self-end font-bold">FULL</div>
                                                                   )}
                                                               </div>
@@ -818,11 +1026,11 @@ const Courses: React.FC = () => {
                                           </td>
                                           <td className="p-4">
                                               <span className={`px-2 py-1 rounded text-[10px] font-bold ${course.colorTag}`}>
-                                                  {course.type}
+                                                  {COURSE_TYPE_LABELS[course.type]}
                                               </span>
                                           </td>
                                           <td className="p-4 text-gray-600">
-                                              <span className="font-medium text-black">{course.level}</span> <span className="text-gray-300 mx-1">|</span> {course.duration}min
+                                              <span className="font-medium text-black">{course.levelLabel}</span> <span className="text-gray-300 mx-1">|</span> {course.durationMinutes}min
                                           </td>
                                           <td className="p-4 font-mono font-bold">¥{course.price}</td>
                                           <td className="p-4">
@@ -989,14 +1197,14 @@ const Courses: React.FC = () => {
                             className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-black transition"
                             value={scheduleForm.courseId}
                             onChange={(e) => {
-                                const cId = Number(e.target.value);
+                                const cId = e.target.value;
                                 const course = libraryList.find(c => c.id === cId);
-                                setScheduleForm({...scheduleForm, courseId: cId, duration: course ? course.duration : 60});
+                                setScheduleForm({...scheduleForm, courseId: cId, duration: course ? course.durationMinutes : 60});
                             }}
                           >
-                              <option value="0">自定义课程</option>
+                              <option value="">自定义课程</option>
                               {libraryList.map(c => (
-                                  <option key={c.id} value={c.id}>{c.name} ({c.type})</option>
+                                  <option key={c.id} value={c.id}>{c.name} ({COURSE_TYPE_LABELS[c.type]})</option>
                               ))}
                           </select>
                       </div>
@@ -1107,32 +1315,37 @@ const Courses: React.FC = () => {
                                           {editMode ? (
                                               <select 
                                                 value={selectedCourse.type} 
-                                                onChange={e => setSelectedCourse({...selectedCourse, type: e.target.value as any})}
+                                                onChange={e => {
+                                                    const nextType = e.target.value as Course['type'];
+                                                    setSelectedCourse({...selectedCourse, type: nextType, colorTag: COURSE_COLOR_TAGS[nextType]});
+                                                }}
                                                 className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-black transition"
                                               >
-                                                  <option value="团课">团课</option>
-                                                  <option value="私教">私教</option>
-                                                  <option value="工作坊">工作坊</option>
+                                                  <option value="group">团课</option>
+                                                  <option value="small_group">小班</option>
+                                                  <option value="private">私教</option>
+                                                  <option value="workshop">工作坊</option>
+                                                  <option value="ttc">教培</option>
                                               </select>
                                           ) : (
-                                              <div className="text-sm font-medium">{selectedCourse.type}</div>
+                                              <div className="text-sm font-medium">{COURSE_TYPE_LABELS[selectedCourse.type]}</div>
                                           )}
                                       </div>
                                       <div>
                                           <label className="block text-xs font-bold text-gray-500 mb-1.5">难度等级</label>
                                           {editMode ? (
-                                              <input type="text" value={selectedCourse.level} onChange={e => setSelectedCourse({...selectedCourse, level: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-black transition" />
+                                              <input type="text" value={selectedCourse.levelLabel} onChange={e => setSelectedCourse({...selectedCourse, levelLabel: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-black transition" />
                                           ) : (
-                                              <div className="text-sm font-medium">{selectedCourse.level}</div>
+                                              <div className="text-sm font-medium">{selectedCourse.levelLabel}</div>
                                           )}
                                       </div>
                                       <div className="grid grid-cols-2 gap-4">
                                           <div>
                                               <label className="block text-xs font-bold text-gray-500 mb-1.5">时长 (min)</label>
                                               {editMode ? (
-                                                  <input type="number" value={selectedCourse.duration} onChange={e => setSelectedCourse({...selectedCourse, duration: parseInt(e.target.value)})} className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-black transition" />
+                                                  <input type="number" value={selectedCourse.durationMinutes} onChange={e => setSelectedCourse({...selectedCourse, durationMinutes: parseInt(e.target.value)})} className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-black transition" />
                                               ) : (
-                                                  <div className="text-sm font-medium">{selectedCourse.duration}</div>
+                                                  <div className="text-sm font-medium">{selectedCourse.durationMinutes}</div>
                                               )}
                                           </div>
                                           <div>
@@ -1193,13 +1406,13 @@ const Courses: React.FC = () => {
                                   {editMode ? (
                                       <textarea 
                                         rows={4} 
-                                        value={selectedCourse.desc} 
-                                        onChange={e => setSelectedCourse({...selectedCourse, desc: e.target.value})}
+                                        value={selectedCourse.description ?? ''}
+                                        onChange={e => setSelectedCourse({...selectedCourse, description: e.target.value})}
                                         className="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm leading-relaxed outline-none focus:border-black transition resize-none"
                                         placeholder="请输入课程的详细介绍，包括课程特色、流派渊源等..."
                                       ></textarea>
                                   ) : (
-                                      <p className="text-sm text-gray-600 leading-relaxed">{selectedCourse.desc || '暂无简介'}</p>
+                                      <p className="text-sm text-gray-600 leading-relaxed">{selectedCourse.description || '暂无简介'}</p>
                                   )}
                               </div>
 
