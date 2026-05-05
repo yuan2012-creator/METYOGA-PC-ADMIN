@@ -2,47 +2,14 @@
 import React, { useState, useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { STAGE_CONFIG, MOCK_MEMBERS } from '../constants';
-import { Member, MemberLifecycleStatus } from '../types';
+import { Member } from '../types';
+import {
+  MEMBER_LIFECYCLE_GROUPS,
+  getMemberLifecycleStatus,
+  getMemberStage,
+  getMemberStageConfig,
+} from '../utils/memberLifecycle';
 import MemberDetailModal from './MemberDetailModal';
-
-const STAGE_TO_LIFECYCLE: Record<Member['stage'], MemberLifecycleStatus> = {
-  S0: 'lead',
-  S1: 'active',
-  S2: 'trial_attended',
-  S3: 'active',
-  S4: 'active',
-  S5: 'warning',
-  S6: 'churned',
-};
-
-const LIFECYCLE_TO_STAGE: Record<MemberLifecycleStatus, Member['stage']> = {
-  lead: 'S0',
-  contacted: 'S0',
-  trial_booked: 'S0',
-  trial_attended: 'S2',
-  active: 'S3',
-  warning: 'S5',
-  inactive: 'S5',
-  churned: 'S6',
-  reactivated: 'S3',
-};
-
-const LEAD_STATUSES: MemberLifecycleStatus[] = ['lead', 'contacted', 'trial_booked'];
-const ACTIVE_STATUSES: MemberLifecycleStatus[] = ['trial_attended', 'active', 'warning', 'reactivated'];
-const CHURNED_STATUSES: MemberLifecycleStatus[] = ['inactive', 'churned'];
-
-const getLifecycleStatus = (member: Member): MemberLifecycleStatus => (
-  member.lifecycleStatus ?? STAGE_TO_LIFECYCLE[member.stage]
-);
-
-const getDisplayStage = (member: Member): Member['stage'] => (
-  member.stage ?? LIFECYCLE_TO_STAGE[getLifecycleStatus(member)]
-);
-
-const getStageConfig = (member: Member) => {
-  const stage = getDisplayStage(member);
-  return STAGE_CONFIG[stage];
-};
 
 const getPrimaryAssetText = (member: Member): string | null => {
   const asset = member.assets?.[0];
@@ -104,15 +71,15 @@ const Members: React.FC = () => {
   const visibleMembers = useMemo(() => {
     let filtered = MOCK_MEMBERS;
     
-    if (mainTab === 'leads') filtered = filtered.filter(m => LEAD_STATUSES.includes(getLifecycleStatus(m)));
-    else if (mainTab === 'active') filtered = filtered.filter(m => ACTIVE_STATUSES.includes(getLifecycleStatus(m)));
-    else if (mainTab === 'churned') filtered = filtered.filter(m => CHURNED_STATUSES.includes(getLifecycleStatus(m)));
+    if (mainTab === 'leads') filtered = filtered.filter(m => MEMBER_LIFECYCLE_GROUPS.leads.includes(getMemberLifecycleStatus(m)));
+    else if (mainTab === 'active') filtered = filtered.filter(m => MEMBER_LIFECYCLE_GROUPS.active.includes(getMemberLifecycleStatus(m)));
+    else if (mainTab === 'churned') filtered = filtered.filter(m => MEMBER_LIFECYCLE_GROUPS.churned.includes(getMemberLifecycleStatus(m)));
 
     if (mainTab !== 'leads' && alertFilter) {
         filtered = filtered.filter(m => m.riskTag === alertFilter);
     }
 
-    if (filterStage !== 'all') filtered = filtered.filter(m => getDisplayStage(m) === filterStage);
+    if (filterStage !== 'all') filtered = filtered.filter(m => getMemberStage(m, 'legacy') === filterStage);
 
     if (searchQuery) {
         const q = searchQuery.toLowerCase();
@@ -129,7 +96,7 @@ const Members: React.FC = () => {
   };
 
   const newLeads = useMemo(
-    () => MOCK_MEMBERS.filter(m => LEAD_STATUSES.includes(getLifecycleStatus(m)) && m.leadStatus === 'new'),
+    () => MOCK_MEMBERS.filter(m => MEMBER_LIFECYCLE_GROUPS.leads.includes(getMemberLifecycleStatus(m)) && m.leadStatus === 'new'),
     []
   );
 
@@ -350,7 +317,7 @@ const Members: React.FC = () => {
                           </thead>
                           <tbody className="divide-y divide-gray-50">
                               {visibleMembers.map(member => {
-                                const stageConfig = getStageConfig(member);
+                                const stageConfig = getMemberStageConfig(member, 'legacy');
                                 const primaryAssetText = getPrimaryAssetText(member);
                                 const leadStatusLabel = member.leadStatus ? LEAD_STATUS_LABELS[member.leadStatus] : '待回访';
 

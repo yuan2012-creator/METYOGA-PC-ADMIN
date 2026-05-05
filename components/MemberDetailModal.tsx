@@ -8,10 +8,13 @@ import {
   Member,
   MemberAsset,
   MemberAssetStatus,
-  MemberLifecycleStatus,
   TimelineEvent,
 } from '../types';
-import { STAGE_CONFIG } from '../constants';
+import {
+  getMemberLifecycleLabel,
+  getMemberLifecycleStatus,
+  getMemberStageConfig,
+} from '../utils/memberLifecycle';
 
 interface MemberDetailModalProps {
   member: Member;
@@ -36,40 +39,6 @@ interface AssetCardView {
   badgeClass: string;
 }
 
-const STAGE_TO_LIFECYCLE: Record<Member['stage'], MemberLifecycleStatus> = {
-  S0: 'lead',
-  S1: 'active',
-  S2: 'trial_attended',
-  S3: 'active',
-  S4: 'active',
-  S5: 'warning',
-  S6: 'churned',
-};
-
-const LIFECYCLE_TO_STAGE: Record<MemberLifecycleStatus, Member['stage']> = {
-  lead: 'S0',
-  contacted: 'S0',
-  trial_booked: 'S0',
-  trial_attended: 'S2',
-  active: 'S3',
-  warning: 'S5',
-  inactive: 'S5',
-  churned: 'S6',
-  reactivated: 'S3',
-};
-
-const LIFECYCLE_LABELS: Record<MemberLifecycleStatus, string> = {
-  lead: '潜在线索',
-  contacted: '已触达',
-  trial_booked: '已约体验',
-  trial_attended: '已体验',
-  active: '正式会员',
-  warning: '风险预警',
-  inactive: '沉睡会员',
-  churned: '流失会员',
-  reactivated: '重新激活',
-};
-
 const MEMBER_ASSET_STATUS_LABELS: Record<MemberAssetStatus, string> = {
   inactive: '未生效',
   effective: '使用中',
@@ -88,14 +57,6 @@ const TIMELINE_TABS: { id: TimelineTab; label: string }[] = [
   { id: 'order', label: '购买' },
   { id: 'follow', label: '跟进' },
 ];
-
-const getLifecycleStatus = (member: Member): MemberLifecycleStatus => (
-  member.lifecycleStatus ?? STAGE_TO_LIFECYCLE[member.stage]
-);
-
-const getLifecycleStage = (member: Member): Member['stage'] => (
-  LIFECYCLE_TO_STAGE[getLifecycleStatus(member)] ?? member.stage
-);
 
 const formatAssetDate = (date?: string) => {
   if (!date) return undefined;
@@ -197,9 +158,9 @@ const buildTimelineItems = (member: Member): TimelineViewItem[] => {
 
 const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }) => {
   const [activeTab, setActiveTab] = useState<TimelineTab>('all');
-  const lifecycleStatus = getLifecycleStatus(member);
-  const stageInfo = STAGE_CONFIG[getLifecycleStage(member)];
-  const legacyStageInfo = STAGE_CONFIG[member.stage];
+  const lifecycleStatus = getMemberLifecycleStatus(member);
+  const stageInfo = getMemberStageConfig(member);
+  const legacyStageInfo = getMemberStageConfig(member, 'legacy');
   const assetCards = getAssetCards(member);
   const timelineItems = buildTimelineItems(member);
 
@@ -269,7 +230,7 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }
                                 backgroundColor: stageInfo.bgColor
                             }}
                         >
-                            {LIFECYCLE_LABELS[lifecycleStatus]}
+                            {getMemberLifecycleLabel(lifecycleStatus)}
                             {legacyStageInfo && <span className="ml-1 opacity-70 normal-case">/ {legacyStageInfo.label}</span>}
                         </span>
                     </div>
