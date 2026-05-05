@@ -21,6 +21,11 @@ import {
   MOCK_PAYMENTS,
   MOCK_REFUNDS,
 } from '../constants';
+import {
+  sumPayments,
+  sumRecognizedIncome,
+  sumRefunds,
+} from '../utils/financeSelectors';
 import type {
   FinanceLedgerEntry,
   Order,
@@ -258,21 +263,6 @@ const buildFinanceTransactionRows = (
   ...refunds.map(refund => toRefundRow(refund, payments, ledgerEntries)),
 ].sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime()));
 
-const sumPayments = (payments: Payment[]): number => (
-  payments
-    .filter(payment => payment.status === 'paid' || payment.status === 'reconciled')
-    .reduce((sum, payment) => sum + payment.amount, 0)
-);
-
-const sumLedgerByDirection = (
-  entries: FinanceLedgerEntry[],
-  direction: FinanceLedgerEntry['direction']
-): number => (
-  entries
-    .filter(entry => entry.direction === direction)
-    .reduce((sum, entry) => sum + entry.amount, 0)
-);
-
 const Finance: React.FC = () => {
   const [subTab, setSubTab] = useState<FinanceSubTab>('overview');
   const [dateRange, setDateRange] = useState({ start: '2026-05-01', end: '2026-05-31' });
@@ -307,8 +297,8 @@ const Finance: React.FC = () => {
   }, [orderFilter, transactionRows]);
 
   const cashIncomeTotal = sumPayments(MOCK_PAYMENTS);
-  const recognizedIncomeTotal = sumLedgerByDirection(MOCK_FINANCE_LEDGER_ENTRIES, 'liability_decrease');
-  const refundTotal = MOCK_REFUNDS.reduce((sum, refund) => sum + refund.amount, 0);
+  const recognizedIncomeTotal = sumRecognizedIncome(MOCK_FINANCE_LEDGER_ENTRIES);
+  const refundTotal = sumRefunds(MOCK_REFUNDS);
   const netCashFlow = cashIncomeTotal - refundTotal;
   const endingDeferredRevenue = beginningDeferredRevenue + cashIncomeTotal - recognizedIncomeTotal - refundTotal;
   const pendingRefunds = MOCK_REFUNDS.filter(refund => (

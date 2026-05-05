@@ -14,14 +14,16 @@ import {
   MOCK_REFUNDS,
   MOCK_TEAM_TASKS,
 } from '../constants';
+import {
+  countPendingOrders,
+  sumPayments,
+  sumRecognizedIncome,
+  sumRefunds,
+} from '../utils/financeSelectors';
 import { MEMBER_LIFECYCLE_GROUPS, getMemberLifecycleStatus } from '../utils/memberLifecycle';
 import type {
   Attendance,
-  FinanceLedgerEntry,
   MHSData,
-  Order,
-  Payment,
-  Refund,
 } from '../types';
 
 type MhsDimensionKey = 'L' | 'F' | 'E' | 'S';
@@ -77,24 +79,6 @@ const MHS_CIRCLE_LENGTH = 440;
 
 const formatMoney = (amount: number): string => `¥${MONEY_FORMATTER.format(amount)}`;
 
-const sumPayments = (payments: Payment[]): number => (
-  payments
-    .filter(payment => payment.status === 'paid' || payment.status === 'reconciled')
-    .reduce((sum, payment) => sum + payment.amount, 0)
-);
-
-const sumRefunds = (refunds: Refund[]): number => (
-  refunds
-    .filter(refund => refund.status === 'completed' || refund.status === 'processing' || refund.status === 'approved')
-    .reduce((sum, refund) => sum + refund.amount, 0)
-);
-
-const sumRecognizedIncome = (entries: FinanceLedgerEntry[]): number => (
-  entries
-    .filter(entry => entry.direction === 'liability_decrease')
-    .reduce((sum, entry) => sum + entry.amount, 0)
-);
-
 const countConsumedAttendances = (attendances: Attendance[]): number => (
   attendances.filter(attendance => attendance.status === 'consumed').length
 );
@@ -119,14 +103,12 @@ const buildDashboardSummary = (): DashboardSummary => {
     MHS_DIMENSION_KEYS.reduce((sum, key) => sum + MOCK_MHS_DATA[key].score, 0) / MHS_DIMENSION_KEYS.length
   );
   const paidPaymentAmount = sumPayments(MOCK_PAYMENTS);
-  const refundAmount = sumRefunds(MOCK_REFUNDS);
+  const refundAmount = sumRefunds(MOCK_REFUNDS, ['completed', 'processing', 'approved']);
   const activeMemberCount = MOCK_MEMBERS.filter(member => (
     MEMBER_LIFECYCLE_GROUPS.active.includes(getMemberLifecycleStatus(member))
   )).length;
   const riskMemberCount = MOCK_MEMBERS.filter(member => Boolean(member.riskTag)).length;
-  const pendingOrderCount = MOCK_ORDERS.filter((order: Order) => (
-    order.status === 'draft' || order.status === 'pending_payment' || order.status === 'paid'
-  )).length;
+  const pendingOrderCount = countPendingOrders(MOCK_ORDERS);
   const pendingContractCount = MOCK_CONTRACTS.filter(contract => (
     contract.status === 'draft' || contract.status === 'pending_signature' || contract.status === 'signed'
   )).length;
