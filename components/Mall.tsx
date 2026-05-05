@@ -3,24 +3,20 @@ import React, { useState, useMemo, useRef } from 'react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell
 } from 'recharts';
-import { MOCK_CARDS, MOCK_POINT_PRODUCTS, MOCK_MEMBERS } from '../constants';
-import { Card, PointProduct, Member } from '../types';
+import {
+  MOCK_CARD_PRODUCTS,
+  MOCK_CONTRACTS,
+  MOCK_MEMBERS,
+  MOCK_ORDERS,
+  MOCK_POINT_PRODUCTS,
+  MOCK_TTC_PRODUCTS,
+} from '../constants';
+import { CardProduct, Contract, Order, OrderItem, PointProduct, TtcProduct } from '../types';
 
 // --- Constants ---
 const AVAILABLE_VENUES = ['万象城馆', '西湖旗舰馆', '滨江宝龙馆', '城西银泰馆'];
 
 // --- Types ---
-
-// 2. TTC (Research Center)
-interface TTCSchedule {
-    id: string;
-    batchName: string; 
-    startDate: string;
-    endDate: string;
-    enrolled: number;
-    max: number;
-    status: 'recruiting' | 'full' | 'ended';
-}
 
 // New: Tutor Interface with Structured Resume
 interface TTCTutorExperience {
@@ -50,12 +46,12 @@ interface TTCCourseAudienceNode {
     desc: string; // 解释性词语 e.g. "建立正确且安全的练习根基"
 }
 
-interface TTCCourse {
-    id: string;
-    name: string;
+type TTCSchedule = NonNullable<TtcProduct['schedules']>[number] & {
+    status: NonNullable<TtcProduct['schedules']>[number]['status'] | 'recruiting' | 'ended';
+};
+
+type MallTtcCourse = TtcProduct & {
     category: 'yoga' | 'pilates';
-    cover: string;
-    price: number;
     earlyBirdPrice: number;
     earlyBirdDeadline: string; 
     alumniPrice: number;
@@ -73,7 +69,7 @@ interface TTCCourse {
     conversionRate: number;
     views: number;
     historicalSales: number[]; 
-}
+};
 
 interface Student {
     id: string;
@@ -89,14 +85,20 @@ interface Student {
 // 3. Points Mall
 
 // 4. Orders
-interface Order {
+type MallOrderCategory = 'cards' | 'ttc' | 'points';
+
+interface MallOrderRow {
     id: string;
     user: string;
+    phone: string;
     product: string;
-    category: 'card' | 'ttc' | 'mall';
+    category: MallOrderCategory;
+    type: string;
     amount: string;
-    status: 'paid' | 'pending' | 'refunded' | 'completed';
+    status: 'paid' | 'pending' | 'refunded' | 'completed' | 'deposit';
     time: string;
+    details: string;
+    subStatus: string;
 }
 
 // --- Data Overview Component ---
@@ -560,6 +562,93 @@ const MOCK_VENUES_LIST = [
     }
 ];
 
+const normalizeTtcScheduleStatus = (status: TTCSchedule['status']): TTCSchedule['status'] => {
+    if (status === 'open') return 'recruiting';
+    if (status === 'closed') return 'ended';
+    return status;
+};
+
+const toMallTtcCourse = (product: TtcProduct, index: number): MallTtcCourse => ({
+    ...product,
+    status: product.status === 'active' ? 'active' : 'inactive',
+    category: product.name.includes('普拉提') ? 'pilates' : 'yoga',
+    earlyBirdPrice: Math.max(product.price - 2000, 0),
+    earlyBirdDeadline: '2026-05-01',
+    alumniPrice: Math.max(product.price - 1000, 0),
+    intro: product.description || '',
+    planNodes: [
+        { stage: '基础理论', content: '课程体系、身体基础和教学安全边界。' },
+        { stage: '实操训练', content: '核心体式、序列设计和课堂带领练习。' },
+    ],
+    audienceNodes: [
+        { tag: '进阶练习者', desc: '希望系统理解瑜伽训练方法的人群。' },
+        { tag: '准老师', desc: '计划进入教学或服务会员的人群。' },
+    ],
+    outcomes: product.description || '完成系统学习并获得结业能力评估。',
+    tutors: ['Master Sarah'],
+    schedules: (product.schedules || []).map(schedule => ({
+        ...schedule,
+        status: normalizeTtcScheduleStatus(schedule.status),
+    })),
+    listingVenues: product.listingVenues || AVAILABLE_VENUES,
+    conversionRate: 12 + index * 2,
+    views: 1200 + index * 600,
+    historicalSales: [12, 15, 18, 14, 16],
+});
+
+const getOrderPrimaryItem = (order: Order): OrderItem | undefined => order.items[0];
+
+const getOrderCategory = (item?: OrderItem): MallOrderCategory => {
+    if (item?.productType === 'ttc') return 'ttc';
+    if (item?.productType === 'point') return 'points';
+    return 'cards';
+};
+
+const getOrderDisplayStatus = (order: Order): MallOrderRow['status'] => {
+    if (order.status === 'pending_payment') return order.paidAmount ? 'deposit' : 'pending';
+    if (order.status === 'refunded' || order.status === 'partially_refunded') return 'refunded';
+    if (order.status === 'fulfilled' || order.status === 'closed' || order.status === 'paid') return 'paid';
+    return 'pending';
+};
+
+const getOrderTypeLabel = (item?: OrderItem): string => {
+    if (!item) return '未知';
+    if (item.productType === 'card') return '会员卡项';
+    if (item.productType === 'ttc') return '教培';
+    if (item.productType === 'point') return '积分商品';
+    if (item.productType === 'course') return '课程权益';
+    return '自定义';
+};
+
+const getContractDisplay = (contract?: Contract): { details: string; subStatus: string } => {
+    if (!contract) return { details: '未绑定合同', subStatus: 'inactive' };
+    if (contract.status === 'effective') return { details: '合同生效', subStatus: 'active' };
+    if (contract.status === 'signed') return { details: '已签合同', subStatus: 'signed' };
+    if (contract.status === 'pending_signature') return { details: '待签署', subStatus: 'pending' };
+    return { details: '合同异常', subStatus: contract.status };
+};
+
+const toMallOrderRow = (order: Order, contracts: Contract[]): MallOrderRow => {
+    const item = getOrderPrimaryItem(order);
+    const member = MOCK_MEMBERS.find(m => m.id === order.memberId);
+    const contract = contracts.find(c => c.id === order.contractId || c.orderId === order.id);
+    const contractDisplay = getContractDisplay(contract);
+
+    return {
+        id: order.id,
+        user: member?.name || order.memberId,
+        phone: member?.phone || '-',
+        product: item?.productName || '未知商品',
+        category: getOrderCategory(item),
+        type: getOrderTypeLabel(item),
+        amount: `¥${(order.paidAmount ?? order.totalAmount).toLocaleString()}`,
+        status: getOrderDisplayStatus(order),
+        time: order.createdAt.replace('T', ' ').slice(0, 16),
+        details: contractDisplay.details,
+        subStatus: contractDisplay.subStatus,
+    };
+};
+
 const Mall: React.FC = () => {
   const [activeModule, setActiveModule] = useState<'cards' | 'ttc' | 'points' | 'orders'>('cards');
   const [subView, setSubView] = useState<'list' | 'edit' | 'students' | 'contract_create'>('list');
@@ -660,7 +749,7 @@ const Mall: React.FC = () => {
 
   // --- Mock Data ---
 
-  const [cards, setCards] = useState<Card[]>(MOCK_CARDS);
+  const [cards, setCards] = useState<CardProduct[]>(MOCK_CARD_PRODUCTS);
 
   const [ttcTutors, setTtcTutors] = useState<TTCTutor[]>([
       {
@@ -686,87 +775,17 @@ const Mall: React.FC = () => {
       }
   ]);
 
-  const [ttcCourses, setTtcCourses] = useState<TTCCourse[]>([
-      { 
-          id: 't1', name: 'RYT 200 全美瑜伽联盟认证', category: 'yoga', cover: 'https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?auto=format&fit=crop&q=80&w=400',
-          price: 18800, earlyBirdPrice: 16800, earlyBirdDeadline: '2024-03-01', alumniPrice: 15800, 
-          intro: '系统学习哈他瑜伽精髓，开启职业之路。', 
-          planNodes: [
-              { stage: '第一阶段', content: '学习瑜伽历史哲学，了解瑜伽的起源与流派发展。' },
-              { stage: '第二阶段', content: '哈他瑜伽基础体式精讲，掌握100+个体式的正位与顺位。' },
-              { stage: '第三阶段', content: '教学法与排课逻辑，如何成为一名合格的瑜伽老师。' }
-          ],
-          audienceNodes: [
-              { tag: '零基础人群', desc: '建立正确且安全的练习根基，开启瑜伽修习之路。' },
-              { tag: '进阶练习者', desc: '渴望突破体式瓶颈，深入了解瑜伽背后的理论体系。' },
-              { tag: '想转行', desc: '希望将瑜伽作为职业，获得国际认可的执教资格。' }
-          ],
-          outcomes: '获得RYT200证书', tutors: ['Master Sarah', 'Dr. Anna'], 
-          status: 'active', conversionRate: 12.5, views: 2400, historicalSales: [12, 15, 18, 14, 16],
-          listingVenues: ['万象城馆', '西湖旗舰馆', '滨江宝龙馆', '城西银泰馆'],
-          schedules: [
-              { id: 's1', batchName: '2024 春季周末班', startDate: '2024-03-15', endDate: '2024-05-15', enrolled: 12, max: 16, status: 'recruiting' },
-          ]
-      },
-      { 
-          id: 't2', name: '孕产普拉提修复工作坊', category: 'pilates', cover: 'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&q=80&w=400',
-          price: 3800, earlyBirdPrice: 3200, earlyBirdDeadline: '2024-04-20', alumniPrice: 3000, 
-          intro: '针对产后修复的深度研习。', 
-          planNodes: [
-              { stage: 'Day 1', content: '孕期解剖生理学变化与产后评估。' },
-              { stage: 'Day 2', content: '盆底肌与腹直肌修复实操序列。' }
-          ],
-          audienceNodes: [
-              { tag: '瑜伽老师', desc: '拓展私教技能，服务孕产会员。' },
-              { tag: '产后妈妈', desc: '自我修复，重塑产后身材。' }
-          ],
-          outcomes: '掌握产后修复序列', tutors: ['Dr. Anna'], 
-          status: 'active', conversionRate: 18.2, views: 1200, historicalSales: [20, 20, 18, 20, 20],
-          listingVenues: ['西湖旗舰馆'],
-          schedules: [
-              { id: 's3', batchName: '第5期', startDate: '2024-05-01', endDate: '2024-05-03', enrolled: 20, max: 20, status: 'full' }
-          ]
-      },
-  ]);
+  const [ttcCourses, setTtcCourses] = useState<MallTtcCourse[]>(MOCK_TTC_PRODUCTS.map(toMallTtcCourse));
 
-  const [products, setProducts] = useState<PointProduct[]>([
-      { 
-          id: 'p1', name: 'Lululemon 瑜伽垫 5mm', type: 'physical', 
-          allowPointsOnly: true, pointsPrice: 5000, allowMixed: false, mixedPoints: 0, mixedCash: 0,
-          cover: 'https://images.unsplash.com/photo-1592432678016-e910b452f9a9?auto=format&fit=crop&q=80&w=200', 
-          stock: 12, warningStock: 5, status: 'active', 
-          usageVenues: ['万象城馆', '西湖旗舰馆', '滨江宝龙馆', '城西银泰馆'],
-          listingVenues: ['万象城馆', '西湖旗舰馆', '滨江宝龙馆', '城西银泰馆'],
-          specs: [
-              { name: '颜色', values: [{name: '黑色', image: 'https://images.unsplash.com/photo-1599447421405-0e3a63080c0e?auto=format&fit=crop&q=80&w=100'}, {name: '紫色'}, {name: '绿色'}] },
-              { name: '厚度', values: [{name: '5mm'}, {name: '3mm'}] }
-          ],
-          exchangedCount: 45, inventoryRate: 78, recentLog: [{user: 'Lisa', time: '10 mins ago'}] 
-      },
-      { 
-          id: 'p6', name: 'MetYoga 定制水杯', type: 'physical', 
-          allowPointsOnly: false, pointsPrice: 0, allowMixed: true, mixedPoints: 800, mixedCash: 49,
-          cover: 'https://images.unsplash.com/photo-1602143407151-a111efd40bac?auto=format&fit=crop&q=80&w=200', 
-          stock: 100, warningStock: 20, status: 'active', 
-          usageVenues: ['万象城馆', '西湖旗舰馆'],
-          listingVenues: ['万象城馆', '西湖旗舰馆', '滨江宝龙馆'],
-          specs: [
-              { name: '颜色', values: [{name: '磨砂黑'}, {name: '珍珠白'}] },
-              { name: '容量', values: [{name: '500ml'}] }
-          ],
-          exchangedCount: 20, inventoryRate: 15, recentLog: [] 
-      },
-  ]);
+  const [products, setProducts] = useState<PointProduct[]>(MOCK_POINT_PRODUCTS);
 
   const [students] = useState<Student[]>([
       { id: 'st1', name: 'Lisa Wang', phone: '138****8888', paymentStatus: 'paid', amount: 16800, confirmed: true, batch: '2024 春季周末班', signupDate: '2023-11-20' },
       { id: 'st2', name: 'Mike Chen', phone: '139****1234', paymentStatus: 'deposit', amount: 5000, confirmed: false, batch: '2024 春季周末班', signupDate: '2023-11-22' },
   ]);
 
-  const [orders] = useState<Order[]>([
-      { id: 'ORD-001', user: 'Lisa Wang', product: '全馆通年卡', category: 'card', amount: '¥12,800', status: 'paid', time: '2023-11-25 10:20' },
-      { id: 'ORD-002', user: 'Kevin Zhang', product: 'RYT 200 报名费', category: 'ttc', amount: '¥5,000 (订金)', status: 'pending', time: '2023-11-25 09:15' },
-  ]);
+  const [orders] = useState<Order[]>(MOCK_ORDERS);
+  const [contracts] = useState<Contract[]>(MOCK_CONTRACTS);
 
   // --- Helpers ---
   const handleEdit = (item: any, type: 'card' | 'ttc_course' | 'ttc_tutor' | 'product') => { 
@@ -797,7 +816,8 @@ const Mall: React.FC = () => {
         : type === 'product' ? {
             type: pointProductTab, // Use current tab as default type
             name: '', cover: '', description: '',
-            pointsRequired: 0, supportCash: false,
+            enablePurePoints: true, purePointsPrice: 0,
+            enableMixedPayment: false, mixedPointsPrice: 0, mixedCashPrice: 0,
             status: 'active', venues: [],
             exchangeCount: 0, inventoryUsage: 0, recentExchanges: []
         }
@@ -1481,8 +1501,8 @@ const Mall: React.FC = () => {
 
   const renderCardEdit = () => {
       const isStored = editCardCategory === 'stored_value';
-      const editingCard = selectedItem as Card;
-      const setEditingCard = (updates: Partial<Card>) => setSelectedItem({ ...selectedItem, ...updates });
+      const editingCard = selectedItem as CardProduct;
+      const setEditingCard = (updates: Partial<CardProduct>) => setSelectedItem({ ...selectedItem, ...updates });
 
       return (
           <div className="flex h-full gap-6 animate-fadeIn">
@@ -2925,20 +2945,11 @@ const Mall: React.FC = () => {
   };
 
   const renderOrders = () => {
-      // Mock Detailed Orders
-      const detailedOrders = [
-          // Cards
-          { id: 'O-1001', user: 'Alice', phone: '138****1234', category: 'cards', product: '初遇卡', type: '次卡', amount: '¥1,204', status: 'paid', time: '2023-10-25 14:30', details: '已开卡', subStatus: 'active' },
-          { id: 'O-1002', user: 'Bob', phone: '139****5678', category: 'cards', product: '瑜伽年卡', type: '期限卡', amount: '¥8,500', status: 'paid', time: '2023-10-24 09:15', details: '未开卡', subStatus: 'inactive' },
-          // TTC
-          { id: 'O-2001', user: 'Charlie', phone: '137****9012', category: 'ttc', product: 'RYT200', type: '教培', amount: '¥12,800', status: 'deposit', time: '2023-10-23 16:45', details: '已签合同', subStatus: 'signed' },
-          { id: 'O-2002', user: 'David', phone: '150****3456', category: 'ttc', product: '普拉提大器械', type: '工作坊', amount: '¥3,500', status: 'paid', time: '2023-10-22 11:20', details: '已入学', subStatus: 'attended' },
-          // Points
-          { id: 'O-3001', user: 'Eva', phone: '151****7890', category: 'points', product: 'Lululemon瑜伽垫', type: '实物', amount: '5000积分', status: 'completed', time: '2023-10-21 10:00', details: '已发货', subStatus: 'shipped' },
-          { id: 'O-3002', user: 'Frank', phone: '152****2345', category: 'points', product: '私教体验课', type: '课程', amount: '1000积分', status: 'pending', time: '2023-10-20 15:30', details: '未兑换', subStatus: 'pending' },
-      ];
-
-      const filteredOrders = detailedOrders.filter(o => o.category === orderTab);
+      const detailedOrders = orders.map(order => toMallOrderRow(order, contracts));
+      const filteredOrders = detailedOrders.filter(order => {
+          const statusMatched = orderFilters.status === 'all' || order.status === orderFilters.status;
+          return order.category === orderTab && statusMatched;
+      });
 
       return (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden animate-fadeIn flex flex-col h-full">
