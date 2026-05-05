@@ -2,8 +2,66 @@
 import React, { useState, useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { STAGE_CONFIG, MOCK_MEMBERS } from '../constants';
-import { Member } from '../types';
+import { Member, MemberLifecycleStatus } from '../types';
 import MemberDetailModal from './MemberDetailModal';
+
+const STAGE_TO_LIFECYCLE: Record<Member['stage'], MemberLifecycleStatus> = {
+  S0: 'lead',
+  S1: 'active',
+  S2: 'trial_attended',
+  S3: 'active',
+  S4: 'active',
+  S5: 'warning',
+  S6: 'churned',
+};
+
+const LIFECYCLE_TO_STAGE: Record<MemberLifecycleStatus, Member['stage']> = {
+  lead: 'S0',
+  contacted: 'S0',
+  trial_booked: 'S0',
+  trial_attended: 'S2',
+  active: 'S3',
+  warning: 'S5',
+  inactive: 'S5',
+  churned: 'S6',
+  reactivated: 'S3',
+};
+
+const LEAD_STATUSES: MemberLifecycleStatus[] = ['lead', 'contacted', 'trial_booked'];
+const ACTIVE_STATUSES: MemberLifecycleStatus[] = ['trial_attended', 'active', 'warning', 'reactivated'];
+const CHURNED_STATUSES: MemberLifecycleStatus[] = ['inactive', 'churned'];
+
+const getLifecycleStatus = (member: Member): MemberLifecycleStatus => (
+  member.lifecycleStatus ?? STAGE_TO_LIFECYCLE[member.stage]
+);
+
+const getDisplayStage = (member: Member): Member['stage'] => (
+  member.stage ?? LIFECYCLE_TO_STAGE[getLifecycleStatus(member)]
+);
+
+const getStageConfig = (member: Member) => {
+  const stage = getDisplayStage(member);
+  return STAGE_CONFIG[stage];
+};
+
+const getPrimaryAssetText = (member: Member): string | null => {
+  const asset = member.assets?.[0];
+  if (asset) {
+    const balance = typeof asset.remainingAmount === 'number' ? `余${asset.remainingAmount}` : asset.status;
+    return `${asset.name} (${balance})`;
+  }
+
+  const card = member.cards[0];
+  if (!card) return null;
+  return `${card.name} (${card.balance})`;
+};
+
+const LEAD_STATUS_LABELS: Record<NonNullable<Member['leadStatus']>, string> = {
+  new: '待回访',
+  following: '跟进中',
+  high_intent: '高意向',
+  pool: '公海',
+};
 
 const Members: React.FC = () => {
   // Fix: Removed invalid inline type annotation in destructuring to fix parsing error and define setSelectedMember correctly
@@ -46,15 +104,15 @@ const Members: React.FC = () => {
   const visibleMembers = useMemo(() => {
     let filtered = MOCK_MEMBERS;
     
-    if (mainTab === 'leads') filtered = filtered.filter(m => m.stage === 'S0');
-    else if (mainTab === 'active') filtered = filtered.filter(m => ['S1', 'S2', 'S3', 'S4', 'S5'].includes(m.stage));
-    else if (mainTab === 'churned') filtered = filtered.filter(m => m.stage === 'S6');
+    if (mainTab === 'leads') filtered = filtered.filter(m => LEAD_STATUSES.includes(getLifecycleStatus(m)));
+    else if (mainTab === 'active') filtered = filtered.filter(m => ACTIVE_STATUSES.includes(getLifecycleStatus(m)));
+    else if (mainTab === 'churned') filtered = filtered.filter(m => CHURNED_STATUSES.includes(getLifecycleStatus(m)));
 
     if (mainTab !== 'leads' && alertFilter) {
         filtered = filtered.filter(m => m.riskTag === alertFilter);
     }
 
-    if (filterStage !== 'all') filtered = filtered.filter(m => m.stage === filterStage);
+    if (filterStage !== 'all') filtered = filtered.filter(m => getDisplayStage(m) === filterStage);
 
     if (searchQuery) {
         const q = searchQuery.toLowerCase();
@@ -69,6 +127,11 @@ const Members: React.FC = () => {
     balance: MOCK_MEMBERS.filter(m => m.riskTag === 'balance').length,
     sleep: MOCK_MEMBERS.filter(m => m.riskTag === 'sleep').length,
   };
+
+  const newLeads = useMemo(
+    () => MOCK_MEMBERS.filter(m => LEAD_STATUSES.includes(getLifecycleStatus(m)) && m.leadStatus === 'new'),
+    []
+  );
 
   const FilterIcon = () => (
     <i className="fa-solid fa-filter text-[9px] opacity-20 group-hover/header:opacity-100 transition-opacity ml-1.5 cursor-pointer"></i>
@@ -191,7 +254,7 @@ const Members: React.FC = () => {
                             <i className="fa-solid fa-bell text-orange-500"></i> 今日待办跟进
                         </h3>
                         <div className="space-y-4 flex-1">
-                            {MOCK_MEMBERS.filter(m => m.stage === 'S0' && m.leadStatus === 'new').slice(0, 2).map(lead => (
+                            {newLeads.slice(0, 2).map(lead => (
                                 <div key={lead.id} className="flex items-center justify-between p-3.5 bg-gray-50 rounded-2xl hover:bg-[#FAFAFA] transition cursor-pointer border border-transparent hover:border-gray-200">
                                     <div className="flex items-center gap-3">
                                         <img src={lead.avatar} className="w-9 h-9 rounded-full border border-white" alt=""/>
@@ -286,7 +349,12 @@ const Members: React.FC = () => {
                               </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-50">
-                              {visibleMembers.map(member => (
+                              {visibleMembers.map(member => {
+                                const stageConfig = getStageConfig(member);
+                                const primaryAssetText = getPrimaryAssetText(member);
+                                const leadStatusLabel = member.leadStatus ? LEAD_STATUS_LABELS[member.leadStatus] : '待回访';
+
+                                return (
                                   <tr 
                                     key={member.id} 
                                     onClick={() => setSelectedMember(member)}
@@ -311,21 +379,21 @@ const Members: React.FC = () => {
                                               </td>
                                               <td className="px-4 py-5 text-xs font-bold text-gray-900">{member.manager}</td>
                                               <td className="px-4 py-5">
-                                                  <span className="px-2 py-0.5 rounded-lg bg-gray-100 text-gray-500 text-[10px] font-bold">待回访</span>
+                                                  <span className="px-2 py-0.5 rounded-lg bg-gray-100 text-gray-500 text-[10px] font-bold">{leadStatusLabel}</span>
                                               </td>
                                           </>
                                       ) : (
                                           <>
                                               <td className="px-4 py-5">
-                                                  <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold border" style={{ color: STAGE_CONFIG[member.stage].color, backgroundColor: STAGE_CONFIG[member.stage].bgColor + '80', borderColor: STAGE_CONFIG[member.stage].color + '20' }}>
-                                                      {STAGE_CONFIG[member.stage].label}
+                                                  <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold border" style={{ color: stageConfig.color, backgroundColor: stageConfig.bgColor + '80', borderColor: stageConfig.color + '20' }}>
+                                                      {stageConfig.label}
                                                   </span>
                                               </td>
                                               <td className="px-4 py-5 text-xs font-bold">{member.lastVisit}</td>
                                               <td className="px-4 py-5">
-                                                  {member.cards.length > 0 ? (
+                                                  {primaryAssetText ? (
                                                       <div className="max-w-[120px] truncate text-[10px] font-bold text-gray-800">
-                                                          {member.cards[0].name} <span className="text-gray-400 font-normal">({member.cards[0].balance})</span>
+                                                          {primaryAssetText}
                                                       </div>
                                                   ) : <span className="text-gray-300 text-[10px]">无持卡</span>}
                                               </td>
@@ -350,7 +418,8 @@ const Members: React.FC = () => {
                                           </div>
                                       </td>
                                   </tr>
-                              ))}
+                                );
+                              })}
                           </tbody>
                       </table>
                   </div>
