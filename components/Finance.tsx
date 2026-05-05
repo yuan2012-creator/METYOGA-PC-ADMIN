@@ -13,6 +13,20 @@ import {
   Filler
 } from 'chart.js';
 import { Line, Doughnut } from 'react-chartjs-2';
+import {
+  MOCK_CONTRACTS,
+  MOCK_FINANCE_LEDGER_ENTRIES,
+  MOCK_MEMBERS,
+  MOCK_ORDERS,
+  MOCK_PAYMENTS,
+  MOCK_REFUNDS,
+} from '../constants';
+import type {
+  FinanceLedgerEntry,
+  Order,
+  Payment,
+  Refund,
+} from '../types';
 
 // Register ChartJS components
 ChartJS.register(
@@ -27,9 +41,13 @@ ChartJS.register(
   Filler
 );
 
-interface Order {
+type FinanceSubTab = 'overview' | 'revenue' | 'expense' | 'target' | 'report';
+type FinanceOrderFilter = 'all' | 'card' | 'refund' | 'integral';
+
+interface FinanceTransactionRow {
   id: string;
   date: string;
+  occurredAt: string;
   type: string;
   content: string;
   amount: number;
@@ -37,7 +55,12 @@ interface Order {
   method: string;
   status: string;
   statusTag: string;
-  isRefund: boolean;
+  sourceType: 'order' | 'refund';
+  orderId: string;
+  paymentId?: string;
+  refundId?: string;
+  ledgerEntryId?: string;
+  productTypes: Order['items'][number]['productType'][];
   integral?: number;
 }
 
@@ -49,21 +72,216 @@ interface StaffPerformance {
   progress: number;
 }
 
-const Finance: React.FC = () => {
-  const [subTab, setSubTab] = useState('overview');
-  const [dateRange, setDateRange] = useState({ start: '2023-11-01', end: '2023-11-30' });
-  const [orderFilter, setOrderFilter] = useState('all');
+const FINANCE_SUB_TABS: { id: FinanceSubTab; label: string }[] = [
+  { id: 'overview', label: '营收总览' },
+  { id: 'revenue', label: '收入与预收' },
+  { id: 'expense', label: '支出与薪酬' },
+  { id: 'target', label: '业绩目标' },
+  { id: 'report', label: '报表中心' },
+];
 
-  // --- Mock Data ---
-  const orders: Order[] = [
-    { id: 'ORD-20231125-01', date: '11-25 10:20', type: '卡项', content: '硬核年卡', amount: 39990.00, customer: '王女士', method: '微信支付', status: '已支付', statusTag: 'bg-green-50 text-green-700 border-green-200', isRefund: false },
-    { id: 'ORD-20231125-02', date: '11-25 09:15', type: '私教', content: '私教50次包', amount: 22000.00, customer: '张先生', method: '支付宝', status: '已支付', statusTag: 'bg-green-50 text-green-700 border-green-200', isRefund: false },
-    { id: 'RFD-20231120-03', date: '11-20 16:00', type: '退款', content: '私教包 (剩余)', amount: -8000.00, customer: '赵先生', method: '原路返回', status: '已退款', statusTag: 'bg-red-50 text-red-700 border-red-200', isRefund: true },
-    { id: 'ORD-20231118-04', date: '11-18 12:00', type: '团课', content: '体验卡升级', amount: 999.00, customer: '李小姐', method: '现金', status: '已支付', statusTag: 'bg-green-50 text-green-700 border-green-200', isRefund: false },
-    { id: 'RFD-20231115-05', date: '11-15 14:30', type: '退款', content: '年卡尾款', amount: -1500.00, customer: '吴女士', method: '微信支付', status: '待审核', statusTag: 'bg-orange-50 text-orange-700 border-orange-200', isRefund: true },
-    { id: 'ORD-20231110-06', date: '11-10 18:00', type: '积分', content: '瑜伽铺巾', amount: 0.00, customer: '周先生', method: '积分核销', status: '已核销', statusTag: 'bg-orange-50 text-orange-700 border-orange-200', isRefund: false, integral: 2000 },
-    { id: 'ORD-20231105-07', date: '11-05 11:30', type: '周边', content: '运动水杯', amount: 199.00, customer: '钱女士', method: '微信支付', status: '已支付', statusTag: 'bg-green-50 text-green-700 border-green-200', isRefund: false }
-  ];
+const PRODUCT_TYPE_LABELS: Record<Order['items'][number]['productType'], string> = {
+  card: '卡项',
+  ttc: '教培',
+  point: '积分',
+  course: '课程',
+  custom: '其他',
+};
+
+const PAYMENT_METHOD_LABELS: Record<NonNullable<Payment['method']>, string> = {
+  cash: '现金',
+  card: '银行卡',
+  wechat: '微信支付',
+  alipay: '支付宝',
+  bank_transfer: '银行转账',
+  other: '其他',
+};
+
+const ORDER_STATUS_LABELS: Record<Order['status'], string> = {
+  draft: '草稿',
+  pending_payment: '待支付',
+  paid: '已支付',
+  fulfilled: '已履约',
+  closed: '已关闭',
+  cancelled: '已取消',
+  partially_refunded: '部分退款',
+  refunded: '已退款',
+};
+
+const ORDER_STATUS_TAGS: Record<Order['status'], string> = {
+  draft: 'bg-gray-50 text-gray-600 border-gray-200',
+  pending_payment: 'bg-orange-50 text-orange-700 border-orange-200',
+  paid: 'bg-green-50 text-green-700 border-green-200',
+  fulfilled: 'bg-green-50 text-green-700 border-green-200',
+  closed: 'bg-gray-50 text-gray-600 border-gray-200',
+  cancelled: 'bg-gray-50 text-gray-600 border-gray-200',
+  partially_refunded: 'bg-red-50 text-red-700 border-red-200',
+  refunded: 'bg-red-50 text-red-700 border-red-200',
+};
+
+const REFUND_STATUS_LABELS: Record<Refund['status'], string> = {
+  requested: '已申请',
+  reviewing: '审核中',
+  approved: '已通过',
+  processing: '处理中',
+  completed: '已退款',
+  rejected: '已拒绝',
+  cancelled: '已取消',
+};
+
+const REFUND_STATUS_TAGS: Record<Refund['status'], string> = {
+  requested: 'bg-orange-50 text-orange-700 border-orange-200',
+  reviewing: 'bg-orange-50 text-orange-700 border-orange-200',
+  approved: 'bg-blue-50 text-blue-700 border-blue-200',
+  processing: 'bg-blue-50 text-blue-700 border-blue-200',
+  completed: 'bg-red-50 text-red-700 border-red-200',
+  rejected: 'bg-gray-50 text-gray-600 border-gray-200',
+  cancelled: 'bg-gray-50 text-gray-600 border-gray-200',
+};
+
+const formatDateTime = (iso?: string): string => {
+  if (!iso) return '-';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+
+  return `${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+};
+
+const getMemberName = (memberId: string): string => (
+  MOCK_MEMBERS.find(member => member.id === memberId)?.name ?? `会员 ${memberId}`
+);
+
+const getOrderById = (orderId: string): Order | undefined => (
+  MOCK_ORDERS.find(order => order.id === orderId)
+);
+
+const getOrderPayment = (orderId: string, payments: Payment[]): Payment | undefined => (
+  payments.find(payment => (
+    payment.orderId === orderId && (payment.status === 'paid' || payment.status === 'reconciled')
+  )) ?? payments.find(payment => payment.orderId === orderId)
+);
+
+const getLedgerEntryForSource = (
+  entries: FinanceLedgerEntry[],
+  sourceType: FinanceLedgerEntry['sourceType'],
+  sourceId: string
+): FinanceLedgerEntry | undefined => (
+  entries.find(entry => entry.sourceType === sourceType && entry.sourceId === sourceId)
+);
+
+const getContractTitle = (order: Order): string | undefined => (
+  order.contractId ? MOCK_CONTRACTS.find(contract => contract.id === order.contractId)?.title : undefined
+);
+
+const getOrderContent = (order: Order): string => {
+  const itemNames = order.items.map(item => item.productName).join(' / ');
+  const contractTitle = getContractTitle(order);
+  return contractTitle ? `${itemNames} · ${contractTitle}` : itemNames;
+};
+
+const toOrderRow = (
+  order: Order,
+  payments: Payment[],
+  ledgerEntries: FinanceLedgerEntry[]
+): FinanceTransactionRow => {
+  // Payment is joined by orderId; ledger entries only describe accounting impact.
+  const payment = getOrderPayment(order.id, payments);
+  const ledgerEntry = payment
+    ? getLedgerEntryForSource(ledgerEntries, 'payment', payment.id)
+    : undefined;
+  const productTypes = order.items.map(item => item.productType);
+  const primaryProductType = productTypes[0] ?? 'custom';
+  const occurredAt = payment?.paidAt ?? order.createdAt;
+
+  return {
+    id: order.id,
+    date: formatDateTime(occurredAt),
+    occurredAt,
+    type: PRODUCT_TYPE_LABELS[primaryProductType],
+    content: getOrderContent(order),
+    amount: order.paidAmount ?? order.totalAmount,
+    customer: getMemberName(order.memberId),
+    method: payment?.method ? PAYMENT_METHOD_LABELS[payment.method] : '未支付',
+    status: ORDER_STATUS_LABELS[order.status],
+    statusTag: ORDER_STATUS_TAGS[order.status],
+    sourceType: 'order',
+    orderId: order.id,
+    paymentId: payment?.id,
+    ledgerEntryId: ledgerEntry?.id,
+    productTypes,
+  };
+};
+
+const toRefundRow = (
+  refund: Refund,
+  payments: Payment[],
+  ledgerEntries: FinanceLedgerEntry[]
+): FinanceTransactionRow => {
+  const order = getOrderById(refund.orderId);
+  const payment = refund.paymentId
+    ? payments.find(item => item.id === refund.paymentId)
+    : getOrderPayment(refund.orderId, payments);
+  const ledgerEntry = getLedgerEntryForSource(ledgerEntries, 'refund', refund.id);
+  const productTypes = order?.items.map(item => item.productType) ?? [];
+  const occurredAt = refund.completedAt ?? refund.approvedAt ?? refund.requestedAt;
+  const content = order
+    ? `${getOrderContent(order)}${refund.reason ? ` · ${refund.reason}` : ''}`
+    : refund.reason ?? '订单退款';
+
+  return {
+    id: refund.id,
+    date: formatDateTime(occurredAt),
+    occurredAt,
+    type: '退款',
+    content,
+    amount: -refund.amount,
+    customer: getMemberName(refund.memberId),
+    method: payment?.method ? `${PAYMENT_METHOD_LABELS[payment.method]}退款` : '原路返回',
+    status: REFUND_STATUS_LABELS[refund.status],
+    statusTag: REFUND_STATUS_TAGS[refund.status],
+    sourceType: 'refund',
+    orderId: refund.orderId,
+    paymentId: payment?.id,
+    refundId: refund.id,
+    ledgerEntryId: ledgerEntry?.id,
+    productTypes,
+  };
+};
+
+const buildFinanceTransactionRows = (
+  orders: Order[],
+  payments: Payment[],
+  refunds: Refund[],
+  ledgerEntries: FinanceLedgerEntry[]
+): FinanceTransactionRow[] => ([
+  ...orders.map(order => toOrderRow(order, payments, ledgerEntries)),
+  ...refunds.map(refund => toRefundRow(refund, payments, ledgerEntries)),
+].sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime()));
+
+const sumPayments = (payments: Payment[]): number => (
+  payments
+    .filter(payment => payment.status === 'paid' || payment.status === 'reconciled')
+    .reduce((sum, payment) => sum + payment.amount, 0)
+);
+
+const sumLedgerByDirection = (
+  entries: FinanceLedgerEntry[],
+  direction: FinanceLedgerEntry['direction']
+): number => (
+  entries
+    .filter(entry => entry.direction === direction)
+    .reduce((sum, entry) => sum + entry.amount, 0)
+);
+
+const Finance: React.FC = () => {
+  const [subTab, setSubTab] = useState<FinanceSubTab>('overview');
+  const [dateRange, setDateRange] = useState({ start: '2026-05-01', end: '2026-05-31' });
+  const [orderFilter, setOrderFilter] = useState<FinanceOrderFilter>('all');
+
+  const transactionRows = useMemo(
+    () => buildFinanceTransactionRows(MOCK_ORDERS, MOCK_PAYMENTS, MOCK_REFUNDS, MOCK_FINANCE_LEDGER_ENTRIES),
+    []
+  );
 
   const staffPerformance: StaffPerformance[] = [
     { name: 'Eva', role: '销售管家', target: 150000, actual: 120000, progress: 80 },
@@ -75,21 +293,36 @@ const Finance: React.FC = () => {
   const annualTarget = 6000000;
   const annualActual = 4200000;
   const monthlyTarget = 540000;
-  const monthlyActual = 458000;
+  const monthlyActual = sumPayments(MOCK_PAYMENTS);
+  const beginningDeferredRevenue = 1200000;
+  const transitionalOperatingExpense = 185000;
 
   // --- Computed ---
   const filteredOrders = useMemo(() => {
-    if (orderFilter === 'all') return orders;
-    if (orderFilter === 'refund') return orders.filter(o => o.isRefund);
-    if (orderFilter === 'integral') return orders.filter(o => o.amount === 0 && o.integral);
-    if (orderFilter === 'card') return orders.filter(o => !o.isRefund && o.amount > 0);
-    return orders;
-  }, [orderFilter]);
+    if (orderFilter === 'all') return transactionRows;
+    if (orderFilter === 'refund') return transactionRows.filter(row => row.sourceType === 'refund');
+    if (orderFilter === 'integral') return transactionRows.filter(row => row.productTypes.includes('point') || row.integral);
+    if (orderFilter === 'card') return transactionRows.filter(row => row.sourceType === 'order' && row.productTypes.some(type => type === 'card' || type === 'course' || type === 'ttc'));
+    return transactionRows;
+  }, [orderFilter, transactionRows]);
+
+  const cashIncomeTotal = sumPayments(MOCK_PAYMENTS);
+  const recognizedIncomeTotal = sumLedgerByDirection(MOCK_FINANCE_LEDGER_ENTRIES, 'liability_decrease');
+  const refundTotal = MOCK_REFUNDS.reduce((sum, refund) => sum + refund.amount, 0);
+  const netCashFlow = cashIncomeTotal - refundTotal;
+  const endingDeferredRevenue = beginningDeferredRevenue + cashIncomeTotal - recognizedIncomeTotal - refundTotal;
+  const pendingRefunds = MOCK_REFUNDS.filter(refund => (
+    refund.status === 'requested'
+    || refund.status === 'reviewing'
+    || refund.status === 'approved'
+    || refund.status === 'processing'
+  ));
 
   const annualProgress = Math.min(100, Math.round((annualActual / annualTarget) * 100));
   const monthlyProgress = Math.min(100, Math.round((monthlyActual / monthlyTarget) * 100));
 
   // --- Charts Config ---
+  // Transitional report mock: the chart shape stays demo-first until ledger reports are split out.
   const cashFlowData = {
     labels: ['1日', '5日', '10日', '15日', '20日', '25日'],
     datasets: [
@@ -148,10 +381,19 @@ const Finance: React.FC = () => {
     },
   };
 
+  const incomeByProductType = MOCK_ORDERS.reduce<Record<Order['items'][number]['productType'], number>>((totals, order) => {
+    order.items.forEach(item => {
+      totals[item.productType] += item.totalAmount;
+    });
+    return totals;
+  }, { card: 0, ttc: 0, point: 0, course: 0, custom: 0 });
+  const incomePieEntries = Object.entries(incomeByProductType)
+    .filter((entry): entry is [Order['items'][number]['productType'], number] => entry[1] > 0);
+
   const incomePieData = {
-    labels: ['年卡 (45%)', '私教 (30%)', '团课 (15%)', '周边 (10%)'],
+    labels: incomePieEntries.map(([type, amount]) => `${PRODUCT_TYPE_LABELS[type]} ¥${amount.toLocaleString()}`),
     datasets: [{
-      data: [45, 30, 15, 10],
+      data: incomePieEntries.map(([, amount]) => amount),
       backgroundColor: ['#000000', '#4ADE80', '#60A5FA', '#FBBF24'],
       borderWidth: 0,
       hoverOffset: 4
@@ -207,13 +449,7 @@ const Finance: React.FC = () => {
         {/* Sub Navigation (Unified Segmented Control) */}
         <div className="px-8 py-4 bg-[#F5F5F7]/95 backdrop-blur border-b border-gray-200/50 sticky top-16 z-10 flex justify-start">
              <div className="bg-gray-100 p-1 rounded-xl inline-flex relative">
-                {[
-                    { id: 'overview', label: '营收总览' },
-                    { id: 'revenue', label: '收入与预收' },
-                    { id: 'expense', label: '支出与薪酬' },
-                    { id: 'target', label: '业绩目标' },
-                    { id: 'report', label: '报表中心' }
-                ].map(tab => (
+                {FINANCE_SUB_TABS.map(tab => (
                     <button 
                         key={tab.id}
                         onClick={() => setSubTab(tab.id)}
@@ -239,23 +475,23 @@ const Finance: React.FC = () => {
                         <div className="grid grid-cols-4 gap-6">
                             <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm border-l-4 border-l-black hover:-translate-y-1 transition duration-200">
                                 <div className="text-xs text-gray-400 mb-1 uppercase font-bold">总现金收入 (Cash In)</div>
-                                <div className="text-3xl font-bold font-mono tracking-tight text-gray-900">¥458,200.00</div>
+                                <div className="text-3xl font-bold font-mono tracking-tight text-gray-900">¥{cashIncomeTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
                                 <div className="text-xs text-green-600 mt-2 font-medium flex items-center"><i className="fa-solid fa-arrow-trend-up mr-1"></i> 环比 +12%</div>
                             </div>
                             <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm border-l-4 border-l-blue-500 hover:-translate-y-1 transition duration-200">
                                 <div className="text-xs text-gray-400 mb-1 uppercase font-bold">确认收入 (消课)</div>
-                                <div className="text-3xl font-bold font-mono tracking-tight text-gray-900">¥320,500.00</div>
+                                <div className="text-3xl font-bold font-mono tracking-tight text-gray-900">¥{recognizedIncomeTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
                                 <div className="text-xs text-blue-600 mt-2 font-medium flex items-center">消课转化率高</div>
                             </div>
                             <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm border-l-4 border-l-red-500 hover:-translate-y-1 transition duration-200">
                                 <div className="text-xs text-gray-400 mb-1 uppercase font-bold">总支出</div>
-                                <div className="text-3xl font-bold font-mono tracking-tight text-gray-900">¥185,000.00</div>
+                                <div className="text-3xl font-bold font-mono tracking-tight text-gray-900">¥{transitionalOperatingExpense.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
                                 <div className="text-xs text-gray-400 mt-2 font-medium">支出占比 40%</div>
                             </div>
                             <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm border-l-4 border-l-green-500 hover:-translate-y-1 transition duration-200">
-                                <div className="text-xs text-gray-400 mb-1 uppercase font-bold">净利润 (Net Profit)</div>
-                                <div className="text-3xl font-bold font-mono tracking-tight text-green-600">¥135,500.00</div>
-                                <div className="text-xs text-gray-400 mt-2 font-medium">净利率 29.5%</div>
+                                <div className="text-xs text-gray-400 mb-1 uppercase font-bold">净现金流 (Net Cash)</div>
+                                <div className={`text-3xl font-bold font-mono tracking-tight ${netCashFlow >= 0 ? 'text-green-600' : 'text-red-600'}`}>¥{netCashFlow.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+                                <div className="text-xs text-gray-400 mt-2 font-medium">收款 - 退款</div>
                             </div>
                         </div>
 
@@ -270,15 +506,19 @@ const Finance: React.FC = () => {
                                 </div>
                             </div>
                             <div className="col-span-1 bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
-                                <h3 className="font-bold text-lg mb-4 flex items-center text-gray-900">待处理事项 <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full ml-2">3</span></h3>
+                                <h3 className="font-bold text-lg mb-4 flex items-center text-gray-900">待处理事项 <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full ml-2">{pendingRefunds.length}</span></h3>
                                 <div className="space-y-3">
-                                    <div className="flex justify-between items-center p-3 bg-red-50 rounded-xl border border-red-100 cursor-pointer hover:bg-red-100 transition">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-red-500 shadow-sm"><i className="fa-solid fa-rotate-left"></i></div>
-                                            <div><div className="text-sm font-bold text-gray-900">待审核退款申请</div><div className="text-[10px] text-gray-500">¥1500.00, 吴女士</div></div>
+                                    {pendingRefunds.length > 0 ? pendingRefunds.map(refund => (
+                                        <div key={refund.id} className="flex justify-between items-center p-3 bg-red-50 rounded-xl border border-red-100 cursor-pointer hover:bg-red-100 transition">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-red-500 shadow-sm"><i className="fa-solid fa-rotate-left"></i></div>
+                                                <div><div className="text-sm font-bold text-gray-900">待审核退款申请</div><div className="text-[10px] text-gray-500">¥{refund.amount.toLocaleString()}, {getMemberName(refund.memberId)}</div></div>
+                                            </div>
+                                            <button className="text-xs text-red-600 hover:underline font-medium">去处理</button>
                                         </div>
-                                        <button className="text-xs text-red-600 hover:underline font-medium">去处理</button>
-                                    </div>
+                                    )) : (
+                                        <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 text-xs text-gray-500">暂无待审核退款</div>
+                                    )}
                                     <div className="flex justify-between items-center p-3 bg-blue-50 rounded-xl border border-blue-100 cursor-pointer hover:bg-blue-100 transition">
                                         <div className="flex items-center gap-3">
                                             <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-blue-500 shadow-sm"><i className="fa-solid fa-file-invoice-dollar"></i></div>
@@ -313,18 +553,18 @@ const Finance: React.FC = () => {
                                      <tbody className="divide-y divide-gray-50">
                                          <tr>
                                             <td className="py-3 font-bold text-gray-900">预收账款 (期末)</td>
-                                            <td className="font-mono text-gray-900">¥1,337,700.00</td>
+                                            <td className="font-mono text-gray-900">¥{endingDeferredRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                                             <td className="text-gray-500 text-xs">负债项</td>
                                         </tr>
                                          <tr>
                                             <td className="py-3 font-bold text-gray-900">当月退款总额</td>
-                                            <td className="font-mono text-red-600">-¥9,500.00</td>
-                                            <td className="text-red-500 text-xs">占比 2.07%</td>
+                                            <td className="font-mono text-red-600">-¥{refundTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                                            <td className="text-red-500 text-xs">来自退款单</td>
                                         </tr>
                                          <tr>
                                             <td className="py-3 font-bold text-gray-900">课时费支出总额</td>
                                             <td className="font-mono text-gray-900">¥45,000.00</td>
-                                            <td className="text-blue-600 text-xs">支出占比 24.3%</td>
+                                            <td className="text-blue-600 text-xs">过渡报表 mock</td>
                                         </tr>
                                      </tbody>
                                  </table>
@@ -346,19 +586,19 @@ const Finance: React.FC = () => {
                             <div className="grid grid-cols-4 divide-x divide-white/10">
                                 <div className="p-6">
                                     <div className="text-xs opacity-60 mb-1">期初预收款</div>
-                                    <div className="text-2xl font-bold font-mono">¥1,200,000</div>
+                                    <div className="text-2xl font-bold font-mono">¥{beginningDeferredRevenue.toLocaleString()}</div>
                                 </div>
                                 <div className="p-6 bg-green-900/20">
                                     <div className="text-xs opacity-60 mb-1 flex items-center gap-1"><i className="fa-solid fa-plus text-[10px] text-green-400"></i> 本期新增 (销售)</div>
-                                    <div className="text-2xl font-bold font-mono text-green-400">¥458,200</div>
+                                    <div className="text-2xl font-bold font-mono text-green-400">¥{cashIncomeTotal.toLocaleString()}</div>
                                 </div>
                                 <div className="p-6 bg-red-900/20">
                                     <div className="text-xs opacity-60 mb-1 flex items-center gap-1"><i className="fa-solid fa-minus text-[10px] text-orange-400"></i> 本期确认收入 (消课)</div>
-                                    <div className="text-2xl font-bold font-mono text-orange-400">¥320,500</div>
+                                    <div className="text-2xl font-bold font-mono text-orange-400">¥{recognizedIncomeTotal.toLocaleString()}</div>
                                 </div>
                                 <div className="p-6 bg-white/5">
                                     <div className="text-xs opacity-60 mb-1">= 期末预收款余额</div>
-                                    <div className="text-2xl font-bold font-mono">¥1,337,700</div>
+                                    <div className="text-2xl font-bold font-mono">¥{endingDeferredRevenue.toLocaleString()}</div>
                                 </div>
                             </div>
                         </div>
@@ -383,10 +623,15 @@ const Finance: React.FC = () => {
                                 <tbody className="divide-y divide-gray-50">
                                     {filteredOrders.map(order => (
                                         <tr key={order.id} className="hover:bg-gray-50 transition">
-                                            <td className="p-4 pl-6"><div className={`font-mono font-bold ${order.isRefund ? 'text-red-600' : 'text-gray-900'}`}>{order.id}</div><div className="text-xs text-gray-400">{order.date}</div></td>
+                                            <td className="p-4 pl-6">
+                                                <div className={`font-mono font-bold ${order.sourceType === 'refund' ? 'text-red-600' : 'text-gray-900'}`}>{order.id}</div>
+                                                <div className="text-xs text-gray-400">{order.date}</div>
+                                                {order.paymentId && <div className="text-[10px] text-gray-300">Payment: {order.paymentId}</div>}
+                                                {order.ledgerEntryId && <div className="text-[10px] text-gray-300">Ledger: {order.ledgerEntryId}</div>}
+                                            </td>
                                             <td className="p-4 font-bold text-gray-900">{order.customer}</td>
                                             <td className="p-4"><span className={`px-2 py-1 rounded text-[10px] font-bold mr-2 ${order.statusTag}`}>{order.type}</span> <span className="text-gray-600">{order.content}</span></td>
-                                            <td className={`p-4 font-mono font-bold ${order.isRefund ? 'text-red-600' : order.amount === 0 ? 'text-gray-400' : 'text-gray-900'}`}>
+                                            <td className={`p-4 font-mono font-bold ${order.sourceType === 'refund' ? 'text-red-600' : order.amount === 0 ? 'text-gray-400' : 'text-gray-900'}`}>
                                                 {order.amount === 0 ? '0.00' : '¥' + order.amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                                                 {order.integral && <span className="text-[10px] text-gray-400 block">{order.integral} 积分</span>}
                                             </td>
