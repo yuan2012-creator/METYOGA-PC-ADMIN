@@ -12,7 +12,6 @@ import {
   ArcElement,
   Filler
 } from 'chart.js';
-import { Line, Doughnut } from 'react-chartjs-2';
 import {
   MOCK_CONTRACTS,
   MOCK_FINANCE_LEDGER_ENTRIES,
@@ -32,6 +31,11 @@ import type {
   Payment,
   Refund,
 } from '../types';
+import DeferredRevenuePanel from './finance/DeferredRevenuePanel';
+import ExpensePayrollPanel from './finance/ExpensePayrollPanel';
+import FinanceOverviewCards from './finance/FinanceOverviewCards';
+import FinanceReportCharts from './finance/FinanceReportCharts';
+import RevenueTable from './finance/RevenueTable';
 
 // Register ChartJS components
 ChartJS.register(
@@ -47,9 +51,9 @@ ChartJS.register(
 );
 
 type FinanceSubTab = 'overview' | 'revenue' | 'expense' | 'target' | 'report';
-type FinanceOrderFilter = 'all' | 'card' | 'refund' | 'integral';
+export type FinanceOrderFilter = 'all' | 'card' | 'refund' | 'integral';
 
-interface FinanceTransactionRow {
+export interface FinanceTransactionRow {
   id: string;
   date: string;
   occurredAt: string;
@@ -311,99 +315,6 @@ const Finance: React.FC = () => {
   const annualProgress = Math.min(100, Math.round((annualActual / annualTarget) * 100));
   const monthlyProgress = Math.min(100, Math.round((monthlyActual / monthlyTarget) * 100));
 
-  // --- Charts Config ---
-  // Transitional report mock: the chart shape stays demo-first until ledger reports are split out.
-  const cashFlowData = {
-    labels: ['1日', '5日', '10日', '15日', '20日', '25日'],
-    datasets: [
-      {
-        label: '总营收 (现金流入)',
-        data: [120, 190, 150, 250, 220, 300],
-        borderColor: '#000',
-        backgroundColor: 'rgba(0,0,0,0.05)',
-        tension: 0.4,
-        borderWidth: 2,
-        pointRadius: 0,
-        pointHoverRadius: 4,
-      },
-      {
-        label: '净现金流',
-        data: [50, 90, 80, 150, 110, 120],
-        borderColor: '#4ADE80',
-        backgroundColor: 'rgba(74, 222, 128, 0.1)',
-        fill: true,
-        tension: 0.4,
-        borderWidth: 2,
-        pointRadius: 0,
-        pointHoverRadius: 4,
-      }
-    ]
-  };
-
-  const cashFlowOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { position: 'top' as const, labels: { usePointStyle: true, boxWidth: 6 } },
-      tooltip: { 
-        backgroundColor: 'rgba(0,0,0,0.8)',
-        padding: 12,
-        cornerRadius: 8,
-        displayColors: false,
-      }
-    },
-    scales: {
-      y: { 
-        beginAtZero: false, 
-        grid: { display: true, color: '#f3f4f6' }, 
-        ticks: { callback: (value: any) => '¥' + value + 'k', font: { size: 10 } },
-        border: { display: false }
-      },
-      x: { 
-        grid: { display: false },
-        ticks: { font: { size: 10 } },
-        border: { display: false }
-      }
-    },
-    interaction: {
-      mode: 'index' as const,
-      intersect: false,
-    },
-  };
-
-  const incomeByProductType = MOCK_ORDERS.reduce<Record<Order['items'][number]['productType'], number>>((totals, order) => {
-    order.items.forEach(item => {
-      totals[item.productType] += item.totalAmount;
-    });
-    return totals;
-  }, { card: 0, ttc: 0, point: 0, course: 0, custom: 0 });
-  const incomePieEntries = Object.entries(incomeByProductType)
-    .filter((entry): entry is [Order['items'][number]['productType'], number] => entry[1] > 0);
-
-  const incomePieData = {
-    labels: incomePieEntries.map(([type, amount]) => `${PRODUCT_TYPE_LABELS[type]} ¥${amount.toLocaleString()}`),
-    datasets: [{
-      data: incomePieEntries.map(([, amount]) => amount),
-      backgroundColor: ['#000000', '#4ADE80', '#60A5FA', '#FBBF24'],
-      borderWidth: 0,
-      hoverOffset: 4
-    }]
-  };
-
-  const incomePieOptions = {
-    cutout: '70%',
-    plugins: {
-      legend: {
-        position: 'bottom' as const,
-        labels: {
-          usePointStyle: true,
-          boxWidth: 8,
-          font: { size: 10 }
-        }
-      }
-    }
-  };
-
   return (
     <div className="h-full flex flex-col animate-fadeIn relative">
         
@@ -462,223 +373,45 @@ const Finance: React.FC = () => {
                 {/* --- TAB: OVERVIEW --- */}
                 {subTab === 'overview' && (
                     <div className="space-y-6 animate-fadeIn">
-                        <div className="grid grid-cols-4 gap-6">
-                            <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm border-l-4 border-l-black hover:-translate-y-1 transition duration-200">
-                                <div className="text-xs text-gray-400 mb-1 uppercase font-bold">总现金收入 (Cash In)</div>
-                                <div className="text-3xl font-bold font-mono tracking-tight text-gray-900">¥{cashIncomeTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
-                                <div className="text-xs text-green-600 mt-2 font-medium flex items-center"><i className="fa-solid fa-arrow-trend-up mr-1"></i> 环比 +12%</div>
-                            </div>
-                            <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm border-l-4 border-l-blue-500 hover:-translate-y-1 transition duration-200">
-                                <div className="text-xs text-gray-400 mb-1 uppercase font-bold">确认收入 (消课)</div>
-                                <div className="text-3xl font-bold font-mono tracking-tight text-gray-900">¥{recognizedIncomeTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
-                                <div className="text-xs text-blue-600 mt-2 font-medium flex items-center">消课转化率高</div>
-                            </div>
-                            <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm border-l-4 border-l-red-500 hover:-translate-y-1 transition duration-200">
-                                <div className="text-xs text-gray-400 mb-1 uppercase font-bold">总支出</div>
-                                <div className="text-3xl font-bold font-mono tracking-tight text-gray-900">¥{transitionalOperatingExpense.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
-                                <div className="text-xs text-gray-400 mt-2 font-medium">支出占比 40%</div>
-                            </div>
-                            <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm border-l-4 border-l-green-500 hover:-translate-y-1 transition duration-200">
-                                <div className="text-xs text-gray-400 mb-1 uppercase font-bold">净现金流 (Net Cash)</div>
-                                <div className={`text-3xl font-bold font-mono tracking-tight ${netCashFlow >= 0 ? 'text-green-600' : 'text-red-600'}`}>¥{netCashFlow.toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
-                                <div className="text-xs text-gray-400 mt-2 font-medium">收款 - 退款</div>
-                            </div>
-                        </div>
+                        <FinanceOverviewCards
+                            cashIncomeTotal={cashIncomeTotal}
+                            recognizedIncomeTotal={recognizedIncomeTotal}
+                            operatingExpenseTotal={transitionalOperatingExpense}
+                            netCashFlow={netCashFlow}
+                        />
 
-                        <div className="grid grid-cols-3 gap-6">
-                            <div className="col-span-2 bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
-                                <div className="flex justify-between items-center mb-4">
-                                    <h3 className="font-bold text-lg flex items-center text-gray-900"><i className="fa-solid fa-chart-line mr-2 text-gray-400"></i> 营收与净现金流趋势</h3>
-                                    <div className="text-sm text-gray-500">用于风险控制和流动性分析</div>
-                                </div>
-                                <div className="h-64 w-full">
-                                    <Line data={cashFlowData} options={cashFlowOptions} />
-                                </div>
-                            </div>
-                            <div className="col-span-1 bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
-                                <h3 className="font-bold text-lg mb-4 flex items-center text-gray-900">待处理事项 <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full ml-2">{pendingRefunds.length}</span></h3>
-                                <div className="space-y-3">
-                                    {pendingRefunds.length > 0 ? pendingRefunds.map(refund => (
-                                        <div key={refund.id} className="flex justify-between items-center p-3 bg-red-50 rounded-xl border border-red-100 cursor-pointer hover:bg-red-100 transition">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-red-500 shadow-sm"><i className="fa-solid fa-rotate-left"></i></div>
-                                                <div><div className="text-sm font-bold text-gray-900">待审核退款申请</div><div className="text-[10px] text-gray-500">¥{refund.amount.toLocaleString()}, {getMemberName(refund.memberId)}</div></div>
-                                            </div>
-                                            <button className="text-xs text-red-600 hover:underline font-medium">去处理</button>
-                                        </div>
-                                    )) : (
-                                        <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 text-xs text-gray-500">暂无待审核退款</div>
-                                    )}
-                                    <div className="flex justify-between items-center p-3 bg-blue-50 rounded-xl border border-blue-100 cursor-pointer hover:bg-blue-100 transition">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-blue-500 shadow-sm"><i className="fa-solid fa-file-invoice-dollar"></i></div>
-                                            <div><div className="text-sm font-bold text-gray-900">待发放薪酬单</div><div className="text-[10px] text-gray-500">11月, 4人</div></div>
-                                        </div>
-                                        <button className="text-xs text-blue-600 hover:underline font-medium">去核对</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-3 gap-6">
-                             <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm flex flex-col items-center">
-                                <h3 className="font-bold text-lg w-full mb-2 text-gray-900">收入结构 (卡项)</h3>
-                                <div className="h-48 w-full flex justify-center relative">
-                                    <Doughnut 
-                                        data={incomePieData} 
-                                        options={incomePieOptions}
-                                    />
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                        <div className="text-xs text-gray-400 font-bold uppercase">Total</div>
-                                        <div className="text-xl font-bold font-mono">100%</div>
-                                    </div>
-                                </div>
-                             </div>
-                             <div className="col-span-2 bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
-                                 <h3 className="font-bold text-lg mb-4 text-gray-900">关键财务指标明细</h3>
-                                 <table className="w-full text-sm text-left">
-                                     <thead className="text-gray-400 border-b border-gray-100 text-xs uppercase font-bold">
-                                         <tr><th className="py-2">指标</th><th>金额/数值</th><th>占比/趋势</th></tr>
-                                     </thead>
-                                     <tbody className="divide-y divide-gray-50">
-                                         <tr>
-                                            <td className="py-3 font-bold text-gray-900">预收账款 (期末)</td>
-                                            <td className="font-mono text-gray-900">¥{endingDeferredRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                                            <td className="text-gray-500 text-xs">负债项</td>
-                                        </tr>
-                                         <tr>
-                                            <td className="py-3 font-bold text-gray-900">当月退款总额</td>
-                                            <td className="font-mono text-red-600">-¥{refundTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                                            <td className="text-red-500 text-xs">来自退款单</td>
-                                        </tr>
-                                         <tr>
-                                            <td className="py-3 font-bold text-gray-900">课时费支出总额</td>
-                                            <td className="font-mono text-gray-900">¥45,000.00</td>
-                                            <td className="text-blue-600 text-xs">过渡报表 mock</td>
-                                        </tr>
-                                     </tbody>
-                                 </table>
-                             </div>
-                        </div>
+                        <FinanceReportCharts
+                            orders={MOCK_ORDERS}
+                            pendingRefunds={pendingRefunds}
+                            getMemberName={getMemberName}
+                            productTypeLabels={PRODUCT_TYPE_LABELS}
+                            endingDeferredRevenue={endingDeferredRevenue}
+                            refundTotal={refundTotal}
+                        />
                     </div>
                 )}
 
                 {/* --- TAB: REVENUE --- */}
                 {subTab === 'revenue' && (
                     <div className="space-y-6 animate-fadeIn">
-                        
-                        {/* Dark Card */}
-                        <div className="rounded-2xl overflow-hidden bg-gradient-to-br from-gray-900 to-black text-white shadow-xl">
-                            <div className="p-6 border-b border-white/10 flex justify-between items-center">
-                                <h3 className="font-bold text-lg flex items-center gap-2"><i className="fa-solid fa-vault text-gray-400"></i> 预收账款资金池 (门店负债)</h3>
-                                <span className="text-xs opacity-60">期初 + 新增 - 确认收入 = 期末负债</span>
-                            </div>
-                            <div className="grid grid-cols-4 divide-x divide-white/10">
-                                <div className="p-6">
-                                    <div className="text-xs opacity-60 mb-1">期初预收款</div>
-                                    <div className="text-2xl font-bold font-mono">¥{beginningDeferredRevenue.toLocaleString()}</div>
-                                </div>
-                                <div className="p-6 bg-green-900/20">
-                                    <div className="text-xs opacity-60 mb-1 flex items-center gap-1"><i className="fa-solid fa-plus text-[10px] text-green-400"></i> 本期新增 (销售)</div>
-                                    <div className="text-2xl font-bold font-mono text-green-400">¥{cashIncomeTotal.toLocaleString()}</div>
-                                </div>
-                                <div className="p-6 bg-red-900/20">
-                                    <div className="text-xs opacity-60 mb-1 flex items-center gap-1"><i className="fa-solid fa-minus text-[10px] text-orange-400"></i> 本期确认收入 (消课)</div>
-                                    <div className="text-2xl font-bold font-mono text-orange-400">¥{recognizedIncomeTotal.toLocaleString()}</div>
-                                </div>
-                                <div className="p-6 bg-white/5">
-                                    <div className="text-xs opacity-60 mb-1">= 期末预收款余额</div>
-                                    <div className="text-2xl font-bold font-mono">¥{endingDeferredRevenue.toLocaleString()}</div>
-                                </div>
-                            </div>
-                        </div>
+                        <DeferredRevenuePanel
+                            beginningDeferredRevenue={beginningDeferredRevenue}
+                            cashIncomeTotal={cashIncomeTotal}
+                            recognizedIncomeTotal={recognizedIncomeTotal}
+                            endingDeferredRevenue={endingDeferredRevenue}
+                        />
 
-                        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                            <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                                <div className="flex gap-2">
-                                    <button className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${orderFilter==='all' ? 'bg-black text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`} onClick={() => setOrderFilter('all')}>全部订单</button>
-                                    <button className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${orderFilter==='card' ? 'bg-black text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`} onClick={() => setOrderFilter('card')}>卡项/课程</button>
-                                    <button className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${orderFilter==='refund' ? 'bg-red-600 text-white' : 'bg-white border border-red-200 text-red-600 hover:bg-red-50'}`} onClick={() => setOrderFilter('refund')}><i className="fa-solid fa-rotate-left mr-1"></i> 退款订单</button>
-                                    <button className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${orderFilter==='integral' ? 'bg-black text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`} onClick={() => setOrderFilter('integral')}>积分兑换</button>
-                                </div>
-                                <div className="relative">
-                                    <input type="text" placeholder="搜索订单号/会员..." className="bg-white border border-gray-200 rounded-lg text-xs py-1.5 pl-8 w-48 focus:border-black focus:ring-1 focus:ring-black outline-none transition" />
-                                    <i className="fa-solid fa-search absolute left-2.5 top-2 text-gray-400 text-xs"></i>
-                                </div>
-                            </div>
-                            <table className="w-full text-sm text-left">
-                                <thead className="bg-gray-50 text-gray-500 border-b border-gray-100 text-xs uppercase font-bold">
-                                    <tr><th className="p-4 pl-6">订单号/时间</th><th className="p-4">客户</th><th className="p-4">类型/内容</th><th className="p-4">金额</th><th className="p-4">支付方式</th><th className="p-4">状态</th><th className="p-4 text-right pr-6">操作</th></tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-50">
-                                    {filteredOrders.map(order => (
-                                        <tr key={order.id} className="hover:bg-gray-50 transition">
-                                            <td className="p-4 pl-6">
-                                                <div className={`font-mono font-bold ${order.sourceType === 'refund' ? 'text-red-600' : 'text-gray-900'}`}>{order.id}</div>
-                                                <div className="text-xs text-gray-400">{order.date}</div>
-                                                {order.paymentId && <div className="text-[10px] text-gray-300">Payment: {order.paymentId}</div>}
-                                                {order.ledgerEntryId && <div className="text-[10px] text-gray-300">Ledger: {order.ledgerEntryId}</div>}
-                                            </td>
-                                            <td className="p-4 font-bold text-gray-900">{order.customer}</td>
-                                            <td className="p-4"><span className={`px-2 py-1 rounded text-[10px] font-bold mr-2 ${order.statusTag}`}>{order.type}</span> <span className="text-gray-600">{order.content}</span></td>
-                                            <td className={`p-4 font-mono font-bold ${order.sourceType === 'refund' ? 'text-red-600' : order.amount === 0 ? 'text-gray-400' : 'text-gray-900'}`}>
-                                                {order.amount === 0 ? '0.00' : '¥' + order.amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                                                {order.integral && <span className="text-[10px] text-gray-400 block">{order.integral} 积分</span>}
-                                            </td>
-                                            <td className="p-4 text-xs text-gray-500">{order.method}</td>
-                                            <td className="p-4"><span className={`px-2 py-1 rounded text-[10px] font-bold ${order.statusTag}`}>{order.status}</span></td>
-                                            <td className="p-4 text-right pr-6"><button className="text-xs text-blue-600 hover:underline font-bold">详情</button></td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                        <RevenueTable
+                            orderFilter={orderFilter}
+                            setOrderFilter={setOrderFilter}
+                            filteredOrders={filteredOrders}
+                        />
                     </div>
                 )}
 
                 {/* --- TAB: EXPENSE --- */}
                 {subTab === 'expense' && (
-                    <div className="space-y-6 animate-fadeIn">
-                        <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
-                            <div className="flex justify-between items-center mb-6">
-                                <h3 className="font-bold text-lg text-gray-900">教练/员工薪酬核算</h3>
-                                <div className="flex gap-2">
-                                    <button className="border border-gray-200 text-gray-600 text-xs px-3 py-1.5 rounded-lg font-bold hover:bg-gray-50 transition">重新计算</button>
-                                    <button className="bg-black text-white text-xs px-3 py-1.5 rounded-lg font-bold hover:opacity-80 transition">一键发放</button>
-                                </div>
-                            </div>
-                            <table className="w-full text-sm text-left">
-                                <thead className="bg-gray-50 text-gray-500 text-xs uppercase font-bold">
-                                    <tr><th className="p-3 pl-4">姓名/职级</th><th className="p-3">基础薪资</th><th className="p-3">课时费 (自动计算)</th><th className="p-3">销售提成</th><th className="p-3">扣除 (个税/社保)</th><th className="p-3">实发金额</th><th className="p-3">状态</th></tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100">
-                                    <tr>
-                                        <td className="p-3 pl-4"><div className="font-bold text-gray-900">Sarah</div><div className="text-[10px] text-gray-400">教学总监</div></td>
-                                        <td className="p-3 font-mono text-gray-600">¥8,000.00</td>
-                                        <td className="p-3 font-mono text-blue-600 font-bold">¥12,500.00 <span className="text-[10px] text-gray-400 block font-normal">50课时 x ¥250</span></td>
-                                        <td className="p-3 font-mono text-gray-600">¥2,000.00</td>
-                                        <td className="p-3 font-mono text-red-500">-¥1,500.00</td>
-                                        <td className="p-3 font-mono font-bold text-lg text-black">¥21,000.00</td>
-                                        <td className="p-3"><span className="bg-orange-50 text-orange-700 border border-orange-200 px-2 py-1 rounded text-[10px] font-bold">待发放</span></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
-                            <div className="flex justify-between items-center mb-4">
-                                <h3 className="font-bold text-lg text-gray-900">支出明细</h3>
-                                <button className="bg-black text-white text-xs px-3 py-1.5 rounded-lg font-bold hover:opacity-80 transition">+ 录入支出</button>
-                            </div>
-                            <table className="w-full text-sm text-left">
-                                <thead className="bg-gray-50 text-gray-500 border-b border-gray-100 text-xs uppercase font-bold"><tr><th className="py-3 pl-4">发生日期</th><th>类别</th><th>金额</th><th>凭证</th></tr></thead>
-                                <tbody className="divide-y divide-gray-50">
-                                    <tr><td className="py-3 pl-4 text-gray-500">2023-11-01</td><td className="font-bold text-gray-900">房租水电</td><td className="font-mono font-bold text-gray-900">¥85,000.00</td><td><i className="fa-solid fa-paperclip text-gray-400 cursor-pointer hover:text-black"></i></td></tr>
-                                    <tr><td className="py-3 pl-4 text-gray-500">2023-11-05</td><td className="font-bold text-gray-900">市场推广</td><td className="font-mono font-bold text-gray-900">¥12,000.00</td><td><i className="fa-solid fa-paperclip text-gray-400 cursor-pointer hover:text-black"></i></td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                    <ExpensePayrollPanel />
                 )}
 
                 {/* --- TAB: TARGET --- */}
