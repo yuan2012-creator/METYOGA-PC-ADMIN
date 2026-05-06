@@ -456,7 +456,7 @@ const DataOverview = ({ moduleType, venues }: { moduleType: 'cards' | 'ttc' | 'p
     );
 };
 
-const Mall: React.FC = () => {const Mall: React.FC = () => {
+const Mall: React.FC = () => {
   const [activeModule, setActiveModule] = useState<'cards' | 'ttc' | 'points' | 'orders'>('cards');
   const [subView, setSubView] = useState<'list' | 'edit' | 'students' | 'contract_create'>('list');
   const [selectedItem, setSelectedItem] = useState<any>(null);
