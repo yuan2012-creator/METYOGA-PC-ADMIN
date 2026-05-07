@@ -1,26 +1,57 @@
 
 import React, { useState, useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-import { STAGE_CONFIG, MOCK_MEMBERS } from '../constants';
+import { MOCK_MEMBERS } from '../constants';
 import { Member } from '../types';
 import {
   MEMBER_LIFECYCLE_GROUPS,
+  MEMBER_STAGE_CONFIG,
+  getMemberLifecycleLabel,
   getMemberLifecycleStatus,
   getMemberStage,
   getMemberStageConfig,
 } from '../utils/memberLifecycle';
 import MemberDetailModal from './MemberDetailModal';
 
-const getPrimaryAssetText = (member: Member): string | null => {
+interface PrimaryAssetView {
+  text: string;
+  sourceLabel: string;
+}
+
+const getPrimaryAssetView = (member: Member): PrimaryAssetView | null => {
   const asset = member.assets?.[0];
   if (asset) {
-    const balance = typeof asset.remainingAmount === 'number' ? `余${asset.remainingAmount}` : asset.status;
-    return `${asset.name} (${balance})`;
+    const balance = typeof asset.remainingAmount === 'number'
+      ? `余${asset.remainingAmount}`
+      : asset.status;
+    return {
+      text: `${asset.name} (${balance})`,
+      sourceLabel: 'Assets',
+    };
   }
 
   const card = member.cards[0];
   if (!card) return null;
-  return `${card.name} (${card.balance})`;
+  return {
+    text: `${card.name} (${card.balance})`,
+    sourceLabel: 'Legacy cards',
+  };
+};
+
+const getMemberListStageView = (member: Member) => {
+  const lifecycleStatus = getMemberLifecycleStatus(member);
+  const lifecycleStage = getMemberStage(member);
+  const legacyStage = getMemberStage(member, 'legacy');
+  const stageConfig = getMemberStageConfig(member);
+  const legacyStageConfig = getMemberStageConfig(member, 'legacy');
+
+  return {
+    lifecycleLabel: getMemberLifecycleLabel(lifecycleStatus),
+    stageLabel: stageConfig.label,
+    legacyStageLabel: legacyStage !== lifecycleStage ? legacyStageConfig.label : null,
+    color: stageConfig.color,
+    bgColor: stageConfig.bgColor,
+  };
 };
 
 const LEAD_STATUS_LABELS: Record<NonNullable<Member['leadStatus']>, string> = {
@@ -79,7 +110,7 @@ const Members: React.FC = () => {
         filtered = filtered.filter(m => m.riskTag === alertFilter);
     }
 
-    if (filterStage !== 'all') filtered = filtered.filter(m => getMemberStage(m, 'legacy') === filterStage);
+    if (filterStage !== 'all') filtered = filtered.filter(m => getMemberStage(m) === filterStage);
 
     if (searchQuery) {
         const q = searchQuery.toLowerCase();
@@ -300,9 +331,9 @@ const Members: React.FC = () => {
                                       <>
                                           <th className="px-4 py-5 relative">
                                               所处阶段 <FilterIcon />
-                                              <select className="absolute inset-0 opacity-0 cursor-pointer" value={filterStage} onChange={(e) => setFilterStage(e.target.value)}>
-                                                  <option value="all">全部</option>
-                                                  {Object.keys(STAGE_CONFIG).map(k => <option key={k} value={k}>{STAGE_CONFIG[k].label}</option>)}
+                                                  <select className="absolute inset-0 opacity-0 cursor-pointer" value={filterStage} onChange={(e) => setFilterStage(e.target.value)}>
+                                                      <option value="all">全部</option>
+                                                  {Object.entries(MEMBER_STAGE_CONFIG).map(([key, config]) => <option key={key} value={key}>{config.label}</option>)}
                                               </select>
                                           </th>
                                           <th className="px-4 py-5">最新到店</th>
@@ -317,8 +348,8 @@ const Members: React.FC = () => {
                           </thead>
                           <tbody className="divide-y divide-gray-50">
                               {visibleMembers.map(member => {
-                                const stageConfig = getMemberStageConfig(member, 'legacy');
-                                const primaryAssetText = getPrimaryAssetText(member);
+                                const stageView = getMemberListStageView(member);
+                                const primaryAsset = getPrimaryAssetView(member);
                                 const leadStatusLabel = member.leadStatus ? LEAD_STATUS_LABELS[member.leadStatus] : '待回访';
 
                                 return (
@@ -352,15 +383,21 @@ const Members: React.FC = () => {
                                       ) : (
                                           <>
                                               <td className="px-4 py-5">
-                                                  <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold border" style={{ color: stageConfig.color, backgroundColor: stageConfig.bgColor + '80', borderColor: stageConfig.color + '20' }}>
-                                                      {stageConfig.label}
-                                                  </span>
+                                                  <div className="flex flex-col items-start gap-1">
+                                                      <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold border" style={{ color: stageView.color, backgroundColor: stageView.bgColor + '80', borderColor: stageView.color + '20' }}>
+                                                          {stageView.lifecycleLabel}
+                                                      </span>
+                                                      {stageView.legacyStageLabel && (
+                                                          <span className="text-[9px] text-gray-400">Legacy: {stageView.legacyStageLabel}</span>
+                                                      )}
+                                                  </div>
                                               </td>
                                               <td className="px-4 py-5 text-xs font-bold">{member.lastVisit}</td>
                                               <td className="px-4 py-5">
-                                                  {primaryAssetText ? (
-                                                      <div className="max-w-[120px] truncate text-[10px] font-bold text-gray-800">
-                                                          {primaryAssetText}
+                                                  {primaryAsset ? (
+                                                      <div className="max-w-[140px]">
+                                                          <div className="truncate text-[10px] font-bold text-gray-800">{primaryAsset.text}</div>
+                                                          <div className="text-[9px] text-gray-400 mt-0.5">{primaryAsset.sourceLabel}</div>
                                                       </div>
                                                   ) : <span className="text-gray-300 text-[10px]">无持卡</span>}
                                               </td>
