@@ -11,10 +11,10 @@ import {
   TimelineEvent,
 } from '../types';
 import {
-  getMemberLifecycleLabel,
-  getMemberLifecycleStatus,
-  getMemberStageConfig,
-} from '../utils/memberLifecycle';
+  getMemberAssetSourceLabel,
+  getMemberLifecyclePresentation,
+  getMemberRiskPresentation,
+} from '../utils/memberPresentation';
 
 interface MemberDetailModalProps {
   member: Member;
@@ -165,12 +165,6 @@ const buildTimelineItems = (member: Member): TimelineViewItem[] => {
   return [...legacyTimeline, ...domainTimeline];
 };
 
-const getAssetSourceLabel = (member: Member): string => {
-  if (member.assets && member.assets.length > 0) return 'Assets';
-  if (member.cards && member.cards.length > 0) return 'Legacy cards';
-  return 'No assets';
-};
-
 const getTimelineSourceLabel = (sourceType: TimelineSourceType): string => {
   switch (sourceType) {
     case 'legacy_timeline':
@@ -215,11 +209,10 @@ const getBusinessRecordSlots = (member: Member): BusinessRecordSlot[] => [
 
 const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }) => {
   const [activeTab, setActiveTab] = useState<TimelineTab>('all');
-  const lifecycleStatus = getMemberLifecycleStatus(member);
-  const stageInfo = getMemberStageConfig(member);
-  const legacyStageInfo = getMemberStageConfig(member, 'legacy');
+  const stageView = getMemberLifecyclePresentation(member);
+  const riskView = getMemberRiskPresentation(member);
   const assetCards = getAssetCards(member);
-  const assetSourceLabel = getAssetSourceLabel(member);
+  const assetSourceLabel = getMemberAssetSourceLabel(member);
   const timelineItems = buildTimelineItems(member);
   const businessRecordSlots = getBusinessRecordSlots(member);
 
@@ -284,22 +277,27 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }
                         <span 
                             className="px-2 py-0.5 rounded-md text-[10px] font-bold border uppercase tracking-wider"
                             style={{ 
-                                color: stageInfo.color, 
-                                borderColor: stageInfo.color + '40',
-                                backgroundColor: stageInfo.bgColor
+                                color: stageView.color,
+                                borderColor: stageView.color + '40',
+                                backgroundColor: stageView.bgColor
                             }}
                         >
-                            {getMemberLifecycleLabel(lifecycleStatus)}
+                            {stageView.label}
                         </span>
+                        {riskView && (
+                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold bg-gray-50 ${riskView.textClass}`}>
+                                <i className={`${riskView.iconClass} mr-1`}></i>{riskView.label}
+                            </span>
+                        )}
                     </div>
                     <div className="flex items-center gap-3 mt-1 text-xs text-gray-400 font-mono">
                         <span><i className="fa-solid fa-phone mr-1"></i>{member.phone}</span>
                         <span className="text-gray-300">|</span>
                         <span><i className="fa-solid fa-location-dot mr-1"></i>杭州·西湖馆</span>
-                        {legacyStageInfo && member.stage && (
+                        {stageView.legacyLabel && (
                             <>
                                 <span className="text-gray-300">|</span>
-                                <span>Legacy stage: {legacyStageInfo.label}</span>
+                                <span>Legacy stage: {stageView.legacyLabel}</span>
                             </>
                         )}
                     </div>
@@ -393,7 +391,7 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }
                     <div className="flex items-start gap-2 px-1">
                         <i className="fa-solid fa-lightbulb text-yellow-500 text-xs mt-0.5"></i>
                         <p className="text-[10px] text-gray-500 leading-relaxed font-medium">
-                            <span className="text-gray-900 font-bold">运营指引：</span> {stageInfo.strategy}
+                            <span className="text-gray-900 font-bold">运营指引：</span> {stageView.strategy}
                         </p>
                     </div>
                 </div>

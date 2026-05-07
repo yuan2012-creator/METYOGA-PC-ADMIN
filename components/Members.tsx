@@ -6,53 +6,16 @@ import { Member } from '../types';
 import {
   MEMBER_LIFECYCLE_GROUPS,
   MEMBER_STAGE_CONFIG,
-  getMemberLifecycleLabel,
   getMemberLifecycleStatus,
   getMemberStage,
-  getMemberStageConfig,
 } from '../utils/memberLifecycle';
+import {
+  MEMBER_RISK_PRESENTATION,
+  getMemberLifecyclePresentation,
+  getMemberRiskPresentation,
+  getPrimaryMemberAssetSummary,
+} from '../utils/memberPresentation';
 import MemberDetailModal from './MemberDetailModal';
-
-interface PrimaryAssetView {
-  text: string;
-  sourceLabel: string;
-}
-
-const getPrimaryAssetView = (member: Member): PrimaryAssetView | null => {
-  const asset = member.assets?.[0];
-  if (asset) {
-    const balance = typeof asset.remainingAmount === 'number'
-      ? `余${asset.remainingAmount}`
-      : asset.status;
-    return {
-      text: `${asset.name} (${balance})`,
-      sourceLabel: 'Assets',
-    };
-  }
-
-  const card = member.cards[0];
-  if (!card) return null;
-  return {
-    text: `${card.name} (${card.balance})`,
-    sourceLabel: 'Legacy cards',
-  };
-};
-
-const getMemberListStageView = (member: Member) => {
-  const lifecycleStatus = getMemberLifecycleStatus(member);
-  const lifecycleStage = getMemberStage(member);
-  const legacyStage = getMemberStage(member, 'legacy');
-  const stageConfig = getMemberStageConfig(member);
-  const legacyStageConfig = getMemberStageConfig(member, 'legacy');
-
-  return {
-    lifecycleLabel: getMemberLifecycleLabel(lifecycleStatus),
-    stageLabel: stageConfig.label,
-    legacyStageLabel: legacyStage !== lifecycleStage ? legacyStageConfig.label : null,
-    color: stageConfig.color,
-    bgColor: stageConfig.bgColor,
-  };
-};
 
 const LEAD_STATUS_LABELS: Record<NonNullable<Member['leadStatus']>, string> = {
   new: '待回访',
@@ -199,9 +162,9 @@ const Members: React.FC = () => {
                 <div className="grid grid-cols-12 gap-6 animate-fadeIn">
                     <div className="col-span-8 grid grid-cols-3 gap-6">
                         {[
-                            { id: 'expiry', label: '即将过期', count: stats.expiry, icon: 'fa-hourglass-half' },
-                            { id: 'balance', label: '余额不足', count: stats.balance, icon: 'fa-wallet' },
-                            { id: 'sleep', label: '沉默会员', count: stats.sleep, icon: 'fa-moon' }
+                            { id: 'expiry', ...MEMBER_RISK_PRESENTATION.expiry, count: stats.expiry },
+                            { id: 'balance', ...MEMBER_RISK_PRESENTATION.balance, count: stats.balance },
+                            { id: 'sleep', ...MEMBER_RISK_PRESENTATION.sleep, count: stats.sleep }
                         ].map(item => (
                             <div 
                               key={item.id} 
@@ -210,7 +173,7 @@ const Members: React.FC = () => {
                             >
                                 <div className="flex justify-between items-start">
                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${alertFilter === item.id ? 'bg-black text-white' : 'bg-gray-50 text-gray-400'}`}>
-                                        <i className={`fa-solid ${item.icon} text-sm`}></i>
+                                        <i className={`fa-solid ${item.cardIcon} text-sm`}></i>
                                     </div>
                                     {alertFilter === item.id && <i className="fa-solid fa-circle-check text-black text-sm"></i>}
                                 </div>
@@ -348,8 +311,9 @@ const Members: React.FC = () => {
                           </thead>
                           <tbody className="divide-y divide-gray-50">
                               {visibleMembers.map(member => {
-                                const stageView = getMemberListStageView(member);
-                                const primaryAsset = getPrimaryAssetView(member);
+                                const stageView = getMemberLifecyclePresentation(member);
+                                const primaryAsset = getPrimaryMemberAssetSummary(member);
+                                const riskView = getMemberRiskPresentation(member);
                                 const leadStatusLabel = member.leadStatus ? LEAD_STATUS_LABELS[member.leadStatus] : '待回访';
 
                                 return (
@@ -385,10 +349,10 @@ const Members: React.FC = () => {
                                               <td className="px-4 py-5">
                                                   <div className="flex flex-col items-start gap-1">
                                                       <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold border" style={{ color: stageView.color, backgroundColor: stageView.bgColor + '80', borderColor: stageView.color + '20' }}>
-                                                          {stageView.lifecycleLabel}
+                                                          {stageView.label}
                                                       </span>
-                                                      {stageView.legacyStageLabel && (
-                                                          <span className="text-[9px] text-gray-400">Legacy: {stageView.legacyStageLabel}</span>
+                                                      {stageView.legacyLabel && (
+                                                          <span className="text-[9px] text-gray-400">Legacy: {stageView.legacyLabel}</span>
                                                       )}
                                                   </div>
                                               </td>
@@ -411,9 +375,7 @@ const Members: React.FC = () => {
                                       )}
 
                                       <td className="px-4 py-5 text-center">
-                                          {member.riskTag === 'sleep' && <i className="fa-solid fa-moon text-gray-300"></i>}
-                                          {member.riskTag === 'expiry' && <i className="fa-solid fa-hourglass-end text-red-400"></i>}
-                                          {member.riskTag === 'balance' && <i className="fa-solid fa-wallet text-orange-400"></i>}
+                                          {riskView && <i className={`${riskView.iconClass} ${riskView.textClass}`} title={riskView.label}></i>}
                                       </td>
                                       <td className="px-8 py-5 text-right">
                                           <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
