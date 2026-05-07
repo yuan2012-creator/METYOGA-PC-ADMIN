@@ -39,6 +39,15 @@ interface AssetCardView {
   badgeClass: string;
 }
 
+interface BusinessRecordSlot {
+  id: 'course' | 'consumption';
+  title: string;
+  description: string;
+  iconClass: string;
+  toneClass: string;
+  metrics: { label: string; value: string }[];
+}
+
 const MEMBER_ASSET_STATUS_LABELS: Record<MemberAssetStatus, string> = {
   inactive: '未生效',
   effective: '使用中',
@@ -156,13 +165,63 @@ const buildTimelineItems = (member: Member): TimelineViewItem[] => {
   return [...legacyTimeline, ...domainTimeline];
 };
 
+const getAssetSourceLabel = (member: Member): string => {
+  if (member.assets && member.assets.length > 0) return 'Assets';
+  if (member.cards && member.cards.length > 0) return 'Legacy cards';
+  return 'No assets';
+};
+
+const getTimelineSourceLabel = (sourceType: TimelineSourceType): string => {
+  switch (sourceType) {
+    case 'legacy_timeline':
+      return '当前 timeline';
+    case 'order':
+      return '订单';
+    case 'booking':
+      return '预约';
+    case 'attendance':
+      return '签到';
+    case 'refund':
+      return '退款';
+    default:
+      return '业务记录';
+  }
+};
+
+const getBusinessRecordSlots = (member: Member): BusinessRecordSlot[] => [
+  {
+    id: 'course',
+    title: '课程记录',
+    description: '后续承接预约、签到、到课与排课场次',
+    iconClass: 'fa-solid fa-calendar-check',
+    toneClass: 'bg-gray-900 text-white',
+    metrics: [
+      { label: '累计上课', value: `${member.totalClasses} 节` },
+      { label: '最近到店', value: member.lastVisit },
+    ],
+  },
+  {
+    id: 'consumption',
+    title: '消费记录',
+    description: '后续承接订单、支付、退款与财务分录',
+    iconClass: 'fa-solid fa-receipt',
+    toneClass: 'bg-white text-gray-900 border border-gray-200',
+    metrics: [
+      { label: '累计消费', value: `¥${member.totalLTV.toLocaleString()}` },
+      { label: '积分余额', value: `${member.points}` },
+    ],
+  },
+];
+
 const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }) => {
   const [activeTab, setActiveTab] = useState<TimelineTab>('all');
   const lifecycleStatus = getMemberLifecycleStatus(member);
   const stageInfo = getMemberStageConfig(member);
   const legacyStageInfo = getMemberStageConfig(member, 'legacy');
   const assetCards = getAssetCards(member);
+  const assetSourceLabel = getAssetSourceLabel(member);
   const timelineItems = buildTimelineItems(member);
+  const businessRecordSlots = getBusinessRecordSlots(member);
 
   // --- Mock Data for Charts ---
   const preferenceData = member.topCourses && member.topCourses.length > 0 
@@ -231,13 +290,18 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }
                             }}
                         >
                             {getMemberLifecycleLabel(lifecycleStatus)}
-                            {legacyStageInfo && <span className="ml-1 opacity-70 normal-case">/ {legacyStageInfo.label}</span>}
                         </span>
                     </div>
                     <div className="flex items-center gap-3 mt-1 text-xs text-gray-400 font-mono">
                         <span><i className="fa-solid fa-phone mr-1"></i>{member.phone}</span>
                         <span className="text-gray-300">|</span>
                         <span><i className="fa-solid fa-location-dot mr-1"></i>杭州·西湖馆</span>
+                        {legacyStageInfo && member.stage && (
+                            <>
+                                <span className="text-gray-300">|</span>
+                                <span>Legacy stage: {legacyStageInfo.label}</span>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>
@@ -338,9 +402,14 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }
 
                 {/* 3. Assets (Moved from Right) */}
                 <div>
-                    <h4 className="text-xs font-bold text-gray-900 mb-3 flex items-center gap-2">
-                        <i className="fa-solid fa-wallet text-gray-400"></i> 资产中心
-                    </h4>
+                    <div className="mb-3 flex items-center justify-between">
+                        <h4 className="text-xs font-bold text-gray-900 flex items-center gap-2">
+                            <i className="fa-solid fa-wallet text-gray-400"></i> 资产中心
+                        </h4>
+                        <span className="text-[9px] text-gray-400 bg-white border border-gray-200 px-2 py-0.5 rounded-full">
+                            {assetSourceLabel}
+                        </span>
+                    </div>
                     
                     <div className="grid grid-cols-2 gap-3 mb-4">
                          <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
@@ -434,10 +503,40 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }
                     </div>
                 </div>
 
-                {/* 2. Timeline */}
+                {/* 2. Business Record Entrypoints */}
+                <div className="grid grid-cols-2 gap-4">
+                    {businessRecordSlots.map((slot) => (
+                        <div key={slot.id} className="bg-[#FAFAFA] border border-gray-100 rounded-2xl p-4 shadow-sm">
+                            <div className="flex items-start gap-3">
+                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${slot.toneClass}`}>
+                                    <i className={slot.iconClass}></i>
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                    <div className="text-sm font-bold text-gray-900">{slot.title}</div>
+                                    <div className="text-[10px] text-gray-400 mt-1 leading-relaxed">{slot.description}</div>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3 mt-4">
+                                {slot.metrics.map((metric) => (
+                                    <div key={`${slot.id}-${metric.label}`}>
+                                        <div className="text-[10px] text-gray-400 mb-1">{metric.label}</div>
+                                        <div className="text-xs font-bold text-gray-900 font-mono truncate">{metric.value}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                {/* 3. Timeline */}
                 <div className="flex-1">
                     <div className="flex items-center justify-between mb-6 border-b border-gray-100 pb-4">
-                        <h3 className="text-sm font-bold text-gray-900">全景动态追踪</h3>
+                        <div>
+                            <h3 className="text-sm font-bold text-gray-900">全景动态追踪</h3>
+                            <p className="text-[10px] text-gray-400 mt-1">
+                                当前展示 timeline；后续接入订单、预约、签到、退款等真实业务记录
+                            </p>
+                        </div>
                         <div className="flex gap-4">
                             {TIMELINE_TABS.map((tab) => (
                                 <button 
@@ -464,7 +563,10 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }
                                 </div>
                                 
                                 <div className="flex justify-between items-start mb-1">
-                                    <div className="text-sm font-bold text-gray-900">{event.title}</div>
+                                    <div>
+                                        <div className="text-sm font-bold text-gray-900">{event.title}</div>
+                                        <div className="text-[10px] text-gray-400 mt-0.5">{getTimelineSourceLabel(event.sourceType)}</div>
+                                    </div>
                                     <div className="text-xs text-gray-400 font-mono">{event.date}</div>
                                 </div>
                                 
