@@ -1,12 +1,12 @@
 import React from 'react';
 import type { ChartData, ChartOptions } from 'chart.js';
 import { Line, Doughnut } from 'react-chartjs-2';
-import type { Order, Refund } from '../../types';
+import type { Order } from '../../types';
+import type { FinancePendingItem } from '../Finance';
 
 interface FinanceReportChartsProps {
   orders: Order[];
-  pendingRefunds: Refund[];
-  getMemberName: (memberId: string) => string;
+  pendingItems: FinancePendingItem[];
   productTypeLabels: Record<Order['items'][number]['productType'], string>;
   endingDeferredRevenue: number;
   refundTotal: number;
@@ -14,8 +14,7 @@ interface FinanceReportChartsProps {
 
 const FinanceReportCharts: React.FC<FinanceReportChartsProps> = ({
   orders,
-  pendingRefunds,
-  getMemberName,
+  pendingItems,
   productTypeLabels,
   endingDeferredRevenue,
   refundTotal,
@@ -80,8 +79,10 @@ const FinanceReportCharts: React.FC<FinanceReportChartsProps> = ({
   };
 
   const incomeByProductType = orders.reduce<Record<Order['items'][number]['productType'], number>>((totals, order) => {
+    const paidAmount = order.paidAmount ?? order.totalAmount;
     order.items.forEach(item => {
-      totals[item.productType] += item.totalAmount;
+      const itemRatio = order.totalAmount > 0 ? item.totalAmount / order.totalAmount : 0;
+      totals[item.productType] += paidAmount * itemRatio;
     });
     return totals;
   }, { card: 0, ttc: 0, point: 0, course: 0, custom: 0 });
@@ -125,26 +126,19 @@ const FinanceReportCharts: React.FC<FinanceReportChartsProps> = ({
           </div>
         </div>
         <div className="col-span-1 bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
-          <h3 className="font-bold text-lg mb-4 flex items-center text-gray-900">待处理事项 <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full ml-2">{pendingRefunds.length}</span></h3>
+          <h3 className="font-bold text-lg mb-4 flex items-center text-gray-900">待处理事项 <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full ml-2">{pendingItems.length}</span></h3>
           <div className="space-y-3">
-            {pendingRefunds.length > 0 ? pendingRefunds.map(refund => (
-              <div key={refund.id} className="flex justify-between items-center p-3 bg-red-50 rounded-xl border border-red-100 cursor-pointer hover:bg-red-100 transition">
+            {pendingItems.length > 0 ? pendingItems.map(item => (
+              <div key={item.id} className={`flex justify-between items-center p-3 rounded-xl border cursor-pointer transition ${item.tone === 'refund' ? 'bg-red-50 border-red-100 hover:bg-red-100' : 'bg-blue-50 border-blue-100 hover:bg-blue-100'}`}>
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-red-500 shadow-sm"><i className="fa-solid fa-rotate-left"></i></div>
-                  <div><div className="text-sm font-bold text-gray-900">待审核退款申请</div><div className="text-[10px] text-gray-500">¥{refund.amount.toLocaleString()}, {getMemberName(refund.memberId)}</div></div>
+                  <div className={`w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm ${item.tone === 'refund' ? 'text-red-500' : 'text-blue-500'}`}><i className={`fa-solid ${item.tone === 'refund' ? 'fa-rotate-left' : 'fa-file-invoice-dollar'}`}></i></div>
+                  <div><div className="text-sm font-bold text-gray-900">{item.title}</div><div className="text-[10px] text-gray-500">{item.description}</div></div>
                 </div>
-                <button className="text-xs text-red-600 hover:underline font-medium">去处理</button>
+                <button className={`text-xs hover:underline font-medium ${item.tone === 'refund' ? 'text-red-600' : 'text-blue-600'}`}>{item.actionLabel}</button>
               </div>
             )) : (
-              <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 text-xs text-gray-500">暂无待审核退款</div>
+              <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 text-xs text-gray-500">暂无待处理事项</div>
             )}
-            <div className="flex justify-between items-center p-3 bg-blue-50 rounded-xl border border-blue-100 cursor-pointer hover:bg-blue-100 transition">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-blue-500 shadow-sm"><i className="fa-solid fa-file-invoice-dollar"></i></div>
-                <div><div className="text-sm font-bold text-gray-900">待发放薪酬单</div><div className="text-[10px] text-gray-500">11月, 4人</div></div>
-              </div>
-              <button className="text-xs text-blue-600 hover:underline font-medium">去核对</button>
-            </div>
           </div>
         </div>
       </div>

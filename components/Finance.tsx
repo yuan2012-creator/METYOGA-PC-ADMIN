@@ -21,6 +21,12 @@ import {
   MOCK_REFUNDS,
 } from '../constants';
 import {
+  filterLedgerEntriesByDateRange,
+  filterOrdersByDateRange,
+  filterPaymentsByDateRange,
+  filterRefundsByDateRange,
+  getPendingOrders,
+  getPendingRefunds,
   sumPayments,
   sumRecognizedIncome,
   sumRefunds,
@@ -71,6 +77,14 @@ export interface FinanceTransactionRow {
   ledgerEntryId?: string;
   productTypes: Order['items'][number]['productType'][];
   integral?: number;
+}
+
+export interface FinancePendingItem {
+  id: string;
+  tone: 'refund' | 'order';
+  title: string;
+  description: string;
+  actionLabel: string;
 }
 
 interface StaffPerformance {
@@ -272,9 +286,29 @@ const Finance: React.FC = () => {
   const [dateRange, setDateRange] = useState({ start: '2026-05-01', end: '2026-05-31' });
   const [orderFilter, setOrderFilter] = useState<FinanceOrderFilter>('all');
 
+  const periodOrders = useMemo(
+    () => filterOrdersByDateRange(MOCK_ORDERS, dateRange),
+    [dateRange]
+  );
+
+  const periodPayments = useMemo(
+    () => filterPaymentsByDateRange(MOCK_PAYMENTS, dateRange),
+    [dateRange]
+  );
+
+  const periodRefunds = useMemo(
+    () => filterRefundsByDateRange(MOCK_REFUNDS, dateRange),
+    [dateRange]
+  );
+
+  const periodLedgerEntries = useMemo(
+    () => filterLedgerEntriesByDateRange(MOCK_FINANCE_LEDGER_ENTRIES, dateRange),
+    [dateRange]
+  );
+
   const transactionRows = useMemo(
-    () => buildFinanceTransactionRows(MOCK_ORDERS, MOCK_PAYMENTS, MOCK_REFUNDS, MOCK_FINANCE_LEDGER_ENTRIES),
-    []
+    () => buildFinanceTransactionRows(periodOrders, periodPayments, periodRefunds, periodLedgerEntries),
+    [periodOrders, periodPayments, periodRefunds, periodLedgerEntries]
   );
 
   const staffPerformance: StaffPerformance[] = [
@@ -287,7 +321,7 @@ const Finance: React.FC = () => {
   const annualTarget = 6000000;
   const annualActual = 4200000;
   const monthlyTarget = 540000;
-  const monthlyActual = sumPayments(MOCK_PAYMENTS);
+  const monthlyActual = sumPayments(periodPayments);
   const beginningDeferredRevenue = 1200000;
   const transitionalOperatingExpense = 185000;
 
@@ -300,17 +334,29 @@ const Finance: React.FC = () => {
     return transactionRows;
   }, [orderFilter, transactionRows]);
 
-  const cashIncomeTotal = sumPayments(MOCK_PAYMENTS);
-  const recognizedIncomeTotal = sumRecognizedIncome(MOCK_FINANCE_LEDGER_ENTRIES);
-  const refundTotal = sumRefunds(MOCK_REFUNDS);
+  const cashIncomeTotal = sumPayments(periodPayments);
+  const recognizedIncomeTotal = sumRecognizedIncome(periodLedgerEntries);
+  const refundTotal = sumRefunds(periodRefunds);
   const netCashFlow = cashIncomeTotal - refundTotal;
   const endingDeferredRevenue = beginningDeferredRevenue + cashIncomeTotal - recognizedIncomeTotal - refundTotal;
-  const pendingRefunds = MOCK_REFUNDS.filter(refund => (
-    refund.status === 'requested'
-    || refund.status === 'reviewing'
-    || refund.status === 'approved'
-    || refund.status === 'processing'
-  ));
+  const pendingRefunds = getPendingRefunds(periodRefunds);
+  const pendingOrders = getPendingOrders(periodOrders);
+  const pendingItems: FinancePendingItem[] = [
+    ...pendingRefunds.map(refund => ({
+      id: refund.id,
+      tone: 'refund' as const,
+      title: '待处理退款申请',
+      description: `¥${refund.amount.toLocaleString()}, ${getMemberName(refund.memberId)}`,
+      actionLabel: refund.status === 'requested' || refund.status === 'reviewing' ? '去审核' : '去处理',
+    })),
+    ...pendingOrders.map(order => ({
+      id: order.id,
+      tone: 'order' as const,
+      title: order.status === 'pending_payment' ? '待确认收款订单' : '待处理订单',
+      description: `¥${(order.paidAmount ?? order.totalAmount).toLocaleString()}, ${getMemberName(order.memberId)}`,
+      actionLabel: order.status === 'pending_payment' ? '去核对' : '去处理',
+    })),
+  ];
 
   const annualProgress = Math.min(100, Math.round((annualActual / annualTarget) * 100));
   const monthlyProgress = Math.min(100, Math.round((monthlyActual / monthlyTarget) * 100));
@@ -381,9 +427,8 @@ const Finance: React.FC = () => {
                         />
 
                         <FinanceReportCharts
-                            orders={MOCK_ORDERS}
-                            pendingRefunds={pendingRefunds}
-                            getMemberName={getMemberName}
+                            orders={periodOrders}
+                            pendingItems={pendingItems}
                             productTypeLabels={PRODUCT_TYPE_LABELS}
                             endingDeferredRevenue={endingDeferredRevenue}
                             refundTotal={refundTotal}
@@ -439,7 +484,7 @@ const Finance: React.FC = () => {
                                 <h3 className="font-bold text-lg mb-4 flex items-center text-gray-900"><i className="fa-solid fa-calendar-alt mr-2 text-gray-400"></i> 月度总目标</h3>
                                 <div className="relative pt-1">
                                     <div className="flex mb-2 items-center justify-between">
-                                        <div><span className="text-xs font-bold text-gray-500 uppercase">剩余完成时间 (30天)</span></div>
+                                        <div><span className="text-xs font-bold text-gray-500 uppercase">查询区间目标进度</span></div>
                                         <div className="text-right"><span className="text-3xl font-bold text-black font-mono">{monthlyProgress}%</span></div>
                                     </div>
                                     <div className="overflow-hidden h-3 mb-4 text-xs flex rounded-full bg-gray-100">
