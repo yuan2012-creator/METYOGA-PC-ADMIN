@@ -7,6 +7,8 @@ import { MOCK_STAFF_LIST } from '../../constants';
 import type { Staff } from '../../types';
 import type { StaffMatrixItem } from '../../utils/staffSelectors';
 
+const ReferenceAreaCompat = ReferenceArea as React.ComponentType<any>;
+
 type StaffTab = 'decision' | 'archives' | 'schedule';
 type StaffModalTab = 'course' | 'member' | 'income' | 'promotion';
 
@@ -100,10 +102,10 @@ const StaffDecisionPanel: React.FC<StaffDecisionPanelProps> = (props) => {
                                         <ZAxis type="number" range={[200, 800]} />
                                         
                                         {/* Quadrants */}
-                                        <ReferenceArea x1={50} x2={100} y1={0} y2={50} fill="#F0FDF4" fillOpacity={0.6} radius={[0,0,20,0]} />
-                                        <ReferenceArea x1={50} x2={100} y1={50} y2={100} fill="#FFFBEB" fillOpacity={0.6} radius={[0,20,0,0]} />
-                                        <ReferenceArea x1={0} x2={50} y1={0} y2={50} fill="#EFF6FF" fillOpacity={0.6} radius={[0,0,0,20]} />
-                                        <ReferenceArea x1={0} x2={50} y1={50} y2={100} fill="#FEF2F2" fillOpacity={0.6} radius={[20,0,0,0]} />
+                                        <ReferenceAreaCompat x1={50} x2={100} y1={0} y2={50} fill="#F0FDF4" fillOpacity={0.6} radius={[0,0,20,0]} />
+                                        <ReferenceAreaCompat x1={50} x2={100} y1={50} y2={100} fill="#FFFBEB" fillOpacity={0.6} radius={[0,20,0,0]} />
+                                        <ReferenceAreaCompat x1={0} x2={50} y1={0} y2={50} fill="#EFF6FF" fillOpacity={0.6} radius={[0,0,0,20]} />
+                                        <ReferenceAreaCompat x1={0} x2={50} y1={50} y2={100} fill="#FEF2F2" fillOpacity={0.6} radius={[20,0,0,0]} />
                                         
                                         <ReTooltip cursor={{ strokeDasharray: '3 3' }} content={({ active, payload }) => {
                                             if (active && payload && payload.length) {

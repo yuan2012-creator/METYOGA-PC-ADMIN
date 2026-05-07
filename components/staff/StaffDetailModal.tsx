@@ -575,7 +575,7 @@ const StaffDetailModal: React.FC<StaffDetailModalProps> = (props) => {
                                                                       yAxisID: 'y1'
                                                                   }
                                                               ]
-                                                          }}
+                                                          } as any}
                                                           options={{
                                                               responsive: true,
                                                               maintainAspectRatio: false,
@@ -611,7 +611,7 @@ const StaffDetailModal: React.FC<StaffDetailModalProps> = (props) => {
                                                                       grid: { display: false } 
                                                                   } 
                                                               }
-                                                          }}
+                                                          } as any}
                                                       />
                                                   </div>
                                               </div>
@@ -719,7 +719,7 @@ const StaffDetailModal: React.FC<StaffDetailModalProps> = (props) => {
                                                                           }
                                                                       }
                                                                   }
-                                                              }}
+                                                              } as any}
                                                           />
                                                       </div>
                                                   </div>

@@ -78,16 +78,24 @@ const FinanceReportCharts: React.FC<FinanceReportChartsProps> = ({
     },
   };
 
-  const incomeByProductType = orders.reduce<Record<Order['items'][number]['productType'], number>>((totals, order) => {
+  const initialIncomeByProductType: Record<Order['items'][number]['productType'], number> = {
+    card: 0,
+    ttc: 0,
+    point: 0,
+    course: 0,
+    custom: 0,
+  };
+  const incomeByProductType = orders.reduce((totals, order) => {
     const paidAmount = order.paidAmount ?? order.totalAmount;
     order.items.forEach(item => {
       const itemRatio = order.totalAmount > 0 ? item.totalAmount / order.totalAmount : 0;
       totals[item.productType] += paidAmount * itemRatio;
     });
     return totals;
-  }, { card: 0, ttc: 0, point: 0, course: 0, custom: 0 });
-  const incomePieEntries = Object.entries(incomeByProductType)
-    .filter((entry): entry is [Order['items'][number]['productType'], number] => entry[1] > 0);
+  }, initialIncomeByProductType);
+  const incomePieEntries = (Object.keys(incomeByProductType) as Array<Order['items'][number]['productType']>)
+    .map((type): [Order['items'][number]['productType'], number] => [type, incomeByProductType[type]])
+    .filter(([, amount]) => amount > 0);
 
   const incomePieData: ChartData<'doughnut'> = {
     labels: incomePieEntries.map(([type, amount]) => `${productTypeLabels[type]} ¥${amount.toLocaleString()}`),

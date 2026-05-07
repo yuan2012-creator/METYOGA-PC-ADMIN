@@ -29,11 +29,11 @@ export interface TTCCourseAudienceNode {
     desc: string;
 }
 
-export type TTCSchedule = NonNullable<TtcProduct['schedules']>[number] & {
+export type TTCSchedule = Omit<NonNullable<TtcProduct['schedules']>[number], 'status'> & {
     status: NonNullable<TtcProduct['schedules']>[number]['status'] | 'recruiting' | 'ended';
 };
 
-export type MallTtcCourse = TtcProduct & {
+export type MallTtcCourse = Omit<TtcProduct, 'schedules' | 'status'> & {
     category: 'yoga' | 'pilates';
     earlyBirdPrice: number;
     earlyBirdDeadline: string;
