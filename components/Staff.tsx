@@ -8,6 +8,16 @@ import { Doughnut, Line, Bar, Radar } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend as ChartLegend, CategoryScale, LinearScale, PointElement, LineElement, Title, BarElement, RadialLinearScale, Filler } from 'chart.js';
 import { MOCK_STAFF_LIST } from '../constants';
 import { Staff } from '../types';
+import {
+  buildStaffDemoMembers,
+  buildStaffDetails,
+  buildStaffMatrixData,
+  buildStaffRankings,
+  calculateTeachingYears,
+  filterStaffDemoMembers,
+  filterStaffList,
+  getNextStaffLevel,
+} from '../utils/staffSelectors';
 
 ChartJS.register(ArcElement, Tooltip, ChartLegend, CategoryScale, LinearScale, PointElement, LineElement, Title, BarElement, RadialLinearScale, Filler);
 
@@ -52,113 +62,32 @@ const StaffPage: React.FC = () => {
 
   // --- Logic 2: Matrix Data ---
   const matrixData = useMemo(() => {
-    return MOCK_STAFF_LIST.filter(s => s.type === 'teacher').map(s => ({
-      x: s.conversionRate,
-      y: s.loadFactor,
-      name: s.name,
-      id: s.id,
-      level: s.level
-    }));
+    return buildStaffMatrixData(MOCK_STAFF_LIST);
   }, []);
 
   // --- Logic 3: Rankings ---
-  const teachers = MOCK_STAFF_LIST.filter(s => s.type === 'teacher');
-  const consumptionTop = [...MOCK_STAFF_LIST].sort((a, b) => b.classHours - a.classHours).slice(0, 3);
-  const conversionTop = [...teachers].sort((a, b) => b.conversionRate - a.conversionRate).slice(0, 3);
-  
-  // UPDATED: Occupancy Rate - Show Bottom 3 (Warning)
-  const occupancyBottom = [...teachers].sort((a, b) => a.occupancyRate - b.occupancyRate).slice(0, 3);
-
-  // NEW: Follow-up Rate - Show Bottom 3 (Warning)
-  const followUpBottom = [...teachers].sort((a, b) => (a.followUpRate || 0) - (b.followUpRate || 0)).slice(0, 3);
+  const {
+    consumptionTop,
+    conversionTop,
+    occupancyBottom,
+    followUpBottom,
+  } = useMemo(() => buildStaffRankings(MOCK_STAFF_LIST), []);
 
   // --- Logic 4: Filtered Staff List ---
   const filteredStaff = useMemo(() => {
-    let list = MOCK_STAFF_LIST;
-    
-    // Tab Filters
-    if (filterType === 'leads') list = list.filter(s => s.conversionRate > 60 && s.loadFactor < 80);
-    if (filterType === 'adjust') list = list.filter(s => s.loadFactor > 90 || s.conversionRate < 30);
-    if (filterType === 'new') list = list.filter(s => s.expYears.includes('0') || s.expYears.includes('1'));
-    if (filterType === 'part_time') list = list.filter(s => s.title.includes('兼职')); // Detect Part-time via title
-    
-    // Search Filter
-    if (searchQuery) {
-        const q = searchQuery.toLowerCase();
-        list = list.filter(s => 
-            s.name.toLowerCase().includes(q) || 
-            s.tags.some(t => t.toLowerCase().includes(q)) ||
-            s.title.toLowerCase().includes(q)
-        );
-    }
-    
-    return list;
+    return filterStaffList(MOCK_STAFF_LIST, filterType, searchQuery);
   }, [filterType, searchQuery]);
 
-  const getAiSuggestion = (s: Staff) => {
-    if (s.conversionRate > 75 && s.loadFactor < 70) return { text: '适合接体验', color: 'text-green-600', bg: 'bg-green-50' };
-    if (s.loadFactor > 90) return { text: '建议控课', color: 'text-orange-600', bg: 'bg-orange-50' };
-    if (s.conversionRate < 30) return { text: '需要培养', color: 'text-blue-600', bg: 'bg-blue-50' };
-    return { text: '状态稳定', color: 'text-gray-500', bg: 'bg-gray-100' };
-  };
-
-  const getLoadBadge = (val: number) => {
-    if (val > 85) return <span className="px-2 py-1 bg-red-50 text-red-600 rounded-lg text-[10px] font-bold border border-red-100">高负载</span>;
-    if (val > 60) return <span className="px-2 py-1 bg-gray-50 text-gray-500 rounded-lg text-[10px] font-bold border border-gray-100">正常</span>;
-    return <span className="px-2 py-1 bg-green-50 text-green-600 rounded-lg text-[10px] font-bold border border-green-100">低负载</span>;
-  };
-
   const mockExtendedMembers = useMemo(() => {
-    if (!activeStaff) return [];
-    // Generate a list of ~12 members to show the filtering
-    const lifecycles = ['S0', 'S1', 'S2', 'S3', 'S4', 'S5', 'S6'];
-    const goals = ['减脂', '增肌', '塑形', '康复', '产后'];
-    
-    return Array.from({ length: 12 }).map((_, i) => {
-      const isPrivate = i % 3 === 0;
-      const balance = isPrivate ? Math.floor(Math.random() * 20) : Math.floor(Math.random() * 100);
-      const daysSinceLastClass = Math.floor(Math.random() * 60);
-      const isPendingRenewal = balance <= 3;
-      const isSilent = daysSinceLastClass > 30;
-      const isNewPendingFollowUp = i % 4 === 0 && lifecycles[i % lifecycles.length] === 'S0';
-      const isSummaryMissing = i % 5 === 0;
-      const isPhotoMissing = i % 6 === 0;
-      const isFollowup = isPendingRenewal || isSilent || isNewPendingFollowUp || isSummaryMissing || isPhotoMissing;
-      
-      return {
-        id: i,
-        name: `会员 ${String.fromCharCode(65 + i)}`,
-        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${activeStaff.name}Member${i}`,
-        type: isPrivate ? 'private' : (i % 2 === 0 ? 'group' : 'small'),
-        card: isPrivate ? '私教包月' : '普通次卡',
-        balance: balance,
-        daysSinceLastClass: daysSinceLastClass,
-        lifecycle: lifecycles[i % lifecycles.length],
-        goal: goals[i % goals.length],
-        isFollowup: isFollowup,
-        isPendingRenewal,
-        isSilent,
-        isNewPendingFollowUp,
-        isSummaryMissing,
-        isPhotoMissing
-      };
-    });
+    return buildStaffDemoMembers(activeStaff);
   }, [activeStaff]);
 
   const filteredMembers = useMemo(() => {
-    return mockExtendedMembers.filter(m => {
-      if (memberListTab === 'private' && m.type !== 'private') return false;
-      if (memberListTab === 'followup' && !m.isFollowup) return false;
-      if (filterLifecycle !== 'all' && m.lifecycle !== filterLifecycle) return false;
-      if (filterGoal !== 'all' && m.goal !== filterGoal) return false;
-      
-      if (activeFollowUpCategory === 'pendingRenewal' && !m.isPendingRenewal) return false;
-      if (activeFollowUpCategory === 'silent' && !m.isSilent) return false;
-      if (activeFollowUpCategory === 'newPending' && !m.isNewPendingFollowUp) return false;
-      if (activeFollowUpCategory === 'summaryMissing' && !m.isSummaryMissing) return false;
-      if (activeFollowUpCategory === 'photoMissing' && !m.isPhotoMissing) return false;
-
-      return true;
+    return filterStaffDemoMembers(mockExtendedMembers, {
+      memberListTab,
+      filterLifecycle,
+      filterGoal,
+      activeFollowUpCategory,
     });
   }, [mockExtendedMembers, memberListTab, filterLifecycle, filterGoal, activeFollowUpCategory]);
 
@@ -785,100 +714,8 @@ const StaffPage: React.FC = () => {
               <div className="bg-white w-full max-w-[1200px] h-[85vh] rounded-[32px] shadow-2xl z-10 flex overflow-hidden animate-fadeInUp">
                   
                   {(() => {
-                      // Mock missing detailed data
-                      const staffDetails = {
-                          ...activeStaff,
-                          phone: activeStaff.phone || '138-8888-8888',
-                          teachingStartDate: activeStaff.teachingStartDate || '2019-05-01',
-                          privateSpecialties: activeStaff.privateSpecialties || ['基础', '塑形'],
-                          groupSpecialties: activeStaff.groupSpecialties || ['哈他', '流瑜伽', '普拉提大器械'],
-                          nonReceptionGroups: activeStaff.nonReceptionGroups || ['男士', '孕早期', '严重腰椎间盘突出'],
-                          certImages: activeStaff.certImages || ['https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=400'],
-                          courseVideos: activeStaff.courseVideos || [
-                              { title: '流瑜伽基础串联', url: '#', thumb: 'https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?auto=format&fit=crop&q=80&w=400' },
-                              { title: '核心力量激活', url: '#', thumb: 'https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&q=80&w=400' }
-                          ],
-                          historicalCourses: activeStaff.historicalCourses || [
-                              { name: '哈他基础', rating: 4.9, count: 120, date: '2023-10' },
-                              { name: '流瑜伽进阶', rating: 4.8, count: 85, date: '2023-11' },
-                              { name: '阴瑜伽', rating: 4.9, count: 60, date: '2023-12' }
-                          ],
-                          popularCourses: activeStaff.popularCourses || ['哈他基础', '流瑜伽进阶', '阿斯汤加'],
-                          attentionCourses: activeStaff.attentionCourses || ['普拉提大器械', '空中瑜伽', '孕产瑜伽'],
-                          incomeStats: activeStaff.incomeStats || {
-                              week: {
-                                  total: 12000,
-                                  percentage: 15,
-                                  baseSalary: 2000,
-                                  commission: 3000,
-                                  smallClassFee: 4000,
-                                  privateClassFee: 3000
-                              },
-                              month: {
-                                  total: 45000,
-                                  percentage: 18,
-                                  baseSalary: 8000,
-                                  commission: 12000,
-                                  smallClassFee: 15000,
-                                  privateClassFee: 10000
-                              },
-                              quarter: {
-                                  total: 130000,
-                                  percentage: 17,
-                                  baseSalary: 24000,
-                                  commission: 35000,
-                                  smallClassFee: 45000,
-                                  privateClassFee: 26000
-                              }
-                          },
-                          consumptionStats: activeStaff.consumptionStats || {
-                              week: {
-                                  total: 11000,
-                                  studioPercentage: 12,
-                                  smallClass: 4000,
-                                  privateClass: 5000,
-                                  workshop: 2000
-                              },
-                              month: {
-                                  total: 42000,
-                                  studioPercentage: 14,
-                                  smallClass: 15000,
-                                  privateClass: 20000,
-                                  workshop: 7000
-                              },
-                              quarter: {
-                                  total: 125000,
-                                  studioPercentage: 13,
-                                  smallClass: 45000,
-                                  privateClass: 60000,
-                                  workshop: 20000
-                              }
-                          },
-                          historicalPromotions: activeStaff.historicalPromotions || [
-                              { date: '2023-01-15', from: 'T1', to: 'T2', reason: '课时达标，评价优异' },
-                              { date: '2024-06-20', from: 'T2', to: 'T3', reason: '续费率突出，完成培训' }
-                          ]
-                      };
-
-                      const calculateYears = (startDate: string) => {
-                          const start = new Date(startDate);
-                          const now = new Date();
-                          const diff = now.getTime() - start.getTime();
-                          const years = Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
-                          return `${years}年`;
-                      };
-                      const teachingYears = calculateYears(staffDetails.teachingStartDate);
-
-                      const getNextLevel = (level: string) => {
-                          const l = level.toLowerCase();
-                          if (l === 't1') return 'T2';
-                          if (l === 't2') return 'T3';
-                          if (l === 't3') return 'T4';
-                          if (l === 't4') return 'T5';
-                          if (l === 't5') return 'MENTOR';
-                          if (l === 'mentor') return 'MAX';
-                          return 'T2';
-                      };
+                      const staffDetails = buildStaffDetails(activeStaff);
+                      const teachingYears = calculateTeachingYears(staffDetails.teachingStartDate);
 
                       const renderProgressBar = (label: string, targetStr: string, currentStr: string, currentVal: number, targetVal: number, reverse: boolean = false) => {
                           let progress = 0;
@@ -921,7 +758,7 @@ const StaffPage: React.FC = () => {
                                           <div className="flex justify-between text-[10px] font-bold mb-2">
                                               <span className="text-gray-900">{staffDetails.level.toUpperCase()}</span>
                                               <span className="text-gray-500">职级综合达成</span>
-                                              <span className="text-gray-400">{getNextLevel(staffDetails.level)}</span>
+                                              <span className="text-gray-400">{getNextStaffLevel(staffDetails.level)}</span>
                                           </div>
                                           <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
                                               <div className="h-full bg-black rounded-full" style={{ width: '88%' }}></div>
@@ -1239,7 +1076,7 @@ const StaffPage: React.FC = () => {
                                                       驳回
                                                   </button>
                                                   <button className="flex-1 md:flex-none px-6 py-2 rounded-lg text-xs font-bold bg-white text-black hover:bg-gray-100 shadow-md transition-all">
-                                                      同意晋升至 {getNextLevel(staffDetails.level)}
+                                                      同意晋升至 {getNextStaffLevel(staffDetails.level)}
                                                   </button>
                                               </div>
                                           </div>
@@ -2075,14 +1912,14 @@ const StaffPage: React.FC = () => {
                                                       </div>
 
                                                       <button className="shrink-0 flex items-center gap-1.5 text-[10px] font-bold text-gray-400 hover:text-gray-900 transition-colors">
-                                                          <span>{getNextLevel(staffDetails.level)}</span>
+                                                          <span>{getNextStaffLevel(staffDetails.level)}</span>
                                                           <i className="fa-solid fa-chevron-right text-[8px]"></i>
                                                       </button>
                                                   </div>
 
                                                   <div className="shrink-0 text-right">
                                                       <div className="text-lg font-bold font-mono text-gray-900 leading-none">75<span className="text-[10px] text-gray-400 ml-0.5">%</span></div>
-                                                      <div className="text-[9px] text-gray-500 mt-1">距离晋升 {getNextLevel(staffDetails.level)}</div>
+                                                      <div className="text-[9px] text-gray-500 mt-1">距离晋升 {getNextStaffLevel(staffDetails.level)}</div>
                                                   </div>
                                               </div>
 
@@ -2214,7 +2051,7 @@ const StaffPage: React.FC = () => {
                                                   <div className="flex justify-between items-end mb-4">
                                                       <div>
                                                           <h3 className="text-lg font-bold text-gray-900">晋升资格记分卡</h3>
-                                                          <div className="text-xs text-gray-500 mt-1">差距分析: {staffDetails.level.toUpperCase()} → {getNextLevel(staffDetails.level)}</div>
+                                                          <div className="text-xs text-gray-500 mt-1">差距分析: {staffDetails.level.toUpperCase()} → {getNextStaffLevel(staffDetails.level)}</div>
                                                       </div>
                                                       <button className="text-xs font-bold text-gray-900 hover:underline flex items-center gap-1">
                                                           查看详细标准 <i className="fa-solid fa-arrow-up-right-from-square"></i>
@@ -2225,7 +2062,7 @@ const StaffPage: React.FC = () => {
                                                           <thead className="bg-gray-50 text-xs text-gray-500">
                                                               <tr>
                                                                   <th className="py-3 px-6 font-medium">指标类别</th>
-                                                                  <th className="py-3 px-6 font-medium">{getNextLevel(staffDetails.level)} 晋升标准</th>
+                                                                  <th className="py-3 px-6 font-medium">{getNextStaffLevel(staffDetails.level)} 晋升标准</th>
                                                                   <th className="py-3 px-6 font-medium">当前实际值</th>
                                                                   <th className="py-3 px-6 font-medium text-center">状态</th>
                                                               </tr>
