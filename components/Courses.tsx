@@ -17,7 +17,7 @@ import ScheduleForm from './courses/ScheduleForm';
 import TodayOpsPanel from './courses/TodayOpsPanel';
 
 // --- View Types ---
-type CourseSubTab = 'schedule' | 'library' | 'ttc' | 'cards' | 'products';
+type CourseSubTab = 'schedule' | 'library';
 
 export type CourseLibraryItem = Course & {
   levelLabel: string;
@@ -64,15 +64,6 @@ export type ScheduleFormState = {
   duration: number;
   capacity: number;
 };
-
-interface CardItem {
-    id: number;
-    name: string;
-    type: '期限' | '次卡' | '储值' | '私教';
-    price: number;
-    value: string; // e.g. "365天", "50次"
-    sales: number;
-}
 
 export interface Room {
     id: string;
@@ -299,27 +290,6 @@ const Courses: React.FC = () => {
   // --- Library State (Courses) ---
   const [libraryList, setLibraryList] = useState<CourseLibraryItem[]>(INITIAL_LIBRARY_LIST);
 
-  // --- Transitional commerce demo states ---
-  // These belong to Mall later; kept here only because hidden legacy tabs still reference them.
-  const [cards, setCards] = useState<CardItem[]>([
-      { id: 1, name: '全馆通年卡 (Yearly)', type: '期限', price: 12800, value: '365天', sales: 45 },
-      { id: 2, name: '50次常规大课卡', type: '次卡', price: 6800, value: '50次', sales: 120 },
-      { id: 3, name: '私教常规20节', type: '私教', price: 9000, value: '20节', sales: 85 },
-      { id: 4, name: '新客体验周卡', type: '期限', price: 199, value: '7天', sales: 300 },
-  ]);
-
-  const [products, setProducts] = useState([
-    { id: 1, name: 'Lulu 瑜伽背心', type: 'wear', stock: 24, price: 380, icon: 'fa-shirt' },
-    { id: 2, name: '天然橡胶瑜伽垫', type: 'gear', stock: 5, price: 680, icon: 'fa-mattress-pillow' },
-    { id: 3, name: '防滑铺巾', type: 'gear', stock: 15, price: 120, icon: 'fa-rug' },
-    { id: 4, name: '普拉提防滑袜', type: 'wear', stock: 50, price: 58, icon: 'fa-socks' },
-  ]);
-
-  const [ttcList, setTtcList] = useState([
-      { id: 1, name: 'RYT 200 全美瑜伽联盟认证', batch: '2024春季班', dates: '3.15 - 4.15', price: 18800, enrolled: 12, max: 16 },
-      { id: 2, name: '孕产瑜伽修复工作坊', batch: '第5期', dates: '5.1 - 5.3', price: 3800, enrolled: 8, max: 20 },
-  ]);
-
   const [selectedCourse, setSelectedCourse] = useState<CourseLibraryItem | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
@@ -410,54 +380,38 @@ const Courses: React.FC = () => {
   };
 
   const handleGlobalCreate = () => {
-      switch(currentSubTab) {
-          case 'library':
-                const newCourse: CourseLibraryItem = {
-                    id: `course-${Date.now()}`,
-                    name: '新课程',
-                    type: 'group',
-                    durationMinutes: 60,
-                    category: '瑜伽',
-                    difficulty: 'beginner',
-                    status: 'active',
-                    levelLabel: 'L1 入门',
-                    price: 0,
-                    rating: 0,
-                    suitable: [],
-                    description: '',
-                    goals: '',
-                    notes: '',
-                    colorTag: 'bg-gray-100 text-gray-700 border-gray-200'
-                };
-                setSelectedCourse(newCourse);
-                setEditMode(true);
-                setIsDetailModalOpen(true);
-                setLibraryList([newCourse, ...libraryList]);
-              break;
-          case 'schedule':
-              alert('请从右侧课程库拖拽课程至日历，或点击日历空白处进行排课。');
-              break;
-          case 'cards':
-              const cardName = prompt('请输入卡项名称 (如: 月卡):');
-              if(cardName) setCards([...cards, { id: Date.now(), name: cardName, type: '期限', price: 0, value: '30天', sales: 0 }]);
-              break;
-          case 'products':
-              const prodName = prompt('请输入商品名称:');
-              if(prodName) setProducts([...products, { id: Date.now(), name: prodName, type: 'gear', stock: 0, price: 0, icon: 'fa-box' }]);
-              break;
-          case 'ttc':
-              alert('已打开教培发布表单...');
-              break;
+      if (currentSubTab === 'library') {
+          const newCourse: CourseLibraryItem = {
+              id: `course-${Date.now()}`,
+              name: '新课程',
+              type: 'group',
+              durationMinutes: 60,
+              category: '瑜伽',
+              difficulty: 'beginner',
+              status: 'active',
+              levelLabel: 'L1 入门',
+              price: 0,
+              rating: 0,
+              suitable: [],
+              description: '',
+              goals: '',
+              notes: '',
+              colorTag: 'bg-gray-100 text-gray-700 border-gray-200'
+          };
+          setSelectedCourse(newCourse);
+          setEditMode(true);
+          setIsDetailModalOpen(true);
+          setLibraryList([newCourse, ...libraryList]);
+          return;
       }
+
+      alert('请从右侧课程库拖拽课程至日历，或点击日历空白处进行排课。');
   };
   
   const getCreateLabel = () => {
     switch (currentSubTab) {
         case 'schedule': return '排课';
         case 'library': return '新建课程';
-        case 'ttc': return '发布教培';
-        case 'cards': return '新建卡项';
-        case 'products': return '上架商品';
         default: return '新建';
     }
   };
@@ -609,7 +563,7 @@ const Courses: React.FC = () => {
       {/* Header */}
       <div className="h-16 border-b border-gray-200 flex items-center justify-between px-8 bg-white/80 backdrop-blur-md sticky top-0 z-20">
           <div className="flex items-center gap-4">
-              <h2 className="text-xl font-bold text-gray-900">课程与产品中心</h2>
+              <h2 className="text-xl font-bold text-gray-900">教务中心</h2>
           </div>
           <div className="flex items-center gap-4">
               <button 
@@ -692,111 +646,6 @@ const Courses: React.FC = () => {
                   />
               )}
 
-              {/* --- TAB: TTC (Existing) --- */}
-              {currentSubTab === 'ttc' && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fadeIn">
-                      {ttcList.map(ttc => (
-                          <div key={ttc.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col h-full group cursor-pointer hover:shadow-md hover:border-gray-300 transition">
-                              <div className="h-32 bg-gray-200 relative overflow-hidden">
-                                  <div className="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition"></div>
-                                  <span className="absolute top-3 left-3 bg-white/90 backdrop-blur px-2 py-1 text-xs font-bold rounded shadow-sm text-gray-800">
-                                      {ttc.name.split(' ')[0]}
-                                  </span>
-                              </div>
-                              <div className="p-5 flex-1 flex flex-col">
-                                  <h3 className="font-bold text-lg mb-1 text-gray-900">{ttc.name}</h3>
-                                  <p className="text-xs text-gray-500 mb-4">{ttc.batch} · {ttc.dates}</p>
-                                  
-                                  <div className="mb-4">
-                                      <div className="flex justify-between text-xs mb-1">
-                                          <span className="text-gray-400">招生进度</span>
-                                          <span className="font-bold">{ttc.enrolled} / {ttc.max}</span>
-                                      </div>
-                                      <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-                                          <div className="h-full bg-black rounded-full" style={{width: `${(ttc.enrolled/ttc.max)*100}%`}}></div>
-                                      </div>
-                                  </div>
-
-                                  <div className="mt-auto flex justify-between items-center border-t border-gray-50 pt-4">
-                                      <span className="font-bold text-gray-900 font-mono">¥{ttc.price.toLocaleString()}</span>
-                                      <button className="text-xs bg-white border border-gray-200 px-3 py-1.5 rounded-lg font-bold hover:bg-gray-50 transition">学员管理</button>
-                                  </div>
-                              </div>
-                          </div>
-                      ))}
-                  </div>
-              )}
-
-              {/* --- TAB: CARDS (Existing) --- */}
-              {currentSubTab === 'cards' && (
-                  <div className="space-y-6 animate-fadeIn">
-                      <div className="grid grid-cols-3 gap-6">
-                          {cards.map(card => (
-                              <div key={card.id} className="bg-white rounded-2xl p-6 border border-gray-200 hover:shadow-md transition cursor-pointer relative group overflow-hidden">
-                                  <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:opacity-10 transition">
-                                      <i className="fa-solid fa-address-card text-6xl"></i>
-                                  </div>
-                                  <div className="relative z-10">
-                                      <div className="flex justify-between items-start mb-4">
-                                          <span className={`text-[10px] px-2 py-1 rounded font-bold uppercase tracking-wider ${card.type === '期限' ? 'bg-black text-white' : 'bg-gray-100 text-gray-600'}`}>
-                                              {card.type}
-                                          </span>
-                                          <button className="text-gray-300 hover:text-black transition"><i className="fa-solid fa-ellipsis"></i></button>
-                                      </div>
-                                      <h3 className="font-bold text-lg text-gray-900 mb-1">{card.name}</h3>
-                                      <p className="text-sm text-gray-500 mb-6">包含权益: {card.value}</p>
-                                      <div className="flex justify-between items-end border-t border-gray-100 pt-4">
-                                          <div>
-                                              <div className="text-[10px] text-gray-400">标准售价</div>
-                                              <div className="font-bold text-lg font-mono">¥{card.price.toLocaleString()}</div>
-                                          </div>
-                                          <div className="text-right">
-                                              <div className="text-[10px] text-gray-400">累计销量</div>
-                                              <div className="font-bold text-sm">{card.sales}</div>
-                                          </div>
-                                      </div>
-                                  </div>
-                              </div>
-                          ))}
-                      </div>
-                  </div>
-              )}
-
-              {/* --- TAB: PRODUCTS (Existing) --- */}
-              {currentSubTab === 'products' && (
-                  <div className="space-y-6 animate-fadeIn">
-                      <div className="flex justify-between items-center">
-                          <div className="flex gap-4 text-sm font-medium text-gray-500">
-                              <button className="text-black border-b-2 border-black pb-0.5">全部商品</button>
-                              <button className="hover:text-black transition">瑜伽服</button>
-                              <button className="hover:text-black transition">辅具</button>
-                          </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                          {products.map(product => (
-                              <div key={product.id} className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden group hover:shadow-md transition">
-                                  <div className="h-48 bg-gray-50 relative flex items-center justify-center">
-                                      <i className={`fa-solid ${product.icon} text-4xl text-gray-300`}></i>
-                                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition"></div>
-                                  </div>
-                                  <div className="p-4">
-                                      <h4 className="font-bold text-sm text-gray-900">{product.name}</h4>
-                                      <p className="text-xs text-gray-400 mt-1">库存: {product.stock}</p>
-                                      <div className="mt-3 flex justify-between items-end">
-                                          <div>
-                                              <div className="text-sm font-bold text-gray-900">¥{product.price}</div>
-                                          </div>
-                                          <button className="w-6 h-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 hover:bg-black hover:text-white transition">
-                                              <i className="fa-solid fa-plus text-[10px]"></i>
-                                          </button>
-                                      </div>
-                                  </div>
-                              </div>
-                          ))}
-                      </div>
-                  </div>
-              )}
           </div>
       </div>
 
