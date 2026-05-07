@@ -1,10 +1,7 @@
 import React from 'react';
 import { Area, AreaChart, ResponsiveContainer } from 'recharts';
 import type { CardProduct } from '../../types';
-
-type MallActionType = 'card' | 'ttc_course' | 'ttc_tutor' | 'product';
-
-type CardEditCategory = 'stored_value' | 'term';
+import type { CardEditCategory, MallActionType } from './mallTypes';
 
 interface MallCardsProps {
   view: 'list' | 'edit';

@@ -1,8 +1,7 @@
 import React from 'react';
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { TtcProduct } from '../../types';
-
-type MallActionType = 'card' | 'ttc_course' | 'ttc_tutor' | 'product';
+import type { MallActionType } from './mallTypes';
 
 export interface TTCTutorExperience {
     year: string;

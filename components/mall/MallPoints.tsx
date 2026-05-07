@@ -1,9 +1,6 @@
 import React from 'react';
 import type { PointProduct } from '../../types';
-
-type MallActionType = 'card' | 'ttc_course' | 'ttc_tutor' | 'product';
-
-type PointProductTab = 'course' | 'physical';
+import type { MallActionType, PointProductTab } from './mallTypes';
 
 interface MallPointsProps {
   view: 'list' | 'edit';
