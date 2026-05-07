@@ -1,7 +1,7 @@
 import React from 'react';
 import { ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis } from 'recharts';
 import type { MHSData } from '../../types';
-import type { DashboardRadarItem } from '../Dashboard';
+import type { DashboardRadarItem } from '../../utils/dashboardSelectors';
 
 interface MhsRadarPanelProps {
   radarData: DashboardRadarItem[];

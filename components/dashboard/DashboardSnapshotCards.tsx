@@ -1,5 +1,5 @@
 import React from 'react';
-import type { DashboardSnapshotItem } from '../Dashboard';
+import type { DashboardSnapshotItem } from '../../utils/dashboardSelectors';
 
 interface DashboardSnapshotCardsProps {
   items: DashboardSnapshotItem[];
