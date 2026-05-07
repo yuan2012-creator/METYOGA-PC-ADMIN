@@ -1,5 +1,6 @@
 import React from 'react';
-import type { CourseLibraryItem, ScheduleFormState } from '../Courses';
+import { COURSE_TYPE_LABELS } from '../../utils/courseSelectors';
+import type { CourseLibraryItem, ScheduleFormState } from '../../utils/courseSelectors';
 
 interface ScheduleFormProps {
   isOpen: boolean;
@@ -9,7 +10,6 @@ interface ScheduleFormProps {
   libraryList: CourseLibraryItem[];
   confirmSchedule: () => void;
   deleteEvent: (id: string) => void;
-  courseTypeLabels: Record<CourseLibraryItem['type'], string>;
 }
 
 const ScheduleForm: React.FC<ScheduleFormProps> = ({
@@ -20,7 +20,6 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({
   libraryList,
   confirmSchedule,
   deleteEvent,
-  courseTypeLabels,
 }) => {
   if (!isOpen) return null;
 
@@ -46,7 +45,7 @@ const ScheduleForm: React.FC<ScheduleFormProps> = ({
                           >
                               <option value="">自定义课程</option>
                               {libraryList.map(c => (
-                                  <option key={c.id} value={c.id}>{c.name} ({courseTypeLabels[c.type]})</option>
+                                  <option key={c.id} value={c.id}>{c.name} ({COURSE_TYPE_LABELS[c.type]})</option>
                               ))}
                           </select>
                       </div>

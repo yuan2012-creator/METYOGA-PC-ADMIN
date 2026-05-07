@@ -5,287 +5,39 @@ import {
   MOCK_COURSE_SESSIONS,
   MOCK_COURSES,
 } from '../constants';
+import {
+  buildOpsSchedule,
+  COURSE_ROOMS,
+  COURSE_SUB_TABS,
+  filterOpsSchedule,
+  getCourseById,
+  getOpsAiGuidance,
+  getOpsSummary,
+  getScheduleEventColor,
+  getSessionTimes,
+  toCourseLibraryItem,
+  toScheduleEvent,
+} from '../utils/courseSelectors';
 import type {
-  Attendance,
-  Booking,
-  Course,
-  CourseSession,
-} from '../types';
+  CourseLibraryItem,
+  CourseSubTab,
+  OpsFilter,
+  ScheduleEvent,
+  ScheduleFormState,
+} from '../utils/courseSelectors';
 import CourseLibrary from './courses/CourseLibrary';
 import ScheduleCalendar from './courses/ScheduleCalendar';
 import ScheduleForm from './courses/ScheduleForm';
 import TodayOpsPanel from './courses/TodayOpsPanel';
 
-// --- View Types ---
-type CourseSubTab = 'schedule' | 'library';
-
-export type CourseLibraryItem = Course & {
-  levelLabel: string;
-  price: number;
-  rating: number;
-  suitable: string[];
-  goals: string;
-  notes: string;
-  colorTag: string;
-};
-
-export type ScheduleEvent = CourseSession & {
-  name: string;
-  teacher: string;
-  dayIndex: number; // 0 = Mon, 6 = Sun
-  startTime: string; // "10:00"
-  duration: number; // minutes
-  color: string;
-};
-
-export type OpsScheduleItem = {
-  id: string;
-  time: string;
-  name: string;
-  type: string;
-  teacher: string;
-  room: string;
-  enrolled: number;
-  capacity: number;
-  status: 'checked_in' | 'upcoming' | 'full';
-  signed: number;
-  state: 'finished' | 'ongoing' | 'upcoming';
-  abnormal: boolean;
-  abnormalReason: string;
-};
-
-export type ScheduleFormState = {
-  id: string;
-  dayIndex: number;
-  roomId: string;
-  courseId: string;
-  teacherName: string;
-  startTime: string;
-  duration: number;
-  capacity: number;
-};
-
-export interface Room {
-    id: string;
-    name: string;
-    type: string;
-    capacity: number;
-    icon: string;
-}
-
-const COURSE_TYPE_LABELS: Record<Course['type'], string> = {
-  group: '团课',
-  small_group: '小班',
-  private: '私教',
-  workshop: '工作坊',
-  ttc: '教培',
-};
-
-const COURSE_DIFFICULTY_LABELS: Record<NonNullable<Course['difficulty']>, string> = {
-  beginner: 'L1 入门',
-  intermediate: 'L2 进阶',
-  advanced: 'L3 强力',
-  all_levels: '全级别',
-};
-
-const COURSE_COLOR_TAGS: Record<Course['type'], string> = {
-  group: 'bg-green-50 text-green-700 border-green-200',
-  small_group: 'bg-gray-100 text-gray-700 border-gray-200',
-  private: 'bg-slate-100 text-slate-700 border-slate-200',
-  workshop: 'bg-zinc-100 text-zinc-700 border-zinc-200',
-  ttc: 'bg-stone-100 text-stone-700 border-stone-200',
-};
-
-const COURSE_ROOMS: Room[] = [
-  { id: '101', name: '瑜伽大教室', type: '团课', capacity: 12, icon: 'fa-om' },
-  { id: '102', name: '普拉提器械室', type: '小班', capacity: 6, icon: 'fa-dumbbell' },
-  { id: '201', name: 'VIP 私教室', type: '私教', capacity: 1, icon: 'fa-user-secret' },
-];
-
-const COURSE_SUB_TABS: { id: CourseSubTab; label: string }[] = [
-  { id: 'schedule', label: '课表与排课' },
-  { id: 'library', label: '课程库' },
-];
-
-const TEACHER_NAMES: Record<string, string> = {
-  '2': 'Mike',
-  '4': 'Leo',
-};
-
-const COURSE_LIBRARY_OVERRIDES: Record<string, Partial<CourseLibraryItem>> = {
-  'course-flow-yoga': {
-    price: 180,
-    rating: 4.9,
-    suitable: ['零基础', '身体僵硬', '亚健康'],
-    goals: '改善身体柔韧性，缓解肩颈腰背酸痛。',
-    notes: '建议饭后1小时进行练习。',
-    description: '以呼吸串联体式，建立稳定、流动、可持续的练习节奏。',
-  },
-  'course-pilates-reformer': {
-    price: 480,
-    rating: 5.0,
-    suitable: ['康复需求', '核心强化', '体态矫正'],
-    goals: '强化核心肌群，改善骨盆前倾/后倾。',
-    notes: '上课必须穿着专业普拉提防滑袜。',
-  },
-  'course-private-core': {
-    price: 680,
-    rating: 4.9,
-    suitable: ['一对一', '核心稳定', '精准训练'],
-    goals: '围绕会员体态问题做个性化核心训练。',
-    notes: '课前需完成身体评估。',
-  },
-  'course-ryt200': {
-    price: 18800,
-    rating: 4.8,
-    suitable: ['教培学员', '进阶习练者'],
-    goals: '完成RYT 200小时系统学习，建立授课能力。',
-    notes: '需完成报名审核与合同签署。',
-  },
-};
-
-const toCourseLibraryItem = (course: Course): CourseLibraryItem => {
-  const override = COURSE_LIBRARY_OVERRIDES[course.id] ?? {};
-
-  return {
-    ...course,
-    levelLabel: override.levelLabel ?? COURSE_DIFFICULTY_LABELS[course.difficulty ?? 'all_levels'],
-    price: override.price ?? 0,
-    rating: override.rating ?? 0,
-    suitable: override.suitable ?? [course.category ?? COURSE_TYPE_LABELS[course.type]],
-    goals: override.goals ?? '',
-    notes: override.notes ?? '',
-    colorTag: override.colorTag ?? COURSE_COLOR_TAGS[course.type],
-    description: override.description ?? course.description ?? '',
-  };
-};
-
-const getRoomName = (roomId?: string): string => (
-  COURSE_ROOMS.find(room => room.id === roomId)?.name ?? '未分配教室'
-);
-
-const getTeacherName = (teacherId?: string): string => (
-  teacherId ? TEACHER_NAMES[teacherId] ?? `老师 ${teacherId}` : '待定'
-);
-
-const getDayIndexFromIso = (iso: string): number => {
-  const day = new Date(iso).getDay();
-  return (day + 6) % 7;
-};
-
-const getTimeFromIso = (iso: string): string => iso.slice(11, 16);
-
-const getDurationMinutes = (startAt: string, endAt: string): number => {
-  const durationMs = new Date(endAt).getTime() - new Date(startAt).getTime();
-  return Math.max(15, Math.round(durationMs / 60000));
-};
-
-const formatSessionTimeRange = (session: CourseSession): string => (
-  `${getTimeFromIso(session.startAt)} - ${getTimeFromIso(session.endAt)}`
-);
-
-const getSessionTimes = (dayIndex: number, startTime: string, duration: number) => {
-  const baseDate = new Date('2026-05-04T00:00:00+08:00');
-  baseDate.setDate(baseDate.getDate() + dayIndex);
-
-  const [hour, minute] = startTime.split(':').map(Number);
-  const start = new Date(baseDate);
-  start.setHours(hour, minute, 0, 0);
-
-  const end = new Date(start);
-  end.setMinutes(end.getMinutes() + duration);
-
-  return {
-    startAt: start.toISOString(),
-    endAt: end.toISOString(),
-  };
-};
-
-const getCourseById = (courses: CourseLibraryItem[], courseId: string): CourseLibraryItem | undefined => (
-  courses.find(course => course.id === courseId)
-);
-
-const getActiveBookings = (sessionId: string, bookings: Booking[]): Booking[] => (
-  bookings.filter(booking => (
-    booking.courseSessionId === sessionId
-    && booking.status !== 'cancelled'
-    && booking.status !== 'late_cancelled'
-  ))
-);
-
-const getSessionAttendances = (sessionId: string, attendances: Attendance[]): Attendance[] => (
-  attendances.filter(attendance => attendance.courseSessionId === sessionId)
-);
-
-const getAttendanceCount = (sessionId: string, attendances: Attendance[]): number => (
-  getSessionAttendances(sessionId, attendances).filter(attendance => (
-    attendance.status === 'checked_in'
-    || attendance.status === 'attended'
-    || attendance.status === 'consumed'
-  )).length
-);
-
-const isEventFull = (event: Pick<CourseSession, 'bookedCount' | 'capacity'>): boolean => (
-  (event.bookedCount ?? 0) >= event.capacity
-);
-
-const toScheduleEvent = (session: CourseSession, courses: CourseLibraryItem[]): ScheduleEvent => {
-  const course = getCourseById(courses, session.courseId);
-
-  return {
-    ...session,
-    name: session.title ?? course?.name ?? '自定义课程',
-    teacher: getTeacherName(session.teacherId),
-    dayIndex: getDayIndexFromIso(session.startAt),
-    startTime: getTimeFromIso(session.startAt),
-    duration: getDurationMinutes(session.startAt, session.endAt),
-    color: course?.colorTag.replace('text-', 'border-').replace('700', '800') ?? 'bg-gray-100 text-gray-800 border-gray-200',
-    bookedCount: session.bookedCount ?? getActiveBookings(session.id, MOCK_BOOKINGS).length,
-  };
-};
-
-const toOpsScheduleItem = (
-  session: CourseSession,
-  courses: CourseLibraryItem[],
-  bookings: Booking[],
-  attendances: Attendance[]
-): OpsScheduleItem => {
-  const course = getCourseById(courses, session.courseId);
-  const activeBookings = getActiveBookings(session.id, bookings);
-  const signed = getAttendanceCount(session.id, attendances);
-  const enrolled = session.bookedCount ?? activeBookings.length;
-  const lateCancelledCount = bookings.filter(booking => (
-    booking.courseSessionId === session.id && booking.status === 'late_cancelled'
-  )).length;
-  const state: OpsScheduleItem['state'] = session.status === 'completed'
-    ? 'finished'
-    : session.status === 'in_progress'
-      ? 'ongoing'
-      : 'upcoming';
-
-  return {
-    id: session.id,
-    time: formatSessionTimeRange(session),
-    name: session.title ?? course?.name ?? '自定义课程',
-    type: course ? COURSE_TYPE_LABELS[course.type] : '课程',
-    teacher: getTeacherName(session.teacherId),
-    room: getRoomName(session.roomId),
-    enrolled,
-    capacity: session.capacity,
-    status: signed >= enrolled && enrolled > 0 ? 'checked_in' : isEventFull(session) ? 'full' : 'upcoming',
-    signed,
-    state,
-    abnormal: lateCancelledCount > 0,
-    abnormalReason: lateCancelledCount > 0 ? `${lateCancelledCount} 个迟取消预约` : '',
-  };
-};
-
 const INITIAL_LIBRARY_LIST = MOCK_COURSES.map(toCourseLibraryItem);
-const INITIAL_SCHEDULE_EVENTS = MOCK_COURSE_SESSIONS.map(session => toScheduleEvent(session, INITIAL_LIBRARY_LIST));
+const INITIAL_SCHEDULE_EVENTS = MOCK_COURSE_SESSIONS.map(session => (
+  toScheduleEvent(session, INITIAL_LIBRARY_LIST, MOCK_BOOKINGS)
+));
 
 const Courses: React.FC = () => {
   const [currentSubTab, setCurrentSubTab] = useState<CourseSubTab>('schedule');
-  const [opsFilter, setOpsFilter] = useState<'all' | 'group' | 'private'>('all');
+  const [opsFilter, setOpsFilter] = useState<OpsFilter>('all');
   
   // --- Library State (Courses) ---
   const [libraryList, setLibraryList] = useState<CourseLibraryItem[]>(INITIAL_LIBRARY_LIST);
@@ -323,37 +75,10 @@ const Courses: React.FC = () => {
   const hourHeight = 70; // pixels per hour for a slightly compact view
 
   // --- Today's Ops: CourseSession + Booking + Attendance ---
-  const todayOpsSchedule = MOCK_COURSE_SESSIONS.map(session => (
-    toOpsScheduleItem(session, libraryList, MOCK_BOOKINGS, MOCK_ATTENDANCES)
-  ));
-
-  const filteredOpsSchedule = todayOpsSchedule.filter(cls => {
-      if (opsFilter === 'group') return cls.type === '团课' || cls.type === '小班';
-      if (opsFilter === 'private') return cls.type === '私教';
-      return true;
-  });
-
-  const opsSummary = {
-      totalCourses: todayOpsSchedule.length,
-      smallClass: todayOpsSchedule.filter(c => c.type === '小班').length,
-      groupClass: todayOpsSchedule.filter(c => c.type === '团课').length,
-      privateClass: todayOpsSchedule.filter(c => c.type === '私教').length,
-      totalEnrolled: todayOpsSchedule.reduce((sum, c) => sum + c.enrolled, 0),
-      totalEmptySpots: todayOpsSchedule.reduce((sum, c) => sum + (c.capacity - c.enrolled), 0),
-      totalConsumed: todayOpsSchedule.reduce((sum, c) => sum + c.signed, 0),
-  };
-
-  const abnormalCount = todayOpsSchedule.filter(c => c.abnormal).length;
-  let aiGuidance = "";
-  if (abnormalCount > 0) {
-      aiGuidance = `发现 ${abnormalCount} 个课程异常（未签到等），请优先处理。`;
-  } else if (opsSummary.totalEmptySpots > 0) {
-      aiGuidance = `今日还有 ${opsSummary.totalEmptySpots} 个空位，建议提醒老师在社群或私聊邀约会员。`;
-  } else if (opsSummary.totalCourses < 6) {
-      aiGuidance = `今日排课较少，下午时段场地空闲，建议安排老师进行私教体验课或场馆内训。`;
-  } else {
-      aiGuidance = `今日课程安排饱满，运行状态良好，请继续保持。`;
-  }
+  const todayOpsSchedule = buildOpsSchedule(MOCK_COURSE_SESSIONS, libraryList, MOCK_BOOKINGS, MOCK_ATTENDANCES);
+  const filteredOpsSchedule = filterOpsSchedule(todayOpsSchedule, opsFilter);
+  const opsSummary = getOpsSummary(todayOpsSchedule);
+  const aiGuidance = getOpsAiGuidance(todayOpsSchedule, opsSummary);
 
   // --- Actions ---
   
@@ -462,7 +187,7 @@ const Courses: React.FC = () => {
               dayIndex: dayIndex,
               startTime: dropTime,
               duration: draggedCourse.durationMinutes,
-              color: draggedCourse.colorTag.replace('text-', 'border-').replace('100', '100').replace('700', '800'),
+              color: getScheduleEventColor(draggedCourse),
               status: 'draft',
               startAt,
               endAt,
@@ -511,7 +236,7 @@ const Courses: React.FC = () => {
   };
 
   const confirmSchedule = () => {
-      const course = libraryList.find(c => c.id === scheduleForm.courseId);
+      const course = getCourseById(libraryList, scheduleForm.courseId);
       const existingIdx = scheduleEvents.findIndex(e => e.id === scheduleForm.id);
       const { startAt, endAt } = getSessionTimes(scheduleForm.dayIndex, scheduleForm.startTime, scheduleForm.duration);
       
@@ -524,7 +249,7 @@ const Courses: React.FC = () => {
           dayIndex: scheduleForm.dayIndex,
           startTime: scheduleForm.startTime,
           duration: scheduleForm.duration,
-          color: course ? course.colorTag.replace('text-', 'border-').replace('100', '100').replace('700', '800') : 'bg-gray-100 text-gray-800 border-gray-200',
+          color: getScheduleEventColor(course),
           status: existingIdx >= 0 ? scheduleEvents[existingIdx].status : 'draft',
           startAt,
           endAt,
@@ -547,14 +272,6 @@ const Courses: React.FC = () => {
           setScheduleEvents(scheduleEvents.filter(e => e.id !== id));
           setIsScheduleModalOpen(false);
       }
-  };
-
-  const getEventStyle = (startTime: string, duration: number) => {
-      const [h, m] = startTime.split(':').map(Number);
-      const startMinutes = (h - startHour) * 60 + m;
-      const top = (startMinutes / 60) * hourHeight;
-      const height = (duration / 60) * hourHeight;
-      return { top: `${top}px`, height: `${height}px` };
   };
 
   return (
@@ -614,15 +331,12 @@ const Courses: React.FC = () => {
                           hourHeight={hourHeight}
                           scheduleEvents={scheduleEvents}
                           draggedEventId={draggedEventId}
-                          courseTypeLabels={COURSE_TYPE_LABELS}
                           handleCourseDragStart={handleCourseDragStart}
                           handleEventDragStart={handleEventDragStart}
                           handleDragOver={handleDragOver}
                           handleDrop={handleDrop}
                           handleGridClick={handleGridClick}
                           openEditModal={openEditModal}
-                          getEventStyle={getEventStyle}
-                          isEventFull={isEventFull}
                       />
                   </div>
               )}
@@ -641,8 +355,6 @@ const Courses: React.FC = () => {
                       handleDuplicate={handleDuplicate}
                       handleDelete={handleDelete}
                       handleSaveCourse={handleSaveCourse}
-                      courseTypeLabels={COURSE_TYPE_LABELS}
-                      courseColorTags={COURSE_COLOR_TAGS}
                   />
               )}
 
@@ -657,7 +369,6 @@ const Courses: React.FC = () => {
         libraryList={libraryList}
         confirmSchedule={confirmSchedule}
         deleteEvent={deleteEvent}
-        courseTypeLabels={COURSE_TYPE_LABELS}
       />
 
       <style>{`

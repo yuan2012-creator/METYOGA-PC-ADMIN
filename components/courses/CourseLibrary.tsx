@@ -1,6 +1,10 @@
 import React from 'react';
 import type { Course } from '../../types';
-import type { CourseLibraryItem } from '../Courses';
+import {
+  COURSE_COLOR_TAGS,
+  COURSE_TYPE_LABELS,
+} from '../../utils/courseSelectors';
+import type { CourseLibraryItem } from '../../utils/courseSelectors';
 
 interface CourseLibraryProps {
   libraryList: CourseLibraryItem[];
@@ -14,8 +18,6 @@ interface CourseLibraryProps {
   handleDuplicate: (course: CourseLibraryItem, e: React.MouseEvent) => void;
   handleDelete: (id: string, e: React.MouseEvent) => void;
   handleSaveCourse: (updatedCourse: CourseLibraryItem) => void;
-  courseTypeLabels: Record<CourseLibraryItem['type'], string>;
-  courseColorTags: Record<CourseLibraryItem['type'], string>;
 }
 
 const CourseLibrary: React.FC<CourseLibraryProps> = ({
@@ -30,8 +32,6 @@ const CourseLibrary: React.FC<CourseLibraryProps> = ({
   handleDuplicate,
   handleDelete,
   handleSaveCourse,
-  courseTypeLabels,
-  courseColorTags,
 }) => (
   <>
                   <div className="space-y-6 animate-fadeIn">
@@ -69,7 +69,7 @@ const CourseLibrary: React.FC<CourseLibraryProps> = ({
                                           </td>
                                           <td className="p-4">
                                               <span className={`px-2 py-1 rounded text-[10px] font-bold ${course.colorTag}`}>
-                                                  {courseTypeLabels[course.type]}
+                                                  {COURSE_TYPE_LABELS[course.type]}
                                               </span>
                                           </td>
                                           <td className="p-4 text-gray-600">
@@ -174,7 +174,7 @@ const CourseLibrary: React.FC<CourseLibraryProps> = ({
                                                 value={selectedCourse.type} 
                                                 onChange={e => {
                                                     const nextType = e.target.value as Course['type'];
-                                                    setSelectedCourse({...selectedCourse, type: nextType, colorTag: courseColorTags[nextType]});
+                                                    setSelectedCourse({...selectedCourse, type: nextType, colorTag: COURSE_COLOR_TAGS[nextType]});
                                                 }}
                                                 className="w-full bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-sm outline-none focus:border-black transition"
                                               >
@@ -185,7 +185,7 @@ const CourseLibrary: React.FC<CourseLibraryProps> = ({
                                                   <option value="ttc">教培</option>
                                               </select>
                                           ) : (
-                                              <div className="text-sm font-medium">{courseTypeLabels[selectedCourse.type]}</div>
+                                              <div className="text-sm font-medium">{COURSE_TYPE_LABELS[selectedCourse.type]}</div>
                                           )}
                                       </div>
                                       <div>

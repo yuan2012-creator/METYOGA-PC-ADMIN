@@ -1,5 +1,10 @@
 import React from 'react';
-import type { CourseLibraryItem, Room, ScheduleEvent } from '../Courses';
+import {
+  COURSE_TYPE_LABELS,
+  getCalendarEventStyle,
+  isEventFull,
+} from '../../utils/courseSelectors';
+import type { CourseLibraryItem, Room, ScheduleEvent } from '../../utils/courseSelectors';
 
 interface ScheduleCalendarProps {
   libraryList: CourseLibraryItem[];
@@ -11,15 +16,12 @@ interface ScheduleCalendarProps {
   hourHeight: number;
   scheduleEvents: ScheduleEvent[];
   draggedEventId: string | null;
-  courseTypeLabels: Record<CourseLibraryItem['type'], string>;
   handleCourseDragStart: (e: React.DragEvent, course: CourseLibraryItem) => void;
   handleEventDragStart: (e: React.DragEvent, event: ScheduleEvent) => void;
   handleDragOver: (e: React.DragEvent) => void;
   handleDrop: (e: React.DragEvent, dayIndex: number) => void;
   handleGridClick: (e: React.MouseEvent, dayIndex: number) => void;
   openEditModal: (event: ScheduleEvent) => void;
-  getEventStyle: (startTime: string, duration: number) => { top: string; height: string };
-  isEventFull: (event: Pick<ScheduleEvent, 'bookedCount' | 'capacity'>) => boolean;
 }
 
 const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
@@ -32,15 +34,12 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
   hourHeight,
   scheduleEvents,
   draggedEventId,
-  courseTypeLabels,
   handleCourseDragStart,
   handleEventDragStart,
   handleDragOver,
   handleDrop,
   handleGridClick,
   openEditModal,
-  getEventStyle,
-  isEventFull,
 }) => (
   <>
                       {/* SECTION 2: SMART SCHEDULING GUIDANCE (Moved here for better visibility) */}
@@ -117,7 +116,7 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                                               className={`p-3 rounded-xl border border-gray-200 bg-white shadow-sm cursor-move hover:border-black hover:shadow-md transition group active:cursor-grabbing`}
                                           >
                                               <div className="flex justify-between items-start mb-1">
-                                                  <div className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${course.colorTag}`}>{courseTypeLabels[course.type]}</div>
+                                                  <div className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${course.colorTag}`}>{COURSE_TYPE_LABELS[course.type]}</div>
                                                   <span className="text-xs text-gray-400">{course.durationMinutes}min</span>
                                               </div>
                                               <div className="font-bold text-sm text-gray-900 mb-1">{course.name}</div>
@@ -222,7 +221,7 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                                                                   onClick={(e) => { e.stopPropagation(); openEditModal(evt); }}
                                                                   className={`absolute left-1 right-1 rounded-lg px-2 py-1.5 text-xs border cursor-move shadow-sm hover:shadow-md transition-all z-10 flex flex-col justify-between overflow-hidden ${evt.color}`}
                                                                   style={{
-                                                                      ...getEventStyle(evt.startTime, evt.duration),
+                                                                      ...getCalendarEventStyle(evt.startTime, evt.duration, hoursArray[0] ?? 8, hourHeight),
                                                                       opacity: draggedEventId === evt.id ? 0.5 : 1
                                                                   }}
                                                               >

@@ -1,21 +1,15 @@
 import React from 'react';
-import type { OpsScheduleItem } from '../Courses';
-
-type OpsFilter = 'all' | 'group' | 'private';
+import type {
+  CourseOpsSummary,
+  OpsFilter,
+  OpsScheduleItem,
+} from '../../utils/courseSelectors';
 
 interface TodayOpsPanelProps {
   opsFilter: OpsFilter;
   setOpsFilter: React.Dispatch<React.SetStateAction<OpsFilter>>;
   filteredOpsSchedule: OpsScheduleItem[];
-  opsSummary: {
-    totalCourses: number;
-    smallClass: number;
-    groupClass: number;
-    privateClass: number;
-    totalEnrolled: number;
-    totalEmptySpots: number;
-    totalConsumed: number;
-  };
+  opsSummary: CourseOpsSummary;
   aiGuidance: string;
 }
 
