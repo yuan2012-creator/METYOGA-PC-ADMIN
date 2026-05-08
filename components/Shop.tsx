@@ -19,10 +19,33 @@ import {
   type StoreOption,
 } from './shop/shopConfig';
 
+type ShopToastTone = 'info' | 'success';
+
+interface ShopToast {
+  id: number;
+  message: string;
+  tone: ShopToastTone;
+}
+
+interface ShopConfirmDialog {
+  title: string;
+  message: string;
+  confirmLabel?: string;
+  onConfirm: () => void;
+}
+
+interface HolidayForm {
+  name: string;
+  date: string;
+}
+
 const Shop: React.FC = () => {
   const [subTab, setSubTab] = useState<ShopSubTab>('setup');
   const [searchQuery, setSearchQuery] = useState('');
   const [shopConfig, setShopConfig] = useState<ShopConfigDraft>(() => buildInitialShopConfig(MOCK_STORE_INFO));
+  const [toast, setToast] = useState<ShopToast | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<ShopConfirmDialog | null>(null);
+  const [holidayForm, setHolidayForm] = useState<HolidayForm | null>(null);
 
   const { store: activeStore, storeOptions, isStoreMenuOpen } = shopConfig;
 
@@ -44,16 +67,31 @@ const Shop: React.FC = () => {
       setShopConfig(prev => updateStoreBasicInfo(prev, updates));
   };
 
+  const showToast = (message: string, tone: ShopToastTone = 'info') => {
+      setToast({ id: Date.now(), message, tone });
+      window.setTimeout(() => {
+          setToast(current => (current?.message === message ? null : current));
+      }, 2400);
+  };
+
   const saveAll = () => {
       const saveInput = buildSaveShopConfigInput(shopConfig);
       void saveInput;
-      // alert("✅ 所有店铺配置已保存并同步至小程序端");
+      showToast('所有店铺配置已保存并同步至小程序端', 'success');
   };
 
   const addHoliday = () => {
-      const n = prompt("请输入假期名称 (如: 春节假期)");
-      const d = prompt("请输入日期范围 (如: 2026-01-20 至 2026-01-28)");
-      if (n && d) setShopConfig(prev => addStoreHoliday(prev, { name: n, date: d }));
+      setHolidayForm({ name: '', date: '' });
+  };
+
+  const submitHoliday = () => {
+      if (!holidayForm?.name.trim() || !holidayForm.date.trim()) return;
+
+      setShopConfig(prev => addStoreHoliday(prev, {
+          name: holidayForm.name.trim(),
+          date: holidayForm.date.trim(),
+      }));
+      setHolidayForm(null);
   };
 
   const removeHoliday = (idx: number) => {
@@ -61,14 +99,17 @@ const Shop: React.FC = () => {
   };
 
   const uploadStoreImage = () => {
-      // alert("✅ 模拟：系统文件选择框已弹出，图片上传成功");
       setShopConfig(prev => addStoreGalleryImage(prev, DEMO_STORE_IMAGE_URL));
+      showToast('模拟图片已上传成功', 'success');
   };
 
   const removeImage = (idx: number) => {
-      if(confirm('确定要删除这张图片吗？')) {
-          setShopConfig(prev => removeStoreGalleryImage(prev, idx));
-      }
+      setConfirmDialog({
+          title: '删除门店图片',
+          message: '确定要删除这张图片吗？',
+          confirmLabel: '删除图片',
+          onConfirm: () => setShopConfig(prev => removeStoreGalleryImage(prev, idx)),
+      });
   };
 
   return (
@@ -80,7 +121,7 @@ const Shop: React.FC = () => {
                 <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                     店铺管理
                     <button
-                        onClick={() => alert('Gemini AI 正在分析店铺运营数据并生成优化建议...')}
+                        onClick={() => showToast('Gemini AI 正在分析店铺运营数据并生成优化建议...', 'info')}
                         className="text-[10px] text-purple-600 font-bold flex items-center gap-1 hover:underline ml-2 bg-purple-50 px-2 py-1 rounded-full border border-purple-100"
                     >
                         <i className="fa-solid fa-wand-magic-sparkles"></i> AI 店铺优化
@@ -327,6 +368,98 @@ const Shop: React.FC = () => {
 
             </div>
         </div>
+
+        {toast && (
+            <div className="fixed top-20 right-8 z-[70] animate-fadeIn">
+                <div className={`px-4 py-3 rounded-xl shadow-xl border text-sm font-bold flex items-center gap-3 ${
+                    toast.tone === 'success'
+                    ? 'bg-green-50 text-green-700 border-green-100'
+                    : 'bg-white text-gray-800 border-gray-100'
+                }`}>
+                    <i className={`fa-solid ${toast.tone === 'success' ? 'fa-circle-check' : 'fa-circle-info'}`}></i>
+                    {toast.message}
+                    <button onClick={() => setToast(null)} className="ml-2 text-current opacity-50 hover:opacity-100">
+                        <i className="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+        )}
+
+        {confirmDialog && (
+            <div className="fixed inset-0 z-[80] flex items-center justify-center">
+                <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" onClick={() => setConfirmDialog(null)}></div>
+                <div className="relative bg-white w-full max-w-sm rounded-3xl shadow-2xl border border-gray-100 p-6 animate-fadeIn">
+                    <div className="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center mb-4">
+                        <i className="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">{confirmDialog.title}</h3>
+                    <p className="text-sm text-gray-500 leading-relaxed mb-6">{confirmDialog.message}</p>
+                    <div className="flex justify-end gap-3">
+                        <button onClick={() => setConfirmDialog(null)} className="px-4 py-2 rounded-xl text-xs font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 transition">
+                            取消
+                        </button>
+                        <button
+                            onClick={() => {
+                                confirmDialog.onConfirm();
+                                setConfirmDialog(null);
+                            }}
+                            className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-red-500 hover:bg-red-600 transition"
+                        >
+                            {confirmDialog.confirmLabel || '确认'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {holidayForm && (
+            <div className="fixed inset-0 z-[80] flex items-center justify-center">
+                <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" onClick={() => setHolidayForm(null)}></div>
+                <div className="relative bg-white w-full max-w-md rounded-3xl shadow-2xl border border-gray-100 p-6 animate-fadeIn">
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">添加特殊营业时间</h3>
+                    <p className="text-sm text-gray-500 leading-relaxed mb-5">填写假期名称和日期范围，用于门店公告展示。</p>
+                    <div className="space-y-4 mb-6">
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">假期名称</label>
+                            <input
+                                autoFocus
+                                type="text"
+                                value={holidayForm.name}
+                                onChange={(event) => setHolidayForm(current => current ? { ...current, name: event.target.value } : current)}
+                                placeholder="如：春节假期"
+                                className="input-apple"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-gray-500 uppercase mb-2">日期范围</label>
+                            <input
+                                type="text"
+                                value={holidayForm.date}
+                                onChange={(event) => setHolidayForm(current => current ? { ...current, date: event.target.value } : current)}
+                                onKeyDown={(event) => {
+                                    if (event.key === 'Enter') submitHoliday();
+                                    if (event.key === 'Escape') setHolidayForm(null);
+                                }}
+                                placeholder="如：2026-01-20 至 2026-01-28"
+                                className="input-apple"
+                            />
+                        </div>
+                    </div>
+                    <div className="flex justify-end gap-3">
+                        <button onClick={() => setHolidayForm(null)} className="px-4 py-2 rounded-xl text-xs font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 transition">
+                            取消
+                        </button>
+                        <button
+                            onClick={submitHoliday}
+                            disabled={!holidayForm.name.trim() || !holidayForm.date.trim()}
+                            className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-black hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition"
+                        >
+                            添加假期
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
 
       <style>{`
         .custom-scroll::-webkit-scrollbar { width: 5px; }
