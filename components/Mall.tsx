@@ -16,20 +16,23 @@ import MallTtc, { type MallTtcCourse, type Student, type TTCTutor, toMallTtcCour
 import type {
   CardEditCategory,
   MallActionType,
+  MallActionButtonRenderer,
   MallDuplicableActionType,
+  MallDuplicableItem,
+  MallEditableItem,
   MallModule,
+  MallSelectedItem,
+  MallCardEditorItem,
+  MallEditorSetter,
+  MallPointEditorItem,
   MallSubView,
+  MallTtcEditorItem,
   PointProductTab,
 } from './mall/mallTypes';
 import type { CardProduct, Contract, Order, PointProduct } from '../types';
 
 // --- Constants ---
 const AVAILABLE_VENUES = ['万象城馆', '西湖旗舰馆', '滨江宝龙馆', '城西银泰馆'];
-
-// --- Types ---
-type MallEditableItem = CardProduct | MallTtcCourse | TTCTutor | PointProduct;
-type MallDuplicableItem = CardProduct | MallTtcCourse | PointProduct;
-type MallSelectedItem = Partial<CardProduct> | Partial<MallTtcCourse> | Partial<TTCTutor> | Partial<PointProduct> | null;
 
 interface MallActionHandlers {
   edit: (item: MallEditableItem, type: MallActionType) => void;
@@ -40,6 +43,16 @@ interface MallActionHandlers {
 const cloneMallItem = <T,>(item: T): T => JSON.parse(JSON.stringify(item)) as T;
 
 const canDuplicateMallItem = (type: MallActionType): type is MallDuplicableActionType => type !== 'ttc_tutor';
+
+const applyMallEditorUpdate = <T,>(
+    prev: MallSelectedItem,
+    value: T | null | ((current: T | null) => T | null)
+): MallSelectedItem => {
+    if (typeof value === 'function') {
+        return (value as (current: T | null) => T | null)(prev as T | null) as MallSelectedItem;
+    }
+    return value as MallSelectedItem;
+};
 
 const MALL_MODULE_TABS: { id: MallModule; label: string }[] = [
   { id: 'cards', label: '会员卡项 (Cards)' },
@@ -106,6 +119,18 @@ const Mall: React.FC = () => {
 
   const [orders] = useState<Order[]>(MOCK_ORDERS);
   const [contracts] = useState<Contract[]>(MOCK_CONTRACTS);
+
+  const setCardSelectedItem: MallEditorSetter<MallCardEditorItem> = (value) => {
+      setSelectedItem(prev => applyMallEditorUpdate(prev, value));
+  };
+
+  const setTtcSelectedItem: MallEditorSetter<MallTtcEditorItem> = (value) => {
+      setSelectedItem(prev => applyMallEditorUpdate(prev, value));
+  };
+
+  const setPointSelectedItem: MallEditorSetter<MallPointEditorItem> = (value) => {
+      setSelectedItem(prev => applyMallEditorUpdate(prev, value));
+  };
 
   // --- Helpers ---
   const handleEdit = (item: MallEditableItem, type: MallActionType) => {
@@ -226,7 +251,7 @@ const Mall: React.FC = () => {
       </div>
   );
 
-  const renderActionButtons = (item: MallEditableItem, type: MallActionType) => (
+  const renderActionButtons: MallActionButtonRenderer = (item, type) => (
       <ActionButtons item={item} type={type} handlers={mallActionHandlers} />
   );
 
@@ -236,7 +261,7 @@ const Mall: React.FC = () => {
           cards={cards}
           setCards={setCards}
           selectedItem={selectedItem}
-          setSelectedItem={setSelectedItem}
+          setSelectedItem={setCardSelectedItem}
           editCardCategory={editCardCategory}
           setEditCardCategory={setEditCardCategory}
           overview={<MallDataOverview moduleType="cards" venues={AVAILABLE_VENUES} />}
@@ -255,7 +280,7 @@ const Mall: React.FC = () => {
           ttcTutors={ttcTutors}
           editType={editType}
           selectedItem={selectedItem}
-          setSelectedItem={setSelectedItem}
+          setSelectedItem={setTtcSelectedItem}
           students={students}
           overview={<MallDataOverview moduleType="ttc" venues={AVAILABLE_VENUES} />}
           actionButtons={renderActionButtons}
@@ -273,7 +298,7 @@ const Mall: React.FC = () => {
           products={products}
           setProducts={setProducts}
           selectedItem={selectedItem}
-          setSelectedItem={setSelectedItem}
+          setSelectedItem={setPointSelectedItem}
           pointProductTab={pointProductTab}
           setPointProductTab={setPointProductTab}
           overview={<MallDataOverview moduleType="points" venues={AVAILABLE_VENUES} />}

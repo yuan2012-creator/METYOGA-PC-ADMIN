@@ -1,7 +1,13 @@
 import React from 'react';
 import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { TtcProduct } from '../../types';
-import type { MallActionType } from './mallTypes';
+import type {
+  MallActionButtonRenderer,
+  MallActionType,
+  MallEditorSetter,
+  MallTtcActionItem,
+  MallTtcEditorItem,
+} from './mallTypes';
 
 export interface TTCTutorExperience {
     year: string;
@@ -105,14 +111,14 @@ interface MallTtcProps {
   ttcCourses: MallTtcCourse[];
   ttcTutors: TTCTutor[];
   editType: MallActionType;
-  selectedItem: any;
-  setSelectedItem: React.Dispatch<React.SetStateAction<any>>;
+  selectedItem: MallTtcEditorItem | null;
+  setSelectedItem: MallEditorSetter<MallTtcEditorItem>;
   students: Student[];
   overview: React.ReactNode;
-  actionButtons: (item: any, type: MallActionType) => React.ReactNode;
+  actionButtons: MallActionButtonRenderer<MallTtcActionItem>;
   handleBack: () => void;
   handleCreate: (type: MallActionType) => void;
-  handleViewStudents: (item: any) => void;
+  handleViewStudents: (item: MallTtcCourse) => void;
   availableVenues: string[];
   funnelData: { name: string; value: number }[];
 }
@@ -274,7 +280,7 @@ const MallTtc: React.FC<MallTtcProps> = ({
                                           />
                                           <button 
                                             onClick={() => {
-                                                const newResume = selectedItem.resume.filter((_:any, i:number) => i !== idx);
+                                                const newResume = (selectedItem.resume || []).filter((_, i: number) => i !== idx);
                                                 setSelectedItem({...selectedItem, resume: newResume});
                                             }}
                                             className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500 transition"
@@ -380,7 +386,7 @@ const MallTtc: React.FC<MallTtcProps> = ({
                                               />
                                               <button 
                                                 onClick={() => {
-                                                    const newPlan = selectedItem.planNodes.filter((_:any, i:number) => i !== idx);
+                                                    const newPlan = (selectedItem.planNodes || []).filter((_, i: number) => i !== idx);
                                                     setSelectedItem({...selectedItem, planNodes: newPlan});
                                                 }}
                                                 className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500 transition"
@@ -428,7 +434,7 @@ const MallTtc: React.FC<MallTtcProps> = ({
                                               />
                                               <button 
                                                 onClick={() => {
-                                                    const newAudience = selectedItem.audienceNodes.filter((_:any, i:number) => i !== idx);
+                                                    const newAudience = (selectedItem.audienceNodes || []).filter((_, i: number) => i !== idx);
                                                     setSelectedItem({...selectedItem, audienceNodes: newAudience});
                                                 }}
                                                 className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-red-500 transition"
@@ -507,7 +513,7 @@ const MallTtc: React.FC<MallTtcProps> = ({
                                           <button 
                                             className="text-xs text-red-500 font-bold hover:underline"
                                             onClick={() => {
-                                                const newScheds = selectedItem.schedules.filter((_:any, i:number) => i !== idx);
+                                                const newScheds = (selectedItem.schedules || []).filter((_, i: number) => i !== idx);
                                                 setSelectedItem({...selectedItem, schedules: newScheds});
                                             }}
                                           >删除</button>
@@ -587,7 +593,7 @@ const MallTtc: React.FC<MallTtcProps> = ({
                           <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
                               <div className="text-xs text-gray-400 mb-1">报名量 (Signups)</div>
                               <div className="text-xl font-bold font-mono">
-                                  {(selectedItem?.schedules || []).reduce((acc:number, s:any) => acc + (s.enrolled || 0), 0)}
+                                  {(selectedItem?.schedules || []).reduce((acc: number, schedule: TTCSchedule) => acc + (schedule.enrolled || 0), 0)}
                               </div>
                               <div className="text-[10px] text-gray-400 font-bold mt-1">-</div>
                           </div>

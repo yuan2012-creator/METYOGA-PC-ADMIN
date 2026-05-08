@@ -1,18 +1,25 @@
 import React from 'react';
 import { Area, AreaChart, ResponsiveContainer } from 'recharts';
 import type { CardProduct } from '../../types';
-import type { CardEditCategory, MallActionType } from './mallTypes';
+import type {
+  CardEditCategory,
+  MallActionButtonRenderer,
+  MallCardActionItem,
+  MallCardEditorItem,
+  MallEditorSetter,
+  MallActionType,
+} from './mallTypes';
 
 interface MallCardsProps {
   view: 'list' | 'edit';
   cards: CardProduct[];
   setCards: React.Dispatch<React.SetStateAction<CardProduct[]>>;
-  selectedItem: any;
-  setSelectedItem: React.Dispatch<React.SetStateAction<any>>;
+  selectedItem: MallCardEditorItem | null;
+  setSelectedItem: MallEditorSetter<MallCardEditorItem>;
   editCardCategory: CardEditCategory;
   setEditCardCategory: React.Dispatch<React.SetStateAction<CardEditCategory>>;
   overview: React.ReactNode;
-  actionButtons: (item: any, type: MallActionType) => React.ReactNode;
+  actionButtons: MallActionButtonRenderer<MallCardActionItem>;
   handleBack: () => void;
   handleCreate: (type: MallActionType) => void;
   salesTrendData: { name: string; val: number }[];
@@ -79,7 +86,7 @@ const MallCards: React.FC<MallCardsProps> = ({
 
   const renderCardEdit = () => {
       const isStored = editCardCategory === 'stored_value';
-      const editingCard = selectedItem as CardProduct;
+      const editingCard = selectedItem as MallCardEditorItem;
       const setEditingCard = (updates: Partial<CardProduct>) => setSelectedItem({ ...selectedItem, ...updates });
 
       return (
@@ -115,7 +122,7 @@ const MallCards: React.FC<MallCardsProps> = ({
                                   <label className="text-xs font-bold text-gray-500 mb-1 block">有效期</label>
                                   <div className="flex gap-2">
                                       <input type="number" defaultValue={editingCard.validity} onBlur={e => setEditingCard({validity: Number(e.target.value)})} className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-black transition" />
-                                      <select defaultValue={editingCard.validityUnit} onChange={e => setEditingCard({validityUnit: e.target.value as any})} className="bg-gray-50 border border-gray-200 rounded-xl px-2 text-xs outline-none">
+                                      <select defaultValue={editingCard.validityUnit} onChange={e => setEditingCard({validityUnit: e.target.value as CardProduct['validityUnit']})} className="bg-gray-50 border border-gray-200 rounded-xl px-2 text-xs outline-none">
                                           <option value="month">月</option>
                                           <option value="day">天</option>
                                       </select>
@@ -347,9 +354,9 @@ const MallCards: React.FC<MallCardsProps> = ({
                       <button onClick={() => {
                           // Save Logic
                           if (selectedItem.id) {
-                              setCards(cards.map(c => c.id === selectedItem.id ? selectedItem : c));
+                              setCards(cards.map(c => c.id === selectedItem.id ? selectedItem as CardProduct : c));
                           } else {
-                              setCards([...cards, { ...selectedItem, id: `c_${Date.now()}`, status: 'active' }]);
+                              setCards([...cards, { ...selectedItem, id: `c_${Date.now()}`, status: 'active' } as CardProduct]);
                           }
                           setSelectedItem(null);
                           handleBack();

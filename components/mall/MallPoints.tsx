@@ -1,17 +1,23 @@
 import React from 'react';
-import type { PointProduct } from '../../types';
-import type { MallActionType, PointProductTab } from './mallTypes';
+import type { PointProduct, ProductSpec, ProductSpecValue } from '../../types';
+import type {
+  MallActionButtonRenderer,
+  MallEditorSetter,
+  MallPointActionItem,
+  MallPointEditorItem,
+  PointProductTab,
+} from './mallTypes';
 
 interface MallPointsProps {
   view: 'list' | 'edit';
   products: PointProduct[];
   setProducts: React.Dispatch<React.SetStateAction<PointProduct[]>>;
-  selectedItem: any;
-  setSelectedItem: React.Dispatch<React.SetStateAction<any>>;
+  selectedItem: MallPointEditorItem | null;
+  setSelectedItem: MallEditorSetter<MallPointEditorItem>;
   pointProductTab: PointProductTab;
   setPointProductTab: React.Dispatch<React.SetStateAction<PointProductTab>>;
   overview: React.ReactNode;
-  actionButtons: (item: any, type: MallActionType) => React.ReactNode;
+  actionButtons: MallActionButtonRenderer<MallPointActionItem>;
   handleBack: () => void;
   handleCreateProduct: () => void;
   availableVenues: string[];
@@ -101,7 +107,7 @@ const MallPoints: React.FC<MallPointsProps> = ({
 
   const renderPointsEdit = () => {
       const isPhysical = selectedItem?.type === 'physical';
-      const setEditingProduct = (updates: any) => setSelectedItem({ ...selectedItem, ...updates });
+      const setEditingProduct = (updates: MallPointEditorItem) => setSelectedItem({ ...selectedItem, ...updates });
 
       return (
           <div className="flex h-full gap-6 animate-fadeIn">
@@ -286,7 +292,7 @@ const MallPoints: React.FC<MallPointsProps> = ({
                                           </button>
                                       </div>
                                       
-                                      {(selectedItem?.specs || []).map((spec: any, specIndex: number) => (
+                                      {(selectedItem?.specs || []).map((spec: ProductSpec, specIndex: number) => (
                                           <div key={specIndex} className="bg-white p-4 rounded-xl border border-gray-200 space-y-3">
                                               <div className="flex justify-between items-center">
                                                   <input 
@@ -313,7 +319,7 @@ const MallPoints: React.FC<MallPointsProps> = ({
                                               </div>
                                               
                                               <div className="space-y-2">
-                                                  {spec.values.map((val: any, valIndex: number) => (
+                                                  {spec.values.map((val: ProductSpecValue, valIndex: number) => (
                                                       <div key={valIndex} className="flex items-center gap-2">
                                                           <input 
                                                               type="text" 
@@ -398,7 +404,7 @@ const MallPoints: React.FC<MallPointsProps> = ({
                                                       checked={selectedItem.functionScope?.includes(fn)} 
                                                       onChange={e => {
                                                           const current = selectedItem.functionScope || [];
-                                                          const newScope = e.target.checked ? [...current, fn] : current.filter((f:any) => f !== fn);
+                                                          const newScope = e.target.checked ? [...current, fn] : current.filter((f: string) => f !== fn);
                                                           setEditingProduct({functionScope: newScope});
                                                       }} 
                                                       className="hidden" 
@@ -420,7 +426,7 @@ const MallPoints: React.FC<MallPointsProps> = ({
                                                       checked={selectedItem.genreScope?.includes(genre)} 
                                                       onChange={e => {
                                                           const current = selectedItem.genreScope || [];
-                                                          const newScope = e.target.checked ? [...current, genre] : current.filter((g:any) => g !== genre);
+                                                          const newScope = e.target.checked ? [...current, genre] : current.filter((g: string) => g !== genre);
                                                           setEditingProduct({genreScope: newScope});
                                                       }} 
                                                       className="hidden" 
@@ -466,9 +472,9 @@ const MallPoints: React.FC<MallPointsProps> = ({
                           onClick={() => {
                               // Save Logic
                               if (selectedItem.id) {
-                                  setProducts(products.map(p => p.id === selectedItem.id ? selectedItem : p));
+                                  setProducts(products.map(p => p.id === selectedItem.id ? selectedItem as PointProduct : p));
                               } else {
-                                  setProducts([...products, { ...selectedItem, id: `p_${Date.now()}` }]);
+                                  setProducts([...products, { ...selectedItem, id: `p_${Date.now()}` } as PointProduct]);
                               }
                               setSelectedItem(null);
                               handleBack();
@@ -538,7 +544,7 @@ const MallPoints: React.FC<MallPointsProps> = ({
                       <div>
                           <div className="text-xs font-bold text-gray-400 mb-4 uppercase">最近兑换记录</div>
                           <div className="space-y-3">
-                              {(selectedItem?.recentExchanges || []).map((log: any) => (
+                              {(selectedItem?.recentExchanges || []).map((log: NonNullable<PointProduct['recentExchanges']>[number]) => (
                                   <div key={log.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
                                       <div className="w-8 h-8 rounded-full bg-white border border-gray-200 overflow-hidden">
                                           <img src={log.avatar || undefined} className="w-full h-full object-cover" alt="" />
