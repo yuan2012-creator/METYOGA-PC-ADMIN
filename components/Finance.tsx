@@ -21,22 +21,19 @@ import {
   MOCK_REFUNDS,
 } from '../constants';
 import {
+  buildFinanceOverviewSummary,
+  buildFinanceIncomeStructure,
+  buildFinancePendingItems,
+  buildFinanceTransactionRows,
   filterLedgerEntriesByDateRange,
+  filterFinanceTransactionRows,
   filterOrdersByDateRange,
   filterPaymentsByDateRange,
   filterRefundsByDateRange,
-  getPendingOrders,
-  getPendingRefunds,
-  sumPayments,
-  sumRecognizedIncome,
-  sumRefunds,
+  type FinanceOrderFilter,
+  type FinancePendingItem,
+  type FinanceTransactionRow,
 } from '../utils/financeSelectors';
-import type {
-  FinanceLedgerEntry,
-  Order,
-  Payment,
-  Refund,
-} from '../types';
 import DeferredRevenuePanel from './finance/DeferredRevenuePanel';
 import ExpensePayrollPanel from './finance/ExpensePayrollPanel';
 import FinanceOverviewCards from './finance/FinanceOverviewCards';
@@ -57,35 +54,6 @@ ChartJS.register(
 );
 
 type FinanceSubTab = 'overview' | 'revenue' | 'expense' | 'target' | 'report';
-export type FinanceOrderFilter = 'all' | 'card' | 'refund' | 'integral';
-
-export interface FinanceTransactionRow {
-  id: string;
-  date: string;
-  occurredAt: string;
-  type: string;
-  content: string;
-  amount: number;
-  customer: string;
-  method: string;
-  status: string;
-  statusTag: string;
-  sourceType: 'order' | 'refund';
-  orderId: string;
-  paymentId?: string;
-  refundId?: string;
-  ledgerEntryId?: string;
-  productTypes: Order['items'][number]['productType'][];
-  integral?: number;
-}
-
-export interface FinancePendingItem {
-  id: string;
-  tone: 'refund' | 'order';
-  title: string;
-  description: string;
-  actionLabel: string;
-}
 
 interface StaffPerformance {
   name: string;
@@ -110,184 +78,6 @@ const FINANCE_SUB_TABS: { id: FinanceSubTab; label: string }[] = [
   { id: 'target', label: '业绩目标' },
   { id: 'report', label: '报表中心' },
 ];
-
-const PRODUCT_TYPE_LABELS: Record<Order['items'][number]['productType'], string> = {
-  card: '卡项',
-  ttc: '教培',
-  point: '积分',
-  course: '课程',
-  custom: '其他',
-};
-
-const PAYMENT_METHOD_LABELS: Record<NonNullable<Payment['method']>, string> = {
-  cash: '现金',
-  card: '银行卡',
-  wechat: '微信支付',
-  alipay: '支付宝',
-  bank_transfer: '银行转账',
-  other: '其他',
-};
-
-const ORDER_STATUS_LABELS: Record<Order['status'], string> = {
-  draft: '草稿',
-  pending_payment: '待支付',
-  paid: '已支付',
-  fulfilled: '已履约',
-  closed: '已关闭',
-  cancelled: '已取消',
-  partially_refunded: '部分退款',
-  refunded: '已退款',
-};
-
-const ORDER_STATUS_TAGS: Record<Order['status'], string> = {
-  draft: 'bg-gray-50 text-gray-600 border-gray-200',
-  pending_payment: 'bg-orange-50 text-orange-700 border-orange-200',
-  paid: 'bg-green-50 text-green-700 border-green-200',
-  fulfilled: 'bg-green-50 text-green-700 border-green-200',
-  closed: 'bg-gray-50 text-gray-600 border-gray-200',
-  cancelled: 'bg-gray-50 text-gray-600 border-gray-200',
-  partially_refunded: 'bg-red-50 text-red-700 border-red-200',
-  refunded: 'bg-red-50 text-red-700 border-red-200',
-};
-
-const REFUND_STATUS_LABELS: Record<Refund['status'], string> = {
-  requested: '已申请',
-  reviewing: '审核中',
-  approved: '已通过',
-  processing: '处理中',
-  completed: '已退款',
-  rejected: '已拒绝',
-  cancelled: '已取消',
-};
-
-const REFUND_STATUS_TAGS: Record<Refund['status'], string> = {
-  requested: 'bg-orange-50 text-orange-700 border-orange-200',
-  reviewing: 'bg-orange-50 text-orange-700 border-orange-200',
-  approved: 'bg-blue-50 text-blue-700 border-blue-200',
-  processing: 'bg-blue-50 text-blue-700 border-blue-200',
-  completed: 'bg-red-50 text-red-700 border-red-200',
-  rejected: 'bg-gray-50 text-gray-600 border-gray-200',
-  cancelled: 'bg-gray-50 text-gray-600 border-gray-200',
-};
-
-const formatDateTime = (iso?: string): string => {
-  if (!iso) return '-';
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return iso;
-
-  return `${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
-};
-
-const getMemberName = (memberId: string): string => (
-  MOCK_MEMBERS.find(member => member.id === memberId)?.name ?? `会员 ${memberId}`
-);
-
-const getOrderById = (orderId: string): Order | undefined => (
-  MOCK_ORDERS.find(order => order.id === orderId)
-);
-
-const getOrderPayment = (orderId: string, payments: Payment[]): Payment | undefined => (
-  payments.find(payment => (
-    payment.orderId === orderId && (payment.status === 'paid' || payment.status === 'reconciled')
-  )) ?? payments.find(payment => payment.orderId === orderId)
-);
-
-const getLedgerEntryForSource = (
-  entries: FinanceLedgerEntry[],
-  sourceType: FinanceLedgerEntry['sourceType'],
-  sourceId: string
-): FinanceLedgerEntry | undefined => (
-  entries.find(entry => entry.sourceType === sourceType && entry.sourceId === sourceId)
-);
-
-const getContractTitle = (order: Order): string | undefined => (
-  order.contractId ? MOCK_CONTRACTS.find(contract => contract.id === order.contractId)?.title : undefined
-);
-
-const getOrderContent = (order: Order): string => {
-  const itemNames = order.items.map(item => item.productName).join(' / ');
-  const contractTitle = getContractTitle(order);
-  return contractTitle ? `${itemNames} · ${contractTitle}` : itemNames;
-};
-
-const toOrderRow = (
-  order: Order,
-  payments: Payment[],
-  ledgerEntries: FinanceLedgerEntry[]
-): FinanceTransactionRow => {
-  // Payment is joined by orderId; ledger entries only describe accounting impact.
-  const payment = getOrderPayment(order.id, payments);
-  const ledgerEntry = payment
-    ? getLedgerEntryForSource(ledgerEntries, 'payment', payment.id)
-    : undefined;
-  const productTypes = order.items.map(item => item.productType);
-  const primaryProductType = productTypes[0] ?? 'custom';
-  const occurredAt = payment?.paidAt ?? order.createdAt;
-
-  return {
-    id: order.id,
-    date: formatDateTime(occurredAt),
-    occurredAt,
-    type: PRODUCT_TYPE_LABELS[primaryProductType],
-    content: getOrderContent(order),
-    amount: order.paidAmount ?? order.totalAmount,
-    customer: getMemberName(order.memberId),
-    method: payment?.method ? PAYMENT_METHOD_LABELS[payment.method] : '未支付',
-    status: ORDER_STATUS_LABELS[order.status],
-    statusTag: ORDER_STATUS_TAGS[order.status],
-    sourceType: 'order',
-    orderId: order.id,
-    paymentId: payment?.id,
-    ledgerEntryId: ledgerEntry?.id,
-    productTypes,
-  };
-};
-
-const toRefundRow = (
-  refund: Refund,
-  payments: Payment[],
-  ledgerEntries: FinanceLedgerEntry[]
-): FinanceTransactionRow => {
-  const order = getOrderById(refund.orderId);
-  const payment = refund.paymentId
-    ? payments.find(item => item.id === refund.paymentId)
-    : getOrderPayment(refund.orderId, payments);
-  const ledgerEntry = getLedgerEntryForSource(ledgerEntries, 'refund', refund.id);
-  const productTypes = order?.items.map(item => item.productType) ?? [];
-  const occurredAt = refund.completedAt ?? refund.approvedAt ?? refund.requestedAt;
-  const content = order
-    ? `${getOrderContent(order)}${refund.reason ? ` · ${refund.reason}` : ''}`
-    : refund.reason ?? '订单退款';
-
-  return {
-    id: refund.id,
-    date: formatDateTime(occurredAt),
-    occurredAt,
-    type: '退款',
-    content,
-    amount: -refund.amount,
-    customer: getMemberName(refund.memberId),
-    method: payment?.method ? `${PAYMENT_METHOD_LABELS[payment.method]}退款` : '原路返回',
-    status: REFUND_STATUS_LABELS[refund.status],
-    statusTag: REFUND_STATUS_TAGS[refund.status],
-    sourceType: 'refund',
-    orderId: refund.orderId,
-    paymentId: payment?.id,
-    refundId: refund.id,
-    ledgerEntryId: ledgerEntry?.id,
-    productTypes,
-  };
-};
-
-const buildFinanceTransactionRows = (
-  orders: Order[],
-  payments: Payment[],
-  refunds: Refund[],
-  ledgerEntries: FinanceLedgerEntry[]
-): FinanceTransactionRow[] => ([
-  ...orders.map(order => toOrderRow(order, payments, ledgerEntries)),
-  ...refunds.map(refund => toRefundRow(refund, payments, ledgerEntries)),
-].sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime()));
 
 const Finance: React.FC = () => {
   const [subTab, setSubTab] = useState<FinanceSubTab>('overview');
@@ -323,7 +113,14 @@ const Finance: React.FC = () => {
   );
 
   const transactionRows = useMemo(
-    () => buildFinanceTransactionRows(periodOrders, periodPayments, periodRefunds, periodLedgerEntries),
+    () => buildFinanceTransactionRows({
+      orders: periodOrders,
+      payments: periodPayments,
+      refunds: periodRefunds,
+      ledgerEntries: periodLedgerEntries,
+      members: MOCK_MEMBERS,
+      contracts: MOCK_CONTRACTS,
+    }),
     [periodOrders, periodPayments, periodRefunds, periodLedgerEntries]
   );
 
@@ -337,42 +134,37 @@ const Finance: React.FC = () => {
   const annualTarget = 6000000;
   const annualActual = 4200000;
   const monthlyTarget = 540000;
-  const monthlyActual = sumPayments(periodPayments);
   const beginningDeferredRevenue = 1200000;
   const transitionalOperatingExpense = 185000;
+  const financeSummary = useMemo(
+    () => buildFinanceOverviewSummary({
+      orders: periodOrders,
+      payments: periodPayments,
+      refunds: periodRefunds,
+      ledgerEntries: periodLedgerEntries,
+      beginningDeferredRevenue,
+    }),
+    [periodOrders, periodPayments, periodRefunds, periodLedgerEntries, beginningDeferredRevenue]
+  );
+  const monthlyActual = financeSummary.cashIncomeTotal;
 
   // --- Computed ---
-  const filteredOrders = useMemo(() => {
-    if (orderFilter === 'all') return transactionRows;
-    if (orderFilter === 'refund') return transactionRows.filter(row => row.sourceType === 'refund');
-    if (orderFilter === 'integral') return transactionRows.filter(row => row.productTypes.includes('point') || row.integral);
-    if (orderFilter === 'card') return transactionRows.filter(row => row.sourceType === 'order' && row.productTypes.some(type => type === 'card' || type === 'course' || type === 'ttc'));
-    return transactionRows;
-  }, [orderFilter, transactionRows]);
-
-  const cashIncomeTotal = sumPayments(periodPayments);
-  const recognizedIncomeTotal = sumRecognizedIncome(periodLedgerEntries);
-  const refundTotal = sumRefunds(periodRefunds);
-  const netCashFlow = cashIncomeTotal - refundTotal;
-  const endingDeferredRevenue = beginningDeferredRevenue + cashIncomeTotal - recognizedIncomeTotal - refundTotal;
-  const pendingRefunds = getPendingRefunds(periodRefunds);
-  const pendingOrders = getPendingOrders(periodOrders);
-  const pendingItems: FinancePendingItem[] = [
-    ...pendingRefunds.map(refund => ({
-      id: refund.id,
-      tone: 'refund' as const,
-      title: '待处理退款申请',
-      description: `¥${refund.amount.toLocaleString()}, ${getMemberName(refund.memberId)}`,
-      actionLabel: refund.status === 'requested' || refund.status === 'reviewing' ? '去审核' : '去处理',
-    })),
-    ...pendingOrders.map(order => ({
-      id: order.id,
-      tone: 'order' as const,
-      title: order.status === 'pending_payment' ? '待确认收款订单' : '待处理订单',
-      description: `¥${(order.paidAmount ?? order.totalAmount).toLocaleString()}, ${getMemberName(order.memberId)}`,
-      actionLabel: order.status === 'pending_payment' ? '去核对' : '去处理',
-    })),
-  ];
+  const filteredOrders = useMemo(
+    () => filterFinanceTransactionRows(transactionRows, orderFilter),
+    [orderFilter, transactionRows]
+  );
+  const pendingItems = useMemo(
+    () => buildFinancePendingItems({
+      orders: periodOrders,
+      refunds: periodRefunds,
+      members: MOCK_MEMBERS,
+    }),
+    [periodOrders, periodRefunds]
+  );
+  const incomeStructure = useMemo(
+    () => buildFinanceIncomeStructure(periodOrders),
+    [periodOrders]
+  );
 
   const annualProgress = Math.min(100, Math.round((annualActual / annualTarget) * 100));
   const monthlyProgress = Math.min(100, Math.round((monthlyActual / monthlyTarget) * 100));
@@ -442,18 +234,17 @@ const Finance: React.FC = () => {
                 {subTab === 'overview' && (
                     <div className="space-y-6 animate-fadeIn">
                         <FinanceOverviewCards
-                            cashIncomeTotal={cashIncomeTotal}
-                            recognizedIncomeTotal={recognizedIncomeTotal}
+                            cashIncomeTotal={financeSummary.cashIncomeTotal}
+                            recognizedIncomeTotal={financeSummary.recognizedIncomeTotal}
                             operatingExpenseTotal={transitionalOperatingExpense}
-                            netCashFlow={netCashFlow}
+                            netCashFlow={financeSummary.netCashFlow}
                         />
 
                         <FinanceReportCharts
-                            orders={periodOrders}
                             pendingItems={pendingItems}
-                            productTypeLabels={PRODUCT_TYPE_LABELS}
-                            endingDeferredRevenue={endingDeferredRevenue}
-                            refundTotal={refundTotal}
+                            incomeStructure={incomeStructure}
+                            endingDeferredRevenue={financeSummary.endingDeferredRevenue}
+                            refundTotal={financeSummary.refundTotal}
                         />
                     </div>
                 )}
@@ -463,9 +254,9 @@ const Finance: React.FC = () => {
                     <div className="space-y-6 animate-fadeIn">
                         <DeferredRevenuePanel
                             beginningDeferredRevenue={beginningDeferredRevenue}
-                            cashIncomeTotal={cashIncomeTotal}
-                            recognizedIncomeTotal={recognizedIncomeTotal}
-                            endingDeferredRevenue={endingDeferredRevenue}
+                            cashIncomeTotal={financeSummary.cashIncomeTotal}
+                            recognizedIncomeTotal={financeSummary.recognizedIncomeTotal}
+                            endingDeferredRevenue={financeSummary.endingDeferredRevenue}
                         />
 
                         <RevenueTable

@@ -1,21 +1,18 @@
 import React from 'react';
 import type { ChartData, ChartOptions } from 'chart.js';
 import { Line, Doughnut } from 'react-chartjs-2';
-import type { Order } from '../../types';
-import type { FinancePendingItem } from '../Finance';
+import type { FinanceIncomeStructureEntry, FinancePendingItem } from '../../utils/financeSelectors';
 
 interface FinanceReportChartsProps {
-  orders: Order[];
   pendingItems: FinancePendingItem[];
-  productTypeLabels: Record<Order['items'][number]['productType'], string>;
+  incomeStructure: FinanceIncomeStructureEntry[];
   endingDeferredRevenue: number;
   refundTotal: number;
 }
 
 const FinanceReportCharts: React.FC<FinanceReportChartsProps> = ({
-  orders,
   pendingItems,
-  productTypeLabels,
+  incomeStructure,
   endingDeferredRevenue,
   refundTotal,
 }) => {
@@ -78,29 +75,10 @@ const FinanceReportCharts: React.FC<FinanceReportChartsProps> = ({
     },
   };
 
-  const initialIncomeByProductType: Record<Order['items'][number]['productType'], number> = {
-    card: 0,
-    ttc: 0,
-    point: 0,
-    course: 0,
-    custom: 0,
-  };
-  const incomeByProductType = orders.reduce((totals, order) => {
-    const paidAmount = order.paidAmount ?? order.totalAmount;
-    order.items.forEach(item => {
-      const itemRatio = order.totalAmount > 0 ? item.totalAmount / order.totalAmount : 0;
-      totals[item.productType] += paidAmount * itemRatio;
-    });
-    return totals;
-  }, initialIncomeByProductType);
-  const incomePieEntries = (Object.keys(incomeByProductType) as Array<Order['items'][number]['productType']>)
-    .map((type): [Order['items'][number]['productType'], number] => [type, incomeByProductType[type]])
-    .filter(([, amount]) => amount > 0);
-
   const incomePieData: ChartData<'doughnut'> = {
-    labels: incomePieEntries.map(([type, amount]) => `${productTypeLabels[type]} ¥${amount.toLocaleString()}`),
+    labels: incomeStructure.map(entry => `${entry.label} ¥${entry.amount.toLocaleString()}`),
     datasets: [{
-      data: incomePieEntries.map(([, amount]) => amount),
+      data: incomeStructure.map(entry => entry.amount),
       backgroundColor: ['#000000', '#4ADE80', '#60A5FA', '#FBBF24'],
       borderWidth: 0,
       hoverOffset: 4
@@ -140,7 +118,11 @@ const FinanceReportCharts: React.FC<FinanceReportChartsProps> = ({
               <div key={item.id} className={`flex justify-between items-center p-3 rounded-xl border cursor-pointer transition ${item.tone === 'refund' ? 'bg-red-50 border-red-100 hover:bg-red-100' : 'bg-blue-50 border-blue-100 hover:bg-blue-100'}`}>
                 <div className="flex items-center gap-3">
                   <div className={`w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm ${item.tone === 'refund' ? 'text-red-500' : 'text-blue-500'}`}><i className={`fa-solid ${item.tone === 'refund' ? 'fa-rotate-left' : 'fa-file-invoice-dollar'}`}></i></div>
-                  <div><div className="text-sm font-bold text-gray-900">{item.title}</div><div className="text-[10px] text-gray-500">{item.description}</div></div>
+                  <div>
+                    <div className="text-sm font-bold text-gray-900">{item.title}</div>
+                    <div className="text-[10px] text-gray-500">{item.description}</div>
+                    <div className="text-[10px] text-gray-400">{item.sourceSummary}</div>
+                  </div>
                 </div>
                 <button className={`text-xs hover:underline font-medium ${item.tone === 'refund' ? 'text-red-600' : 'text-blue-600'}`}>{item.actionLabel}</button>
               </div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import type { FinanceOrderFilter, FinanceTransactionRow } from '../Finance';
+import type { FinanceOrderFilter, FinanceTransactionRow } from '../../utils/financeSelectors';
 
 interface RevenueTableProps {
   orderFilter: FinanceOrderFilter;
@@ -37,6 +37,7 @@ const RevenueTable: React.FC<RevenueTableProps> = ({
               <div className="text-xs text-gray-400">{order.date}</div>
               {order.paymentId && <div className="text-[10px] text-gray-300">Payment: {order.paymentId}</div>}
               {order.ledgerEntryId && <div className="text-[10px] text-gray-300">Ledger: {order.ledgerEntryId}</div>}
+              <div className="text-[10px] text-gray-300">{order.sourceSummary}</div>
             </td>
             <td className="p-4 font-bold text-gray-900">{order.customer}</td>
             <td className="p-4"><span className={`px-2 py-1 rounded text-[10px] font-bold mr-2 ${order.statusTag}`}>{order.type}</span> <span className="text-gray-600">{order.content}</span></td>
