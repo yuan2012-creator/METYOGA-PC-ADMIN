@@ -70,6 +70,19 @@ export type ScheduleWriteFeedback = {
   message: string;
 };
 
+export type CourseBookingWriteResult = {
+  event: ScheduleEvent;
+  bookings: Booking[];
+  message: string;
+};
+
+export type CourseAttendanceWriteResult = {
+  event: ScheduleEvent;
+  bookings: Booking[];
+  attendances: Attendance[];
+  message: string;
+};
+
 export interface Room {
   id: string;
   name: string;
@@ -116,6 +129,8 @@ const TEACHER_NAMES: Record<string, string> = {
   '2': 'Mike',
   '4': 'Leo',
 };
+
+const DEMO_BOOKING_MEMBER_IDS = ['1', '2', '3', '5'];
 
 const COURSE_LIBRARY_OVERRIDES: Record<string, Partial<CourseLibraryItem>> = {
   'course-flow-yoga': {
@@ -418,6 +433,170 @@ export const markScheduleCheckInHandled = (event: ScheduleEvent): ScheduleWriteF
     message: event.status === 'in_progress'
       ? `${event.name} 已标记完成`
       : `${event.name} 已进入签到处理中`,
+  };
+};
+
+const createDemoBooking = (
+  event: ScheduleEvent,
+  bookings: Booking[]
+): Booking => {
+  const activeBookingCount = Math.max(event.bookedCount ?? 0, getActiveBookings(event.id, bookings).length);
+
+  return {
+    id: `booking-demo-${event.id}-${Date.now()}`,
+    memberId: DEMO_BOOKING_MEMBER_IDS[activeBookingCount % DEMO_BOOKING_MEMBER_IDS.length],
+    courseSessionId: event.id,
+    status: 'booked',
+    bookedAt: new Date().toISOString(),
+    source: 'admin',
+  };
+};
+
+const getFirstCheckInCandidate = (
+  event: ScheduleEvent,
+  bookings: Booking[],
+  attendances: Attendance[]
+): Booking | undefined => (
+  getActiveBookings(event.id, bookings).find(booking => (
+    !attendances.some(attendance => (
+      attendance.courseSessionId === event.id
+      && attendance.bookingId === booking.id
+      && (
+        attendance.status === 'checked_in'
+        || attendance.status === 'attended'
+        || attendance.status === 'consumed'
+      )
+    ))
+  ))
+);
+
+const createAttendanceFromBooking = (
+  event: ScheduleEvent,
+  booking: Booking,
+  status: Attendance['status']
+): Attendance => {
+  const now = new Date().toISOString();
+
+  return {
+    id: `attendance-demo-${event.id}-${booking.memberId}-${Date.now()}`,
+    memberId: booking.memberId,
+    courseSessionId: event.id,
+    bookingId: booking.id,
+    status,
+    checkedInAt: status === 'checked_in' || status === 'attended' || status === 'consumed' ? now : undefined,
+    attendedAt: status === 'attended' || status === 'consumed' ? now : undefined,
+    consumedAt: status === 'consumed' ? now : undefined,
+    notes: '前端演示态生成签到记录',
+  };
+};
+
+export const bookDemoMemberForSession = (
+  event: ScheduleEvent,
+  bookings: Booking[]
+): CourseBookingWriteResult => {
+  const activeBookingCount = Math.max(event.bookedCount ?? 0, getActiveBookings(event.id, bookings).length);
+
+  if (activeBookingCount >= event.capacity) {
+    return {
+      event,
+      bookings,
+      message: `${event.name} 已满员，无法继续添加演示预约`,
+    };
+  }
+
+  const booking = createDemoBooking(event, bookings);
+
+  return {
+    event: {
+      ...event,
+      bookedCount: activeBookingCount + 1,
+      notes: [event.notes, '前端演示态新增预约'].filter(Boolean).join('；'),
+    },
+    bookings: [...bookings, booking],
+    message: `${event.name} 已新增 1 条演示预约`,
+  };
+};
+
+export const checkInDemoAttendanceForSession = (
+  event: ScheduleEvent,
+  bookings: Booking[],
+  attendances: Attendance[]
+): CourseAttendanceWriteResult => {
+  let nextBookings = bookings;
+  let nextEvent = event;
+  let booking = getFirstCheckInCandidate(event, bookings, attendances);
+
+  if (!booking) {
+    const previousBookingCount = nextBookings.length;
+    const bookingResult = bookDemoMemberForSession(event, bookings);
+    nextBookings = bookingResult.bookings;
+    nextEvent = bookingResult.event;
+    booking = nextBookings.length > previousBookingCount
+      ? nextBookings[nextBookings.length - 1]
+      : getFirstCheckInCandidate(nextEvent, nextBookings, attendances);
+  }
+
+  if (!booking) {
+    return {
+      event,
+      bookings,
+      attendances,
+      message: `${event.name} 暂无可签到预约`,
+    };
+  }
+
+  const attendance = createAttendanceFromBooking(nextEvent, booking, 'checked_in');
+
+  return {
+    event: {
+      ...nextEvent,
+      status: nextEvent.status === 'completed' ? 'completed' : 'in_progress',
+      notes: [nextEvent.notes, '前端演示态签到'].filter(Boolean).join('；'),
+    },
+    bookings: nextBookings,
+    attendances: [...attendances, attendance],
+    message: `${nextEvent.name} 已生成 1 条演示签到记录`,
+  };
+};
+
+export const completeDemoAttendanceForSession = (
+  event: ScheduleEvent,
+  bookings: Booking[],
+  attendances: Attendance[]
+): CourseAttendanceWriteResult => {
+  const sessionAttendances = getSessionAttendances(event.id, attendances);
+
+  if (sessionAttendances.length === 0) {
+    const checkedInResult = checkInDemoAttendanceForSession(event, bookings, attendances);
+    return completeDemoAttendanceForSession(
+      checkedInResult.event,
+      checkedInResult.bookings,
+      checkedInResult.attendances
+    );
+  }
+
+  const now = new Date().toISOString();
+  const updatedAttendances = attendances.map(attendance => (
+    attendance.courseSessionId === event.id
+      ? {
+          ...attendance,
+          status: 'consumed' as const,
+          attendedAt: attendance.attendedAt ?? now,
+          consumedAt: attendance.consumedAt ?? now,
+          notes: [attendance.notes, '前端演示态完成消课'].filter(Boolean).join('；'),
+        }
+      : attendance
+  ));
+
+  return {
+    event: {
+      ...event,
+      status: 'completed',
+      notes: [event.notes, '前端演示态完成课程'].filter(Boolean).join('；'),
+    },
+    bookings,
+    attendances: updatedAttendances,
+    message: `${event.name} 已完成签到并生成消课记录`,
   };
 };
 

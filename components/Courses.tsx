@@ -10,7 +10,10 @@ import {
   COURSE_ROOMS,
   COURSE_SUB_TABS,
   assignSubstituteTeacher,
+  bookDemoMemberForSession,
   cancelScheduleEvent,
+  checkInDemoAttendanceForSession,
+  completeDemoAttendanceForSession,
   createDraftEventFromCourse,
   createEventFromScheduleForm,
   createScheduleFormDraft,
@@ -18,7 +21,6 @@ import {
   getActiveScheduleEvents,
   getOpsAiGuidance,
   getOpsSummary,
-  markScheduleCheckInHandled,
   moveScheduleEvent,
   toCourseLibraryItem,
   toScheduleEvent,
@@ -74,6 +76,8 @@ const Courses: React.FC = () => {
   
   // DRAG & DROP STATE
   const [scheduleEvents, setScheduleEvents] = useState<ScheduleEvent[]>(INITIAL_SCHEDULE_EVENTS);
+  const [bookings, setBookings] = useState(MOCK_BOOKINGS);
+  const [attendances, setAttendances] = useState(MOCK_ATTENDANCES);
   const [draggedCourse, setDraggedCourse] = useState<CourseLibraryItem | null>(null);
   const [draggedEventId, setDraggedEventId] = useState<string | null>(null);
   const activeScheduleEvents = getActiveScheduleEvents(scheduleEvents);
@@ -98,7 +102,7 @@ const Courses: React.FC = () => {
   const hourHeight = 70; // pixels per hour for a slightly compact view
 
   // --- Today's Ops: CourseSession + Booking + Attendance ---
-  const todayOpsSchedule = buildOpsSchedule(activeScheduleEvents, libraryList, MOCK_BOOKINGS, MOCK_ATTENDANCES);
+  const todayOpsSchedule = buildOpsSchedule(activeScheduleEvents, libraryList, bookings, attendances);
   const filteredOpsSchedule = filterOpsSchedule(todayOpsSchedule, opsFilter);
   const opsSummary = getOpsSummary(todayOpsSchedule);
   const aiGuidance = getOpsAiGuidance(todayOpsSchedule, opsSummary);
@@ -287,15 +291,42 @@ const Courses: React.FC = () => {
       showToast(feedback || '已进入代课处理演示流程', 'success');
   };
 
+  const handleOpsBooking = (sessionId: string) => {
+      let feedback = '';
+      setScheduleEvents(current => current.map(event => {
+          if (event.id !== sessionId) return event;
+          const result = bookDemoMemberForSession(event, bookings);
+          setBookings(result.bookings);
+          feedback = result.message;
+          return result.event;
+      }));
+      showToast(feedback || '已新增演示预约', 'success');
+  };
+
   const handleOpsCheckIn = (sessionId: string) => {
       let feedback = '';
       setScheduleEvents(current => current.map(event => {
           if (event.id !== sessionId) return event;
-          const result = markScheduleCheckInHandled(event);
+          const result = checkInDemoAttendanceForSession(event, bookings, attendances);
+          setBookings(result.bookings);
+          setAttendances(result.attendances);
           feedback = result.message;
           return result.event;
       }));
       showToast(feedback || '已处理签到演示状态', 'success');
+  };
+
+  const handleOpsComplete = (sessionId: string) => {
+      let feedback = '';
+      setScheduleEvents(current => current.map(event => {
+          if (event.id !== sessionId) return event;
+          const result = completeDemoAttendanceForSession(event, bookings, attendances);
+          setBookings(result.bookings);
+          setAttendances(result.attendances);
+          feedback = result.message;
+          return result.event;
+      }));
+      showToast(feedback || '已完成课程演示状态', 'success');
   };
 
   return (
@@ -344,8 +375,10 @@ const Courses: React.FC = () => {
                           filteredOpsSchedule={filteredOpsSchedule}
                           opsSummary={opsSummary}
                           aiGuidance={aiGuidance}
+                          onBookDemo={handleOpsBooking}
                           onSubstitute={handleSubstitute}
                           onCheckIn={handleOpsCheckIn}
+                          onComplete={handleOpsComplete}
                       />
                       <ScheduleCalendar
                           libraryList={libraryList}
