@@ -2,9 +2,18 @@
 import React, { useState } from 'react';
 import { MOCK_STAFF_LIST, MOCK_STORE_INFO } from '../constants';
 
+type MarketingToastTone = 'info' | 'success';
+
+interface MarketingToast {
+  id: number;
+  message: string;
+  tone: MarketingToastTone;
+}
+
 const Marketing: React.FC = () => {
   const [subTab, setSubTab] = useState<'campaigns' | 'creatives' | 'coupons'>('campaigns');
   const [showModal, setShowModal] = useState(false);
+  const [toast, setToast] = useState<MarketingToast | null>(null);
   
   // --- Creative State ---
   const [creativeType, setCreativeType] = useState<'banner' | 'popup' | 'push'>('banner');
@@ -59,8 +68,15 @@ const Marketing: React.FC = () => {
     return '创建优惠券';
   };
 
+  const showToast = (message: string, tone: MarketingToastTone = 'info') => {
+    setToast({ id: Date.now(), message, tone });
+    window.setTimeout(() => {
+      setToast(current => (current?.message === message ? null : current));
+    }, 2400);
+  };
+
   const handleCreateAction = () => {
-    if(subTab === 'coupons') alert('打开优惠券配置表单');
+    if(subTab === 'coupons') showToast('已打开优惠券配置演示入口', 'info');
     else {
         setFormData(initialFormState); // Reset form
         setShowModal(true);
@@ -202,8 +218,24 @@ const Marketing: React.FC = () => {
                                                     <span>转化率 <b className="text-black">{camp.rate}</b></span>
                                                 </div>
                                                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition">
-                                                    <button className="text-xs border border-gray-200 px-3 py-1.5 rounded hover:bg-gray-50 bg-white">编辑</button>
-                                                    <button className="text-xs border border-gray-200 px-3 py-1.5 rounded hover:text-red-600 hover:border-red-200 bg-white">下架</button>
+                                                    <button
+                                                        onClick={(event) => {
+                                                            event.stopPropagation();
+                                                            showToast(`已打开「${camp.title}」编辑演示`, 'info');
+                                                        }}
+                                                        className="text-xs border border-gray-200 px-3 py-1.5 rounded hover:bg-gray-50 bg-white"
+                                                    >
+                                                        编辑
+                                                    </button>
+                                                    <button
+                                                        onClick={(event) => {
+                                                            event.stopPropagation();
+                                                            showToast(`已进入「${camp.title}」下架确认演示`, 'info');
+                                                        }}
+                                                        className="text-xs border border-gray-200 px-3 py-1.5 rounded hover:text-red-600 hover:border-red-200 bg-white"
+                                                    >
+                                                        下架
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
@@ -296,7 +328,12 @@ const Marketing: React.FC = () => {
                                                     <div className="p-5 text-center">
                                                         <h3 className="font-bold text-lg mb-1">{creativeData.title}</h3>
                                                         <p className="text-xs text-gray-500 mb-4">{creativeData.desc}</p>
-                                                        <button className="w-full bg-black text-white py-2 rounded-lg text-xs font-bold">立即查看</button>
+                                                        <button
+                                                            onClick={() => showToast('已打开活动弹窗跳转演示', 'info')}
+                                                            className="w-full bg-black text-white py-2 rounded-lg text-xs font-bold"
+                                                        >
+                                                            立即查看
+                                                        </button>
                                                     </div>
                                                     <div className="p-3 border-t text-center text-gray-400 text-xs">关闭</div>
                                                 </div>
@@ -401,7 +438,12 @@ const Marketing: React.FC = () => {
                                 </div>
 
                                 <div className="mt-8 pt-6 border-t border-gray-50 flex justify-end">
-                                    <button className="bg-black text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:opacity-80 transition shadow-lg">保存并发布</button>
+                                    <button
+                                        onClick={() => showToast('推广素材已保存并发布到演示环境', 'success')}
+                                        className="bg-black text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:opacity-80 transition shadow-lg"
+                                    >
+                                        保存并发布
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -414,17 +456,20 @@ const Marketing: React.FC = () => {
                         
                         <div className="flex justify-between items-center">
                             <div className="flex gap-2">
-                                <button className="px-4 py-2 bg-black text-white rounded-full text-xs font-medium">全部 (5)</button>
-                                <button className="px-4 py-2 bg-white border border-gray-200 text-gray-500 rounded-full text-xs font-medium hover:bg-gray-50">发放中</button>
-                                <button className="px-4 py-2 bg-white border border-gray-200 text-gray-500 rounded-full text-xs font-medium hover:bg-gray-50">已结束</button>
+                                <button onClick={() => showToast('已筛选全部优惠券', 'info')} className="px-4 py-2 bg-black text-white rounded-full text-xs font-medium">全部 (5)</button>
+                                <button onClick={() => showToast('已筛选发放中优惠券', 'info')} className="px-4 py-2 bg-white border border-gray-200 text-gray-500 rounded-full text-xs font-medium hover:bg-gray-50">发放中</button>
+                                <button onClick={() => showToast('已筛选已结束优惠券', 'info')} className="px-4 py-2 bg-white border border-gray-200 text-gray-500 rounded-full text-xs font-medium hover:bg-gray-50">已结束</button>
                             </div>
-                            <button className="bg-white border border-gray-200 text-black text-xs px-4 py-2 rounded-lg font-medium hover:bg-gray-50" onClick={() => alert('打开优惠券配置')}>+ 新建优惠券</button>
+                            <button className="bg-white border border-gray-200 text-black text-xs px-4 py-2 rounded-lg font-medium hover:bg-gray-50" onClick={() => showToast('已打开优惠券配置演示入口', 'info')}>+ 新建优惠券</button>
                         </div>
 
                         <div className="grid grid-cols-3 gap-6">
                             {coupons.map((c, idx) => (
                                 <div key={idx} className="bg-gradient-to-br from-[#1D1D1F] to-[#434343] text-white rounded-xl p-6 relative shadow-lg transition hover:-translate-y-1 group coupon-mask">
-                                    <div className="absolute top-3 right-3 opacity-50 group-hover:opacity-100 transition cursor-pointer text-white">
+                                    <div
+                                        onClick={() => showToast(`已打开「${c.name}」更多操作演示`, 'info')}
+                                        className="absolute top-3 right-3 opacity-50 group-hover:opacity-100 transition cursor-pointer text-white"
+                                    >
                                         <i className="fa-solid fa-ellipsis"></i>
                                     </div>
                                     <div className="flex justify-between items-start mb-4">
@@ -443,7 +488,7 @@ const Marketing: React.FC = () => {
                                     </div>
                                     <div 
                                         className="absolute bottom-0 left-0 right-0 bg-white/10 backdrop-blur text-center py-2 text-xs font-bold cursor-pointer hover:bg-white/20 transition opacity-0 group-hover:opacity-100" 
-                                        onClick={() => alert(`已打开发放窗口：将 [${c.name}] 发送给指定会员群组`)}
+                                        onClick={() => showToast(`已打开发放窗口：将 [${c.name}] 发送给指定会员群组`, 'success')}
                                     >
                                         <i className="fa-regular fa-paper-plane mr-1"></i> 定向发放
                                     </div>
@@ -689,14 +734,20 @@ const Marketing: React.FC = () => {
                                 <div className="grid grid-cols-3 gap-6">
                                     <div className="col-span-2">
                                         <label className="block text-xs font-bold text-gray-500 uppercase mb-2">活动横图 (列表/Banner)</label>
-                                        <div className="aspect-[2/1] bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center text-gray-400 hover:border-black hover:text-black transition cursor-pointer group">
+                                        <div
+                                            onClick={() => showToast('已打开活动横图上传演示', 'info')}
+                                            className="aspect-[2/1] bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center text-gray-400 hover:border-black hover:text-black transition cursor-pointer group"
+                                        >
                                             <i className="fa-solid fa-cloud-arrow-up text-2xl mb-2 group-hover:scale-110 transition"></i>
                                             <span className="text-xs font-bold">点击上传 16:9</span>
                                         </div>
                                     </div>
                                     <div>
                                         <label className="block text-xs font-bold text-gray-500 uppercase mb-2">活动方图 (分享)</label>
-                                        <div className="aspect-square bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center text-gray-400 hover:border-black hover:text-black transition cursor-pointer group">
+                                        <div
+                                            onClick={() => showToast('已打开活动方图上传演示', 'info')}
+                                            className="aspect-square bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center text-gray-400 hover:border-black hover:text-black transition cursor-pointer group"
+                                        >
                                             <i className="fa-solid fa-cloud-arrow-up text-2xl mb-2 group-hover:scale-110 transition"></i>
                                             <span className="text-xs font-bold">点击上传 1:1</span>
                                         </div>
@@ -704,7 +755,10 @@ const Marketing: React.FC = () => {
                                 </div>
                                 <div className="mt-6">
                                     <label className="block text-xs font-bold text-gray-500 uppercase mb-2">活动详情长图</label>
-                                    <div className="h-24 bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center text-gray-400 hover:border-black hover:text-black transition cursor-pointer group">
+                                    <div
+                                        onClick={() => showToast('已打开活动详情图上传演示', 'info')}
+                                        className="h-24 bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center text-gray-400 hover:border-black hover:text-black transition cursor-pointer group"
+                                    >
                                         <span className="text-xs font-bold flex items-center gap-2"><i className="fa-solid fa-plus"></i> 添加详情页图片</span>
                                     </div>
                                 </div>
@@ -728,6 +782,22 @@ const Marketing: React.FC = () => {
                             上架活动
                         </button>
                     </div>
+                </div>
+            </div>
+        )}
+
+        {toast && (
+            <div className="fixed top-20 right-8 z-[70] animate-fadeIn">
+                <div className={`px-4 py-3 rounded-xl shadow-xl border text-sm font-bold flex items-center gap-3 ${
+                    toast.tone === 'success'
+                    ? 'bg-green-50 text-green-700 border-green-100'
+                    : 'bg-white text-gray-800 border-gray-100'
+                }`}>
+                    <i className={`fa-solid ${toast.tone === 'success' ? 'fa-circle-check' : 'fa-circle-info'}`}></i>
+                    {toast.message}
+                    <button onClick={() => setToast(null)} className="ml-2 text-current opacity-50 hover:opacity-100">
+                        <i className="fa-solid fa-xmark"></i>
+                    </button>
                 </div>
             </div>
         )}
