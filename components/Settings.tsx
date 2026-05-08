@@ -47,8 +47,36 @@ interface Role {
     memberIds: number[]; // List of Account IDs assigned to this role
 }
 
+type SettingsToastTone = 'info' | 'success' | 'warning';
+
+interface SettingsToast {
+    id: number;
+    message: string;
+    tone: SettingsToastTone;
+}
+
+interface SettingsConfirmDialog {
+    title: string;
+    message: string;
+    confirmLabel?: string;
+    tone?: 'danger' | 'default';
+    onConfirm: () => void;
+}
+
+interface SettingsInputDialog {
+    title: string;
+    message?: string;
+    placeholder?: string;
+    confirmLabel?: string;
+    onConfirm: (value: string) => void;
+}
+
 const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'salary' | 'course' | 'member' | 'role'>('salary');
+  const [toast, setToast] = useState<SettingsToast | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<SettingsConfirmDialog | null>(null);
+  const [inputDialog, setInputDialog] = useState<SettingsInputDialog | null>(null);
+  const [inputDialogValue, setInputDialogValue] = useState('');
 
   // --- 9.1 Salary & Promotion State ---
   const [autoPromotion, setAutoPromotion] = useState(true);
@@ -64,6 +92,36 @@ const Settings: React.FC = () => {
       renewal: 5 // %
   });
 
+  const showToast = (message: string, tone: SettingsToastTone = 'info') => {
+      setToast({ id: Date.now(), message, tone });
+      window.setTimeout(() => {
+          setToast(current => (current?.message === message ? null : current));
+      }, 2400);
+  };
+
+  const openConfirmDialog = (dialog: SettingsConfirmDialog) => {
+      setConfirmDialog(dialog);
+  };
+
+  const openInputDialog = (dialog: SettingsInputDialog) => {
+      setInputDialog(dialog);
+      setInputDialogValue('');
+  };
+
+  const closeInputDialog = () => {
+      setInputDialog(null);
+      setInputDialogValue('');
+  };
+
+  const submitInputDialog = () => {
+      if (!inputDialog) return;
+      const value = inputDialogValue.trim();
+      if (!value) return;
+
+      inputDialog.onConfirm(value);
+      closeInputDialog();
+  };
+
   // Actions for Salary
   const addLevel = () => {
       const newId = Math.max(...levels.map(l => l.id)) + 1;
@@ -71,9 +129,15 @@ const Settings: React.FC = () => {
   };
 
   const removeLevel = (id: number) => {
-      if(confirm('确定删除该等级吗？')) {
-          setLevels(levels.filter(l => l.id !== id));
-      }
+      openConfirmDialog({
+          title: '删除老师等级',
+          message: '确定删除该等级吗？',
+          confirmLabel: '删除等级',
+          tone: 'danger',
+          onConfirm: () => {
+              setLevels(current => current.filter(l => l.id !== id));
+          },
+      });
   };
 
   const updateLevel = (id: number, field: keyof TeacherLevel, value: any) => {
@@ -246,7 +310,7 @@ const Settings: React.FC = () => {
   const toggleRoleMember = (accountId: number) => {
       if (!activeRole) return;
       if (activeRole.type === 'system' && activeRole.memberIds.length <= 1 && activeRole.memberIds.includes(accountId)) {
-          alert("系统至少需要保留一位总管理员");
+          showToast('系统至少需要保留一位总管理员', 'warning');
           return;
       }
 
@@ -268,20 +332,31 @@ const Settings: React.FC = () => {
   };
 
   const addNewRole = () => {
-      const name = prompt("请输入新角色名称");
-      if (name) {
+      openInputDialog({
+          title: '新增角色',
+          message: '请输入新角色名称',
+          placeholder: '例如：门店运营主管',
+          confirmLabel: '创建角色',
+          onConfirm: (name) => {
           const newId = `role_${Date.now()}`;
           const newRole: Role = { id: newId, name, desc: '新创建的角色，请配置权限。', type: 'custom', permissions: [], memberIds: [] };
-          setRoles([...roles, newRole]);
+          setRoles(current => [...current, newRole]);
           setActiveRoleId(newId);
-      }
+          },
+      });
   };
 
   const deleteRole = (roleId: string) => {
-      if(confirm('确定删除该角色吗？关联的员工将失去权限。')) {
-          setRoles(roles.filter(r => r.id !== roleId));
-          if(activeRoleId === roleId) setActiveRoleId(null);
-      }
+      openConfirmDialog({
+          title: '删除角色',
+          message: '确定删除该角色吗？关联的员工将失去权限。',
+          confirmLabel: '删除角色',
+          tone: 'danger',
+          onConfirm: () => {
+              setRoles(current => current.filter(r => r.id !== roleId));
+              if(activeRoleId === roleId) setActiveRoleId(null);
+          },
+      });
   };
 
   return (
@@ -293,7 +368,7 @@ const Settings: React.FC = () => {
                 <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                     系统设置
                     <button 
-                        onClick={() => alert('Gemini AI 正在分析系统配置并生成优化建议...')}
+                        onClick={() => showToast('Gemini AI 正在分析系统配置并生成优化建议...', 'info')}
                         className="text-[10px] text-purple-600 font-bold flex items-center gap-1 hover:underline ml-2 bg-purple-50 px-2 py-1 rounded-full border border-purple-100"
                     >
                         <i className="fa-solid fa-wand-magic-sparkles"></i> AI 配置优化
@@ -305,7 +380,7 @@ const Settings: React.FC = () => {
                 <button className="text-xs text-gray-500 hover:text-black font-medium transition">重置更改</button>
                 <button 
                     className="bg-black text-white text-xs px-5 py-2 rounded-lg font-bold hover:opacity-80 transition shadow-lg shadow-black/10"
-                    onClick={() => alert('规则已生效并同步至全系统')}
+                    onClick={() => showToast('规则已生效并同步至全系统', 'success')}
                 >
                     保存配置
                 </button>
@@ -695,6 +770,99 @@ const Settings: React.FC = () => {
                             </div>
 
                         </div>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {toast && (
+            <div className="fixed top-20 right-8 z-[70] animate-fadeIn">
+                <div className={`px-4 py-3 rounded-xl shadow-xl border text-sm font-bold flex items-center gap-3 ${
+                    toast.tone === 'success'
+                    ? 'bg-green-50 text-green-700 border-green-100'
+                    : toast.tone === 'warning'
+                    ? 'bg-orange-50 text-orange-700 border-orange-100'
+                    : 'bg-white text-gray-800 border-gray-100'
+                }`}>
+                    <i className={`fa-solid ${
+                        toast.tone === 'success'
+                        ? 'fa-circle-check'
+                        : toast.tone === 'warning'
+                        ? 'fa-triangle-exclamation'
+                        : 'fa-circle-info'
+                    }`}></i>
+                    {toast.message}
+                    <button onClick={() => setToast(null)} className="ml-2 text-current opacity-50 hover:opacity-100">
+                        <i className="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+        )}
+
+        {confirmDialog && (
+            <div className="fixed inset-0 z-[80] flex items-center justify-center">
+                <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" onClick={() => setConfirmDialog(null)}></div>
+                <div className="relative bg-white w-full max-w-sm rounded-3xl shadow-2xl border border-gray-100 p-6 animate-fadeIn">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-4 ${
+                        confirmDialog.tone === 'danger'
+                        ? 'bg-red-50 text-red-500'
+                        : 'bg-gray-100 text-gray-700'
+                    }`}>
+                        <i className={`fa-solid ${confirmDialog.tone === 'danger' ? 'fa-triangle-exclamation' : 'fa-circle-question'}`}></i>
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">{confirmDialog.title}</h3>
+                    <p className="text-sm text-gray-500 leading-relaxed mb-6">{confirmDialog.message}</p>
+                    <div className="flex justify-end gap-3">
+                        <button onClick={() => setConfirmDialog(null)} className="px-4 py-2 rounded-xl text-xs font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 transition">
+                            取消
+                        </button>
+                        <button
+                            onClick={() => {
+                                confirmDialog.onConfirm();
+                                setConfirmDialog(null);
+                            }}
+                            className={`px-4 py-2 rounded-xl text-xs font-bold text-white transition ${
+                                confirmDialog.tone === 'danger'
+                                ? 'bg-red-500 hover:bg-red-600'
+                                : 'bg-black hover:bg-gray-800'
+                            }`}
+                        >
+                            {confirmDialog.confirmLabel || '确认'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {inputDialog && (
+            <div className="fixed inset-0 z-[80] flex items-center justify-center">
+                <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" onClick={closeInputDialog}></div>
+                <div className="relative bg-white w-full max-w-md rounded-3xl shadow-2xl border border-gray-100 p-6 animate-fadeIn">
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">{inputDialog.title}</h3>
+                    {inputDialog.message && <p className="text-sm text-gray-500 leading-relaxed mb-4">{inputDialog.message}</p>}
+                    <input
+                        autoFocus
+                        type="text"
+                        value={inputDialogValue}
+                        onChange={(event) => setInputDialogValue(event.target.value)}
+                        onKeyDown={(event) => {
+                            if (event.key === 'Enter') submitInputDialog();
+                            if (event.key === 'Escape') closeInputDialog();
+                        }}
+                        placeholder={inputDialog.placeholder}
+                        className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm font-bold text-gray-900 outline-none focus:bg-white focus:border-black transition mb-6"
+                    />
+                    <div className="flex justify-end gap-3">
+                        <button onClick={closeInputDialog} className="px-4 py-2 rounded-xl text-xs font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 transition">
+                            取消
+                        </button>
+                        <button
+                            onClick={submitInputDialog}
+                            disabled={!inputDialogValue.trim()}
+                            className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-black hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition"
+                        >
+                            {inputDialog.confirmLabel || '确认'}
+                        </button>
                     </div>
                 </div>
             </div>
