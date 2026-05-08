@@ -66,6 +66,70 @@ export interface FinanceIncomeStructureEntry {
   amount: number;
 }
 
+export interface FinanceCashFlowPoint {
+  label: string;
+  cashIncome: number;
+  netCashFlow: number;
+}
+
+export interface FinanceTargetProgress {
+  label: string;
+  target: number;
+  actual: number;
+  progress: number;
+  sourceSummary: string;
+  isFallbackTarget: boolean;
+}
+
+export interface FinanceStaffPerformance {
+  id: string;
+  name: string;
+  role: string;
+  target: number;
+  actual: number;
+  progress: number;
+  sourceSummary: string;
+  isFallbackTarget: boolean;
+}
+
+export interface FinanceExpenseRow {
+  id: string;
+  date: string;
+  category: string;
+  amount: number;
+  voucherLabel: string;
+  sourceSummary: string;
+  isFallback: boolean;
+}
+
+export interface FinancePayrollRow {
+  id: string;
+  name: string;
+  role: string;
+  baseSalary: number;
+  classFee: number;
+  commission: number;
+  deduction: number;
+  netPay: number;
+  status: string;
+  sourceSummary: string;
+  isFallback: boolean;
+}
+
+export interface FinanceReportSummary {
+  cashFlowTrend: FinanceCashFlowPoint[];
+  operatingExpenseTotal: number;
+  payrollExpenseTotal: number;
+  reportExpenseTotal: number;
+  targetProgress: {
+    annual: FinanceTargetProgress;
+    period: FinanceTargetProgress;
+  };
+  staffPerformance: FinanceStaffPerformance[];
+  expenseRows: FinanceExpenseRow[];
+  payrollRows: FinancePayrollRow[];
+}
+
 const PRODUCT_TYPE_LABELS: Record<Order['items'][number]['productType'], string> = {
   card: '卡项',
   ttc: '教培',
@@ -133,6 +197,14 @@ const formatDateTime = (iso?: string): string => {
   if (Number.isNaN(date.getTime())) return iso;
 
   return `${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+};
+
+const formatDateOnly = (iso?: string): string => {
+  if (!iso) return '-';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 };
 
 const getMemberName = (memberId: string, members: Member[]): string => (
@@ -445,4 +517,221 @@ export const buildFinanceIncomeStructure = (orders: Order[]): FinanceIncomeStruc
       amount: incomeByProductType[type],
     }))
     .filter(entry => entry.amount > 0);
+};
+
+const getPaymentTime = (payment: Payment): string | undefined => payment.paidAt ?? payment.initiatedAt;
+
+const getRefundTime = (refund: Refund): string => refund.completedAt ?? refund.approvedAt ?? refund.requestedAt;
+
+const getProgress = (actual: number, target: number): number => (
+  target > 0 ? Math.min(100, Math.round((actual / target) * 100)) : 0
+);
+
+const getNetCashFlowForDate = (
+  date: string,
+  payments: Payment[],
+  refunds: Refund[]
+): { cashIncome: number; netCashFlow: number } => {
+  const dailyPayments = payments.filter(payment => formatDateOnly(getPaymentTime(payment)) === date);
+  const dailyRefunds = refunds.filter(refund => formatDateOnly(getRefundTime(refund)) === date);
+  const cashIncome = sumPayments(dailyPayments);
+  const refundTotal = sumRefunds(dailyRefunds);
+
+  return {
+    cashIncome,
+    netCashFlow: cashIncome - refundTotal,
+  };
+};
+
+export const buildFinanceCashFlowTrend = ({
+  payments,
+  refunds,
+  dateRange,
+}: {
+  payments: Payment[];
+  refunds: Refund[];
+  dateRange: FinanceDateRange;
+}): FinanceCashFlowPoint[] => {
+  const dates = Array.from(new Set([
+    ...payments.map(payment => formatDateOnly(getPaymentTime(payment))),
+    ...refunds.map(refund => formatDateOnly(getRefundTime(refund))),
+  ])).filter(date => date !== '-' && isWithinFinanceDateRange(`${date}T12:00:00+08:00`, dateRange));
+
+  const labels = dates.length > 0
+    ? dates.sort((a, b) => new Date(a).getTime() - new Date(b).getTime())
+    : [dateRange.start, dateRange.end];
+
+  return labels.map(date => ({
+    label: date.slice(5),
+    ...getNetCashFlowForDate(date, payments, refunds),
+  }));
+};
+
+export const buildFinanceExpenseRows = (ledgerEntries: FinanceLedgerEntry[]): FinanceExpenseRow[] => {
+  const expenseEntries = ledgerEntries.filter(entry => entry.direction === 'expense');
+
+  if (expenseEntries.length > 0) {
+    return expenseEntries.map(entry => ({
+      id: entry.id,
+      date: formatDateOnly(entry.occurredAt),
+      category: entry.sourceType === 'payroll' ? '薪酬支出' : entry.sourceType === 'refund' ? '退款支出' : '运营支出',
+      amount: entry.amount,
+      voucherLabel: entry.sourceId,
+      sourceSummary: `Ledger ${entry.id} -> ${entry.sourceType} ${entry.sourceId}`,
+      isFallback: false,
+    }));
+  }
+
+  return [
+    {
+      id: 'expense-fallback-rent',
+      date: '演示周期',
+      category: '房租水电',
+      amount: 85000,
+      voucherLabel: 'fallback',
+      sourceSummary: 'fallback：费用分录尚未接入 FinanceLedgerEntry',
+      isFallback: true,
+    },
+    {
+      id: 'expense-fallback-marketing',
+      date: '演示周期',
+      category: '市场推广',
+      amount: 12000,
+      voucherLabel: 'fallback',
+      sourceSummary: 'fallback：费用分录尚未接入 FinanceLedgerEntry',
+      isFallback: true,
+    },
+  ];
+};
+
+export const buildFinancePayrollRows = (ledgerEntries: FinanceLedgerEntry[]): FinancePayrollRow[] => {
+  const payrollEntries = ledgerEntries.filter(entry => entry.sourceType === 'payroll');
+
+  if (payrollEntries.length > 0) {
+    return payrollEntries.map(entry => ({
+      id: entry.id,
+      name: entry.createdBy ?? '员工',
+      role: '薪酬对象',
+      baseSalary: 0,
+      classFee: 0,
+      commission: entry.amount,
+      deduction: 0,
+      netPay: entry.amount,
+      status: '待发放',
+      sourceSummary: `Ledger ${entry.id} -> payroll ${entry.sourceId}`,
+      isFallback: false,
+    }));
+  }
+
+  return [
+    {
+      id: 'payroll-fallback-sarah',
+      name: 'Sarah',
+      role: '教学总监',
+      baseSalary: 8000,
+      classFee: 12500,
+      commission: 2000,
+      deduction: 1500,
+      netPay: 21000,
+      status: '待发放',
+      sourceSummary: 'fallback：薪酬分录尚未接入 FinanceLedgerEntry',
+      isFallback: true,
+    },
+  ];
+};
+
+export const buildFinanceStaffPerformance = ({
+  orders,
+  payments,
+  staffTargets,
+}: {
+  orders: Order[];
+  payments: Payment[];
+  staffTargets: Array<{ id: string; name: string; role: string; target: number }>;
+}): FinanceStaffPerformance[] => (
+  staffTargets.map(staff => {
+    const staffOrderIds = orders
+      .filter(order => order.salesId === staff.id)
+      .map(order => order.id);
+    const actual = sumPayments(payments.filter(payment => staffOrderIds.includes(payment.orderId)));
+
+    return {
+      ...staff,
+      actual,
+      progress: getProgress(actual, staff.target),
+      sourceSummary: staffOrderIds.length > 0
+        ? `Orders ${staffOrderIds.join(', ')} -> Payments`
+        : 'fallback target：当前周期暂无销售订单',
+      isFallbackTarget: true,
+    };
+  })
+);
+
+export const buildFinanceReportSummary = ({
+  periodOrders,
+  periodPayments,
+  periodRefunds,
+  periodLedgerEntries,
+  annualPayments,
+  annualRefunds,
+  dateRange,
+  annualTarget,
+  periodTarget,
+  staffTargets,
+}: {
+  periodOrders: Order[];
+  periodPayments: Payment[];
+  periodRefunds: Refund[];
+  periodLedgerEntries: FinanceLedgerEntry[];
+  annualPayments: Payment[];
+  annualRefunds: Refund[];
+  dateRange: FinanceDateRange;
+  annualTarget: number;
+  periodTarget: number;
+  staffTargets: Array<{ id: string; name: string; role: string; target: number }>;
+}): FinanceReportSummary => {
+  const expenseRows = buildFinanceExpenseRows(periodLedgerEntries);
+  const payrollRows = buildFinancePayrollRows(periodLedgerEntries);
+  const operatingExpenseTotal = expenseRows.reduce((sum, row) => sum + row.amount, 0);
+  const payrollExpenseTotal = payrollRows.reduce((sum, row) => sum + row.netPay, 0);
+  const periodCashIncome = sumPayments(periodPayments);
+  const periodRefundTotal = sumRefunds(periodRefunds);
+  const annualActual = sumPayments(annualPayments) - sumRefunds(annualRefunds);
+  const periodActual = periodCashIncome - periodRefundTotal;
+
+  return {
+    cashFlowTrend: buildFinanceCashFlowTrend({
+      payments: periodPayments,
+      refunds: periodRefunds,
+      dateRange,
+    }),
+    operatingExpenseTotal,
+    payrollExpenseTotal,
+    reportExpenseTotal: operatingExpenseTotal + payrollExpenseTotal,
+    targetProgress: {
+      annual: {
+        label: '年度业绩目标 (YTD)',
+        target: annualTarget,
+        actual: annualActual,
+        progress: getProgress(annualActual, annualTarget),
+        sourceSummary: '年度完成额 = 本年度 Payment - Refund；目标为门店配置 fallback',
+        isFallbackTarget: true,
+      },
+      period: {
+        label: '查询区间目标',
+        target: periodTarget,
+        actual: periodActual,
+        progress: getProgress(periodActual, periodTarget),
+        sourceSummary: '区间完成额 = 查询区间 Payment - Refund；目标为门店配置 fallback',
+        isFallbackTarget: true,
+      },
+    },
+    staffPerformance: buildFinanceStaffPerformance({
+      orders: periodOrders,
+      payments: periodPayments,
+      staffTargets,
+    }),
+    expenseRows,
+    payrollRows,
+  };
 };

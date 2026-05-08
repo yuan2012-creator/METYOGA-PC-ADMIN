@@ -24,6 +24,7 @@ import {
   buildFinanceOverviewSummary,
   buildFinanceIncomeStructure,
   buildFinancePendingItems,
+  buildFinanceReportSummary,
   buildFinanceTransactionRows,
   filterLedgerEntriesByDateRange,
   filterFinanceTransactionRows,
@@ -31,8 +32,6 @@ import {
   filterPaymentsByDateRange,
   filterRefundsByDateRange,
   type FinanceOrderFilter,
-  type FinancePendingItem,
-  type FinanceTransactionRow,
 } from '../utils/financeSelectors';
 import DeferredRevenuePanel from './finance/DeferredRevenuePanel';
 import ExpensePayrollPanel from './finance/ExpensePayrollPanel';
@@ -55,14 +54,6 @@ ChartJS.register(
 
 type FinanceSubTab = 'overview' | 'revenue' | 'expense' | 'target' | 'report';
 
-interface StaffPerformance {
-  name: string;
-  role: string;
-  target: number;
-  actual: number;
-  progress: number;
-}
-
 type FinanceToastTone = 'info' | 'success';
 
 interface FinanceToast {
@@ -77,6 +68,19 @@ const FINANCE_SUB_TABS: { id: FinanceSubTab; label: string }[] = [
   { id: 'expense', label: '支出与薪酬' },
   { id: 'target', label: '业绩目标' },
   { id: 'report', label: '报表中心' },
+];
+
+const FINANCE_TARGET_FALLBACKS = {
+  annualTarget: 6000000,
+  periodTarget: 540000,
+  beginningDeferredRevenue: 1200000,
+};
+
+const FINANCE_STAFF_TARGETS = [
+  { id: '5', name: 'Eva', role: '销售管家', target: 150000 },
+  { id: '1', name: 'Mike', role: '教练/销售', target: 120000 },
+  { id: '2', name: 'Sarah', role: '教练/销售', target: 120000 },
+  { id: '4', name: 'Leo', role: '店长/行政', target: 150000 },
 ];
 
 const Finance: React.FC = () => {
@@ -112,6 +116,16 @@ const Finance: React.FC = () => {
     [dateRange]
   );
 
+  const annualPayments = useMemo(
+    () => filterPaymentsByDateRange(MOCK_PAYMENTS, { start: '2026-01-01', end: '2026-12-31' }),
+    []
+  );
+
+  const annualRefunds = useMemo(
+    () => filterRefundsByDateRange(MOCK_REFUNDS, { start: '2026-01-01', end: '2026-12-31' }),
+    []
+  );
+
   const transactionRows = useMemo(
     () => buildFinanceTransactionRows({
       orders: periodOrders,
@@ -124,29 +138,31 @@ const Finance: React.FC = () => {
     [periodOrders, periodPayments, periodRefunds, periodLedgerEntries]
   );
 
-  const staffPerformance: StaffPerformance[] = [
-    { name: 'Eva', role: '销售管家', target: 150000, actual: 120000, progress: 80 },
-    { name: 'Mike', role: '教练/销售', target: 120000, actual: 85000, progress: 71 },
-    { name: 'Sarah', role: '教练/销售', target: 120000, actual: 110000, progress: 92 },
-    { name: 'Leo', role: '店长/行政', target: 150000, actual: 143000, progress: 95 }
-  ];
-
-  const annualTarget = 6000000;
-  const annualActual = 4200000;
-  const monthlyTarget = 540000;
-  const beginningDeferredRevenue = 1200000;
-  const transitionalOperatingExpense = 185000;
   const financeSummary = useMemo(
     () => buildFinanceOverviewSummary({
       orders: periodOrders,
       payments: periodPayments,
       refunds: periodRefunds,
       ledgerEntries: periodLedgerEntries,
-      beginningDeferredRevenue,
+      beginningDeferredRevenue: FINANCE_TARGET_FALLBACKS.beginningDeferredRevenue,
     }),
-    [periodOrders, periodPayments, periodRefunds, periodLedgerEntries, beginningDeferredRevenue]
+    [periodOrders, periodPayments, periodRefunds, periodLedgerEntries]
   );
-  const monthlyActual = financeSummary.cashIncomeTotal;
+  const reportSummary = useMemo(
+    () => buildFinanceReportSummary({
+      periodOrders,
+      periodPayments,
+      periodRefunds,
+      periodLedgerEntries,
+      annualPayments,
+      annualRefunds,
+      dateRange,
+      annualTarget: FINANCE_TARGET_FALLBACKS.annualTarget,
+      periodTarget: FINANCE_TARGET_FALLBACKS.periodTarget,
+      staffTargets: FINANCE_STAFF_TARGETS,
+    }),
+    [periodOrders, periodPayments, periodRefunds, periodLedgerEntries, annualPayments, annualRefunds, dateRange]
+  );
 
   // --- Computed ---
   const filteredOrders = useMemo(
@@ -165,9 +181,6 @@ const Finance: React.FC = () => {
     () => buildFinanceIncomeStructure(periodOrders),
     [periodOrders]
   );
-
-  const annualProgress = Math.min(100, Math.round((annualActual / annualTarget) * 100));
-  const monthlyProgress = Math.min(100, Math.round((monthlyActual / monthlyTarget) * 100));
 
   return (
     <div className="h-full flex flex-col animate-fadeIn relative">
@@ -236,15 +249,17 @@ const Finance: React.FC = () => {
                         <FinanceOverviewCards
                             cashIncomeTotal={financeSummary.cashIncomeTotal}
                             recognizedIncomeTotal={financeSummary.recognizedIncomeTotal}
-                            operatingExpenseTotal={transitionalOperatingExpense}
+                            operatingExpenseTotal={reportSummary.reportExpenseTotal}
                             netCashFlow={financeSummary.netCashFlow}
                         />
 
                         <FinanceReportCharts
                             pendingItems={pendingItems}
                             incomeStructure={incomeStructure}
+                            cashFlowTrend={reportSummary.cashFlowTrend}
                             endingDeferredRevenue={financeSummary.endingDeferredRevenue}
                             refundTotal={financeSummary.refundTotal}
+                            reportExpenseTotal={reportSummary.reportExpenseTotal}
                         />
                     </div>
                 )}
@@ -253,7 +268,7 @@ const Finance: React.FC = () => {
                 {subTab === 'revenue' && (
                     <div className="space-y-6 animate-fadeIn">
                         <DeferredRevenuePanel
-                            beginningDeferredRevenue={beginningDeferredRevenue}
+                            beginningDeferredRevenue={FINANCE_TARGET_FALLBACKS.beginningDeferredRevenue}
                             cashIncomeTotal={financeSummary.cashIncomeTotal}
                             recognizedIncomeTotal={financeSummary.recognizedIncomeTotal}
                             endingDeferredRevenue={financeSummary.endingDeferredRevenue}
@@ -269,7 +284,10 @@ const Finance: React.FC = () => {
 
                 {/* --- TAB: EXPENSE --- */}
                 {subTab === 'expense' && (
-                    <ExpensePayrollPanel />
+                    <ExpensePayrollPanel
+                        payrollRows={reportSummary.payrollRows}
+                        expenseRows={reportSummary.expenseRows}
+                    />
                 )}
 
                 {/* --- TAB: TARGET --- */}
@@ -282,15 +300,16 @@ const Finance: React.FC = () => {
                                 <div className="relative pt-1">
                                     <div className="flex mb-2 items-center justify-between">
                                         <div><span className="text-xs font-bold text-gray-500 uppercase">已完成进度</span></div>
-                                        <div className="text-right"><span className="text-3xl font-bold text-black font-mono">{annualProgress}%</span></div>
+                                        <div className="text-right"><span className="text-3xl font-bold text-black font-mono">{reportSummary.targetProgress.annual.progress}%</span></div>
                                     </div>
                                     <div className="overflow-hidden h-3 mb-4 text-xs flex rounded-full bg-gray-100">
-                                        <div style={{ width: `${annualProgress}%` }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-black rounded-full transition-all duration-1000"></div>
+                                        <div style={{ width: `${reportSummary.targetProgress.annual.progress}%` }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-black rounded-full transition-all duration-1000"></div>
                                     </div>
                                     <div className="flex justify-between text-xs text-gray-500 font-mono">
-                                        <span>当前: ¥{annualActual.toLocaleString()}</span>
-                                        <span>目标: ¥{annualTarget.toLocaleString()}</span>
+                                        <span>当前: ¥{reportSummary.targetProgress.annual.actual.toLocaleString()}</span>
+                                        <span>目标: ¥{reportSummary.targetProgress.annual.target.toLocaleString()}</span>
                                     </div>
+                                    <div className="text-[10px] text-orange-500 mt-3">{reportSummary.targetProgress.annual.sourceSummary}</div>
                                 </div>
                             </div>
                             <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
@@ -298,15 +317,16 @@ const Finance: React.FC = () => {
                                 <div className="relative pt-1">
                                     <div className="flex mb-2 items-center justify-between">
                                         <div><span className="text-xs font-bold text-gray-500 uppercase">查询区间目标进度</span></div>
-                                        <div className="text-right"><span className="text-3xl font-bold text-black font-mono">{monthlyProgress}%</span></div>
+                                        <div className="text-right"><span className="text-3xl font-bold text-black font-mono">{reportSummary.targetProgress.period.progress}%</span></div>
                                     </div>
                                     <div className="overflow-hidden h-3 mb-4 text-xs flex rounded-full bg-gray-100">
-                                        <div style={{ width: `${monthlyProgress}%` }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-600 rounded-full transition-all duration-1000"></div>
+                                        <div style={{ width: `${reportSummary.targetProgress.period.progress}%` }} className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-600 rounded-full transition-all duration-1000"></div>
                                     </div>
                                     <div className="flex justify-between text-xs text-gray-500 font-mono">
-                                        <span>当前: ¥{monthlyActual.toLocaleString()}</span>
-                                        <span>目标: ¥{monthlyTarget.toLocaleString()}</span>
+                                        <span>当前: ¥{reportSummary.targetProgress.period.actual.toLocaleString()}</span>
+                                        <span>目标: ¥{reportSummary.targetProgress.period.target.toLocaleString()}</span>
                                     </div>
+                                    <div className="text-[10px] text-orange-500 mt-3">{reportSummary.targetProgress.period.sourceSummary}</div>
                                 </div>
                             </div>
                         </div>
@@ -333,8 +353,8 @@ const Finance: React.FC = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-50">
-                                    {staffPerformance.map((staff, index) => (
-                                        <tr key={index}>
+                                    {reportSummary.staffPerformance.map((staff) => (
+                                        <tr key={staff.id}>
                                             <td className="p-3 pl-4"><div className="font-bold text-gray-900">{staff.name}</div><div className="text-[10px] text-gray-400">{staff.role}</div></td>
                                             <td className="p-3 font-mono text-gray-900">¥{staff.target.toLocaleString()}</td>
                                             <td className="p-3 font-mono text-green-600 font-bold">¥{staff.actual.toLocaleString()}</td>
@@ -348,7 +368,7 @@ const Finance: React.FC = () => {
                                             </td>
                                             <td className="p-3">
                                               <button
-                                                onClick={() => showToast(`已打开 ${staff.name} 业绩明细演示`)}
+                                                onClick={() => showToast(`${staff.name}：${staff.sourceSummary}`)}
                                                 className="text-xs text-blue-600 hover:underline font-bold"
                                               >
                                                 查看明细

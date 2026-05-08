@@ -1,28 +1,31 @@
 import React from 'react';
 import type { ChartData, ChartOptions } from 'chart.js';
 import { Line, Doughnut } from 'react-chartjs-2';
-import type { FinanceIncomeStructureEntry, FinancePendingItem } from '../../utils/financeSelectors';
+import type { FinanceCashFlowPoint, FinanceIncomeStructureEntry, FinancePendingItem } from '../../utils/financeSelectors';
 
 interface FinanceReportChartsProps {
   pendingItems: FinancePendingItem[];
   incomeStructure: FinanceIncomeStructureEntry[];
+  cashFlowTrend: FinanceCashFlowPoint[];
   endingDeferredRevenue: number;
   refundTotal: number;
+  reportExpenseTotal: number;
 }
 
 const FinanceReportCharts: React.FC<FinanceReportChartsProps> = ({
   pendingItems,
   incomeStructure,
+  cashFlowTrend,
   endingDeferredRevenue,
   refundTotal,
+  reportExpenseTotal,
 }) => {
-  // Transitional report mock: the chart shape stays demo-first until ledger reports are split out.
   const cashFlowData: ChartData<'line'> = {
-    labels: ['1日', '5日', '10日', '15日', '20日', '25日'],
+    labels: cashFlowTrend.map(point => point.label),
     datasets: [
       {
         label: '总营收 (现金流入)',
-        data: [120, 190, 150, 250, 220, 300],
+        data: cashFlowTrend.map(point => Math.round(point.cashIncome / 1000)),
         borderColor: '#000',
         backgroundColor: 'rgba(0,0,0,0.05)',
         tension: 0.4,
@@ -32,7 +35,7 @@ const FinanceReportCharts: React.FC<FinanceReportChartsProps> = ({
       },
       {
         label: '净现金流',
-        data: [50, 90, 80, 150, 110, 120],
+        data: cashFlowTrend.map(point => Math.round(point.netCashFlow / 1000)),
         borderColor: '#4ADE80',
         backgroundColor: 'rgba(74, 222, 128, 0.1)',
         fill: true,
@@ -166,8 +169,8 @@ const FinanceReportCharts: React.FC<FinanceReportChartsProps> = ({
               </tr>
               <tr>
                 <td className="py-3 font-bold text-gray-900">课时费支出总额</td>
-                <td className="font-mono text-gray-900">¥45,000.00</td>
-                <td className="text-blue-600 text-xs">过渡报表 mock</td>
+                <td className="font-mono text-gray-900">¥{reportExpenseTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                <td className="text-blue-600 text-xs">费用/薪酬分录口径，缺失时显示 fallback</td>
               </tr>
             </tbody>
           </table>
