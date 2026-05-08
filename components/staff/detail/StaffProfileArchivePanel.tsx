@@ -3,6 +3,15 @@ import type { Staff } from '../../../types';
 import { getNextStaffLevel } from '../../../utils/staffSelectors';
 import type { StaffProfileArchivePanelProps } from './StaffDetailTypes';
 
+type StaffProfileInputDialogKind = 'cert' | 'video';
+
+interface StaffProfileInputDialog {
+  kind: StaffProfileInputDialogKind;
+  title: string;
+  placeholder: string;
+  confirmLabel: string;
+}
+
 const StaffProfileArchivePanel: React.FC<StaffProfileArchivePanelProps> = ({
   activeStaff,
   setActiveStaff,
@@ -14,7 +23,45 @@ const StaffProfileArchivePanel: React.FC<StaffProfileArchivePanelProps> = ({
   setIsEditingPricing,
   pricingConfig,
   setPricingConfig,
-}) => (
+}) => {
+  const [inputDialog, setInputDialog] = React.useState<StaffProfileInputDialog | null>(null);
+  const [inputValue, setInputValue] = React.useState('');
+
+  const openInputDialog = (dialog: StaffProfileInputDialog) => {
+      setInputDialog(dialog);
+      setInputValue('');
+  };
+
+  const closeInputDialog = () => {
+      setInputDialog(null);
+      setInputValue('');
+  };
+
+  const submitInputDialog = () => {
+      if (!inputDialog) return;
+
+      const value = inputValue.trim();
+      if (!value) return;
+
+      if (inputDialog.kind === 'cert') {
+          setActiveStaff({
+              ...activeStaff,
+              certs: [...(activeStaff.certs || []), value],
+              certImages: [...(activeStaff.certImages || []), 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=400']
+          } as Staff);
+      }
+
+      if (inputDialog.kind === 'video') {
+          setActiveStaff({
+              ...activeStaff,
+              courseVideos: [...(activeStaff.courseVideos || []), { title: value, url: '#', thumb: 'https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?auto=format&fit=crop&q=80&w=400' }]
+          } as Staff);
+      }
+
+      closeInputDialog();
+  };
+
+  return (
   <div className="w-[400px] bg-[#FAFAFA] border-r border-gray-200 overflow-y-auto custom-scroll flex flex-col">
       <div className="p-6 text-center border-b border-gray-100 relative shrink-0">
           <div className="w-20 h-20 rounded-full mx-auto mb-3 p-1 border border-gray-200 bg-white shadow-sm">
@@ -194,14 +241,12 @@ const StaffProfileArchivePanel: React.FC<StaffProfileArchivePanelProps> = ({
                   <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">资质认证</div>
                   {isEditingProfile && (
                       <button onClick={() => {
-                          const newCert = prompt('请输入证书名称');
-                          if (newCert) {
-                              setActiveStaff({
-                                  ...activeStaff,
-                                  certs: [...(activeStaff.certs || []), newCert],
-                                  certImages: [...(activeStaff.certImages || []), 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&q=80&w=400']
-                              } as Staff);
-                          }
+                          openInputDialog({
+                              kind: 'cert',
+                              title: '上传证书',
+                              placeholder: '请输入证书名称',
+                              confirmLabel: '添加证书',
+                          });
                       }} className="text-[10px] text-blue-500 hover:underline"><i className="fa-solid fa-plus"></i> 上传证书</button>
                   )}
               </div>
@@ -239,13 +284,12 @@ const StaffProfileArchivePanel: React.FC<StaffProfileArchivePanelProps> = ({
                   <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">课程视频</div>
                   {isEditingProfile && (
                       <button onClick={() => {
-                          const newVideo = prompt('请输入视频标题');
-                          if (newVideo) {
-                              setActiveStaff({
-                                  ...activeStaff,
-                                  courseVideos: [...(activeStaff.courseVideos || []), { title: newVideo, url: '#', thumb: 'https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?auto=format&fit=crop&q=80&w=400' }]
-                              } as Staff);
-                          }
+                          openInputDialog({
+                              kind: 'video',
+                              title: '上传课程视频',
+                              placeholder: '请输入视频标题',
+                              confirmLabel: '添加视频',
+                          });
                       }} className="text-[10px] text-blue-500 hover:underline"><i className="fa-solid fa-plus"></i> 上传视频</button>
                   )}
               </div>
@@ -281,9 +325,44 @@ const StaffProfileArchivePanel: React.FC<StaffProfileArchivePanelProps> = ({
               {isEditingProfile ? '保存档案修改' : '编辑全项档案'}
           </button>
       </div>
+
+      {inputDialog && (
+          <div className="fixed inset-0 z-[90] flex items-center justify-center">
+              <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" onClick={closeInputDialog}></div>
+              <div className="relative bg-white w-full max-w-md rounded-3xl shadow-2xl border border-gray-100 p-6 animate-fadeIn">
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">{inputDialog.title}</h3>
+                  <p className="text-sm text-gray-500 leading-relaxed mb-4">{inputDialog.placeholder}</p>
+                  <input
+                      autoFocus
+                      type="text"
+                      value={inputValue}
+                      onChange={(event) => setInputValue(event.target.value)}
+                      onKeyDown={(event) => {
+                          if (event.key === 'Enter') submitInputDialog();
+                          if (event.key === 'Escape') closeInputDialog();
+                      }}
+                      placeholder={inputDialog.placeholder}
+                      className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm font-bold text-gray-900 outline-none focus:bg-white focus:border-black transition mb-6"
+                  />
+                  <div className="flex justify-end gap-3">
+                      <button onClick={closeInputDialog} className="px-4 py-2 rounded-xl text-xs font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 transition">
+                          取消
+                      </button>
+                      <button
+                          onClick={submitInputDialog}
+                          disabled={!inputValue.trim()}
+                          className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-black hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition"
+                      >
+                          {inputDialog.confirmLabel}
+                      </button>
+                  </div>
+              </div>
+          </div>
+      )}
   </div>
 
 
-);
+  );
+};
 
 export default StaffProfileArchivePanel;
