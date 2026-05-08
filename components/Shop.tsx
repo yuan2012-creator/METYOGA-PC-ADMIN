@@ -1,53 +1,73 @@
 
 import React, { useState, useMemo } from 'react';
 import { MOCK_STORE_INFO } from '../constants';
-import type { StoreInfo } from '../types';
+import {
+  addStoreGalleryImage,
+  addStoreHoliday,
+  buildInitialShopConfig,
+  buildSaveShopConfigInput,
+  DEMO_STORE_IMAGE_URL,
+  filterStoreRooms,
+  removeStoreGalleryImage,
+  removeStoreHoliday,
+  setStoreMenuOpen,
+  SHOP_SUB_TABS,
+  switchStoreConfig,
+  updateStoreBasicInfo,
+  type ShopConfigDraft,
+  type ShopSubTab,
+  type StoreOption,
+} from './shop/shopConfig';
 
 const Shop: React.FC = () => {
-  const [subTab, setSubTab] = useState<'setup' | 'rooms'>('setup');
+  const [subTab, setSubTab] = useState<ShopSubTab>('setup');
   const [searchQuery, setSearchQuery] = useState('');
-  
-  // Store Data (Local state for editability)
-  const [activeStore, setActiveStore] = useState<StoreInfo>(MOCK_STORE_INFO);
-  const [stores] = useState([{ id: 1, name: 'MetYoga 西湖馆' }, { id: 2, name: '万象城馆' }, { id: 3, name: '城西银泰馆' }]);
-  const [showStoreMenu, setShowStoreMenu] = useState(false);
+  const [shopConfig, setShopConfig] = useState<ShopConfigDraft>(() => buildInitialShopConfig(MOCK_STORE_INFO));
+
+  const { store: activeStore, storeOptions, isStoreMenuOpen } = shopConfig;
 
   // --- Computed ---
   const filteredRooms = useMemo(() => {
-      if (searchQuery && subTab === 'rooms') {
-          return activeStore.rooms.filter(r => r.name.toLowerCase().includes(searchQuery.toLowerCase()));
-      }
-      return activeStore.rooms;
+      return filterStoreRooms(activeStore.rooms, searchQuery, subTab);
   }, [activeStore.rooms, searchQuery, subTab]);
 
   // --- Actions ---
-  const handleSwitchStore = (store: {id: number, name: string}) => {
-      setActiveStore(prev => ({ ...prev, id: store.id, name: store.name }));
-      setShowStoreMenu(false);
+  const handleSwitchStore = (store: StoreOption) => {
+      setShopConfig(prev => switchStoreConfig(prev, store));
+  };
+
+  const handleStoreMenuOpen = (isOpen: boolean) => {
+      setShopConfig(prev => setStoreMenuOpen(prev, isOpen));
+  };
+
+  const updateStoreInfo = (updates: Parameters<typeof updateStoreBasicInfo>[1]) => {
+      setShopConfig(prev => updateStoreBasicInfo(prev, updates));
   };
 
   const saveAll = () => {
+      const saveInput = buildSaveShopConfigInput(shopConfig);
+      void saveInput;
       // alert("✅ 所有店铺配置已保存并同步至小程序端");
   };
 
   const addHoliday = () => {
       const n = prompt("请输入假期名称 (如: 春节假期)");
       const d = prompt("请输入日期范围 (如: 2026-01-20 至 2026-01-28)");
-      if (n && d) setActiveStore(prev => ({ ...prev, holidays: [...prev.holidays, { name: n, date: d }] }));
+      if (n && d) setShopConfig(prev => addStoreHoliday(prev, { name: n, date: d }));
   };
 
   const removeHoliday = (idx: number) => {
-      setActiveStore(prev => ({ ...prev, holidays: prev.holidays.filter((_, i) => i !== idx) }));
+      setShopConfig(prev => removeStoreHoliday(prev, idx));
   };
 
   const uploadStoreImage = () => {
       // alert("✅ 模拟：系统文件选择框已弹出，图片上传成功");
-      setActiveStore(prev => ({ ...prev, gallery: [...prev.gallery, 'https://images.unsplash.com/photo-1571019613454-1cb2f57a69d7?auto=format&fit=crop&q=80&w=400'] }));
+      setShopConfig(prev => addStoreGalleryImage(prev, DEMO_STORE_IMAGE_URL));
   };
 
   const removeImage = (idx: number) => {
       if(confirm('确定要删除这张图片吗？')) {
-          setActiveStore(prev => ({ ...prev, gallery: prev.gallery.filter((_, i) => i !== idx) }));
+          setShopConfig(prev => removeStoreGalleryImage(prev, idx));
       }
   };
 
@@ -59,18 +79,18 @@ const Shop: React.FC = () => {
             <div className="flex items-center gap-4">
                 <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                     店铺管理
-                    <button 
+                    <button
                         onClick={() => alert('Gemini AI 正在分析店铺运营数据并生成优化建议...')}
                         className="text-[10px] text-purple-600 font-bold flex items-center gap-1 hover:underline ml-2 bg-purple-50 px-2 py-1 rounded-full border border-purple-100"
                     >
                         <i className="fa-solid fa-wand-magic-sparkles"></i> AI 店铺优化
                     </button>
                 </h2>
-                
+
                 {/* Store Switcher */}
                 <div className="relative">
-                    <button 
-                        onClick={() => setShowStoreMenu(!showStoreMenu)} 
+                    <button
+                        onClick={() => handleStoreMenuOpen(!isStoreMenuOpen)}
                         className="flex items-center gap-2 text-xs font-medium bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition-all w-56 justify-between border border-transparent hover:border-gray-300"
                     >
                         <span className="flex items-center gap-2">
@@ -80,12 +100,12 @@ const Shop: React.FC = () => {
                         <i className="fa-solid fa-chevron-down text-[10px] text-gray-400"></i>
                     </button>
                     
-                    {showStoreMenu && (
+                    {isStoreMenuOpen && (
                         <>
-                            <div className="fixed inset-0 z-40" onClick={() => setShowStoreMenu(false)}></div>
+                            <div className="fixed inset-0 z-40" onClick={() => handleStoreMenuOpen(false)}></div>
                             <div className="absolute top-full left-0 mt-2 w-56 bg-white border border-gray-200 rounded-xl shadow-xl p-2 z-50 animate-fadeIn">
                                 <div className="text-[10px] text-gray-400 px-3 py-2 uppercase font-bold">切换门店</div>
-                                {stores.map(store => (
+                                {storeOptions.map(store => (
                                     <div 
                                         key={store.id} 
                                         onClick={() => handleSwitchStore(store)} 
@@ -128,13 +148,10 @@ const Shop: React.FC = () => {
         {/* Sub Navigation (Unified Segmented Control) */}
         <div className="px-8 py-4 bg-[#F5F5F7]/95 backdrop-blur border-b border-gray-200/50 sticky top-16 z-10 flex justify-start">
             <div className="bg-gray-100 p-1 rounded-xl inline-flex relative">
-                {[
-                    { id: 'setup', label: '门店配置' },
-                    { id: 'rooms', label: '教室配置' }
-                ].map(tab => (
+                {SHOP_SUB_TABS.map(tab => (
                     <button 
                         key={tab.id}
-                        onClick={() => setSubTab(tab.id as any)}
+                        onClick={() => setSubTab(tab.id)}
                         className={`relative z-10 px-4 py-2 text-[13px] font-medium text-center rounded-lg transition-all duration-200 ${
                             subTab === tab.id 
                             ? 'bg-white text-black shadow-sm font-bold' 
@@ -207,19 +224,19 @@ const Shop: React.FC = () => {
                                 <div className="grid grid-cols-2 gap-6">
                                     <div className="col-span-2">
                                         <label className="block text-xs font-bold text-gray-500 uppercase mb-2">门店名称</label>
-                                        <input type="text" value={activeStore.name} onChange={e => setActiveStore({...activeStore, name: e.target.value})} className="input-apple" />
+                                        <input type="text" value={activeStore.name} onChange={e => updateStoreInfo({ name: e.target.value })} className="input-apple" />
                                     </div>
                                     <div className="col-span-2">
                                         <label className="block text-xs font-bold text-gray-500 uppercase mb-2">详细地址</label>
-                                        <input type="text" value={activeStore.address} onChange={e => setActiveStore({...activeStore, address: e.target.value})} className="input-apple" />
+                                        <input type="text" value={activeStore.address} onChange={e => updateStoreInfo({ address: e.target.value })} className="input-apple" />
                                     </div>
                                     <div>
                                         <label className="block text-xs font-bold text-gray-500 uppercase mb-2">联系电话</label>
-                                        <input type="text" value={activeStore.phone} onChange={e => setActiveStore({...activeStore, phone: e.target.value})} className="input-apple" />
+                                        <input type="text" value={activeStore.phone} onChange={e => updateStoreInfo({ phone: e.target.value })} className="input-apple" />
                                     </div>
                                     <div>
                                         <label className="block text-xs font-bold text-gray-500 uppercase mb-2">营业时间</label>
-                                        <input type="text" value={activeStore.hours} onChange={e => setActiveStore({...activeStore, hours: e.target.value})} className="input-apple" />
+                                        <input type="text" value={activeStore.hours} onChange={e => updateStoreInfo({ hours: e.target.value })} className="input-apple" />
                                     </div>
                                     
                                     <div className="col-span-2 bg-gray-50 p-5 rounded-xl border border-gray-200 mt-2">
