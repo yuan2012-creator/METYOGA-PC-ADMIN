@@ -35,9 +35,26 @@ const INITIAL_SCHEDULE_EVENTS = MOCK_COURSE_SESSIONS.map(session => (
   toScheduleEvent(session, INITIAL_LIBRARY_LIST, MOCK_BOOKINGS)
 ));
 
+type CourseToastTone = 'info' | 'success';
+
+interface CourseToast {
+  id: number;
+  message: string;
+  tone: CourseToastTone;
+}
+
+interface CourseConfirmDialog {
+  title: string;
+  message: string;
+  confirmLabel?: string;
+  onConfirm: () => void;
+}
+
 const Courses: React.FC = () => {
   const [currentSubTab, setCurrentSubTab] = useState<CourseSubTab>('schedule');
   const [opsFilter, setOpsFilter] = useState<OpsFilter>('all');
+  const [toast, setToast] = useState<CourseToast | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<CourseConfirmDialog | null>(null);
   
   // --- Library State (Courses) ---
   const [libraryList, setLibraryList] = useState<CourseLibraryItem[]>(INITIAL_LIBRARY_LIST);
@@ -81,6 +98,12 @@ const Courses: React.FC = () => {
   const aiGuidance = getOpsAiGuidance(todayOpsSchedule, opsSummary);
 
   // --- Actions ---
+  const showToast = (message: string, tone: CourseToastTone = 'info') => {
+      setToast({ id: Date.now(), message, tone });
+      window.setTimeout(() => {
+          setToast(current => (current?.message === message ? null : current));
+      }, 2400);
+  };
   
   const handleDuplicate = (course: CourseLibraryItem, e: React.MouseEvent) => {
       e.stopPropagation();
@@ -90,7 +113,12 @@ const Courses: React.FC = () => {
 
   const handleDelete = (id: string, e: React.MouseEvent) => {
       e.stopPropagation();
-      if(confirm('确定要删除该课程吗？此操作不可恢复。')) setLibraryList(libraryList.filter(c => c.id !== id));
+      setConfirmDialog({
+          title: '删除课程',
+          message: '确定要删除该课程吗？此操作不可恢复。',
+          confirmLabel: '删除课程',
+          onConfirm: () => setLibraryList(current => current.filter(c => c.id !== id)),
+      });
   };
 
   const handleOpenDetail = (course: CourseLibraryItem) => {
@@ -130,7 +158,7 @@ const Courses: React.FC = () => {
           return;
       }
 
-      alert('请从右侧课程库拖拽课程至日历，或点击日历空白处进行排课。');
+      showToast('请从右侧课程库拖拽课程至日历，或点击日历空白处进行排课。', 'info');
   };
   
   const getCreateLabel = () => {
@@ -268,10 +296,15 @@ const Courses: React.FC = () => {
   };
 
   const deleteEvent = (id: string) => {
-      if(confirm('确定取消该排课？')) {
-          setScheduleEvents(scheduleEvents.filter(e => e.id !== id));
-          setIsScheduleModalOpen(false);
-      }
+      setConfirmDialog({
+          title: '取消排课',
+          message: '确定取消该排课？',
+          confirmLabel: '取消排课',
+          onConfirm: () => {
+              setScheduleEvents(current => current.filter(e => e.id !== id));
+              setIsScheduleModalOpen(false);
+          },
+      });
   };
 
   return (
@@ -320,6 +353,7 @@ const Courses: React.FC = () => {
                           filteredOpsSchedule={filteredOpsSchedule}
                           opsSummary={opsSummary}
                           aiGuidance={aiGuidance}
+                          onSubstitute={() => showToast('已进入代课处理演示流程', 'info')}
                       />
                       <ScheduleCalendar
                           libraryList={libraryList}
@@ -337,6 +371,7 @@ const Courses: React.FC = () => {
                           handleDrop={handleDrop}
                           handleGridClick={handleGridClick}
                           openEditModal={openEditModal}
+                          onRegenerateAi={() => showToast('Gemini AI 正在根据历史数据生成排课建议...', 'info')}
                       />
                   </div>
               )}
@@ -370,6 +405,49 @@ const Courses: React.FC = () => {
         confirmSchedule={confirmSchedule}
         deleteEvent={deleteEvent}
       />
+
+      {toast && (
+          <div className="fixed top-20 right-8 z-[70] animate-fadeIn">
+              <div className={`px-4 py-3 rounded-xl shadow-xl border text-sm font-bold flex items-center gap-3 ${
+                  toast.tone === 'success'
+                  ? 'bg-green-50 text-green-700 border-green-100'
+                  : 'bg-white text-gray-800 border-gray-100'
+              }`}>
+                  <i className={`fa-solid ${toast.tone === 'success' ? 'fa-circle-check' : 'fa-circle-info'}`}></i>
+                  {toast.message}
+                  <button onClick={() => setToast(null)} className="ml-2 text-current opacity-50 hover:opacity-100">
+                      <i className="fa-solid fa-xmark"></i>
+                  </button>
+              </div>
+          </div>
+      )}
+
+      {confirmDialog && (
+          <div className="fixed inset-0 z-[80] flex items-center justify-center">
+              <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" onClick={() => setConfirmDialog(null)}></div>
+              <div className="relative bg-white w-full max-w-sm rounded-3xl shadow-2xl border border-gray-100 p-6 animate-fadeIn">
+                  <div className="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center mb-4">
+                      <i className="fa-solid fa-triangle-exclamation"></i>
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900 mb-2">{confirmDialog.title}</h3>
+                  <p className="text-sm text-gray-500 leading-relaxed mb-6">{confirmDialog.message}</p>
+                  <div className="flex justify-end gap-3">
+                      <button onClick={() => setConfirmDialog(null)} className="px-4 py-2 rounded-xl text-xs font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 transition">
+                          取消
+                      </button>
+                      <button
+                          onClick={() => {
+                              confirmDialog.onConfirm();
+                              setConfirmDialog(null);
+                          }}
+                          className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-red-500 hover:bg-red-600 transition"
+                      >
+                          {confirmDialog.confirmLabel || '确认'}
+                      </button>
+                  </div>
+              </div>
+          </div>
+      )}
 
       <style>{`
         .custom-scroll::-webkit-scrollbar { width: 5px; }

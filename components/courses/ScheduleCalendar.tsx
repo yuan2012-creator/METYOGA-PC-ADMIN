@@ -22,6 +22,7 @@ interface ScheduleCalendarProps {
   handleDrop: (e: React.DragEvent, dayIndex: number) => void;
   handleGridClick: (e: React.MouseEvent, dayIndex: number) => void;
   openEditModal: (event: ScheduleEvent) => void;
+  onRegenerateAi: () => void;
 }
 
 const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
@@ -40,6 +41,7 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
   handleDrop,
   handleGridClick,
   openEditModal,
+  onRegenerateAi,
 }) => (
   <>
                       {/* SECTION 2: SMART SCHEDULING GUIDANCE (Moved here for better visibility) */}
@@ -50,7 +52,7 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                               </h3>
                               <div className="flex items-center gap-4">
                                   <button 
-                                      onClick={() => alert('Gemini AI 正在根据历史数据生成排课建议...')}
+                                      onClick={onRegenerateAi}
                                       className="text-[10px] text-purple-600 font-bold flex items-center gap-1 hover:underline"
                                   >
                                       <i className="fa-solid fa-rotate-right"></i> AI 重新生成
