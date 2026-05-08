@@ -5,11 +5,26 @@ import {
   BarChart, Bar, XAxis, Tooltip 
 } from 'recharts';
 import {
+  MOCK_ATTENDANCES,
+  MOCK_BOOKINGS,
+  MOCK_COURSE_SESSIONS,
+  MOCK_COURSES,
+  MOCK_FINANCE_LEDGER_ENTRIES,
+  MOCK_ORDERS,
+  MOCK_PAYMENTS,
+  MOCK_REFUNDS,
+} from '../constants';
+import {
   Member,
   MemberAsset,
   MemberAssetStatus,
   TimelineEvent,
 } from '../types';
+import {
+  buildMemberDetailBusinessRecordSlots,
+  buildMemberDetailTimelineItems,
+  getMemberDetailTimelineSourceLabel,
+} from '../utils/memberDetailSelectors';
 import {
   getMemberAssetSourceLabel,
   getMemberLifecyclePresentation,
@@ -22,12 +37,6 @@ interface MemberDetailModalProps {
 }
 
 type TimelineTab = 'all' | 'class' | 'follow' | 'order' | 'phase';
-type TimelineSourceType = 'legacy_timeline' | 'order' | 'booking' | 'attendance' | 'refund';
-
-type TimelineViewItem = TimelineEvent & {
-  sourceType: TimelineSourceType;
-  sourceId: string;
-};
 
 type MemberDetailToast = {
   id: number;
@@ -43,15 +52,6 @@ interface AssetCardView {
   statusLabel: string;
   colorClass: string;
   badgeClass: string;
-}
-
-interface BusinessRecordSlot {
-  id: 'course' | 'consumption';
-  title: string;
-  description: string;
-  iconClass: string;
-  toneClass: string;
-  metrics: { label: string; value: string }[];
 }
 
 const MEMBER_ASSET_STATUS_LABELS: Record<MemberAssetStatus, string> = {
@@ -157,62 +157,6 @@ const getAssetCards = (member: Member): AssetCardView[] => {
   }));
 };
 
-const buildTimelineItems = (member: Member): TimelineViewItem[] => {
-  const legacyTimeline: TimelineViewItem[] = member.timeline.map((event) => ({
-    ...event,
-    sourceType: 'legacy_timeline',
-    sourceId: event.id,
-  }));
-
-  // Future P0 sources can be merged here without changing the render layer:
-  // orders -> purchase, bookings -> class, attendances -> check_in, refunds -> operation.
-  const domainTimeline: TimelineViewItem[] = [];
-
-  return [...legacyTimeline, ...domainTimeline];
-};
-
-const getTimelineSourceLabel = (sourceType: TimelineSourceType): string => {
-  switch (sourceType) {
-    case 'legacy_timeline':
-      return '当前 timeline';
-    case 'order':
-      return '订单';
-    case 'booking':
-      return '预约';
-    case 'attendance':
-      return '签到';
-    case 'refund':
-      return '退款';
-    default:
-      return '业务记录';
-  }
-};
-
-const getBusinessRecordSlots = (member: Member): BusinessRecordSlot[] => [
-  {
-    id: 'course',
-    title: '课程记录',
-    description: '后续承接预约、签到、到课与排课场次',
-    iconClass: 'fa-solid fa-calendar-check',
-    toneClass: 'bg-gray-900 text-white',
-    metrics: [
-      { label: '累计上课', value: `${member.totalClasses} 节` },
-      { label: '最近到店', value: member.lastVisit },
-    ],
-  },
-  {
-    id: 'consumption',
-    title: '消费记录',
-    description: '后续承接订单、支付、退款与财务分录',
-    iconClass: 'fa-solid fa-receipt',
-    toneClass: 'bg-white text-gray-900 border border-gray-200',
-    metrics: [
-      { label: '累计消费', value: `¥${member.totalLTV.toLocaleString()}` },
-      { label: '积分余额', value: `${member.points}` },
-    ],
-  },
-];
-
 const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }) => {
   const [activeTab, setActiveTab] = useState<TimelineTab>('all');
   const [toast, setToast] = useState<MemberDetailToast | null>(null);
@@ -220,8 +164,19 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }
   const riskView = getMemberRiskPresentation(member);
   const assetCards = getAssetCards(member);
   const assetSourceLabel = getMemberAssetSourceLabel(member);
-  const timelineItems = buildTimelineItems(member);
-  const businessRecordSlots = getBusinessRecordSlots(member);
+  const detailRecordInput = {
+    member,
+    bookings: MOCK_BOOKINGS,
+    attendances: MOCK_ATTENDANCES,
+    courseSessions: MOCK_COURSE_SESSIONS,
+    courses: MOCK_COURSES,
+    orders: MOCK_ORDERS,
+    payments: MOCK_PAYMENTS,
+    refunds: MOCK_REFUNDS,
+    ledgerEntries: MOCK_FINANCE_LEDGER_ENTRIES,
+  };
+  const timelineItems = buildMemberDetailTimelineItems(detailRecordInput);
+  const businessRecordSlots = buildMemberDetailBusinessRecordSlots(detailRecordInput);
 
   // --- Mock Data for Charts ---
   const preferenceData = member.topCourses && member.topCourses.length > 0 
@@ -566,7 +521,7 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }
                         <div>
                             <h3 className="text-sm font-bold text-gray-900">全景动态追踪</h3>
                             <p className="text-[10px] text-gray-400 mt-1">
-                                当前展示 timeline；后续接入订单、预约、签到、退款等真实业务记录
+                                优先展示订单、预约、签到、退款链路；缺口由 Legacy timeline fallback 补充
                             </p>
                         </div>
                         <div className="flex gap-4">
@@ -597,7 +552,7 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }
                                 <div className="flex justify-between items-start mb-1">
                                     <div>
                                         <div className="text-sm font-bold text-gray-900">{event.title}</div>
-                                        <div className="text-[10px] text-gray-400 mt-0.5">{getTimelineSourceLabel(event.sourceType)}</div>
+                                        <div className="text-[10px] text-gray-400 mt-0.5">{getMemberDetailTimelineSourceLabel(event.sourceType)}</div>
                                     </div>
                                     <div className="text-xs text-gray-400 font-mono">{event.date}</div>
                                 </div>
