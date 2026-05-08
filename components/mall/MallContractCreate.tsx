@@ -4,6 +4,7 @@ import {
     applyMallProductToContractDraft,
     type MallContractSourceSummary,
     type MallProductOption,
+    type MallWriteClosureDraft,
 } from '../../utils/mallSelectors';
 
 export const createInitialContractData = () => ({
@@ -81,8 +82,12 @@ interface MallContractCreateProps {
   members: Member[];
   productOptions: MallProductOption[];
   sourceSummary: MallContractSourceSummary;
+  writeClosureDraft: MallWriteClosureDraft | null;
   handleBack: () => void;
   onDemoAction: (message: string) => void;
+  onSaveDraft: () => void;
+  onGenerateOrderPreview: () => void;
+  onConfirmOrderPreview: () => void;
 }
 
 const MallContractCreate: React.FC<MallContractCreateProps> = ({
@@ -91,8 +96,12 @@ const MallContractCreate: React.FC<MallContractCreateProps> = ({
   members,
   productOptions,
   sourceSummary,
+  writeClosureDraft,
   handleBack,
   onDemoAction,
+  onSaveDraft,
+  onGenerateOrderPreview,
+  onConfirmOrderPreview,
 }) => {
   const previewContainerRef = useRef<HTMLDivElement>(null);
   const sectionRefs = {
@@ -139,19 +148,61 @@ const MallContractCreate: React.FC<MallContractCreateProps> = ({
                 </div>
                 <div className="flex gap-3">
                     <button
-                        onClick={() => onDemoAction(`${sourceSummary.productName} 合同草稿已保存，真实持久化待后续接口接入`)}
+                        onClick={onSaveDraft}
                         className="px-6 py-2 bg-white border border-gray-200 rounded-xl text-sm font-bold hover:bg-gray-50 transition"
                     >
                         保存草稿
                     </button>
                     <button
-                        onClick={() => onDemoAction(`${sourceSummary.memberName} 的合同签署已进入演示发送流程`)}
+                        onClick={onGenerateOrderPreview}
+                        className="px-6 py-2 bg-orange-500 text-white rounded-xl text-sm font-bold hover:opacity-90 transition shadow-lg shadow-orange-500/10"
+                    >
+                        生成订单预览
+                    </button>
+                    <button
+                        onClick={onConfirmOrderPreview}
+                        disabled={!writeClosureDraft}
+                        className={`px-6 py-2 rounded-xl text-sm font-bold transition shadow-lg ${
+                            writeClosureDraft
+                                ? 'bg-black text-white hover:opacity-80 shadow-black/10'
+                                : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        }`}
+                    >
+                        确认订单并生成资产
+                    </button>
+                    <button
+                        onClick={() => onDemoAction(`${sourceSummary.memberName} 的合同签署发送仍为演示入口，请先确认订单生成资产`)}
                         className="px-6 py-2 bg-black text-white rounded-xl text-sm font-bold hover:opacity-80 transition shadow-lg shadow-black/10"
                     >
                         发送给会员签署
                     </button>
                 </div>
             </div>
+
+            {writeClosureDraft && (
+                <div className="mb-6 shrink-0 bg-white border border-green-100 rounded-2xl p-4 shadow-sm grid grid-cols-4 gap-4 text-xs">
+                    <div>
+                        <div className="text-gray-400 font-bold mb-1">订单预览</div>
+                        <div className="font-black text-gray-900">{writeClosureDraft.order.id}</div>
+                        <div className="text-gray-500 mt-1">¥{writeClosureDraft.order.totalAmount.toLocaleString()}</div>
+                    </div>
+                    <div>
+                        <div className="text-gray-400 font-bold mb-1">合同草稿</div>
+                        <div className="font-black text-gray-900">{writeClosureDraft.contract.id}</div>
+                        <div className="text-gray-500 mt-1">{writeClosureDraft.contract.title}</div>
+                    </div>
+                    <div>
+                        <div className="text-gray-400 font-bold mb-1">会员资产</div>
+                        <div className="font-black text-gray-900">{writeClosureDraft.asset.id}</div>
+                        <div className="text-gray-500 mt-1">{writeClosureDraft.asset.name}</div>
+                    </div>
+                    <div>
+                        <div className="text-gray-400 font-bold mb-1">来源链路</div>
+                        <div className="font-black text-green-700">商品 → 合同 → 订单 → 资产</div>
+                        <div className="text-gray-500 mt-1">{writeClosureDraft.member.name} / {writeClosureDraft.product.sourceLabel}</div>
+                    </div>
+                </div>
+            )}
 
             <div className="flex-1 flex gap-8 min-h-0">
                 {/* Left: Form */}

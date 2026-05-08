@@ -1,5 +1,5 @@
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   MOCK_CARD_PRODUCTS,
   MOCK_CONTRACTS,
@@ -31,12 +31,14 @@ import type {
   MallTtcEditorItem,
   PointProductTab,
 } from './mall/mallTypes';
-import type { CardProduct, Contract, Order, PointProduct } from '../types';
+import type { CardProduct, Contract, MemberAsset, Order, PointProduct } from '../types';
 import {
   buildMallAssetSourceLinks,
   buildMallClosureSummary,
   buildMallContractSourceSummary,
   buildMallProductOptions,
+  buildMallWriteClosureDraft,
+  type MallWriteClosureDraft,
 } from '../utils/mallSelectors';
 
 // --- Constants ---
@@ -138,19 +140,21 @@ const Mall: React.FC = () => {
       { id: 'st2', name: 'Mike Chen', phone: '139****1234', paymentStatus: 'deposit', amount: 5000, confirmed: false, batch: '2024 春季周末班', signupDate: '2023-11-22' },
   ]);
 
-  const [orders] = useState<Order[]>(MOCK_ORDERS);
-  const [contracts] = useState<Contract[]>(MOCK_CONTRACTS);
+  const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
+  const [contracts, setContracts] = useState<Contract[]>(MOCK_CONTRACTS);
+  const [memberAssets, setMemberAssets] = useState<MemberAsset[]>(MOCK_MEMBER_ASSETS);
+  const [writeClosureDraft, setWriteClosureDraft] = useState<MallWriteClosureDraft | null>(null);
   const mallProductOptions = useMemo(
       () => buildMallProductOptions({ cards, ttcCourses, pointProducts: products }),
       [cards, ttcCourses, products]
   );
   const assetSourceLinks = useMemo(
       () => buildMallAssetSourceLinks({
-          assets: MOCK_MEMBER_ASSETS,
+          assets: memberAssets,
           orders,
           contracts,
       }),
-      [orders, contracts]
+      [memberAssets, orders, contracts]
   );
   const contractSourceSummary = useMemo(
       () => buildMallContractSourceSummary({
@@ -164,6 +168,17 @@ const Mall: React.FC = () => {
       () => buildMallClosureSummary({ orders, assetSourceLinks }),
       [orders, assetSourceLinks]
   );
+
+  useEffect(() => {
+      setWriteClosureDraft(null);
+  }, [
+      contractData.memberId,
+      contractData.productId,
+      contractData.productType,
+      contractData.amount,
+      contractData.startDate,
+      contractData.endDate,
+  ]);
 
   const setCardSelectedItem: MallEditorSetter<MallCardEditorItem> = (value) => {
       setSelectedItem(prev => applyMallEditorUpdate(prev, value));
@@ -252,6 +267,44 @@ const Mall: React.FC = () => {
   const openContractCreate = () => {
       setContractData(prev => ({...prev, productType: activeModule === 'ttc' ? 'ttc' : 'card'}));
       setSubView('contract_create');
+  };
+
+  const handleSaveContractDraft = () => {
+      showToast(`${contractSourceSummary.productName} 合同草稿已保存为前端草稿，后端持久化仍待接入`);
+  };
+
+  const handleGenerateOrderPreview = () => {
+      const draft = buildMallWriteClosureDraft({
+          contractData,
+          members: MOCK_MEMBERS,
+          productOptions: mallProductOptions,
+          existingOrders: orders,
+      });
+
+      if (!draft) {
+          showToast('请先选择会员、关联商品并填写合同金额，再生成订单预览');
+          return;
+      }
+
+      setWriteClosureDraft(draft);
+      showToast(`${draft.member.name} 的 ${draft.product.name} 已生成订单预览`);
+  };
+
+  const handleConfirmOrderPreview = () => {
+      if (!writeClosureDraft) {
+          showToast('请先生成订单预览');
+          return;
+      }
+
+      setOrders(current => [writeClosureDraft.order, ...current]);
+      setContracts(current => [writeClosureDraft.contract, ...current]);
+      setMemberAssets(current => [writeClosureDraft.asset, ...current]);
+      setOrderTab(writeClosureDraft.product.sourceType === 'ttc' ? 'ttc' : 'cards');
+      setActiveModule('orders');
+      setSubView('list');
+      showToast(`${writeClosureDraft.order.id} 已确认，会员资产来源已写入前端链路`);
+      setWriteClosureDraft(null);
+      setContractData(createInitialContractData());
   };
 
   // --- Charts Data ---
@@ -375,8 +428,12 @@ const Mall: React.FC = () => {
           members={MOCK_MEMBERS}
           productOptions={mallProductOptions}
           sourceSummary={contractSourceSummary}
+          writeClosureDraft={writeClosureDraft}
           handleBack={handleBack}
           onDemoAction={showToast}
+          onSaveDraft={handleSaveContractDraft}
+          onGenerateOrderPreview={handleGenerateOrderPreview}
+          onConfirmOrderPreview={handleConfirmOrderPreview}
       />
   );
   

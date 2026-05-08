@@ -71,6 +71,14 @@ export interface MallClosureSummary {
   fallbackAssetCount: number;
 }
 
+export interface MallWriteClosureDraft {
+  order: Order;
+  contract: Contract;
+  asset: MemberAsset;
+  product: MallProductOption;
+  member: Member;
+}
+
 const formatMoney = (value: number | undefined) => `¥${(value ?? 0).toLocaleString()}`;
 
 const getOrderPrimaryItem = (order: Order): OrderItem | undefined => order.items[0];
@@ -253,6 +261,98 @@ export const applyMallProductToContractDraft = (
     ? { cardSubCategory: product.name, productType: 'card' as const }
     : { ttcCourseName: product.name, productType: 'ttc' as const }),
 });
+
+const toLocalIsoDateTime = (date: string | undefined, fallback: string) =>
+  `${date || fallback}T00:00:00+08:00`;
+
+const buildDraftSequence = (existingOrders: Order[]) => {
+  const generatedCount = existingOrders.filter(order => order.id.startsWith('ord-local-')).length + 1;
+  return String(generatedCount).padStart(3, '0');
+};
+
+export const buildMallWriteClosureDraft = ({
+  contractData,
+  members,
+  productOptions,
+  existingOrders,
+  now = new Date(),
+}: {
+  contractData: MallContractData;
+  members: Member[];
+  productOptions: MallProductOption[];
+  existingOrders: Order[];
+  now?: Date;
+}): MallWriteClosureDraft | null => {
+  const member = members.find(item => item.id === contractData.memberId);
+  const product = productOptions.find(item => item.id === contractData.productId);
+
+  if (!member || !product || !contractData.amount) return null;
+
+  const sequence = buildDraftSequence(existingOrders);
+  const createdAt = now.toISOString();
+  const orderId = `ord-local-${sequence}`;
+  const contractId = `contract-local-${sequence}`;
+  const assetId = `asset-local-${sequence}`;
+  const title = contractData.productType === 'card'
+    ? `${product.name}会员服务协议`
+    : `${product.name}教培服务协议`;
+
+  const orderItem: OrderItem = {
+    id: `${orderId}-item-1`,
+    orderId,
+    productType: product.sourceType === 'ttc' ? 'ttc' : 'card',
+    productId: product.id,
+    productName: product.name,
+    quantity: 1,
+    unitPrice: contractData.amount,
+    totalAmount: contractData.amount,
+    memberAssetId: assetId,
+  };
+
+  const order: Order = {
+    id: orderId,
+    memberId: member.id,
+    status: 'paid',
+    items: [orderItem],
+    totalAmount: contractData.amount,
+    paidAmount: contractData.amount,
+    contractId,
+    createdAt,
+    updatedAt: createdAt,
+    storeId: contractData.partyAVenueId,
+  };
+
+  const contract: Contract = {
+    id: contractId,
+    memberId: member.id,
+    orderId,
+    status: 'pending_signature',
+    title,
+    templateId: contractData.productType === 'card' ? 'template-card-standard' : 'template-ttc-standard',
+    sentAt: createdAt,
+    expiresAt: contractData.endDate ? toLocalIsoDateTime(contractData.endDate, contractData.paymentDate) : undefined,
+  };
+
+  const asset: MemberAsset = {
+    id: assetId,
+    memberId: member.id,
+    name: product.name,
+    status: 'inactive',
+    sourceOrderId: orderId,
+    contractId,
+    productId: product.id,
+    productType: product.sourceType === 'ttc' ? 'ttc' : 'card',
+    balanceType: product.sourceType === 'ttc' ? 'course' : 'time',
+    totalAmount: product.sourceType === 'ttc' ? 1 : undefined,
+    remainingAmount: product.sourceType === 'ttc' ? 1 : undefined,
+    effectiveDate: toLocalIsoDateTime(contractData.startDate, contractData.paymentDate),
+    expiryDate: contractData.endDate ? toLocalIsoDateTime(contractData.endDate, contractData.paymentDate) : undefined,
+    createdAt,
+    updatedAt: createdAt,
+  };
+
+  return { order, contract, asset, product, member };
+};
 
 export const buildMallClosureSummary = ({
   orders,
