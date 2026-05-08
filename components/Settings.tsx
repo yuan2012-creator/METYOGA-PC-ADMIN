@@ -1,51 +1,26 @@
 
 import React, { useState } from 'react';
-
-// --- Types ---
-interface TeacherLevel {
-    id: number;
-    name: string;
-    threshold: number; // Hours
-    baseGroup: number; // RMB
-    basePrivate: number; // RMB
-}
-
-interface CourseItem {
-    id: number;
-    name: string;
-    points: number;
-}
-
-interface StorePricing {
-    id: number;
-    name: string;
-    group: CourseItem[];
-    private: CourseItem[];
-}
-
-// --- New Types for Roles & Permissions ---
-interface PermissionNode {
-    id: string;
-    name: string;
-    desc?: string;
-    isDangerous?: boolean; // Highlight dangerous actions like delete
-}
-
-interface PermissionModule {
-    id: string;
-    name: string;
-    icon: string;
-    nodes: PermissionNode[];
-}
-
-interface Role {
-    id: string;
-    name: string;
-    desc: string;
-    type: 'system' | 'custom'; // System roles cannot be deleted
-    permissions: string[]; // List of permission IDs
-    memberIds: number[]; // List of Account IDs assigned to this role
-}
+import {
+    INITIAL_ACTIVE_STORE_ID,
+    INITIAL_BASE_POINT_VALUE,
+    INITIAL_COMMISSION_RULES,
+    INITIAL_MEMBER_RULES,
+    INITIAL_ROLES,
+    INITIAL_STORE_PRICING,
+    INITIAL_TEACHER_LEVELS,
+    SETTINGS_ACCOUNTS,
+    SETTINGS_PERMISSION_MODULES,
+    SETTINGS_TABS,
+    createCourseItem,
+    createCustomRole,
+    createTeacherLevel,
+    type CourseItem,
+    type CoursePricingType,
+    type Role,
+    type SettingsTab,
+    type StorePricing,
+    type TeacherLevel,
+} from '../utils/settingsPresentation';
 
 type SettingsToastTone = 'info' | 'success' | 'warning';
 
@@ -72,7 +47,7 @@ interface SettingsInputDialog {
 }
 
 const Settings: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'salary' | 'course' | 'member' | 'role'>('salary');
+  const [activeTab, setActiveTab] = useState<SettingsTab>('salary');
   const [toast, setToast] = useState<SettingsToast | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<SettingsConfirmDialog | null>(null);
   const [inputDialog, setInputDialog] = useState<SettingsInputDialog | null>(null);
@@ -80,17 +55,8 @@ const Settings: React.FC = () => {
 
   // --- 9.1 Salary & Promotion State ---
   const [autoPromotion, setAutoPromotion] = useState(true);
-  
-  const [levels, setLevels] = useState<TeacherLevel[]>([
-      { id: 1, name: 'T1 初级', threshold: 0, baseGroup: 80, basePrivate: 150 },
-      { id: 2, name: 'T2 资深', threshold: 500, baseGroup: 120, basePrivate: 220 },
-      { id: 3, name: 'T3 专家', threshold: 1500, baseGroup: 180, basePrivate: 300 },
-  ]);
-
-  const [commissionRules, setCommissionRules] = useState({
-      trialConversion: 10, // %
-      renewal: 5 // %
-  });
+  const [levels, setLevels] = useState<TeacherLevel[]>(INITIAL_TEACHER_LEVELS);
+  const [commissionRules, setCommissionRules] = useState(INITIAL_COMMISSION_RULES);
 
   const showToast = (message: string, tone: SettingsToastTone = 'info') => {
       setToast({ id: Date.now(), message, tone });
@@ -124,8 +90,7 @@ const Settings: React.FC = () => {
 
   // Actions for Salary
   const addLevel = () => {
-      const newId = Math.max(...levels.map(l => l.id)) + 1;
-      setLevels([...levels, { id: newId, name: '新等级', threshold: 2000, baseGroup: 0, basePrivate: 0 }]);
+      setLevels(current => [...current, createTeacherLevel(current)]);
   };
 
   const removeLevel = (id: number) => {
@@ -140,62 +105,30 @@ const Settings: React.FC = () => {
       });
   };
 
-  const updateLevel = (id: number, field: keyof TeacherLevel, value: any) => {
-      setLevels(levels.map(l => l.id === id ? { ...l, [field]: value } : l));
+  const updateLevel = <K extends keyof TeacherLevel>(id: number, field: K, value: TeacherLevel[K]) => {
+      setLevels(current => current.map(l => l.id === id ? { ...l, [field]: value } : l));
   };
 
   // --- 9.2 Course & Pricing State ---
-  const [basePointValue, setBasePointValue] = useState(125); // 1 Point = 125 RMB
-  const [activeStoreId, setActiveStoreId] = useState(1);
-  
-  const [storePricing, setStorePricing] = useState<StorePricing[]>([
-      {
-          id: 1, name: '西湖旗舰馆', 
-          group: [
-              { id: 1, name: '一星课程 (L1)', points: 2 },
-              { id: 2, name: '二星课程 (L2)', points: 3 },
-              { id: 3, name: '三星课程 (L3)', points: 4 }
-          ],
-          private: [
-              { id: 101, name: '基础私教', points: 4 },
-              { id: 102, name: '塑形普拉提', points: 4.5 },
-              { id: 103, name: '孕产康复', points: 6 }
-          ]
-      },
-      {
-          id: 2, name: '城西银泰馆', 
-          group: [
-              { id: 1, name: '一星课程 (L1)', points: 0.5 },
-              { id: 2, name: '二星课程 (L2)', points: 1 },
-              { id: 3, name: '三星课程 (L3)', points: 1.5 }
-          ],
-          private: [
-              { id: 101, name: '基础私教', points: 3.5 },
-              { id: 102, name: '特色私教', points: 4.5 }
-          ]
-      },
-      { id: 3, name: '万象城馆', group: [], private: [] }, // Simplified for mock
-      { id: 4, name: '滨江宝龙馆', group: [], private: [] },
-      { id: 5, name: '嘉里中心馆', group: [], private: [] }
-  ]);
+  const [basePointValue, setBasePointValue] = useState(INITIAL_BASE_POINT_VALUE);
+  const [activeStoreId, setActiveStoreId] = useState(INITIAL_ACTIVE_STORE_ID);
+  const [storePricing, setStorePricing] = useState<StorePricing[]>(INITIAL_STORE_PRICING);
 
   const currentStore = storePricing.find(s => s.id === activeStoreId) || storePricing[0];
 
   // Actions for Course Pricing
-  const addCourseItem = (type: 'group' | 'private') => {
+  const addCourseItem = (type: CoursePricingType) => {
       const updatedStores = storePricing.map(store => {
           if (store.id === activeStoreId) {
               const list = store[type];
-              const newId = list.length > 0 ? Math.max(...list.map(i => i.id)) + 1 : (type === 'group' ? 1 : 101);
-              const newItem = { id: newId, name: type === 'group' ? '新团课类型' : '新私教类型', points: 0 };
-              return { ...store, [type]: [...list, newItem] };
+              return { ...store, [type]: [...list, createCourseItem(list, type)] };
           }
           return store;
       });
       setStorePricing(updatedStores);
   };
 
-  const removeCourseItem = (type: 'group' | 'private', itemId: number) => {
+  const removeCourseItem = (type: CoursePricingType, itemId: number) => {
       const updatedStores = storePricing.map(store => {
           if (store.id === activeStoreId) {
               return { ...store, [type]: store[type].filter(i => i.id !== itemId) };
@@ -205,11 +138,11 @@ const Settings: React.FC = () => {
       setStorePricing(updatedStores);
   };
 
-  const updateCourseItem = (type: 'group' | 'private', itemId: number, field: 'name' | 'points', value: any) => {
+  const updateCourseItem = <K extends keyof CourseItem>(type: CoursePricingType, itemId: number, field: K, value: CourseItem[K]) => {
       const updatedStores = storePricing.map(store => {
           if (store.id === activeStoreId) {
               const updatedList = store[type].map(item => item.id === itemId ? { ...item, [field]: value } : item);
-              return { ...store, [type]: updatedList };
+              return { ...store, [type]: updatedList } as StorePricing;
           }
           return store;
       });
@@ -217,81 +150,12 @@ const Settings: React.FC = () => {
   };
 
   // 9.3 Member Rules (Mock)
-  const [memberRules, setMemberRules] = useState({ pointsEarnRate: 100, s5SleepDays: 30, s6ChurnDays: 90 });
+  const [memberRules, setMemberRules] = useState(INITIAL_MEMBER_RULES);
 
   // 9.4 Role & Permissions (New)
-  
-  // Define System Capabilities (Permissions)
-  const permissionModules: PermissionModule[] = [
-      {
-          id: 'dashboard', name: '首页与数据', icon: 'fa-chart-pie',
-          nodes: [
-              { id: 'view_dashboard', name: '查看首页概览' },
-              { id: 'view_data_bi', name: '查看详细BI数据' },
-              { id: 'view_investor', name: '查看投资人看板', isDangerous: true },
-          ]
-      },
-      {
-          id: 'member', name: '会员管理', icon: 'fa-users',
-          nodes: [
-              { id: 'view_member_list', name: '查看会员列表 (脱敏)' },
-              { id: 'view_member_detail', name: '查看完整档案 (含联系方式)', isDangerous: true },
-              { id: 'edit_member', name: '编辑会员信息' },
-              { id: 'export_member', name: '导出会员数据', isDangerous: true },
-          ]
-      },
-      {
-          id: 'finance', name: '财务中心', icon: 'fa-wallet',
-          nodes: [
-              { id: 'view_revenue', name: '查看营收报表' },
-              { id: 'manage_refund', name: '处理退款申请', isDangerous: true },
-              { id: 'manage_salary', name: '查看/发放薪资', isDangerous: true },
-          ]
-      },
-      {
-          id: 'operation', name: '教务运营', icon: 'fa-calendar-check',
-          nodes: [
-              { id: 'manage_schedule', name: '排课与发布' },
-              { id: 'check_in', name: '签到消课' },
-              { id: 'manage_staff', name: '员工档案管理' },
-          ]
-      }
-  ];
-
-  const [accounts] = useState([
-      { id: 1, name: 'Alexander', role: '总管理员', avatar: 'A' },
-      { id: 2, name: 'Sarah', role: '教学总监', avatar: 'S' },
-      { id: 3, name: 'Eva', role: '运营管家', avatar: 'E' },
-      { id: 4, name: 'Mike', role: '全职老师', avatar: 'M' },
-      { id: 5, name: 'Finance01', role: '财务专员', avatar: 'F' },
-  ]);
-
-  const [roles, setRoles] = useState<Role[]>([
-      { 
-          id: 'admin', name: '总管理员 (Admin)', desc: '拥有系统最高权限，可管理所有模块与配置。', type: 'system', 
-          permissions: ['all'], memberIds: [1] 
-      },
-      { 
-          id: 'manager', name: '店长 (Store Manager)', desc: '负责单店全面运营，拥有除敏感财务外的管理权限。', type: 'custom', 
-          permissions: ['view_dashboard', 'view_member_list', 'view_member_detail', 'edit_member', 'view_revenue', 'manage_schedule', 'check_in', 'manage_staff'], 
-          memberIds: [] 
-      },
-      { 
-          id: 'butler', name: '运营管家 (Butler)', desc: '负责前台接待、会员维护与日常排课协助。', type: 'custom', 
-          permissions: ['view_member_list', 'edit_member', 'check_in', 'manage_schedule'], 
-          memberIds: [3] 
-      },
-      { 
-          id: 'teacher', name: '老师/教练 (Teacher)', desc: '仅可查看课表、签到以及查看关联学员信息。', type: 'custom', 
-          permissions: ['check_in'], 
-          memberIds: [2, 4] 
-      },
-      { 
-          id: 'finance', name: '财务 (Finance)', desc: '负责账目核对、薪酬计算与退款审核。', type: 'custom', 
-          permissions: ['view_revenue', 'manage_refund', 'manage_salary', 'view_data_bi'], 
-          memberIds: [5] 
-      },
-  ]);
+  const permissionModules = SETTINGS_PERMISSION_MODULES;
+  const accounts = SETTINGS_ACCOUNTS;
+  const [roles, setRoles] = useState<Role[]>(INITIAL_ROLES);
 
   const [activeRoleId, setActiveRoleId] = useState<string | null>(null);
   const activeRole = roles.find(r => r.id === activeRoleId);
@@ -338,10 +202,9 @@ const Settings: React.FC = () => {
           placeholder: '例如：门店运营主管',
           confirmLabel: '创建角色',
           onConfirm: (name) => {
-          const newId = `role_${Date.now()}`;
-          const newRole: Role = { id: newId, name, desc: '新创建的角色，请配置权限。', type: 'custom', permissions: [], memberIds: [] };
-          setRoles(current => [...current, newRole]);
-          setActiveRoleId(newId);
+              const newRole = createCustomRole(name);
+              setRoles(current => [...current, newRole]);
+              setActiveRoleId(newRole.id);
           },
       });
   };
@@ -380,7 +243,7 @@ const Settings: React.FC = () => {
                 <button className="text-xs text-gray-500 hover:text-black font-medium transition">重置更改</button>
                 <button 
                     className="bg-black text-white text-xs px-5 py-2 rounded-lg font-bold hover:opacity-80 transition shadow-lg shadow-black/10"
-                    onClick={() => showToast('规则已生效并同步至全系统', 'success')}
+                    onClick={() => showToast('配置已在前端演示态生效，真实后台保存与同步待接口接入', 'success')}
                 >
                     保存配置
                 </button>
@@ -390,15 +253,10 @@ const Settings: React.FC = () => {
         {/* Sub Nav */}
         <div className="px-8 py-4 bg-[#F5F5F7] sticky top-16 z-10 border-b border-gray-200/50 flex justify-start">
             <div className="bg-gray-100 p-1 rounded-xl inline-flex relative">
-                {[
-                    { id: 'salary', label: '薪酬与晋升' },
-                    { id: 'course', label: '课程与定价' },
-                    { id: 'member', label: '会员权益与积分' },
-                    { id: 'role', label: '角色与权限' }
-                ].map(tab => (
+                {SETTINGS_TABS.map(tab => (
                     <button
                         key={tab.id}
-                        onClick={() => setActiveTab(tab.id as any)}
+                        onClick={() => setActiveTab(tab.id)}
                         className={`relative z-10 px-4 py-2 text-[13px] font-medium text-center rounded-lg transition-all duration-200 ${
                             activeTab === tab.id
                             ? 'bg-white text-black shadow-sm font-bold'
@@ -525,7 +383,7 @@ const Settings: React.FC = () => {
                                                 <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl group hover:bg-white hover:shadow-sm hover:ring-1 hover:ring-gray-200 transition">
                                                     <input type="text" value={item.name} onChange={(e) => updateCourseItem('group', item.id, 'name', e.target.value)} className="bg-transparent font-medium text-sm text-gray-700 w-32 outline-none border-b border-transparent focus:border-black transition" />
                                                     <div className="flex items-center gap-4">
-                                                        <div className="flex items-center bg-white rounded-lg px-2 py-1 border border-gray-200 group-hover:border-gray-300 transition"><input type="number" step="0.5" value={item.points} onChange={(e) => updateCourseItem('group', item.id, 'points', e.target.value)} className="w-10 bg-transparent text-center font-bold text-sm outline-none" /><span className="text-xs text-gray-400 font-medium">点</span></div>
+                                                        <div className="flex items-center bg-white rounded-lg px-2 py-1 border border-gray-200 group-hover:border-gray-300 transition"><input type="number" step="0.5" value={item.points} onChange={(e) => updateCourseItem('group', item.id, 'points', Number(e.target.value))} className="w-10 bg-transparent text-center font-bold text-sm outline-none" /><span className="text-xs text-gray-400 font-medium">点</span></div>
                                                         <div className="w-16 text-right text-xs text-gray-400 font-mono">¥{(item.points * basePointValue).toLocaleString()}</div>
                                                         <button onClick={() => removeCourseItem('group', item.id)} className="w-6 h-6 rounded-full flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 transition"><i className="fa-solid fa-minus text-[10px]"></i></button>
                                                     </div>
@@ -540,7 +398,7 @@ const Settings: React.FC = () => {
                                                 <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl group hover:bg-white hover:shadow-sm hover:ring-1 hover:ring-gray-200 transition">
                                                     <input type="text" value={item.name} onChange={(e) => updateCourseItem('private', item.id, 'name', e.target.value)} className="bg-transparent font-medium text-sm text-gray-700 w-32 outline-none border-b border-transparent focus:border-black transition" />
                                                     <div className="flex items-center gap-4">
-                                                        <div className="flex items-center bg-white rounded-lg px-2 py-1 border border-gray-200 group-hover:border-gray-300 transition"><input type="number" step="0.5" value={item.points} onChange={(e) => updateCourseItem('private', item.id, 'points', e.target.value)} className="w-10 bg-transparent text-center font-bold text-sm outline-none" /><span className="text-xs text-gray-400 font-medium">点</span></div>
+                                                        <div className="flex items-center bg-white rounded-lg px-2 py-1 border border-gray-200 group-hover:border-gray-300 transition"><input type="number" step="0.5" value={item.points} onChange={(e) => updateCourseItem('private', item.id, 'points', Number(e.target.value))} className="w-10 bg-transparent text-center font-bold text-sm outline-none" /><span className="text-xs text-gray-400 font-medium">点</span></div>
                                                         <div className="w-16 text-right text-xs text-gray-400 font-mono">¥{(item.points * basePointValue).toLocaleString()}</div>
                                                         <button onClick={() => removeCourseItem('private', item.id)} className="w-6 h-6 rounded-full flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 transition"><i className="fa-solid fa-minus text-[10px]"></i></button>
                                                     </div>
