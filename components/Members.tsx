@@ -13,6 +13,7 @@ import {
   MOCK_REFUNDS,
 } from '../constants';
 import { Member } from '../types';
+import type { Stage } from '../types';
 import { buildMemberBusinessRecordSummary } from '../utils/memberDetailSelectors';
 import {
   MEMBER_LIFECYCLE_GROUPS,
@@ -34,14 +35,32 @@ const LEAD_STATUS_LABELS: Record<NonNullable<Member['leadStatus']>, string> = {
   pool: '公海',
 };
 
+type MemberMainTab = 'overview' | 'leads' | 'active' | 'churned';
+type MemberRiskFilter = Exclude<NonNullable<Member['riskTag']>, 'churn'>;
+type MemberStageFilter = 'all' | Stage;
+
+const MEMBER_MAIN_TABS: Array<{ id: MemberMainTab; label: string }> = [
+  { id: 'overview', label: '总览' },
+  { id: 'leads', label: '潜客公海' },
+  { id: 'active', label: '正式会员' },
+  { id: 'churned', label: '流失客户' },
+];
+
 const Members: React.FC = () => {
-  // Fix: Removed invalid inline type annotation in destructuring to fix parsing error and define setSelectedMember correctly
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
-  const [mainTab, setMainTab] = useState<'overview' | 'leads' | 'active' | 'churned'>('overview');
-  const [filterStage, setFilterStage] = useState<string>('all');
-  const [alertFilter, setAlertFilter] = useState<'expiry' | 'balance' | 'sleep' | null>(null);
+  const [mainTab, setMainTab] = useState<MemberMainTab>('overview');
+  const [filterStage, setFilterStage] = useState<MemberStageFilter>('all');
+  const [alertFilter, setAlertFilter] = useState<MemberRiskFilter | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [funnelRange, setFunnelRange] = useState<'week' | 'month'>('month');
+  const [toast, setToast] = useState<{ id: number; message: string } | null>(null);
+
+  const showToast = (message: string) => {
+    setToast({ id: Date.now(), message });
+    window.setTimeout(() => {
+      setToast(current => (current?.message === message ? null : current));
+    }, 2400);
+  };
 
   // --- Statistics ---
   const totalMembers = 1890;
@@ -133,7 +152,7 @@ const Members: React.FC = () => {
           <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
               会员管理中心
               <button 
-                  onClick={() => alert('Gemini AI 正在分析会员数据并生成洞察...')}
+                  onClick={() => showToast('AI 会员洞察仍为演示入口，后续会接入真实会员运营分析')}
                   className="text-[10px] text-purple-600 font-bold flex items-center gap-1 hover:underline ml-2 bg-purple-50 px-2 py-1 rounded-full border border-purple-100"
               >
                   <i className="fa-solid fa-wand-magic-sparkles"></i> AI 会员洞察
@@ -159,15 +178,10 @@ const Members: React.FC = () => {
       {/* 2. SUB NAVIGATION (Row 2 - Gray Background) */}
       <nav className="px-8 py-4 bg-[#F5F5F7] border-b border-gray-200/50 sticky top-16 z-20 flex justify-start">
           <div className="bg-gray-100 p-1 rounded-xl inline-flex relative">
-              {[
-                  { id: 'overview', label: '总览' },
-                  { id: 'leads', label: '潜客公海' },
-                  { id: 'active', label: '正式会员' },
-                  { id: 'churned', label: '流失客户' }
-              ].map(tab => (
+              {MEMBER_MAIN_TABS.map(tab => (
                   <button 
                     key={tab.id}
-                    onClick={() => { setMainTab(tab.id as any); setFilterStage('all'); setAlertFilter(null); }}
+                    onClick={() => { setMainTab(tab.id); setFilterStage('all'); setAlertFilter(null); }}
                     className={`relative z-10 px-6 py-2 text-[13px] font-medium text-center rounded-lg transition-all duration-200 ${
                         mainTab === tab.id 
                         ? 'bg-white text-black shadow-sm font-bold' 
@@ -188,14 +202,14 @@ const Members: React.FC = () => {
               {mainTab !== 'leads' ? (
                 <div className="grid grid-cols-12 gap-6 animate-fadeIn">
                     <div className="col-span-8 grid grid-cols-3 gap-6">
-                        {[
-                            { id: 'expiry', ...MEMBER_RISK_PRESENTATION.expiry, count: stats.expiry },
-                            { id: 'balance', ...MEMBER_RISK_PRESENTATION.balance, count: stats.balance },
-                            { id: 'sleep', ...MEMBER_RISK_PRESENTATION.sleep, count: stats.sleep }
-                        ].map(item => (
+                        {([
+                            { id: 'expiry' as const, ...MEMBER_RISK_PRESENTATION.expiry, count: stats.expiry },
+                            { id: 'balance' as const, ...MEMBER_RISK_PRESENTATION.balance, count: stats.balance },
+                            { id: 'sleep' as const, ...MEMBER_RISK_PRESENTATION.sleep, count: stats.sleep }
+                        ]).map(item => (
                             <div 
                               key={item.id} 
-                              onClick={() => setAlertFilter(alertFilter === item.id ? null : item.id as any)}
+                              onClick={() => setAlertFilter(alertFilter === item.id ? null : item.id)}
                               className={`p-6 bg-white rounded-[28px] border transition-all duration-300 cursor-pointer group relative overflow-hidden flex flex-col justify-between h-40 ${alertFilter === item.id ? 'border-black ring-4 ring-black/5 shadow-xl' : 'border-transparent shadow-sm hover:shadow-md'}`}
                             >
                                 <div className="flex justify-between items-start">
@@ -321,7 +335,7 @@ const Members: React.FC = () => {
                                       <>
                                           <th className="px-4 py-5 relative">
                                               所处阶段 <FilterIcon />
-                                                  <select className="absolute inset-0 opacity-0 cursor-pointer" value={filterStage} onChange={(e) => setFilterStage(e.target.value)}>
+                                                  <select className="absolute inset-0 opacity-0 cursor-pointer" value={filterStage} onChange={(e) => setFilterStage(e.target.value as MemberStageFilter)}>
                                                       <option value="all">全部</option>
                                                   {Object.entries(MEMBER_STAGE_CONFIG).map(([key, config]) => <option key={key} value={key}>{config.label}</option>)}
                                               </select>
@@ -426,8 +440,18 @@ const Members: React.FC = () => {
                                       </td>
                                       <td className="px-8 py-5 text-right">
                                           <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                              <button className="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-black transition"><i className="fa-regular fa-pen-to-square"></i></button>
-                                              <button className="w-8 h-8 rounded-lg hover:bg-red-50 flex items-center justify-center text-gray-400 hover:text-red-500 transition" onClick={(e) => { e.stopPropagation(); }}><i className="fa-regular fa-trash-can"></i></button>
+                                              <button
+                                                className="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-black transition"
+                                                onClick={(e) => { e.stopPropagation(); showToast(`${member.name} 档案编辑仍为演示入口，真实保存待后续接入`); }}
+                                              >
+                                                <i className="fa-regular fa-pen-to-square"></i>
+                                              </button>
+                                              <button
+                                                className="w-8 h-8 rounded-lg hover:bg-red-50 flex items-center justify-center text-gray-400 hover:text-red-500 transition"
+                                                onClick={(e) => { e.stopPropagation(); showToast(`${member.name} 删除/归档仍为演示入口，需接入会员生命周期动作`); }}
+                                              >
+                                                <i className="fa-regular fa-trash-can"></i>
+                                              </button>
                                           </div>
                                       </td>
                                   </tr>
@@ -445,6 +469,15 @@ const Members: React.FC = () => {
             member={selectedMember} 
             onClose={() => setSelectedMember(null)} 
           />
+      )}
+
+      {toast && (
+          <div className="fixed top-20 right-8 z-[70] animate-fadeIn">
+              <div className="px-4 py-3 rounded-xl shadow-xl border text-sm font-bold flex items-center gap-3 bg-white text-gray-800 border-gray-100">
+                  <i className="fa-solid fa-circle-info text-blue-500"></i>
+                  {toast.message}
+              </div>
+          </div>
       )}
 
       <style>{`
