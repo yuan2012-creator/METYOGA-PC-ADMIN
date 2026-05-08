@@ -1,8 +1,19 @@
 
 import React, { useState, useMemo } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-import { MOCK_MEMBERS } from '../constants';
+import {
+  MOCK_ATTENDANCES,
+  MOCK_BOOKINGS,
+  MOCK_COURSES,
+  MOCK_COURSE_SESSIONS,
+  MOCK_FINANCE_LEDGER_ENTRIES,
+  MOCK_MEMBERS,
+  MOCK_ORDERS,
+  MOCK_PAYMENTS,
+  MOCK_REFUNDS,
+} from '../constants';
 import { Member } from '../types';
+import { buildMemberBusinessRecordSummary } from '../utils/memberDetailSelectors';
 import {
   MEMBER_LIFECYCLE_GROUPS,
   MEMBER_STAGE_CONFIG,
@@ -12,8 +23,7 @@ import {
 import {
   MEMBER_RISK_PRESENTATION,
   getMemberLifecyclePresentation,
-  getMemberRiskPresentation,
-  getPrimaryMemberAssetSummary,
+  getMemberListBusinessSummary,
 } from '../utils/memberPresentation';
 import MemberDetailModal from './MemberDetailModal';
 
@@ -93,6 +103,23 @@ const Members: React.FC = () => {
     () => MOCK_MEMBERS.filter(m => MEMBER_LIFECYCLE_GROUPS.leads.includes(getMemberLifecycleStatus(m)) && m.leadStatus === 'new'),
     []
   );
+
+  const memberBusinessSummaries = useMemo(() => (
+    new Map(MOCK_MEMBERS.map(member => [
+      member.id,
+      buildMemberBusinessRecordSummary({
+        member,
+        bookings: MOCK_BOOKINGS,
+        attendances: MOCK_ATTENDANCES,
+        courseSessions: MOCK_COURSE_SESSIONS,
+        courses: MOCK_COURSES,
+        orders: MOCK_ORDERS,
+        payments: MOCK_PAYMENTS,
+        refunds: MOCK_REFUNDS,
+        ledgerEntries: MOCK_FINANCE_LEDGER_ENTRIES,
+      }),
+    ]))
+  ), []);
 
   const FilterIcon = () => (
     <i className="fa-solid fa-filter text-[9px] opacity-20 group-hover/header:opacity-100 transition-opacity ml-1.5 cursor-pointer"></i>
@@ -299,7 +326,7 @@ const Members: React.FC = () => {
                                                   {Object.entries(MEMBER_STAGE_CONFIG).map(([key, config]) => <option key={key} value={key}>{config.label}</option>)}
                                               </select>
                                           </th>
-                                          <th className="px-4 py-5">最新到店</th>
+                                          <th className="px-4 py-5">课程记录</th>
                                           <th className="px-4 py-5">卡项</th>
                                           <th className="px-4 py-5">管家</th>
                                           <th className="px-4 py-5">专属老师</th>
@@ -312,8 +339,18 @@ const Members: React.FC = () => {
                           <tbody className="divide-y divide-gray-50">
                               {visibleMembers.map(member => {
                                 const stageView = getMemberLifecyclePresentation(member);
-                                const primaryAsset = getPrimaryMemberAssetSummary(member);
-                                const riskView = getMemberRiskPresentation(member);
+                                const recordSummary = memberBusinessSummaries.get(member.id) ?? buildMemberBusinessRecordSummary({
+                                  member,
+                                  bookings: MOCK_BOOKINGS,
+                                  attendances: MOCK_ATTENDANCES,
+                                  courseSessions: MOCK_COURSE_SESSIONS,
+                                  courses: MOCK_COURSES,
+                                  orders: MOCK_ORDERS,
+                                  payments: MOCK_PAYMENTS,
+                                  refunds: MOCK_REFUNDS,
+                                  ledgerEntries: MOCK_FINANCE_LEDGER_ENTRIES,
+                                });
+                                const listSummary = getMemberListBusinessSummary(member, recordSummary);
                                 const leadStatusLabel = member.leadStatus ? LEAD_STATUS_LABELS[member.leadStatus] : '待回访';
 
                                 return (
@@ -356,12 +393,17 @@ const Members: React.FC = () => {
                                                       )}
                                                   </div>
                                               </td>
-                                              <td className="px-4 py-5 text-xs font-bold">{member.lastVisit}</td>
                                               <td className="px-4 py-5">
-                                                  {primaryAsset ? (
+                                                  <div className="max-w-[150px]">
+                                                      <div className="truncate text-[10px] font-bold text-gray-800">{listSummary.courseText}</div>
+                                                      <div className="text-[9px] text-gray-400 mt-0.5">{listSummary.courseSourceLabel}</div>
+                                                  </div>
+                                              </td>
+                                              <td className="px-4 py-5">
+                                                  {listSummary.assetText !== '无有效资产' ? (
                                                       <div className="max-w-[140px]">
-                                                          <div className="truncate text-[10px] font-bold text-gray-800">{primaryAsset.text}</div>
-                                                          <div className="text-[9px] text-gray-400 mt-0.5">{primaryAsset.sourceLabel}</div>
+                                                          <div className="truncate text-[10px] font-bold text-gray-800">{listSummary.assetText}</div>
+                                                          <div className="text-[9px] text-gray-400 mt-0.5">{listSummary.assetSourceLabel} · {listSummary.consumptionText}</div>
                                                       </div>
                                                   ) : <span className="text-gray-300 text-[10px]">无持卡</span>}
                                               </td>
@@ -375,7 +417,12 @@ const Members: React.FC = () => {
                                       )}
 
                                       <td className="px-4 py-5 text-center">
-                                          {riskView && <i className={`${riskView.iconClass} ${riskView.textClass}`} title={riskView.label}></i>}
+                                          {listSummary.riskIconClass && (
+                                              <i
+                                                className={`${listSummary.riskIconClass} ${listSummary.riskTextClass}`}
+                                                title={`${listSummary.riskLabel ?? '风险提示'} · ${listSummary.consumptionSourceLabel}`}
+                                              ></i>
+                                          )}
                                       </td>
                                       <td className="px-8 py-5 text-right">
                                           <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

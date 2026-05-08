@@ -33,7 +33,7 @@ export interface MemberDetailBusinessRecordSlot {
   metrics: { label: string; value: string }[];
 }
 
-interface MemberDetailRecordInput {
+export interface MemberDetailRecordInput {
   member: Member;
   bookings: Booking[];
   attendances: Attendance[];
@@ -43,6 +43,21 @@ interface MemberDetailRecordInput {
   payments: Payment[];
   refunds: Refund[];
   ledgerEntries: FinanceLedgerEntry[];
+}
+
+export interface MemberBusinessRecordSummary {
+  courseRecordText: string;
+  courseSourceLabel: string;
+  consumptionRecordText: string;
+  consumptionSourceLabel: string;
+  completedClassCount: number;
+  bookingCount: number;
+  orderCount: number;
+  paidTotal: number;
+  refundTotal: number;
+  recognizedCourseIncome: number;
+  hasCourseDomainData: boolean;
+  hasConsumptionDomainData: boolean;
 }
 
 const COURSE_ATTENDANCE_STATUSES: Attendance['status'][] = ['checked_in', 'attended', 'consumed'];
@@ -202,7 +217,7 @@ export const buildMemberDetailTimelineItems = ({
   });
 };
 
-export const buildMemberDetailBusinessRecordSlots = ({
+export const buildMemberBusinessRecordSummary = ({
   member,
   bookings,
   attendances,
@@ -210,7 +225,7 @@ export const buildMemberDetailBusinessRecordSlots = ({
   payments,
   refunds,
   ledgerEntries,
-}: MemberDetailRecordInput): MemberDetailBusinessRecordSlot[] => {
+}: MemberDetailRecordInput): MemberBusinessRecordSummary => {
   const memberBookings = bookings.filter(booking => booking.memberId === member.id);
   const memberAttendances = attendances.filter(attendance => attendance.memberId === member.id);
   const completedAttendances = memberAttendances.filter(attendance => COURSE_ATTENDANCE_STATUSES.includes(attendance.status));
@@ -227,31 +242,61 @@ export const buildMemberDetailBusinessRecordSlots = ({
   const hasCourseDomainData = memberBookings.length > 0 || memberAttendances.length > 0;
   const hasConsumptionDomainData = memberOrders.length > 0 || memberPayments.length > 0 || memberRefunds.length > 0;
 
+  return {
+    courseRecordText: hasCourseDomainData
+      ? `${completedAttendances.length} 到课 / ${memberBookings.length} 预约`
+      : `${member.totalClasses} 累计课程`,
+    courseSourceLabel: hasCourseDomainData
+      ? 'Booking / Attendance'
+      : 'Fallback: member.totalClasses',
+    consumptionRecordText: hasConsumptionDomainData
+      ? `¥${paidTotal.toLocaleString()} / ${memberOrders.length} 单`
+      : `¥${member.totalLTV.toLocaleString()} LTV`,
+    consumptionSourceLabel: hasConsumptionDomainData
+      ? (refundTotal > 0 ? `Refund ¥${refundTotal.toLocaleString()}` : `Ledger ¥${recognizedCourseIncome.toLocaleString()}`)
+      : 'Fallback: member.totalLTV',
+    completedClassCount: completedAttendances.length,
+    bookingCount: memberBookings.length,
+    orderCount: memberOrders.length,
+    paidTotal,
+    refundTotal,
+    recognizedCourseIncome,
+    hasCourseDomainData,
+    hasConsumptionDomainData,
+  };
+};
+
+export const buildMemberDetailBusinessRecordSlots = (
+  input: MemberDetailRecordInput
+): MemberDetailBusinessRecordSlot[] => {
+  const { member } = input;
+  const summary = buildMemberBusinessRecordSummary(input);
+
   return [
     {
       id: 'course',
       title: '课程记录',
-      description: hasCourseDomainData
+      description: summary.hasCourseDomainData
         ? '来自 Booking / Attendance / CourseSession'
         : 'Fallback：当前会员累计课程字段',
       iconClass: 'fa-solid fa-calendar-check',
       toneClass: 'bg-gray-900 text-white',
       metrics: [
-        { label: hasCourseDomainData ? '已到课/消课' : '累计上课', value: `${hasCourseDomainData ? completedAttendances.length : member.totalClasses} 节` },
-        { label: '预约记录', value: `${memberBookings.length} 条` },
+        { label: summary.hasCourseDomainData ? '已到课/消课' : '累计上课', value: `${summary.hasCourseDomainData ? summary.completedClassCount : member.totalClasses} 节` },
+        { label: '预约记录', value: `${summary.bookingCount} 条` },
       ],
     },
     {
       id: 'consumption',
       title: '消费记录',
-      description: hasConsumptionDomainData
+      description: summary.hasConsumptionDomainData
         ? '来自 Order / Payment / Refund / Ledger'
         : 'Fallback：当前会员 LTV 与积分字段',
       iconClass: 'fa-solid fa-receipt',
       toneClass: 'bg-white text-gray-900 border border-gray-200',
       metrics: [
-        { label: hasConsumptionDomainData ? '实收金额' : '累计消费', value: `¥${(hasConsumptionDomainData ? paidTotal : member.totalLTV).toLocaleString()}` },
-        { label: refundTotal > 0 ? '退款/确认收入' : '订单/确认收入', value: refundTotal > 0 ? `¥${refundTotal.toLocaleString()} / ¥${recognizedCourseIncome.toLocaleString()}` : `${memberOrders.length} 单 / ¥${recognizedCourseIncome.toLocaleString()}` },
+        { label: summary.hasConsumptionDomainData ? '实收金额' : '累计消费', value: `¥${(summary.hasConsumptionDomainData ? summary.paidTotal : member.totalLTV).toLocaleString()}` },
+        { label: summary.refundTotal > 0 ? '退款/确认收入' : '订单/确认收入', value: summary.refundTotal > 0 ? `¥${summary.refundTotal.toLocaleString()} / ¥${summary.recognizedCourseIncome.toLocaleString()}` : `${summary.orderCount} 单 / ¥${summary.recognizedCourseIncome.toLocaleString()}` },
       ],
     },
   ];

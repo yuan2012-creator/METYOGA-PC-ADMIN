@@ -1,4 +1,5 @@
 import type { Member } from '../types';
+import type { MemberBusinessRecordSummary } from './memberDetailSelectors';
 import {
   getMemberLifecycleLabel,
   getMemberLifecycleStatus,
@@ -25,6 +26,18 @@ export interface MemberRiskPresentation {
   iconClass: string;
   textClass: string;
   cardIcon: string;
+}
+
+export interface MemberListBusinessSummary {
+  assetText: string;
+  assetSourceLabel: string;
+  courseText: string;
+  courseSourceLabel: string;
+  consumptionText: string;
+  consumptionSourceLabel: string;
+  riskLabel: string | null;
+  riskIconClass: string | null;
+  riskTextClass: string | null;
 }
 
 export const MEMBER_RISK_PRESENTATION: Record<NonNullable<Member['riskTag']>, MemberRiskPresentation> = {
@@ -101,4 +114,24 @@ export const getMemberAssetSourceLabel = (member: Member): string => {
 export const getMemberRiskPresentation = (member: Member): MemberRiskPresentation | null => {
   if (!member.riskTag) return null;
   return MEMBER_RISK_PRESENTATION[member.riskTag] ?? null;
+};
+
+export const getMemberListBusinessSummary = (
+  member: Member,
+  recordSummary: MemberBusinessRecordSummary
+): MemberListBusinessSummary => {
+  const assetSummary = getPrimaryMemberAssetSummary(member);
+  const riskView = getMemberRiskPresentation(member);
+
+  return {
+    assetText: assetSummary?.text ?? '无有效资产',
+    assetSourceLabel: assetSummary?.sourceLabel ?? 'No assets',
+    courseText: recordSummary.courseRecordText,
+    courseSourceLabel: recordSummary.courseSourceLabel,
+    consumptionText: recordSummary.consumptionRecordText,
+    consumptionSourceLabel: recordSummary.consumptionSourceLabel,
+    riskLabel: riskView?.label ?? null,
+    riskIconClass: riskView?.iconClass ?? null,
+    riskTextClass: riskView?.textClass ?? null,
+  };
 };

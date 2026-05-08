@@ -21,6 +21,7 @@ import {
   TimelineEvent,
 } from '../types';
 import {
+  buildMemberBusinessRecordSummary,
   buildMemberDetailBusinessRecordSlots,
   buildMemberDetailTimelineItems,
   getMemberDetailTimelineSourceLabel,
@@ -176,6 +177,7 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }
     ledgerEntries: MOCK_FINANCE_LEDGER_ENTRIES,
   };
   const timelineItems = buildMemberDetailTimelineItems(detailRecordInput);
+  const businessRecordSummary = buildMemberBusinessRecordSummary(detailRecordInput);
   const businessRecordSlots = buildMemberDetailBusinessRecordSlots(detailRecordInput);
 
   // --- Mock Data for Charts ---
@@ -475,7 +477,7 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }
                         <div className="flex justify-between items-center mb-2">
                             <h4 className="text-sm font-bold text-gray-900">近期练习频率 (周)</h4>
                             <div className="text-xs font-bold text-gray-900 flex items-center gap-1">
-                                <span className="text-xl font-mono">{member.totalClasses}</span> <span className="text-gray-400 font-normal">累计</span>
+                                <span className="text-xl font-mono">{businessRecordSummary.hasCourseDomainData ? businessRecordSummary.completedClassCount : member.totalClasses}</span> <span className="text-gray-400 font-normal">{businessRecordSummary.hasCourseDomainData ? '到课' : '累计'}</span>
                             </div>
                         </div>
                         <div className="flex-1 w-full h-24">
