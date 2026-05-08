@@ -35,6 +35,7 @@ export interface StaffProfileArchivePanelProps extends StaffDetailPanelProps {
 export interface StaffCoursePerformancePanelProps extends StaffDetailPanelProps {
   courseTimeRange: TimeRange;
   setCourseTimeRange: (range: TimeRange) => void;
+  onDemoAction: (message: string) => void;
 }
 
 export interface StaffMemberFollowupPanelProps extends StaffDetailPanelProps {
@@ -56,4 +57,3 @@ export interface StaffIncomePayrollPanelProps extends StaffDetailPanelProps {
   incomeTimeRange: IncomeTimeRange;
   setIncomeTimeRange: (range: IncomeTimeRange) => void;
 }
-

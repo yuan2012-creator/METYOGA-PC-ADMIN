@@ -58,6 +58,7 @@ interface StaffDetailModalProps {
   setFilterGoal: (goal: string) => void;
   activeFollowUpCategory: string | null;
   setActiveFollowUpCategory: (category: string | null) => void;
+  onDemoAction: (message: string) => void;
 }
 
 const StaffDetailModal: React.FC<StaffDetailModalProps> = (props) => {
@@ -90,6 +91,7 @@ const StaffDetailModal: React.FC<StaffDetailModalProps> = (props) => {
     setFilterGoal,
     activeFollowUpCategory,
     setActiveFollowUpCategory,
+    onDemoAction,
   } = props;
 
   return (
@@ -206,6 +208,7 @@ const StaffDetailModal: React.FC<StaffDetailModalProps> = (props) => {
                                               staffDetails={staffDetails}
                                               courseTimeRange={courseTimeRange}
                                               setCourseTimeRange={setCourseTimeRange}
+                                              onDemoAction={onDemoAction}
                                           />
                                       )}
 

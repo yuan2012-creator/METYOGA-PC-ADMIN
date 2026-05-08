@@ -1,7 +1,16 @@
 import type { Staff } from '../types';
 
+export type StaffTab = 'decision' | 'archives' | 'schedule';
 export type StaffFilterType = 'all' | 'leads' | 'adjust' | 'new' | 'part_time';
 export type StaffMemberListTab = 'all' | 'private' | 'followup';
+
+export const STAFF_TABS: Array<{ id: StaffTab; label: string }> = [
+  { id: 'decision', label: '智能决策' },
+  { id: 'archives', label: '员工档案' },
+  { id: 'schedule', label: '出勤与排班' },
+];
+
+export const STAFF_FILTER_TYPES: StaffFilterType[] = ['all', 'leads', 'adjust', 'new', 'part_time'];
 
 export interface StaffMatrixItem {
   x: number;

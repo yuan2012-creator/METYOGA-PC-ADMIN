@@ -1,8 +1,7 @@
 import React from 'react';
 import type { Staff } from '../../types';
-import type { StaffFilterType } from '../../utils/staffSelectors';
+import { STAFF_FILTER_TYPES, type StaffFilterType, type StaffTab } from '../../utils/staffSelectors';
 
-type StaffTab = 'decision' | 'archives' | 'schedule';
 type StaffModalTab = 'course' | 'member' | 'income' | 'promotion';
 
 interface StaffArchiveListProps {
@@ -54,10 +53,10 @@ const StaffArchiveList: React.FC<StaffArchiveListProps> = (props) => {
                     {/* Filters */}
                     <div className="flex items-center justify-between">
                         <div className="flex gap-2">
-                            {['all', 'leads', 'adjust', 'new', 'part_time'].map((type) => (
+                            {STAFF_FILTER_TYPES.map((type) => (
                                 <button 
                                     key={type}
-                                    onClick={() => setFilterType(type as any)} 
+                                    onClick={() => setFilterType(type)} 
                                     className={`px-4 py-1.5 rounded-full text-xs font-bold border transition-all ${
                                         filterType === type 
                                         ? 'bg-black text-white border-black shadow-sm'

@@ -1,10 +1,161 @@
 import React from 'react';
+import type { ChartData, ChartOptions } from 'chart.js';
 import { Bar, Doughnut, Radar } from 'react-chartjs-2';
 import type { StaffCoursePerformancePanelProps, TimeRange } from './StaffDetailTypes';
 
 const courseTimeRanges: TimeRange[] = ['week', 'month', 'quarter'];
 
-const StaffCoursePerformancePanel: React.FC<StaffCoursePerformancePanelProps> = ({ staffDetails, courseTimeRange, setCourseTimeRange }) => (
+const getCourseTrendLabels = (courseTimeRange: TimeRange): string[] => {
+  if (courseTimeRange === 'week') return ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+  if (courseTimeRange === 'month') return ['第1周', '第2周', '第3周', '第4周'];
+  return ['一月', '二月', '三月'];
+};
+
+const buildCourseTrendData = (courseTimeRange: TimeRange): ChartData<'bar', number[], string> => ({
+  labels: getCourseTrendLabels(courseTimeRange),
+  datasets: [
+    {
+      type: 'bar' as const,
+      label: '排课数',
+      data: courseTimeRange === 'week' ? [3, 4, 3, 5, 4, 6, 5] : courseTimeRange === 'month' ? [15, 18, 16, 20] : [60, 65, 70],
+      backgroundColor: 'rgba(0, 0, 0, 0.05)',
+      borderColor: 'rgba(0, 0, 0, 0.1)',
+      borderWidth: { top: 1, right: 1, bottom: 0, left: 1 },
+      borderRadius: 4,
+      grouped: false,
+      maxBarThickness: 16,
+      order: 2,
+      yAxisID: 'y',
+    },
+    {
+      type: 'bar' as const,
+      label: '开课数',
+      data: courseTimeRange === 'week' ? [2, 4, 3, 4, 4, 5, 5] : courseTimeRange === 'month' ? [12, 16, 15, 18] : [50, 55, 60],
+      backgroundColor: '#1D1D1F',
+      borderRadius: 4,
+      grouped: false,
+      maxBarThickness: 16,
+      order: 1,
+      yAxisID: 'y',
+    },
+    {
+      label: '开课率(%)',
+      data: courseTimeRange === 'week' ? [66, 100, 100, 80, 100, 83, 100] : courseTimeRange === 'month' ? [80, 88, 93, 90] : [83, 84, 85],
+      backgroundColor: 'rgba(59, 130, 246, 0.25)',
+      borderColor: '#3B82F6',
+      borderRadius: 4,
+      maxBarThickness: 10,
+      order: 0,
+      yAxisID: 'y1',
+    },
+  ],
+});
+
+const courseTrendOptions: ChartOptions<'bar'> = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 6 } },
+    tooltip: {
+      mode: 'index',
+      intersect: false,
+    },
+  },
+  scales: {
+    y: {
+      type: 'linear',
+      display: true,
+      position: 'left',
+      beginAtZero: true,
+      grid: { color: '#F3F4F6' },
+    },
+    y1: {
+      type: 'linear',
+      display: true,
+      position: 'right',
+      beginAtZero: true,
+      max: 100,
+      grid: { drawOnChartArea: false },
+      ticks: {
+        callback: (value) => `${value}%`,
+      },
+    },
+    x: {
+      grid: { display: false },
+    },
+  },
+};
+
+const radarOptions: ChartOptions<'radar'> = {
+  responsive: true,
+  maintainAspectRatio: false,
+  layout: {
+    padding: 10,
+  },
+  scales: {
+    r: {
+      angleLines: {
+        display: true,
+        color: '#F3F4F6',
+      },
+      grid: {
+        color: '#F3F4F6',
+        circular: true,
+      },
+      pointLabels: {
+        font: {
+          size: 11,
+          weight: 'bold',
+          family: 'Inter, sans-serif',
+        },
+        color: '#1F2937',
+        padding: 15,
+        backdropColor: '#ffffff',
+        backdropPadding: 6,
+        borderRadius: 8,
+      },
+      ticks: {
+        display: false,
+        stepSize: 20,
+      },
+      min: 0,
+      max: 100,
+    },
+  },
+  plugins: {
+    legend: {
+      display: false,
+    },
+    tooltip: {
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
+      titleColor: '#1F2937',
+      bodyColor: '#4B5563',
+      borderColor: '#F3F4F6',
+      borderWidth: 1,
+      padding: 12,
+      titleFont: { size: 14, weight: 'bold' },
+      bodyFont: { size: 13 },
+      displayColors: false,
+      callbacks: {
+        title: (context) => {
+          const label = context[0].label;
+          return Array.isArray(label) ? label[0] : label;
+        },
+        label: (context) => {
+          const label = context.chart.data.labels?.[context.dataIndex];
+          return Array.isArray(label) ? label[1] : '';
+        },
+      },
+    },
+  },
+};
+
+const StaffCoursePerformancePanel: React.FC<StaffCoursePerformancePanelProps> = ({
+  staffDetails,
+  courseTimeRange,
+  setCourseTimeRange,
+  onDemoAction,
+}) => (
 
   <div className="space-y-6 animate-fadeIn">
       <div className="bg-white p-6 rounded-[24px] border border-gray-100 shadow-sm">
@@ -71,83 +222,8 @@ const StaffCoursePerformancePanel: React.FC<StaffCoursePerformancePanelProps> = 
           </div>
           <div className="h-64 w-full">
               <Bar 
-                  data={{
-                      labels: courseTimeRange === 'week' ? ['周一', '周二', '周三', '周四', '周五', '周六', '周日'] : courseTimeRange === 'month' ? ['第1周', '第2周', '第3周', '第4周'] : ['一月', '二月', '三月'],
-                      datasets: [
-                          {
-                              type: 'bar' as const,
-                              label: '排课数',
-                              data: courseTimeRange === 'week' ? [3, 4, 3, 5, 4, 6, 5] : courseTimeRange === 'month' ? [15, 18, 16, 20] : [60, 65, 70],
-                              backgroundColor: 'rgba(0, 0, 0, 0.05)',
-                              borderColor: 'rgba(0, 0, 0, 0.1)',
-                              borderWidth: { top: 1, right: 1, bottom: 0, left: 1 },
-                              borderDash: [5, 5],
-                              borderRadius: 4,
-                              grouped: false,
-                              maxBarThickness: 16,
-                              order: 2,
-                              yAxisID: 'y'
-                          },
-                          {
-                              type: 'bar' as const,
-                              label: '开课数',
-                              data: courseTimeRange === 'week' ? [2, 4, 3, 4, 4, 5, 5] : courseTimeRange === 'month' ? [12, 16, 15, 18] : [50, 55, 60],
-                              backgroundColor: '#1D1D1F',
-                              borderRadius: 4,
-                              grouped: false,
-                              maxBarThickness: 16,
-                              order: 1,
-                              yAxisID: 'y'
-                          },
-                          {
-                              type: 'line' as const,
-                              label: '开课率(%)',
-                              data: courseTimeRange === 'week' ? [66, 100, 100, 80, 100, 83, 100] : courseTimeRange === 'month' ? [80, 88, 93, 90] : [83, 84, 85],
-                              borderColor: '#3B82F6',
-                              backgroundColor: '#3B82F6',
-                              borderDash: [5, 5],
-                              tension: 0.4,
-                              order: 0,
-                              yAxisID: 'y1'
-                          }
-                      ]
-                  } as any}
-                  options={{
-                      responsive: true,
-                      maintainAspectRatio: false,
-                      plugins: { 
-                          legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 6 } },
-                          tooltip: {
-                              mode: 'index',
-                              intersect: false,
-                          }
-                      },
-                      scales: { 
-                          y: { 
-                              type: 'linear',
-                              display: true,
-                              position: 'left',
-                              beginAtZero: true, 
-                              grid: { color: '#F3F4F6' } 
-                          }, 
-                          y1: {
-                              type: 'linear',
-                              display: true,
-                              position: 'right',
-                              beginAtZero: true,
-                              max: 100,
-                              grid: { drawOnChartArea: false },
-                              ticks: {
-                                  callback: function(value) {
-                                      return value + '%';
-                                  }
-                              }
-                          },
-                          x: { 
-                              grid: { display: false } 
-                          } 
-                      }
-                  } as any}
+                  data={buildCourseTrendData(courseTimeRange)}
+                  options={courseTrendOptions}
               />
           </div>
       </div>
@@ -188,74 +264,7 @@ const StaffCoursePerformancePanel: React.FC<StaffCoursePerformancePanelProps> = 
                               borderWidth: 2,
                           }]
                       }}
-                      options={{
-                          responsive: true,
-                          maintainAspectRatio: false,
-                          layout: {
-                              padding: 10
-                          },
-                          scales: {
-                              r: {
-                                  angleLines: {
-                                      display: true,
-                                      color: '#F3F4F6',
-                                      borderDash: [5, 5]
-                                  },
-                                  grid: {
-                                      color: '#F3F4F6',
-                                      circular: true,
-                                      borderDash: [5, 5]
-                                  },
-                                  pointLabels: {
-                                      font: {
-                                          size: 11,
-                                          weight: 'bold',
-                                          family: 'Inter, sans-serif'
-                                      },
-                                      color: (context) => {
-                                          // Make the second line lighter
-                                          return context.index !== undefined ? ['#1F2937', '#9CA3AF'] : '#1F2937';
-                                      },
-                                      padding: 15,
-                                      backdropColor: '#ffffff',
-                                      backdropPadding: 6,
-                                      borderRadius: 8,
-                                  },
-                                  ticks: {
-                                      display: false,
-                                      min: 0,
-                                      max: 100,
-                                      stepSize: 20
-                                  }
-                              }
-                          },
-                          plugins: {
-                              legend: {
-                                  display: false
-                              },
-                              tooltip: {
-                                  backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                                  titleColor: '#1F2937',
-                                  bodyColor: '#4B5563',
-                                  borderColor: '#F3F4F6',
-                                  borderWidth: 1,
-                                  padding: 12,
-                                  titleFont: { size: 14, weight: 'bold' },
-                                  bodyFont: { size: 13 },
-                                  displayColors: false,
-                                  callbacks: {
-                                      title: (context) => {
-                                          const label = context[0].label as unknown as string[];
-                                          return label[0];
-                                      },
-                                      label: function(context) {
-                                          const label = context.chart.data.labels?.[context.dataIndex] as string[];
-                                          return label[1];
-                                      }
-                                  }
-                              }
-                          }
-                      } as any}
+                      options={radarOptions}
                   />
               </div>
           </div>
@@ -271,7 +280,7 @@ const StaffCoursePerformancePanel: React.FC<StaffCoursePerformancePanelProps> = 
                   </h4>
                   <div className="space-y-3">
                       {staffDetails.popularCourses.map((c, i) => (
-                          <div key={c} onClick={() => alert('进入课程详情页')} className="flex items-center justify-between group cursor-pointer">
+                          <div key={c} onClick={() => onDemoAction(`${c} 课程详情仍为演示入口，后续会接入教务课程记录`)} className="flex items-center justify-between group cursor-pointer">
                               <div className="flex items-center gap-4">
                                   <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${i === 0 ? 'bg-orange-100 text-orange-600' : i === 1 ? 'bg-gray-100 text-gray-600' : 'bg-gray-50 text-gray-400'}`}>
                                       {i+1}
@@ -298,7 +307,7 @@ const StaffCoursePerformancePanel: React.FC<StaffCoursePerformancePanelProps> = 
                   </h4>
                   <div className="space-y-3">
                       {staffDetails.attentionCourses.map((c, i) => (
-                          <div key={c} onClick={() => alert('进入课程详情页')} className="flex items-center justify-between group cursor-pointer">
+                          <div key={c} onClick={() => onDemoAction(`${c} 课程关注明细仍为演示入口，后续会接入开课/取消记录`)} className="flex items-center justify-between group cursor-pointer">
                               <div className="flex items-center gap-4">
                                   <div className="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-sm font-bold">
                                       {i+1}
@@ -332,7 +341,7 @@ const StaffCoursePerformancePanel: React.FC<StaffCoursePerformancePanelProps> = 
           </h4>
           <div className="space-y-3">
               {staffDetails.historicalCourses.map((c, i) => (
-                  <div key={i} onClick={() => alert('查看上课学员')} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100 hover:bg-white hover:shadow-sm transition-all cursor-pointer">
+                  <div key={i} onClick={() => onDemoAction(`${c.name} 上课学员列表仍为演示入口，后续会接入签到记录`)} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100 hover:bg-white hover:shadow-sm transition-all cursor-pointer">
                       <div className="flex items-center gap-4">
                           <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-gray-400 text-sm font-bold shadow-sm border border-gray-100">{i+1}</div>
                           <div>

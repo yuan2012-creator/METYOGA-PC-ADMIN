@@ -1,14 +1,15 @@
 import React from 'react';
-
-type StaffTab = 'decision' | 'archives' | 'schedule';
+import type { StaffTab } from '../../utils/staffSelectors';
 
 interface StaffSchedulePanelProps {
   activeTab: StaffTab;
+  onDemoAction: (message: string) => void;
 }
 
 const StaffSchedulePanel: React.FC<StaffSchedulePanelProps> = (props) => {
   const {
     activeTab,
+    onDemoAction,
   } = props;
 
   return (
@@ -189,7 +190,7 @@ const StaffSchedulePanel: React.FC<StaffSchedulePanelProps> = (props) => {
                                         <i className="fa-solid fa-wand-magic-sparkles text-purple-500"></i> 智能调度建议
                                     </h3>
                                     <button 
-                                        onClick={() => alert('Gemini AI 正在重新生成智能调度建议...')}
+                                        onClick={() => onDemoAction('Gemini AI 正在重新生成智能调度建议，真实排班重算待后续接入')}
                                         className="text-[10px] text-purple-600 font-bold flex items-center gap-1 hover:underline"
                                     >
                                         <i className="fa-solid fa-rotate-right"></i> AI 重新生成
@@ -204,7 +205,12 @@ const StaffSchedulePanel: React.FC<StaffSchedulePanelProps> = (props) => {
                                             <div>
                                                 <div className="text-sm font-bold text-gray-900 mb-1">晚高峰运力不足预警</div>
                                                 <div className="text-xs text-gray-600 leading-relaxed">今日 18:00-20:00 预约人数激增，当前仅有 2 名教练空闲。建议临时调配 <span className="font-bold text-purple-700 cursor-pointer hover:underline">Lisa Wu</span> 或 <span className="font-bold text-purple-700 cursor-pointer hover:underline">Mike Wang</span> 支援。</div>
-                                                <button className="mt-3 px-4 py-1.5 bg-purple-600 text-white text-xs font-bold rounded-lg hover:bg-purple-700 transition-colors">一键发送支援邀请</button>
+                                                <button
+                                                    onClick={() => onDemoAction('支援邀请已进入站内演示反馈，真实通知待后续接入')}
+                                                    className="mt-3 px-4 py-1.5 bg-purple-600 text-white text-xs font-bold rounded-lg hover:bg-purple-700 transition-colors"
+                                                >
+                                                    一键发送支援邀请
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -216,7 +222,12 @@ const StaffSchedulePanel: React.FC<StaffSchedulePanelProps> = (props) => {
                                             <div>
                                                 <div className="text-sm font-bold text-gray-900 mb-1">Emma Liu 课表空档过长</div>
                                                 <div className="text-xs text-gray-600 leading-relaxed">15:00-18:00 存在 3 小时空档，建议为其安排内部培训或体验课转化。</div>
-                                                <button className="mt-3 px-4 py-1.5 bg-white border border-blue-200 text-blue-700 text-xs font-bold rounded-lg hover:bg-blue-50 transition-colors">查看可排课程</button>
+                                                <button
+                                                    onClick={() => onDemoAction('已定位 Emma Liu 的可排课程建议，真实排课入口待后续接入')}
+                                                    className="mt-3 px-4 py-1.5 bg-white border border-blue-200 text-blue-700 text-xs font-bold rounded-lg hover:bg-blue-50 transition-colors"
+                                                >
+                                                    查看可排课程
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
@@ -240,8 +251,18 @@ const StaffSchedulePanel: React.FC<StaffSchedulePanelProps> = (props) => {
                                             </div>
                                         </div>
                                         <div className="flex flex-col gap-2">
-                                            <button className="px-3 py-1 bg-white border border-gray-200 text-gray-700 text-[10px] font-bold rounded hover:bg-gray-50 transition-colors">联系员工</button>
-                                            <button className="px-3 py-1 bg-red-600 text-white text-[10px] font-bold rounded hover:bg-red-700 transition-colors">记录扣罚</button>
+                                            <button
+                                                onClick={() => onDemoAction('已打开联系员工演示，真实 IM/电话入口待后续接入')}
+                                                className="px-3 py-1 bg-white border border-gray-200 text-gray-700 text-[10px] font-bold rounded hover:bg-gray-50 transition-colors"
+                                            >
+                                                联系员工
+                                            </button>
+                                            <button
+                                                onClick={() => onDemoAction('扣罚记录已进入站内演示反馈，真实薪酬扣款待后续接入')}
+                                                className="px-3 py-1 bg-red-600 text-white text-[10px] font-bold rounded hover:bg-red-700 transition-colors"
+                                            >
+                                                记录扣罚
+                                            </button>
                                         </div>
                                     </div>
                                 </div>

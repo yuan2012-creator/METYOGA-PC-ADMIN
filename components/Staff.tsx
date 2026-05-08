@@ -8,6 +8,9 @@ import {
   buildStaffRankings,
   filterStaffDemoMembers,
   filterStaffList,
+  STAFF_TABS,
+  type StaffFilterType,
+  type StaffTab,
 } from '../utils/staffSelectors';
 import StaffArchiveList from './staff/StaffArchiveList';
 import StaffDecisionPanel from './staff/StaffDecisionPanel';
@@ -15,8 +18,8 @@ import StaffDetailModal from './staff/StaffDetailModal';
 import StaffSchedulePanel from './staff/StaffSchedulePanel';
 
 const StaffPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'decision' | 'archives' | 'schedule'>('decision');
-  const [filterType, setFilterType] = useState<'all' | 'leads' | 'adjust' | 'new' | 'part_time'>('all');
+  const [activeTab, setActiveTab] = useState<StaffTab>('decision');
+  const [filterType, setFilterType] = useState<StaffFilterType>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showStaffModal, setShowStaffModal] = useState(false);
   const [activeStaff, setActiveStaff] = useState<Staff | null>(null);
@@ -32,6 +35,7 @@ const StaffPage: React.FC = () => {
   const [filterLifecycle, setFilterLifecycle] = useState<string>('all');
   const [filterGoal, setFilterGoal] = useState<string>('all');
   const [activeFollowUpCategory, setActiveFollowUpCategory] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ id: number; message: string } | null>(null);
 
   // Pricing Settings State
   const [isEditingPricing, setIsEditingPricing] = useState(false);
@@ -43,6 +47,13 @@ const StaffPage: React.FC = () => {
     trial: 99,
     acceptPoints: true
   });
+
+  const showStaffFeedback = (message: string) => {
+    setToast({ id: Date.now(), message });
+    window.setTimeout(() => {
+      setToast(current => (current?.message === message ? null : current));
+    }, 2400);
+  };
 
   // --- Logic 1: AI Decision Cards ---
   const decisions = [
@@ -111,14 +122,10 @@ const StaffPage: React.FC = () => {
       {/* --- SUB NAVIGATION --- */}
       <div className="px-8 py-4 bg-[#F5F5F7]/95 backdrop-blur border-b border-gray-200/50 sticky top-16 z-10 flex justify-start">
           <div className="bg-gray-100 p-1 rounded-xl inline-flex relative">
-              {[
-                  { id: 'decision', label: '智能决策' },
-                  { id: 'archives', label: '员工档案' },
-                  { id: 'schedule', label: '出勤与排班' }
-              ].map(tab => (
+              {STAFF_TABS.map(tab => (
                   <button 
                       key={tab.id}
-                      onClick={() => setActiveTab(tab.id as any)}
+                      onClick={() => setActiveTab(tab.id)}
                       className={`relative z-10 px-6 py-2 text-[13px] font-medium text-center rounded-lg transition-all duration-200 ${
                           activeTab === tab.id 
                           ? 'bg-white text-black shadow-sm font-bold' 
@@ -160,7 +167,7 @@ const StaffPage: React.FC = () => {
               setShowStaffModal={setShowStaffModal}
             />
 
-            <StaffSchedulePanel activeTab={activeTab} />
+            <StaffSchedulePanel activeTab={activeTab} onDemoAction={showStaffFeedback} />
 
           </div>
       </div>
@@ -194,7 +201,17 @@ const StaffPage: React.FC = () => {
         setFilterGoal={setFilterGoal}
         activeFollowUpCategory={activeFollowUpCategory}
         setActiveFollowUpCategory={setActiveFollowUpCategory}
+        onDemoAction={showStaffFeedback}
       />
+
+      {toast && (
+        <div className="fixed top-20 right-8 z-[70] animate-fadeIn">
+          <div className="px-4 py-3 rounded-xl shadow-xl border text-sm font-bold flex items-center gap-3 bg-white text-gray-800 border-gray-100">
+            <i className="fa-solid fa-circle-info text-blue-500"></i>
+            {toast.message}
+          </div>
+        </div>
+      )}
 
       <style>{`
         @keyframes fadeIn {
