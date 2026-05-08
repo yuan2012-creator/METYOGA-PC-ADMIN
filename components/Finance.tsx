@@ -95,6 +95,14 @@ interface StaffPerformance {
   progress: number;
 }
 
+type FinanceToastTone = 'info' | 'success';
+
+interface FinanceToast {
+  id: number;
+  message: string;
+  tone: FinanceToastTone;
+}
+
 const FINANCE_SUB_TABS: { id: FinanceSubTab; label: string }[] = [
   { id: 'overview', label: '营收总览' },
   { id: 'revenue', label: '收入与预收' },
@@ -285,6 +293,14 @@ const Finance: React.FC = () => {
   const [subTab, setSubTab] = useState<FinanceSubTab>('overview');
   const [dateRange, setDateRange] = useState({ start: '2026-05-01', end: '2026-05-31' });
   const [orderFilter, setOrderFilter] = useState<FinanceOrderFilter>('all');
+  const [toast, setToast] = useState<FinanceToast | null>(null);
+
+  const showToast = (message: string, tone: FinanceToastTone = 'info') => {
+    setToast({ id: Date.now(), message, tone });
+    window.setTimeout(() => {
+      setToast(current => (current?.message === message ? null : current));
+    }, 2400);
+  };
 
   const periodOrders = useMemo(
     () => filterOrdersByDateRange(MOCK_ORDERS, dateRange),
@@ -369,7 +385,7 @@ const Finance: React.FC = () => {
             <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                 财务管理中心
                 <button 
-                    onClick={() => alert('Gemini AI 正在生成财务分析报告...')}
+                    onClick={() => showToast('Gemini AI 正在生成财务分析报告...')}
                     className="text-[10px] text-purple-600 font-bold flex items-center gap-1 hover:underline ml-2 bg-purple-50 px-2 py-1 rounded-full border border-purple-100"
                 >
                     <i className="fa-solid fa-wand-magic-sparkles"></i> AI 财务分析
@@ -381,13 +397,19 @@ const Finance: React.FC = () => {
                     <input type="date" value={dateRange.start} onChange={e => setDateRange({...dateRange, start: e.target.value})} className="bg-transparent outline-none w-24 text-black mr-2 font-mono" />
                     <span className="text-gray-400">-</span>
                     <input type="date" value={dateRange.end} onChange={e => setDateRange({...dateRange, end: e.target.value})} className="bg-transparent outline-none w-24 text-black ml-2 font-mono" />
-                    <button onClick={() => alert(`数据已更新至 ${dateRange.start} ~ ${dateRange.end}`)} className="bg-black text-white px-3 py-1.5 rounded-lg ml-3 text-xs font-medium hover:opacity-80 transition">查询</button>
+                    <button onClick={() => showToast(`数据已更新至 ${dateRange.start} ~ ${dateRange.end}`, 'success')} className="bg-black text-white px-3 py-1.5 rounded-lg ml-3 text-xs font-medium hover:opacity-80 transition">查询</button>
                 </div>
 
-                <button className="bg-white border border-gray-200 text-black text-xs px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition flex items-center gap-2">
+                <button
+                    onClick={() => showToast('财务报表导出演示已准备', 'success')}
+                    className="bg-white border border-gray-200 text-black text-xs px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition flex items-center gap-2"
+                >
                     <i className="fa-solid fa-file-export"></i> 导出报表
                 </button>
-                <button className="bg-black text-white text-xs px-4 py-2 rounded-lg font-medium hover:opacity-80 transition">
+                <button
+                    onClick={() => showToast('已打开录入支出演示')}
+                    className="bg-black text-white text-xs px-4 py-2 rounded-lg font-medium hover:opacity-80 transition"
+                >
                     + 录入支出
                 </button>
             </div>
@@ -501,7 +523,12 @@ const Finance: React.FC = () => {
                         <div className="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
                             <div className="flex justify-between items-center mb-6">
                                 <h3 className="font-bold text-lg flex items-center text-gray-900"><i className="fa-solid fa-user-friends mr-2 text-gray-400"></i> 门店业绩分配与实时进度</h3>
-                                <button className="bg-black text-white text-xs px-3 py-1.5 rounded-lg font-bold hover:opacity-80 transition">重新分配目标</button>
+                                <button
+                                    onClick={() => showToast('已进入业绩目标重新分配演示')}
+                                    className="bg-black text-white text-xs px-3 py-1.5 rounded-lg font-bold hover:opacity-80 transition"
+                                >
+                                    重新分配目标
+                                </button>
                             </div>
                             
                             <table className="w-full text-sm text-left">
@@ -528,7 +555,14 @@ const Finance: React.FC = () => {
                                                     <span className="text-xs text-gray-600 absolute right-0 top-0 -mt-1 font-mono">{staff.progress}%</span>
                                                 </div>
                                             </td>
-                                            <td className="p-3"><button className="text-xs text-blue-600 hover:underline font-bold">查看明细</button></td>
+                                            <td className="p-3">
+                                              <button
+                                                onClick={() => showToast(`已打开 ${staff.name} 业绩明细演示`)}
+                                                className="text-xs text-blue-600 hover:underline font-bold"
+                                              >
+                                                查看明细
+                                              </button>
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -544,17 +578,26 @@ const Finance: React.FC = () => {
                             <h3 className="font-bold text-2xl mb-2 text-gray-900">生成标准财务报表</h3>
                             <p className="text-sm text-gray-500 mb-10">根据自定义查询日期，导出正式报表文件。</p>
                             <div className="flex justify-center gap-6">
-                                <div className="p-6 border border-gray-200 rounded-2xl cursor-pointer hover:border-black hover:bg-gray-50 w-56 transition group">
+                                <div
+                                    onClick={() => showToast('资产负债表导出演示已准备', 'success')}
+                                    className="p-6 border border-gray-200 rounded-2xl cursor-pointer hover:border-black hover:bg-gray-50 w-56 transition group"
+                                >
                                     <i className="fa-solid fa-file-excel text-4xl text-green-600 mb-4 group-hover:scale-110 transition"></i>
                                     <div className="font-bold text-base text-gray-900">资产负债表</div>
                                     <div className="text-xs text-gray-400 mt-1">XLSX 格式</div>
                                 </div>
-                                <div className="p-6 border border-gray-200 rounded-2xl cursor-pointer hover:border-black hover:bg-gray-50 w-56 transition group">
+                                <div
+                                    onClick={() => showToast('利润表导出演示已准备', 'success')}
+                                    className="p-6 border border-gray-200 rounded-2xl cursor-pointer hover:border-black hover:bg-gray-50 w-56 transition group"
+                                >
                                     <i className="fa-solid fa-file-invoice text-4xl text-blue-600 mb-4 group-hover:scale-110 transition"></i>
                                     <div className="font-bold text-base text-gray-900">利润表 (P&L)</div>
                                     <div className="text-xs text-gray-400 mt-1">PDF / XLSX</div>
                                 </div>
-                                <div className="p-6 border border-gray-200 rounded-2xl cursor-pointer hover:border-black hover:bg-gray-50 w-56 transition group">
+                                <div
+                                    onClick={() => showToast('现金流量表导出演示已准备', 'success')}
+                                    className="p-6 border border-gray-200 rounded-2xl cursor-pointer hover:border-black hover:bg-gray-50 w-56 transition group"
+                                >
                                     <i className="fa-solid fa-money-bill-transfer text-4xl text-orange-500 mb-4 group-hover:scale-110 transition"></i>
                                     <div className="font-bold text-base text-gray-900">现金流量表</div>
                                     <div className="text-xs text-gray-400 mt-1">XLSX 格式</div>
@@ -563,12 +606,18 @@ const Finance: React.FC = () => {
                             <div className="mt-12 pt-8 border-t border-gray-100 w-full max-w-2xl mx-auto">
                                  <div className="font-bold text-base mb-4 text-gray-700">经营分析报表</div>
                                  <div className="flex justify-center gap-4">
-                                    <button className="bg-white border border-gray-200 text-black text-sm px-5 py-2.5 rounded-xl font-bold hover:bg-gray-50 transition">
+                                    <button
+                                        onClick={() => showToast('消课收入明细表导出演示已准备', 'success')}
+                                        className="bg-white border border-gray-200 text-black text-sm px-5 py-2.5 rounded-xl font-bold hover:bg-gray-50 transition"
+                                    >
                                         消课收入明细表
                                     </button>
-                                    <button className="bg-white border border-gray-200 text-black text-sm px-5 py-2.5 rounded-xl font-bold hover:bg-gray-50 transition">
+                                    <button
+                                        onClick={() => showToast('卡项销售明细表导出演示已准备', 'success')}
+                                        className="bg-white border border-gray-200 text-black text-sm px-5 py-2.5 rounded-xl font-bold hover:bg-gray-50 transition"
+                                    >
                                         卡项销售明细表
-                                    </button>
+                                     </button>
                                  </div>
                             </div>
                         </div>
@@ -577,6 +626,19 @@ const Finance: React.FC = () => {
 
             </div>
         </div>
+
+        {toast && (
+            <div className="fixed top-20 right-8 z-[70] animate-fadeIn">
+                <div className={`px-4 py-3 rounded-xl shadow-xl border text-sm font-bold flex items-center gap-3 ${
+                    toast.tone === 'success'
+                    ? 'bg-green-50 text-green-700 border-green-100'
+                    : 'bg-white text-gray-800 border-gray-100'
+                }`}>
+                    <i className={`fa-solid ${toast.tone === 'success' ? 'fa-circle-check' : 'fa-circle-info'}`}></i>
+                    {toast.message}
+                </div>
+            </div>
+        )}
 
       <style>{`
         .custom-scroll::-webkit-scrollbar { width: 5px; }

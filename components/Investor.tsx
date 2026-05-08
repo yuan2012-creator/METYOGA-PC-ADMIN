@@ -1,11 +1,20 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   BarChart, Bar, AreaChart, Area, ComposedChart, Cell, PieChart, Pie
 } from 'recharts';
 
 const Investor: React.FC = () => {
+  const [toast, setToast] = useState<string | null>(null);
+
+  const showToast = (message: string) => {
+    setToast(message);
+    window.setTimeout(() => {
+      setToast(current => (current === message ? null : current));
+    }, 2400);
+  };
+
   // --- Mock Data ---
 
   // 1. ROI Trend
@@ -53,7 +62,7 @@ const Investor: React.FC = () => {
             <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
                 投资人看板 (Investor Relations)
                 <button 
-                    onClick={() => alert('Gemini AI 正在生成投资分析报告...')}
+                    onClick={() => showToast('Gemini AI 正在生成投资分析报告...')}
                     className="text-[10px] text-purple-600 font-bold flex items-center gap-1 hover:underline ml-2 bg-purple-50 px-2 py-1 rounded-full border border-purple-100"
                 >
                     <i className="fa-solid fa-wand-magic-sparkles"></i> AI 投资分析
@@ -61,7 +70,10 @@ const Investor: React.FC = () => {
             </h2>
             <div className="flex items-center gap-3">
                 <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1.5 rounded-lg">数据更新至: 2023-11-25</span>
-                <button className="bg-black text-white text-xs px-4 py-2 rounded-lg font-bold hover:opacity-80 transition shadow-lg shadow-black/10">
+                <button
+                    onClick={() => showToast('投资人月报导出演示已准备')}
+                    className="bg-black text-white text-xs px-4 py-2 rounded-lg font-bold hover:opacity-80 transition shadow-lg shadow-black/10"
+                >
                     <i className="fa-solid fa-file-pdf mr-2"></i>导出月报
                 </button>
             </div>
@@ -246,6 +258,14 @@ const Investor: React.FC = () => {
 
             </div>
         </div>
+        {toast && (
+            <div className="fixed top-20 right-8 z-[70] animate-fadeIn">
+                <div className="px-4 py-3 rounded-xl shadow-xl border text-sm font-bold flex items-center gap-3 bg-white text-gray-800 border-gray-100">
+                    <i className="fa-solid fa-circle-info text-purple-500"></i>
+                    {toast}
+                </div>
+            </div>
+        )}
     </div>
   );
 };

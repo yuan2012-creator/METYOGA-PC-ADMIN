@@ -29,6 +29,12 @@ type TimelineViewItem = TimelineEvent & {
   sourceId: string;
 };
 
+type MemberDetailToast = {
+  id: number;
+  message: string;
+  tone: 'info' | 'success';
+};
+
 interface AssetCardView {
   id: string;
   name: string;
@@ -209,6 +215,7 @@ const getBusinessRecordSlots = (member: Member): BusinessRecordSlot[] => [
 
 const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }) => {
   const [activeTab, setActiveTab] = useState<TimelineTab>('all');
+  const [toast, setToast] = useState<MemberDetailToast | null>(null);
   const stageView = getMemberLifecyclePresentation(member);
   const riskView = getMemberRiskPresentation(member);
   const assetCards = getAssetCards(member);
@@ -231,6 +238,13 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }
   ];
 
   // --- Helpers ---
+  const showToast = (message: string, tone: MemberDetailToast['tone'] = 'info') => {
+    setToast({ id: Date.now(), message, tone });
+    window.setTimeout(() => {
+      setToast(current => (current?.message === message ? null : current));
+    }, 2400);
+  };
+
   const getTimelineIcon = (type: TimelineEvent['type']) => {
     switch (type) {
       case 'class': return <i className="fa-solid fa-person-running text-gray-900"></i>;
@@ -305,12 +319,15 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }
             </div>
             <div className="flex items-center gap-3">
                 <button 
-                    onClick={() => alert('Gemini AI 正在生成会员深度洞察报告...')}
+                    onClick={() => showToast('Gemini AI 正在生成会员深度洞察报告...')}
                     className="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-xl text-xs font-bold hover:opacity-90 transition shadow-sm flex items-center gap-2"
                 >
                     <i className="fa-solid fa-wand-magic-sparkles"></i> AI 洞察
                 </button>
-                <button className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold hover:bg-gray-50 transition text-gray-700 shadow-sm">
+                <button
+                    onClick={() => showToast('已进入会员档案编辑演示')}
+                    className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold hover:bg-gray-50 transition text-gray-700 shadow-sm"
+                >
                     编辑档案
                 </button>
                 <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition text-gray-500">
@@ -364,24 +381,41 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }
                         {member.bodyTags.map(tag => (
                             <span key={tag} className="px-2.5 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-bold text-gray-600 shadow-sm">{tag}</span>
                         ))}
-                        <button className="px-2 py-1 border border-dashed border-gray-300 rounded-lg text-[10px] text-gray-400 hover:border-gray-400 transition">+</button>
+                        <button
+                          onClick={() => showToast('已打开会员标签补充演示')}
+                          className="px-2 py-1 border border-dashed border-gray-300 rounded-lg text-[10px] text-gray-400 hover:border-gray-400 transition"
+                        >
+                          +
+                        </button>
                     </div>
 
                     {/* Action Buttons */}
                     <div className="grid grid-cols-4 gap-2 mb-3">
-                        <button className="flex flex-col items-center justify-center py-3 bg-white border border-gray-200 rounded-xl hover:border-gray-300 hover:bg-gray-50 transition group shadow-sm">
+                        <button
+                          onClick={() => showToast('已进入微信触达演示')}
+                          className="flex flex-col items-center justify-center py-3 bg-white border border-gray-200 rounded-xl hover:border-gray-300 hover:bg-gray-50 transition group shadow-sm"
+                        >
                             <i className="fa-brands fa-weixin text-lg text-green-600 mb-1 group-hover:scale-110 transition"></i>
                             <span className="text-[10px] font-medium text-gray-500">微信</span>
                         </button>
-                        <button className="flex flex-col items-center justify-center py-3 bg-white border border-gray-200 rounded-xl hover:border-gray-300 hover:bg-gray-50 transition group shadow-sm">
+                        <button
+                          onClick={() => showToast(`已准备拨打 ${member.phone}`)}
+                          className="flex flex-col items-center justify-center py-3 bg-white border border-gray-200 rounded-xl hover:border-gray-300 hover:bg-gray-50 transition group shadow-sm"
+                        >
                             <i className="fa-solid fa-phone text-lg text-black mb-1 group-hover:scale-110 transition"></i>
                             <span className="text-[10px] font-medium text-gray-500">电话</span>
                         </button>
-                        <button className="flex flex-col items-center justify-center py-3 bg-white border border-gray-200 rounded-xl hover:border-gray-300 hover:bg-gray-50 transition group shadow-sm">
+                        <button
+                          onClick={() => showToast('已进入会员预约创建演示')}
+                          className="flex flex-col items-center justify-center py-3 bg-white border border-gray-200 rounded-xl hover:border-gray-300 hover:bg-gray-50 transition group shadow-sm"
+                        >
                             <i className="fa-solid fa-calendar-check text-lg text-black mb-1 group-hover:scale-110 transition"></i>
                             <span className="text-[10px] font-medium text-gray-500">预约</span>
                         </button>
-                        <button className="flex flex-col items-center justify-center py-3 bg-white border border-gray-200 rounded-xl hover:border-gray-300 hover:bg-gray-50 transition group shadow-sm">
+                        <button
+                          onClick={() => showToast('已打开优惠券发放演示', 'success')}
+                          className="flex flex-col items-center justify-center py-3 bg-white border border-gray-200 rounded-xl hover:border-gray-300 hover:bg-gray-50 transition group shadow-sm"
+                        >
                             <i className="fa-solid fa-ticket text-lg text-orange-500 mb-1 group-hover:scale-110 transition"></i>
                             <span className="text-[10px] font-medium text-gray-500">发券</span>
                         </button>
@@ -605,6 +639,18 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }
         </div>
 
       </div>
+      {toast && (
+        <div className="fixed top-20 right-8 z-[80] animate-fadeInUp">
+          <div className={`px-4 py-3 rounded-xl shadow-xl border text-sm font-bold flex items-center gap-3 ${
+            toast.tone === 'success'
+              ? 'bg-green-50 text-green-700 border-green-100'
+              : 'bg-white text-gray-800 border-gray-100'
+          }`}>
+            <i className={`fa-solid ${toast.tone === 'success' ? 'fa-circle-check' : 'fa-circle-info'}`}></i>
+            {toast.message}
+          </div>
+        </div>
+      )}
       <style>{`
         @keyframes fadeInUp {
             from { opacity: 0; transform: translateY(20px) scale(0.98); }

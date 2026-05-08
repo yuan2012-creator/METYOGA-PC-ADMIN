@@ -40,6 +40,11 @@ interface MallActionHandlers {
   toggleStatus: (item: MallEditableItem, type: MallActionType) => void;
 }
 
+type MallToast = {
+  id: number;
+  message: string;
+};
+
 const cloneMallItem = <T,>(item: T): T => JSON.parse(JSON.stringify(item)) as T;
 
 const canDuplicateMallItem = (type: MallActionType): type is MallDuplicableActionType => type !== 'ttc_tutor';
@@ -77,6 +82,14 @@ const Mall: React.FC = () => {
 
   // Contract Creation State
   const [contractData, setContractData] = useState<MallContractData>(() => createInitialContractData());
+  const [toast, setToast] = useState<MallToast | null>(null);
+
+  const showToast = (message: string) => {
+      setToast({ id: Date.now(), message });
+      window.setTimeout(() => {
+          setToast(current => (current?.message === message ? null : current));
+      }, 2400);
+  };
 
   // --- Mock Data ---  // --- Mock Data ---
 
@@ -366,7 +379,8 @@ const Mall: React.FC = () => {
                                 accept=".pdf,.doc,.docx" 
                                 onChange={(e) => {
                                     if (e.target.files && e.target.files.length > 0) {
-                                        alert('标准合同上传成功！');
+                                        showToast('标准合同上传成功！');
+                                        e.target.value = '';
                                     }
                                 }} 
                             />
@@ -407,6 +421,15 @@ const Mall: React.FC = () => {
                 {subView === 'contract_create' && renderMallContractCreate()}
             </div>
         </div>
+
+        {toast && (
+            <div className="fixed top-20 right-8 z-[70] animate-fadeIn">
+                <div className="px-4 py-3 rounded-xl shadow-xl border text-sm font-bold flex items-center gap-3 bg-green-50 text-green-700 border-green-100">
+                    <i className="fa-solid fa-circle-check"></i>
+                    {toast.message}
+                </div>
+            </div>
+        )}
 
       <style>{`
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }

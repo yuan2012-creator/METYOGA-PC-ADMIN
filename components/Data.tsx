@@ -6,9 +6,18 @@ import {
   Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis
 } from 'recharts';
 
+type DataToastTone = 'info' | 'success';
+
+interface DataToast {
+  id: number;
+  message: string;
+  tone: DataToastTone;
+}
+
 const Data: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<'overview' | 'revenue' | 'member' | 'course' | 'training'>('overview');
   const [dateRange, setDateRange] = useState('本月');
+  const [toast, setToast] = useState<DataToast | null>(null);
 
   // --- Mock Data ---
   
@@ -118,6 +127,12 @@ const Data: React.FC = () => {
   ];
 
   // --- Components ---
+  const showToast = (message: string, tone: DataToastTone = 'info') => {
+    setToast({ id: Date.now(), message, tone });
+    window.setTimeout(() => {
+      setToast(current => (current?.message === message ? null : current));
+    }, 2400);
+  };
 
   const InsightCard = ({ title, status, desc, action }: { title: string, status: 'good' | 'warning' | 'bad', desc: string, action?: string }) => (
     <div className={`p-4 rounded-xl border-l-4 flex flex-col gap-2 ${
@@ -129,7 +144,14 @@ const Data: React.FC = () => {
                 <i className={`fa-solid ${status === 'good' ? 'fa-circle-check text-green-600' : status === 'warning' ? 'fa-triangle-exclamation text-yellow-600' : 'fa-circle-xmark text-red-600'}`}></i>
                 <h4 className={`text-sm font-bold ${status === 'good' ? 'text-green-800' : status === 'warning' ? 'text-yellow-800' : 'text-red-800'}`}>{title}</h4>
             </div>
-            {action && <button className="text-[10px] bg-white border border-gray-200 px-2 py-1 rounded shadow-sm hover:bg-gray-50 transition">{action}</button>}
+            {action && (
+                <button
+                    onClick={() => showToast(`已进入「${action}」演示流程`)}
+                    className="text-[10px] bg-white border border-gray-200 px-2 py-1 rounded shadow-sm hover:bg-gray-50 transition"
+                >
+                    {action}
+                </button>
+            )}
         </div>
         <p className="text-xs text-gray-600 leading-relaxed ml-6">{desc}</p>
     </div>
@@ -169,7 +191,7 @@ const Data: React.FC = () => {
             
             <div className="flex items-center gap-3">
                 <button 
-                    onClick={() => alert('Gemini AI 正在生成深度经营分析报告...')}
+                    onClick={() => showToast('Gemini AI 正在生成深度经营分析报告...')}
                     className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:opacity-90 transition shadow-sm"
                 >
                     <i className="fa-solid fa-wand-magic-sparkles"></i> AI 深度分析
@@ -185,7 +207,10 @@ const Data: React.FC = () => {
                         </button>
                     ))}
                 </div>
-                <button className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50 text-gray-600 transition">
+                <button
+                    onClick={() => showToast(`${dateRange}经营数据导出演示已准备`, 'success')}
+                    className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50 text-gray-600 transition"
+                >
                     <i className="fa-solid fa-download text-xs"></i>
                 </button>
             </div>
@@ -476,11 +501,17 @@ const Data: React.FC = () => {
 
                                     <div className="space-y-3">
                                         <div className="text-xs font-bold text-gray-900">建议行动：</div>
-                                        <button className="w-full py-2 bg-white border border-gray-200 rounded-lg text-xs font-medium hover:bg-gray-50 text-left px-3 flex justify-between items-center">
+                                        <button
+                                            onClick={() => showToast('已进入体验课 SOP 优化演示')}
+                                            className="w-full py-2 bg-white border border-gray-200 rounded-lg text-xs font-medium hover:bg-gray-50 text-left px-3 flex justify-between items-center"
+                                        >
                                             <span>1. 优化体验课SOP (话术)</span>
                                             <i className="fa-solid fa-chevron-right text-gray-300"></i>
                                         </button>
-                                        <button className="w-full py-2 bg-white border border-gray-200 rounded-lg text-xs font-medium hover:bg-gray-50 text-left px-3 flex justify-between items-center">
+                                        <button
+                                            onClick={() => showToast('已进入新客首单优惠券发送演示')}
+                                            className="w-full py-2 bg-white border border-gray-200 rounded-lg text-xs font-medium hover:bg-gray-50 text-left px-3 flex justify-between items-center"
+                                        >
                                             <span>2. 发送 "新客首单" 限时优惠券</span>
                                             <i className="fa-solid fa-chevron-right text-gray-300"></i>
                                         </button>
@@ -651,7 +682,12 @@ const Data: React.FC = () => {
                             <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                                 <div className="flex justify-between items-center mb-4">
                                     <h3 className="font-bold text-gray-900">最受欢迎课程 Top 5</h3>
-                                    <button className="text-xs text-gray-500 hover:text-black">查看全部</button>
+                                    <button
+                                        onClick={() => showToast('已切换到课程完整榜单演示')}
+                                        className="text-xs text-gray-500 hover:text-black"
+                                    >
+                                        查看全部
+                                    </button>
                                 </div>
                                 <div className="space-y-3">
                                     {popularCourses.map((c, i) => (
@@ -678,7 +714,11 @@ const Data: React.FC = () => {
                             <h3 className="font-bold text-gray-900 mb-6">私教明星榜 (Top Teachers)</h3>
                             <div className="grid grid-cols-3 gap-4">
                                 {topTeachers.map((t, i) => (
-                                    <div key={i} className="p-4 rounded-xl border border-gray-200 hover:border-black transition group cursor-pointer relative overflow-hidden">
+                                    <div
+                                        key={i}
+                                        onClick={() => showToast(`已打开 ${t.name} 教练表现详情演示`)}
+                                        className="p-4 rounded-xl border border-gray-200 hover:border-black transition group cursor-pointer relative overflow-hidden"
+                                    >
                                         <div className="absolute top-0 right-0 bg-yellow-400 text-white text-[10px] font-bold px-2 py-1 rounded-bl-lg">TOP {i+1}</div>
                                         <div className="flex items-center gap-4 mb-4">
                                             <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-lg font-bold text-gray-400 group-hover:bg-black group-hover:text-white transition">
@@ -794,10 +834,18 @@ const Data: React.FC = () => {
                         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
                             <div className="flex justify-between items-center mb-6">
                                 <h3 className="font-bold text-gray-900">即将开班 (Upcoming Cohorts)</h3>
-                                <button className="text-xs bg-black text-white px-3 py-1.5 rounded-lg font-bold">新增排期</button>
+                                <button
+                                    onClick={() => showToast('已进入 TTC 新增排期演示')}
+                                    className="text-xs bg-black text-white px-3 py-1.5 rounded-lg font-bold"
+                                >
+                                    新增排期
+                                </button>
                             </div>
                             <div className="grid grid-cols-3 gap-6">
-                                <div className="border border-gray-200 rounded-xl p-4 flex flex-col justify-between h-32 hover:border-black transition cursor-pointer">
+                                <div
+                                    onClick={() => showToast('已打开 RYT 200 周末班详情演示')}
+                                    className="border border-gray-200 rounded-xl p-4 flex flex-col justify-between h-32 hover:border-black transition cursor-pointer"
+                                >
                                     <div>
                                         <div className="text-xs text-blue-600 font-bold mb-1">2024 春季班</div>
                                         <div className="font-bold text-lg">RYT 200 周末班</div>
@@ -808,7 +856,10 @@ const Data: React.FC = () => {
                                     </div>
                                     <div className="text-[10px] text-right text-gray-400 mt-1">已报 12 / 限 16</div>
                                 </div>
-                                <div className="border border-gray-200 rounded-xl p-4 flex flex-col justify-between h-32 hover:border-black transition cursor-pointer">
+                                <div
+                                    onClick={() => showToast('已打开孕产修复专题详情演示')}
+                                    className="border border-gray-200 rounded-xl p-4 flex flex-col justify-between h-32 hover:border-black transition cursor-pointer"
+                                >
                                     <div>
                                         <div className="text-xs text-purple-600 font-bold mb-1">进阶工作坊</div>
                                         <div className="font-bold text-lg">孕产修复专题</div>
@@ -819,7 +870,10 @@ const Data: React.FC = () => {
                                     </div>
                                     <div className="text-[10px] text-right text-gray-400 mt-1">已报 10 / 限 20</div>
                                 </div>
-                                <div className="border border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center h-32 text-gray-400 hover:border-gray-400 hover:text-gray-600 transition cursor-pointer">
+                                <div
+                                    onClick={() => showToast('已进入新班次规划演示')}
+                                    className="border border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center h-32 text-gray-400 hover:border-gray-400 hover:text-gray-600 transition cursor-pointer"
+                                >
                                     <i className="fa-solid fa-plus text-2xl mb-2"></i>
                                     <span className="text-xs font-bold">规划新班次</span>
                                 </div>
@@ -830,6 +884,19 @@ const Data: React.FC = () => {
 
             </div>
         </div>
+
+        {toast && (
+            <div className="fixed top-20 right-8 z-[70] animate-fadeIn">
+                <div className={`px-4 py-3 rounded-xl shadow-xl border text-sm font-bold flex items-center gap-3 ${
+                    toast.tone === 'success'
+                    ? 'bg-green-50 text-green-700 border-green-100'
+                    : 'bg-white text-gray-800 border-gray-100'
+                }`}>
+                    <i className={`fa-solid ${toast.tone === 'success' ? 'fa-circle-check' : 'fa-circle-info'}`}></i>
+                    {toast.message}
+                </div>
+            </div>
+        )}
 
       <style>{`
         .custom-scroll::-webkit-scrollbar { width: 5px; }
