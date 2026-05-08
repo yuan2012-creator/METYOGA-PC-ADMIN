@@ -77,7 +77,7 @@ const Shop: React.FC = () => {
   const saveAll = () => {
       const saveInput = buildSaveShopConfigInput(shopConfig);
       void saveInput;
-      showToast('所有店铺配置已保存并同步至小程序端', 'success');
+      showToast('门店配置已保存为前端草稿，真实后台保存与小程序同步待接口接入', 'success');
   };
 
   const addHoliday = () => {
@@ -85,30 +85,41 @@ const Shop: React.FC = () => {
   };
 
   const submitHoliday = () => {
-      if (!holidayForm?.name.trim() || !holidayForm.date.trim()) return;
+      const name = holidayForm?.name.trim() ?? '';
+      const date = holidayForm?.date.trim() ?? '';
+
+      if (!name || !date) {
+          showToast('请填写假期名称和日期范围后再添加', 'info');
+          return;
+      }
 
       setShopConfig(prev => addStoreHoliday(prev, {
-          name: holidayForm.name.trim(),
-          date: holidayForm.date.trim(),
+          name,
+          date,
       }));
       setHolidayForm(null);
+      showToast('特殊营业时间已加入前端配置草稿，真实同步待接口接入', 'success');
   };
 
   const removeHoliday = (idx: number) => {
       setShopConfig(prev => removeStoreHoliday(prev, idx));
+      showToast('特殊营业时间已从前端配置草稿移除，真实同步待接口接入', 'success');
   };
 
   const uploadStoreImage = () => {
       setShopConfig(prev => addStoreGalleryImage(prev, DEMO_STORE_IMAGE_URL));
-      showToast('模拟图片已上传成功', 'success');
+      showToast('演示图片已加入前端相册草稿，真实上传待文件接口接入', 'success');
   };
 
   const removeImage = (idx: number) => {
       setConfirmDialog({
           title: '删除门店图片',
-          message: '确定要删除这张图片吗？',
+          message: '确定从前端相册草稿中移除这张图片吗？真实图片删除待接口接入。',
           confirmLabel: '删除图片',
-          onConfirm: () => setShopConfig(prev => removeStoreGalleryImage(prev, idx)),
+          onConfirm: () => {
+              setShopConfig(prev => removeStoreGalleryImage(prev, idx));
+              showToast('图片已从前端相册草稿移除，真实删除待接口接入', 'success');
+          },
       });
   };
 
