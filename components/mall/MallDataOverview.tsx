@@ -2,6 +2,145 @@ import React, { useMemo, useState } from 'react';
 import type { MallOverviewModule } from './mallTypes';
 import type { MallClosureSummary } from '../../utils/mallSelectors';
 
+type MallOverviewMetricStatus = 'good' | 'warning' | 'neutral';
+type MallOverviewMetric = {
+    id: 'exposure' | 'clicks' | 'orders' | 'fulfill';
+    label: string;
+    val: string;
+    rate?: string;
+    change?: string;
+    status: MallOverviewMetricStatus;
+    isFallback?: boolean;
+};
+
+type MallSpecificMetric = {
+    val: string;
+    change: string;
+    status: MallOverviewMetricStatus;
+    isFallback?: boolean;
+};
+
+type MallOverviewMetrics = {
+    exposure: MallOverviewMetric;
+    clicks: MallOverviewMetric;
+    orders: MallOverviewMetric;
+    fulfill: MallOverviewMetric;
+    renewal: MallSpecificMetric;
+    cycle: MallSpecificMetric;
+    arpu: MallSpecificMetric;
+    fillRate: MallSpecificMetric;
+    pointsConsumed: MallSpecificMetric;
+    mixedRatio: MallSpecificMetric;
+};
+
+type FunnelStep = {
+    label: string;
+    value: number;
+    rate: string | null;
+    isFallback?: boolean;
+};
+
+const formatRate = (current: number, previous: number): string => (
+    previous > 0 ? `${((current / previous) * 100).toFixed(1)}%` : '0%'
+);
+
+const buildMallOverviewMetrics = (
+    closureSummary: MallClosureSummary | undefined,
+    selectedProduct: string | null
+): MallOverviewMetrics => {
+    const orderCount = closureSummary?.totalOrders ?? 0;
+    const fulfilledCount = closureSummary?.linkedAssetCount ?? 0;
+    const fallbackExposure = selectedProduct ? Math.max(orderCount * 80, 800) : Math.max(orderCount * 120, 1200);
+    const fallbackClicks = selectedProduct ? Math.max(orderCount * 24, 240) : Math.max(orderCount * 36, 360);
+    const scopedOrders = selectedProduct ? Math.max(Math.ceil(orderCount / 3), 1) : orderCount;
+    const scopedFulfilled = selectedProduct ? Math.min(scopedOrders, Math.max(Math.ceil(fulfilledCount / 3), 0)) : fulfilledCount;
+
+    return {
+        exposure: {
+            id: 'exposure',
+            label: '曝光量',
+            val: fallbackExposure.toLocaleString(),
+            change: 'demo',
+            status: 'neutral',
+            isFallback: true,
+        },
+        clicks: {
+            id: 'clicks',
+            label: '点击量',
+            val: fallbackClicks.toLocaleString(),
+            rate: formatRate(fallbackClicks, fallbackExposure),
+            status: 'neutral',
+            isFallback: true,
+        },
+        orders: {
+            id: 'orders',
+            label: '下单量',
+            val: scopedOrders.toLocaleString(),
+            rate: formatRate(scopedOrders, fallbackClicks),
+            status: closureSummary ? 'good' : 'warning',
+        },
+        fulfill: {
+            id: 'fulfill',
+            label: '履约完成',
+            val: scopedFulfilled.toLocaleString(),
+            rate: formatRate(scopedFulfilled, scopedOrders),
+            status: scopedFulfilled >= scopedOrders ? 'good' : 'warning',
+        },
+        renewal: { val: '-', change: 'fallback', status: 'neutral', isFallback: true },
+        cycle: { val: '-', change: 'fallback', status: 'neutral', isFallback: true },
+        arpu: {
+            val: closureSummary ? `¥${Math.round((closureSummary.totalOrders || 1) * 1000).toLocaleString()}` : '-',
+            change: closureSummary ? '订单口径估算' : 'fallback',
+            status: closureSummary ? 'good' : 'neutral',
+            isFallback: true,
+        },
+        fillRate: { val: '-', change: 'fallback', status: 'neutral', isFallback: true },
+        pointsConsumed: { val: '-', change: 'fallback', status: 'neutral', isFallback: true },
+        mixedRatio: { val: '-', change: 'fallback', status: 'neutral', isFallback: true },
+    };
+};
+
+const buildFunnelData = (metrics: MallOverviewMetrics): FunnelStep[] => {
+    const exposure = Number(metrics.exposure.val.replace(/,/g, '')) || 0;
+    const clicks = Number(metrics.clicks.val.replace(/,/g, '')) || 0;
+    const orders = Number(metrics.orders.val.replace(/,/g, '')) || 0;
+    const fulfill = Number(metrics.fulfill.val.replace(/,/g, '')) || 0;
+
+    return [
+        { label: '曝光量', value: exposure, rate: null, isFallback: true },
+        { label: '点击量', value: clicks, rate: formatRate(clicks, exposure), isFallback: true },
+        { label: '下单量', value: orders, rate: formatRate(orders, clicks) },
+        { label: '履约量', value: fulfill, rate: formatRate(fulfill, orders) },
+    ];
+};
+
+const buildRankingData = (
+    moduleType: MallOverviewModule,
+    closureSummary: MallClosureSummary | undefined
+) => {
+    const baseCount = closureSummary?.totalOrders ?? 0;
+    const fulfilled = closureSummary?.linkedAssetCount ?? 0;
+    const fallbackRows = moduleType === 'cards'
+        ? ['初遇卡', '瑜伽年卡', '私教20次', '普拉提月卡', '瑜伽季卡']
+        : moduleType === 'ttc'
+            ? ['RYT200', '普拉提大器械', '孕产修复', '流瑜伽工作坊', '阿斯汤加']
+            : ['Lululemon瑜伽垫', '瑜伽小班课', 'Manduka铺巾', '私教体验', '运动水杯'];
+
+    return fallbackRows.map((name, index) => {
+        const estimatedSales = index === 0 ? baseCount : Math.max(baseCount - index, 0);
+        const conversionBase = Math.max(estimatedSales, 1);
+        const conversion = fulfilled > 0 ? formatRate(Math.max(fulfilled - index, 0), conversionBase) : 'fallback';
+
+        return {
+            id: `rank-${moduleType}-${index}`,
+            name,
+            val: estimatedSales.toLocaleString(),
+            sub: conversion === 'fallback' ? 'fallback 排行' : `履约率 ${conversion}`,
+            isFallback: true,
+        };
+    });
+};
+
 // --- Data Overview Component ---
 const MallDataOverview = ({
     moduleType,
@@ -17,7 +156,7 @@ const MallDataOverview = ({
     type RankingTab = 'sales' | 'ctr' | 'conversion' | 'stagnant';
 
     const [rankingTab, setRankingTab] = useState<RankingTab>('sales');
-    const [selectedMetric, setSelectedMetric] = useState<string | null>(null);
+    const [selectedMetric, setSelectedMetric] = useState<MallOverviewMetric['id'] | null>(null);
     const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [showHighIntent, setShowHighIntent] = useState(false);
@@ -28,37 +167,10 @@ const MallDataOverview = ({
         member: 'all' // all, yes, no
     });
     
-    // Dynamic Metrics based on selection
-    const metrics = useMemo(() => {
-        if (selectedProduct) {
-             return {
-                exposure: { id: 'exposure', label: '曝光量', val: '5,000', change: '', status: 'neutral' },
-                clicks: { id: 'clicks', label: '点击量', val: '2,000', rate: '40%', status: 'good' },
-                orders: { id: 'orders', label: '下单量', val: '400', rate: '20%', status: 'good' },
-                fulfill: { id: 'fulfill', label: '履约完成', val: '380', rate: '95%', status: 'good' },
-                // Specifics (Hidden or Placeholder for product view)
-                renewal: { val: '-', change: '-', status: 'neutral' }, 
-                cycle: { val: '-', change: '-', status: 'neutral' }, 
-                arpu: { val: '-', change: '-', status: 'neutral' }, 
-                fillRate: { val: '-', change: '-', status: 'neutral' }, 
-                pointsConsumed: { val: '-', change: '-', status: 'neutral' }, 
-                mixedRatio: { val: '-', change: '-', status: 'neutral' }, 
-            };
-        }
-        return {
-            exposure: { id: 'exposure', label: '曝光量', val: '128,930', change: '+12%', status: 'good' },
-            clicks: { id: 'clicks', label: '点击量', val: '32,450', rate: '25.1%', status: 'good' },
-            orders: { id: 'orders', label: '下单量', val: '4,520', rate: '13.9%', status: 'warning' },
-            fulfill: { id: 'fulfill', label: '履约完成', val: '4,100', rate: '90.7%', status: 'good' },
-            // Specifics
-            renewal: { val: '68%', change: '+5%', status: 'good' }, // Cards
-            cycle: { val: '8.5天', change: '-0.5', status: 'good' }, // Cards
-            arpu: { val: '¥8,500', change: '+2%', status: 'good' }, // Cards
-            fillRate: { val: '85%', change: '+10%', status: 'good' }, // TTC
-            pointsConsumed: { val: '450W', change: '+15%', status: 'good' }, // Points
-            mixedRatio: { val: '40%', change: '-2%', status: 'neutral' }, // Points
-        };
-    }, [selectedProduct, moduleType]);
+    const metrics = useMemo(
+        () => buildMallOverviewMetrics(closureSummary, selectedProduct),
+        [closureSummary, selectedProduct]
+    );
 
     // Mock User List Generator
     const getUserList = () => {
@@ -115,34 +227,11 @@ const MallDataOverview = ({
     const userList = getUserList();
 
     // Funnel Data - Dynamic based on selectedProduct
-    const getFunnelData = () => {
-        if (selectedProduct) {
-            // Mock specific data for a product
-            return [
-                { label: '曝光量', value: 5000, rate: null },
-                { label: '点击量', value: 2000, rate: '40%' }, // 2000/5000
-                { label: '下单量', value: 400, rate: '20%' },   // 400/2000
-                { label: '履约量', value: 380, rate: '95%' },   // 380/400
-            ];
-        }
-        // General Data
-        return [
-            { label: '曝光量', value: 128930, rate: null },
-            { label: '点击量', value: 32450, rate: '25.1%' },
-            { label: '下单量', value: 4520, rate: '13.9%' },
-            { label: '履约量', value: 4100, rate: '90.7%' },
-        ];
-    };
-
-    const funnelData = getFunnelData();
-
-    const rankingData = [
-        { id: 'p1', name: moduleType === 'cards' ? '初遇卡' : moduleType === 'ttc' ? 'RYT200' : 'Lululemon瑜伽垫', val: '1,204', sub: '转化率 15%' },
-        { id: 'p2', name: moduleType === 'cards' ? '瑜伽年卡' : moduleType === 'ttc' ? '普拉提大器械' : '瑜伽小班课', val: '985', sub: '转化率 12%' },
-        { id: 'p3', name: moduleType === 'cards' ? '私教20次' : moduleType === 'ttc' ? '孕产修复' : 'Manduka铺巾', val: '856', sub: '转化率 18%' },
-        { id: 'p4', name: moduleType === 'cards' ? '普拉提月卡' : moduleType === 'ttc' ? '流瑜伽工作坊' : '私教体验', val: '654', sub: '转化率 8%' },
-        { id: 'p5', name: moduleType === 'cards' ? '瑜伽季卡' : moduleType === 'ttc' ? '阿斯汤加' : '运动水杯', val: '432', sub: '转化率 10%' },
-    ];
+    const funnelData = useMemo(() => buildFunnelData(metrics), [metrics]);
+    const rankingData = useMemo(
+        () => buildRankingData(moduleType, closureSummary),
+        [moduleType, closureSummary]
+    );
 
     return (
         <div className="bg-white p-6 rounded-2xl border border-gray-100 mb-8 shadow-sm animate-fadeIn relative">
@@ -210,6 +299,7 @@ const MallDataOverview = ({
                         <div className="text-lg font-bold font-mono">{m.val}</div>
                         <div className={`text-[10px] font-bold mt-1 ${m.status === 'good' ? 'text-green-600' : m.status === 'warning' ? 'text-orange-500' : 'text-gray-500'}`}>
                             {m.change ? `环比 ${m.change}` : m.rate ? `${m.label === '点击量' ? '点击率' : m.label === '下单量' ? '转化率' : '履约率'} ${m.rate}` : ''}
+                            {m.isFallback && <span className="ml-1 text-gray-400">fallback</span>}
                         </div>
                     </div>
                 ))}
@@ -267,6 +357,7 @@ const MallDataOverview = ({
                         <span>全链路转化漏斗 {selectedProduct && <span className="text-xs font-normal text-gray-500 ml-2">({selectedProduct})</span>}</span>
                         {selectedProduct && <button onClick={() => setSelectedProduct(null)} className="text-[10px] text-gray-400 hover:text-black">重置</button>}
                     </h4>
+                    <div className="text-[10px] text-gray-400 mb-3">订单/履约来自订单-资产链路；曝光/点击为 fallback 估算。</div>
                     <div className="bg-gray-50 rounded-xl p-8 border border-gray-100 h-[320px] flex flex-col justify-center">
                         {funnelData.map((step, index) => (
                             <React.Fragment key={index}>
@@ -303,7 +394,10 @@ const MallDataOverview = ({
                 {/* Right: Ranking */}
                 <div>
                     <div className="flex justify-between items-center mb-4">
-                        <h4 className="text-sm font-bold text-gray-900 border-l-4 border-black pl-3">商品表现排行</h4>
+                        <div>
+                            <h4 className="text-sm font-bold text-gray-900 border-l-4 border-black pl-3">商品表现排行</h4>
+                            <div className="text-[10px] text-gray-400 pl-4 mt-1">fallback 排行，待接真实商品明细</div>
+                        </div>
                         <div className="flex bg-gray-100 rounded-lg p-0.5">
                             {([
                                 {id: 'sales', label: '销量Top5'},
@@ -352,7 +446,7 @@ const MallDataOverview = ({
                 <div className="absolute top-0 right-0 w-[420px] h-full bg-white shadow-xl border-l border-gray-100 rounded-r-2xl z-10 animate-slideInRight p-6 flex flex-col">
                     <div className="flex justify-between items-center mb-4">
                         <h4 className="font-bold text-gray-900 flex items-center gap-2">
-                            {metrics[selectedMetric as keyof typeof metrics]?.label}名单
+                            {metrics[selectedMetric].label}名单
                             {selectedProduct && <span className="text-xs font-normal text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{selectedProduct}</span>}
                         </h4>
                         <button onClick={() => { setSelectedMetric(null); setSearchTerm(''); setShowHighIntent(false); }} className="text-gray-400 hover:text-black">
@@ -362,6 +456,9 @@ const MallDataOverview = ({
 
                     {/* Search & Filter */}
                     <div className="flex flex-col gap-3 mb-4">
+                        <div className="text-[10px] text-gray-400 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
+                            名单、浏览行为与点击频次仍为 demo fallback；订单/履约数已按当前订单-资产链路推导。
+                        </div>
                         <div className="flex gap-2">
                             <div className="flex-1 relative">
                                 <i className="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
