@@ -65,6 +65,11 @@ export type ScheduleFormState = {
   capacity: number;
 };
 
+export type ScheduleWriteFeedback = {
+  event: ScheduleEvent;
+  message: string;
+};
+
 export interface Room {
   id: string;
   name: string;
@@ -247,6 +252,10 @@ export const getScheduleEventColor = (
   ?? 'bg-gray-100 text-gray-800 border-gray-200'
 );
 
+export const getActiveScheduleEvents = (events: ScheduleEvent[]): ScheduleEvent[] => (
+  events.filter(event => event.status !== 'cancelled')
+);
+
 export const getCalendarEventStyle = (
   startTime: string,
   duration: number,
@@ -279,6 +288,139 @@ export const toScheduleEvent = (
   };
 };
 
+export const createScheduleFormDraft = (
+  dayIndex: number,
+  roomId: string,
+  startTime: string,
+  capacity: number,
+  duration = 60
+): ScheduleFormState => ({
+  id: `evt_${Date.now()}`,
+  dayIndex,
+  roomId,
+  courseId: '',
+  teacherName: '',
+  startTime,
+  duration,
+  capacity,
+});
+
+export const createDraftEventFromCourse = (
+  course: CourseLibraryItem,
+  dayIndex: number,
+  roomId: string,
+  startTime: string,
+  capacity: number
+): ScheduleEvent => {
+  const { startAt, endAt } = getSessionTimes(dayIndex, startTime, course.durationMinutes);
+
+  return {
+    id: `evt_${Date.now()}`,
+    courseId: course.id,
+    name: course.name,
+    title: course.name,
+    teacher: '待定',
+    roomId,
+    dayIndex,
+    startTime,
+    duration: course.durationMinutes,
+    color: getScheduleEventColor(course),
+    status: 'draft',
+    startAt,
+    endAt,
+    capacity,
+    bookedCount: 0,
+  };
+};
+
+export const createEventFromScheduleForm = (
+  form: ScheduleFormState,
+  courses: CourseLibraryItem[],
+  existingEvent?: ScheduleEvent
+): ScheduleEvent => {
+  const course = getCourseById(courses, form.courseId);
+  const { startAt, endAt } = getSessionTimes(form.dayIndex, form.startTime, form.duration);
+
+  return {
+    ...(existingEvent ?? {}),
+    id: form.id || existingEvent?.id || `evt_${Date.now()}`,
+    courseId: form.courseId || 'custom-course',
+    name: course ? course.name : '自定义课程',
+    title: course ? course.name : '自定义课程',
+    teacher: form.teacherName || '待定',
+    roomId: form.roomId,
+    dayIndex: form.dayIndex,
+    startTime: form.startTime,
+    duration: form.duration,
+    color: getScheduleEventColor(course),
+    status: existingEvent?.status ?? 'draft',
+    startAt,
+    endAt,
+    bookedCount: existingEvent?.bookedCount ?? 0,
+    waitlistCount: existingEvent?.waitlistCount,
+    capacity: form.capacity,
+  };
+};
+
+export const moveScheduleEvent = (
+  event: ScheduleEvent,
+  dayIndex: number,
+  roomId: string,
+  startTime: string
+): ScheduleEvent => {
+  const { startAt, endAt } = getSessionTimes(dayIndex, startTime, event.duration);
+
+  return {
+    ...event,
+    dayIndex,
+    roomId,
+    startTime,
+    startAt,
+    endAt,
+    status: event.status === 'published' || event.status === 'in_progress' || event.status === 'completed'
+      ? 'rescheduled'
+      : event.status,
+  };
+};
+
+export const cancelScheduleEvent = (event: ScheduleEvent): ScheduleEvent => ({
+  ...event,
+  status: 'cancelled',
+  notes: [event.notes, '前端演示态取消排课'].filter(Boolean).join('；'),
+});
+
+export const assignSubstituteTeacher = (
+  event: ScheduleEvent,
+  substituteName = '代课老师'
+): ScheduleWriteFeedback => ({
+  event: {
+    ...event,
+    teacher: substituteName,
+    notes: [event.notes, `前端演示态安排${substituteName}`].filter(Boolean).join('；'),
+  },
+  message: `${event.name} 已安排${substituteName}`,
+});
+
+export const markScheduleCheckInHandled = (event: ScheduleEvent): ScheduleWriteFeedback => {
+  if (event.status === 'completed') {
+    return {
+      event,
+      message: `${event.name} 已完成，无需重复签到`,
+    };
+  }
+
+  return {
+    event: {
+      ...event,
+      status: event.status === 'in_progress' ? 'completed' : 'in_progress',
+      notes: [event.notes, '前端演示态处理签到'].filter(Boolean).join('；'),
+    },
+    message: event.status === 'in_progress'
+      ? `${event.name} 已标记完成`
+      : `${event.name} 已进入签到处理中`,
+  };
+};
+
 export const toOpsScheduleItem = (
   session: CourseSession,
   courses: CourseLibraryItem[],
@@ -286,6 +428,9 @@ export const toOpsScheduleItem = (
   attendances: Attendance[]
 ): OpsScheduleItem => {
   const course = getCourseById(courses, session.courseId);
+  const displayTeacher = 'teacher' in session && typeof session.teacher === 'string'
+    ? session.teacher
+    : getTeacherName(session.teacherId);
   const activeBookings = getActiveBookings(session.id, bookings);
   const signed = getAttendanceCount(session.id, attendances);
   const enrolled = session.bookedCount ?? activeBookings.length;
@@ -303,7 +448,7 @@ export const toOpsScheduleItem = (
     time: formatSessionTimeRange(session),
     name: session.title ?? course?.name ?? '自定义课程',
     type: course ? COURSE_TYPE_LABELS[course.type] : '课程',
-    teacher: getTeacherName(session.teacherId),
+    teacher: displayTeacher,
     room: getRoomName(session.roomId),
     enrolled,
     capacity: session.capacity,

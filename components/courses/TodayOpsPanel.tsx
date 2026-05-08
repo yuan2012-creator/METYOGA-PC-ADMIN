@@ -11,7 +11,8 @@ interface TodayOpsPanelProps {
   filteredOpsSchedule: OpsScheduleItem[];
   opsSummary: CourseOpsSummary;
   aiGuidance: string;
-  onSubstitute: () => void;
+  onSubstitute: (sessionId: string) => void;
+  onCheckIn: (sessionId: string) => void;
 }
 
 const TodayOpsPanel: React.FC<TodayOpsPanelProps> = ({
@@ -21,6 +22,7 @@ const TodayOpsPanel: React.FC<TodayOpsPanelProps> = ({
   opsSummary,
   aiGuidance,
   onSubstitute,
+  onCheckIn,
 }) => (
   <>
                       {/* SECTION 1: TODAY'S OPERATIONS & LIVE STATUS */}
@@ -127,8 +129,8 @@ const TodayOpsPanel: React.FC<TodayOpsPanelProps> = ({
                                                       <div className="font-bold text-lg font-mono text-gray-900">{cls.signed} <span className="text-gray-400 text-xs font-normal">/ {cls.enrolled}</span></div>
                                                   </div>
                                                   <div className="flex gap-2">
-                                                      <button className="bg-white border border-gray-200 hover:border-black text-gray-600 hover:text-black text-xs px-3 py-1.5 rounded transition" onClick={onSubstitute}>代课</button>
-                                                      <button className="bg-black text-white text-xs px-4 py-1.5 rounded hover:opacity-80 transition shadow-sm">签到</button>
+                                                      <button className="bg-white border border-gray-200 hover:border-black text-gray-600 hover:text-black text-xs px-3 py-1.5 rounded transition" onClick={() => onSubstitute(cls.id)}>代课</button>
+                                                      <button className="bg-black text-white text-xs px-4 py-1.5 rounded hover:opacity-80 transition shadow-sm" onClick={() => onCheckIn(cls.id)}>签到</button>
                                                   </div>
                                               </div>
                                           </div>

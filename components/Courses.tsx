@@ -9,12 +9,17 @@ import {
   buildOpsSchedule,
   COURSE_ROOMS,
   COURSE_SUB_TABS,
+  assignSubstituteTeacher,
+  cancelScheduleEvent,
+  createDraftEventFromCourse,
+  createEventFromScheduleForm,
+  createScheduleFormDraft,
   filterOpsSchedule,
-  getCourseById,
+  getActiveScheduleEvents,
   getOpsAiGuidance,
   getOpsSummary,
-  getScheduleEventColor,
-  getSessionTimes,
+  markScheduleCheckInHandled,
+  moveScheduleEvent,
   toCourseLibraryItem,
   toScheduleEvent,
 } from '../utils/courseSelectors';
@@ -71,6 +76,7 @@ const Courses: React.FC = () => {
   const [scheduleEvents, setScheduleEvents] = useState<ScheduleEvent[]>(INITIAL_SCHEDULE_EVENTS);
   const [draggedCourse, setDraggedCourse] = useState<CourseLibraryItem | null>(null);
   const [draggedEventId, setDraggedEventId] = useState<string | null>(null);
+  const activeScheduleEvents = getActiveScheduleEvents(scheduleEvents);
 
   // Schedule Modal State
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
@@ -92,7 +98,7 @@ const Courses: React.FC = () => {
   const hourHeight = 70; // pixels per hour for a slightly compact view
 
   // --- Today's Ops: CourseSession + Booking + Attendance ---
-  const todayOpsSchedule = buildOpsSchedule(MOCK_COURSE_SESSIONS, libraryList, MOCK_BOOKINGS, MOCK_ATTENDANCES);
+  const todayOpsSchedule = buildOpsSchedule(activeScheduleEvents, libraryList, MOCK_BOOKINGS, MOCK_ATTENDANCES);
   const filteredOpsSchedule = filterOpsSchedule(todayOpsSchedule, opsFilter);
   const opsSummary = getOpsSummary(todayOpsSchedule);
   const aiGuidance = getOpsAiGuidance(todayOpsSchedule, opsSummary);
@@ -158,7 +164,9 @@ const Courses: React.FC = () => {
           return;
       }
 
-      showToast('请从右侧课程库拖拽课程至日历，或点击日历空白处进行排课。', 'info');
+      const capacity = rooms.find(r => r.id === activeRoomId)?.capacity || 10;
+      setScheduleForm(createScheduleFormDraft(4, activeRoomId, '10:00', capacity));
+      setIsScheduleModalOpen(true);
   };
   
   const getCreateLabel = () => {
@@ -205,34 +213,15 @@ const Courses: React.FC = () => {
 
       if (draggedCourse) {
           const capacity = rooms.find(r => r.id === activeRoomId)?.capacity || 10;
-          const { startAt, endAt } = getSessionTimes(dayIndex, dropTime, draggedCourse.durationMinutes);
-          const newEvent: ScheduleEvent = {
-              id: `evt_${Date.now()}`,
-              courseId: draggedCourse.id,
-              name: draggedCourse.name,
-              teacher: '待定',
-              roomId: activeRoomId,
-              dayIndex: dayIndex,
-              startTime: dropTime,
-              duration: draggedCourse.durationMinutes,
-              color: getScheduleEventColor(draggedCourse),
-              status: 'draft',
-              startAt,
-              endAt,
-              capacity,
-              bookedCount: 0
-          };
-          setScheduleEvents([...scheduleEvents, newEvent]);
+          const newEvent = createDraftEventFromCourse(draggedCourse, dayIndex, activeRoomId, dropTime, capacity);
+          setScheduleEvents(current => [...current, newEvent]);
           openEditModal(newEvent);
       } else if (draggedEventId) {
-          const updatedEvents = scheduleEvents.map(evt => {
-              if (evt.id === draggedEventId) {
-                  const { startAt, endAt } = getSessionTimes(dayIndex, dropTime, evt.duration);
-                  return { ...evt, dayIndex: dayIndex, startTime: dropTime, roomId: activeRoomId, startAt, endAt };
-              }
-              return evt;
-          });
-          setScheduleEvents(updatedEvents);
+          setScheduleEvents(current => current.map(evt => (
+              evt.id === draggedEventId
+                ? moveScheduleEvent(evt, dayIndex, activeRoomId, dropTime)
+                : evt
+          )));
       }
       setDraggedCourse(null);
       setDraggedEventId(null);
@@ -242,15 +231,7 @@ const Courses: React.FC = () => {
       if (e.target === e.currentTarget) {
           const clickedTime = getClickedTime(e, e.currentTarget as HTMLDivElement);
           const capacity = rooms.find(r => r.id === activeRoomId)?.capacity || 10;
-          const { startAt, endAt } = getSessionTimes(dayIndex, clickedTime, 60);
-          const newEvent: ScheduleEvent = {
-              id: `evt_${Date.now()}`,
-              courseId: 'custom-course',
-              name: '', teacher: '', roomId: activeRoomId, dayIndex: dayIndex, startTime: clickedTime, duration: 60,
-              color: 'bg-gray-100 text-gray-800 border-gray-200', status: 'draft', startAt, endAt,
-              capacity, bookedCount: 0
-          };
-          setScheduleForm({ id: newEvent.id, dayIndex: dayIndex, roomId: activeRoomId, courseId: '', teacherName: '', startTime: clickedTime, duration: 60, capacity: newEvent.capacity });
+          setScheduleForm(createScheduleFormDraft(dayIndex, activeRoomId, clickedTime, capacity));
           setIsScheduleModalOpen(true);
       }
   };
@@ -264,33 +245,19 @@ const Courses: React.FC = () => {
   };
 
   const confirmSchedule = () => {
-      const course = getCourseById(libraryList, scheduleForm.courseId);
       const existingIdx = scheduleEvents.findIndex(e => e.id === scheduleForm.id);
-      const { startAt, endAt } = getSessionTimes(scheduleForm.dayIndex, scheduleForm.startTime, scheduleForm.duration);
-      
-      const newEventData: ScheduleEvent = {
-          id: scheduleForm.id || `evt_${Date.now()}`,
-          courseId: scheduleForm.courseId || 'custom-course',
-          name: course ? course.name : '自定义课程',
-          teacher: scheduleForm.teacherName || '待定',
-          roomId: scheduleForm.roomId,
-          dayIndex: scheduleForm.dayIndex,
-          startTime: scheduleForm.startTime,
-          duration: scheduleForm.duration,
-          color: getScheduleEventColor(course),
-          status: existingIdx >= 0 ? scheduleEvents[existingIdx].status : 'draft',
-          startAt,
-          endAt,
-          bookedCount: existingIdx >= 0 ? scheduleEvents[existingIdx].bookedCount : 0,
-          capacity: scheduleForm.capacity
-      };
+      const newEventData = createEventFromScheduleForm(
+          scheduleForm,
+          libraryList,
+          existingIdx >= 0 ? scheduleEvents[existingIdx] : undefined
+      );
 
       if (existingIdx >= 0) {
           const updated = [...scheduleEvents];
           updated[existingIdx] = newEventData;
           setScheduleEvents(updated);
       } else {
-          setScheduleEvents([...scheduleEvents, newEventData]);
+          setScheduleEvents(current => [...current, newEventData]);
       }
       setIsScheduleModalOpen(false);
   };
@@ -301,10 +268,34 @@ const Courses: React.FC = () => {
           message: '确定取消该排课？',
           confirmLabel: '取消排课',
           onConfirm: () => {
-              setScheduleEvents(current => current.filter(e => e.id !== id));
+              setScheduleEvents(current => current.map(event => (
+                  event.id === id ? cancelScheduleEvent(event) : event
+              )));
               setIsScheduleModalOpen(false);
           },
       });
+  };
+
+  const handleSubstitute = (sessionId: string) => {
+      let feedback = '';
+      setScheduleEvents(current => current.map(event => {
+          if (event.id !== sessionId) return event;
+          const result = assignSubstituteTeacher(event);
+          feedback = result.message;
+          return result.event;
+      }));
+      showToast(feedback || '已进入代课处理演示流程', 'success');
+  };
+
+  const handleOpsCheckIn = (sessionId: string) => {
+      let feedback = '';
+      setScheduleEvents(current => current.map(event => {
+          if (event.id !== sessionId) return event;
+          const result = markScheduleCheckInHandled(event);
+          feedback = result.message;
+          return result.event;
+      }));
+      showToast(feedback || '已处理签到演示状态', 'success');
   };
 
   return (
@@ -353,7 +344,8 @@ const Courses: React.FC = () => {
                           filteredOpsSchedule={filteredOpsSchedule}
                           opsSummary={opsSummary}
                           aiGuidance={aiGuidance}
-                          onSubstitute={() => showToast('已进入代课处理演示流程', 'info')}
+                          onSubstitute={handleSubstitute}
+                          onCheckIn={handleOpsCheckIn}
                       />
                       <ScheduleCalendar
                           libraryList={libraryList}
@@ -363,7 +355,7 @@ const Courses: React.FC = () => {
                           weekDays={weekDays}
                           hoursArray={hoursArray}
                           hourHeight={hourHeight}
-                          scheduleEvents={scheduleEvents}
+                          scheduleEvents={activeScheduleEvents}
                           draggedEventId={draggedEventId}
                           handleCourseDragStart={handleCourseDragStart}
                           handleEventDragStart={handleEventDragStart}
