@@ -1,8 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   MOCK_CARD_PRODUCTS,
   MOCK_CONTRACTS,
+  MOCK_MEMBERS,
+  MOCK_MEMBER_ASSETS,
   MOCK_ORDERS,
   MOCK_POINT_PRODUCTS,
   MOCK_TTC_PRODUCTS,
@@ -30,6 +32,12 @@ import type {
   PointProductTab,
 } from './mall/mallTypes';
 import type { CardProduct, Contract, Order, PointProduct } from '../types';
+import {
+  buildMallAssetSourceLinks,
+  buildMallClosureSummary,
+  buildMallContractSourceSummary,
+  buildMallProductOptions,
+} from '../utils/mallSelectors';
 
 // --- Constants ---
 const AVAILABLE_VENUES = ['万象城馆', '西湖旗舰馆', '滨江宝龙馆', '城西银泰馆'];
@@ -132,6 +140,30 @@ const Mall: React.FC = () => {
 
   const [orders] = useState<Order[]>(MOCK_ORDERS);
   const [contracts] = useState<Contract[]>(MOCK_CONTRACTS);
+  const mallProductOptions = useMemo(
+      () => buildMallProductOptions({ cards, ttcCourses, pointProducts: products }),
+      [cards, ttcCourses, products]
+  );
+  const assetSourceLinks = useMemo(
+      () => buildMallAssetSourceLinks({
+          assets: MOCK_MEMBER_ASSETS,
+          orders,
+          contracts,
+      }),
+      [orders, contracts]
+  );
+  const contractSourceSummary = useMemo(
+      () => buildMallContractSourceSummary({
+          contractData,
+          members: MOCK_MEMBERS,
+          productOptions: mallProductOptions,
+      }),
+      [contractData, mallProductOptions]
+  );
+  const mallClosureSummary = useMemo(
+      () => buildMallClosureSummary({ orders, assetSourceLinks }),
+      [orders, assetSourceLinks]
+  );
 
   const setCardSelectedItem: MallEditorSetter<MallCardEditorItem> = (value) => {
       setSelectedItem(prev => applyMallEditorUpdate(prev, value));
@@ -277,7 +309,7 @@ const Mall: React.FC = () => {
           setSelectedItem={setCardSelectedItem}
           editCardCategory={editCardCategory}
           setEditCardCategory={setEditCardCategory}
-          overview={<MallDataOverview moduleType="cards" venues={AVAILABLE_VENUES} />}
+          overview={<MallDataOverview moduleType="cards" venues={AVAILABLE_VENUES} closureSummary={mallClosureSummary} onDemoAction={showToast} />}
           actionButtons={renderActionButtons}
           handleBack={handleBack}
           handleCreate={handleCreate}
@@ -295,7 +327,7 @@ const Mall: React.FC = () => {
           selectedItem={selectedItem}
           setSelectedItem={setTtcSelectedItem}
           students={students}
-          overview={<MallDataOverview moduleType="ttc" venues={AVAILABLE_VENUES} />}
+          overview={<MallDataOverview moduleType="ttc" venues={AVAILABLE_VENUES} closureSummary={mallClosureSummary} onDemoAction={showToast} />}
           actionButtons={renderActionButtons}
           handleBack={handleBack}
           handleCreate={handleCreate}
@@ -314,7 +346,7 @@ const Mall: React.FC = () => {
           setSelectedItem={setPointSelectedItem}
           pointProductTab={pointProductTab}
           setPointProductTab={setPointProductTab}
-          overview={<MallDataOverview moduleType="points" venues={AVAILABLE_VENUES} />}
+          overview={<MallDataOverview moduleType="points" venues={AVAILABLE_VENUES} closureSummary={mallClosureSummary} onDemoAction={showToast} />}
           actionButtons={renderActionButtons}
           handleBack={handleBack}
           handleCreateProduct={() => handleCreate('product')}
@@ -326,10 +358,13 @@ const Mall: React.FC = () => {
       <MallOrders
           orders={orders}
           contracts={contracts}
+          members={MOCK_MEMBERS}
+          assetSourceLinks={assetSourceLinks}
           orderTab={orderTab}
           setOrderTab={setOrderTab}
           orderFilters={orderFilters}
           setOrderFilters={setOrderFilters}
+          onDemoAction={showToast}
       />
   );
 
@@ -337,9 +372,11 @@ const Mall: React.FC = () => {
       <MallContractCreate
           contractData={contractData}
           setContractData={setContractData}
-          cards={cards}
-          ttcCourses={ttcCourses}
+          members={MOCK_MEMBERS}
+          productOptions={mallProductOptions}
+          sourceSummary={contractSourceSummary}
           handleBack={handleBack}
+          onDemoAction={showToast}
       />
   );
   

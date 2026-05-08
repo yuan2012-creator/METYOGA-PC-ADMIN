@@ -1,6 +1,6 @@
 import React from 'react';
-import { MOCK_MEMBERS } from '../../constants';
-import type { Contract, Order, OrderItem } from '../../types';
+import type { Contract, Member, Order } from '../../types';
+import { buildMallOrderRows, type MallAssetSourceLink } from '../../utils/mallSelectors';
 
 export type MallOrderCategory = 'cards' | 'ttc' | 'points';
 
@@ -10,95 +10,35 @@ export interface MallOrderFilters {
     status: string;
 }
 
-interface MallOrderRow {
-    id: string;
-    user: string;
-    phone: string;
-    product: string;
-    category: MallOrderCategory;
-    type: string;
-    amount: string;
-    status: 'paid' | 'pending' | 'refunded' | 'completed' | 'deposit';
-    time: string;
-    details: string;
-    subStatus: string;
-}
-
-const getOrderPrimaryItem = (order: Order): OrderItem | undefined => order.items[0];
-
-const getOrderCategory = (item?: OrderItem): MallOrderCategory => {
-    if (item?.productType === 'ttc') return 'ttc';
-    if (item?.productType === 'point') return 'points';
-    return 'cards';
-};
-
-const getOrderDisplayStatus = (order: Order): MallOrderRow['status'] => {
-    if (order.status === 'pending_payment') return order.paidAmount ? 'deposit' : 'pending';
-    if (order.status === 'refunded' || order.status === 'partially_refunded') return 'refunded';
-    if (order.status === 'fulfilled' || order.status === 'closed' || order.status === 'paid') return 'paid';
-    return 'pending';
-};
-
-const getOrderTypeLabel = (item?: OrderItem): string => {
-    if (!item) return '未知';
-    if (item.productType === 'card') return '会员卡项';
-    if (item.productType === 'ttc') return '教培';
-    if (item.productType === 'point') return '积分商品';
-    if (item.productType === 'course') return '课程权益';
-    return '自定义';
-};
-
-const getContractDisplay = (contract?: Contract): { details: string; subStatus: string } => {
-    if (!contract) return { details: '未绑定合同', subStatus: 'inactive' };
-    if (contract.status === 'effective') return { details: '合同生效', subStatus: 'active' };
-    if (contract.status === 'signed') return { details: '已签合同', subStatus: 'signed' };
-    if (contract.status === 'pending_signature') return { details: '待签署', subStatus: 'pending' };
-    return { details: '合同异常', subStatus: contract.status };
-};
-
-const toMallOrderRow = (order: Order, contracts: Contract[]): MallOrderRow => {
-    const item = getOrderPrimaryItem(order);
-    const member = MOCK_MEMBERS.find(m => m.id === order.memberId);
-    const contract = contracts.find(c => c.id === order.contractId || c.orderId === order.id);
-    const contractDisplay = getContractDisplay(contract);
-
-    return {
-        id: order.id,
-        user: member?.name || order.memberId,
-        phone: member?.phone || '-',
-        product: item?.productName || '未知商品',
-        category: getOrderCategory(item),
-        type: getOrderTypeLabel(item),
-        amount: `¥${(order.paidAmount ?? order.totalAmount).toLocaleString()}`,
-        status: getOrderDisplayStatus(order),
-        time: order.createdAt.replace('T', ' ').slice(0, 16),
-        details: contractDisplay.details,
-        subStatus: contractDisplay.subStatus,
-    };
-};
-
 interface MallOrdersProps {
   orders: Order[];
   contracts: Contract[];
+  members: Member[];
+  assetSourceLinks: MallAssetSourceLink[];
   orderTab: MallOrderCategory;
   setOrderTab: React.Dispatch<React.SetStateAction<MallOrderCategory>>;
   orderFilters: MallOrderFilters;
   setOrderFilters: React.Dispatch<React.SetStateAction<MallOrderFilters>>;
+  onDemoAction: (message: string) => void;
 }
 
 const MallOrders: React.FC<MallOrdersProps> = ({
   orders,
   contracts,
+  members,
+  assetSourceLinks,
   orderTab,
   setOrderTab,
   orderFilters,
   setOrderFilters,
+  onDemoAction,
 }) => {
   const renderOrders = () => {
-      const detailedOrders = orders.map(order => toMallOrderRow(order, contracts));
+      const detailedOrders = buildMallOrderRows({ orders, contracts, members, assetSourceLinks });
       const filteredOrders = detailedOrders.filter(order => {
           const statusMatched = orderFilters.status === 'all' || order.status === orderFilters.status;
-          return order.category === orderTab && statusMatched;
+          const typeMatched = orderFilters.type === 'all' || order.productType === orderFilters.type;
+          return order.category === orderTab && statusMatched && typeMatched;
       });
 
       return (
@@ -107,7 +47,12 @@ const MallOrders: React.FC<MallOrdersProps> = ({
                   <div className="flex justify-between items-center">
                       <h3 className="font-bold text-gray-900">销售与订单管理</h3>
                       <div className="flex gap-2">
-                          <button className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium hover:bg-gray-50">导出数据</button>
+                          <button
+                              onClick={() => onDemoAction('订单导出已接入站内反馈，真实导出仍为后续接口能力')}
+                              className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium hover:bg-gray-50"
+                          >
+                              导出数据
+                          </button>
                       </div>
                   </div>
 
@@ -141,8 +86,10 @@ const MallOrders: React.FC<MallOrdersProps> = ({
                           className="bg-white border border-gray-200 rounded-lg px-3 py-2 text-xs font-bold outline-none focus:border-black transition w-32"
                       >
                           <option value="all">全部类型</option>
-                          <option value="type1">类型1</option>
-                          <option value="type2">类型2</option>
+                          <option value="card">会员卡项</option>
+                          <option value="ttc">教培</option>
+                          <option value="point">积分商品</option>
+                          <option value="course">课程权益</option>
                       </select>
                       <select
                           value={orderFilters.status}
@@ -191,6 +138,9 @@ const MallOrders: React.FC<MallOrdersProps> = ({
                                       }`}>
                                           {order.details}
                                       </span>
+                                      <div className={`text-[10px] mt-1 ${order.hasAssetSource ? 'text-gray-400' : 'text-orange-500'}`}>
+                                          {order.sourceSummary}
+                                      </div>
                                   </td>
                                   <td className="p-4 font-mono font-bold text-gray-900">{order.amount}</td>
                                   <td className="p-4">
@@ -203,7 +153,12 @@ const MallOrders: React.FC<MallOrdersProps> = ({
                                   </td>
                                   <td className="p-4 text-xs text-gray-400 font-mono">{order.time}</td>
                                   <td className="p-4 text-right pr-6">
-                                      <button className="text-black hover:underline text-xs font-bold">查看</button>
+                                      <button
+                                          onClick={() => onDemoAction(`${order.id}：${order.assetSourceLabel}`)}
+                                          className="text-black hover:underline text-xs font-bold"
+                                      >
+                                          查看
+                                      </button>
                                   </td>
                               </tr>
                           ))}

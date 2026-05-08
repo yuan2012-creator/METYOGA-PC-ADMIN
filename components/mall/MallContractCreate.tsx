@@ -1,7 +1,10 @@
 import React, { useRef } from 'react';
-import { MOCK_MEMBERS } from '../../constants';
-import type { CardProduct } from '../../types';
-import type { MallTtcCourse } from './MallTtc';
+import type { Member } from '../../types';
+import {
+    applyMallProductToContractDraft,
+    type MallContractSourceSummary,
+    type MallProductOption,
+} from '../../utils/mallSelectors';
 
 export const createInitialContractData = () => ({
     memberId: '',
@@ -75,17 +78,21 @@ const MOCK_VENUES_LIST = [
 interface MallContractCreateProps {
   contractData: MallContractData;
   setContractData: React.Dispatch<React.SetStateAction<MallContractData>>;
-  cards: CardProduct[];
-  ttcCourses: MallTtcCourse[];
+  members: Member[];
+  productOptions: MallProductOption[];
+  sourceSummary: MallContractSourceSummary;
   handleBack: () => void;
+  onDemoAction: (message: string) => void;
 }
 
 const MallContractCreate: React.FC<MallContractCreateProps> = ({
   contractData,
   setContractData,
-  cards,
-  ttcCourses,
+  members,
+  productOptions,
+  sourceSummary,
   handleBack,
+  onDemoAction,
 }) => {
   const previewContainerRef = useRef<HTMLDivElement>(null);
   const sectionRefs = {
@@ -115,10 +122,8 @@ const MallContractCreate: React.FC<MallContractCreateProps> = ({
   };
 
   const renderContractCreate = () => {
-    const selectedMember = MOCK_MEMBERS.find(m => m.id === contractData.memberId);
-    const selectedProduct = contractData.productType === 'card' 
-        ? cards.find(c => c.id === contractData.productId)
-        : ttcCourses.find(c => c.id === contractData.productId);
+    const selectedMember = members.find(m => m.id === contractData.memberId);
+    const selectableProducts = productOptions.filter(product => product.sourceType === contractData.productType);
 
     return (
         <div className="animate-fadeIn flex-1 flex flex-col min-h-0">
@@ -133,8 +138,18 @@ const MallContractCreate: React.FC<MallContractCreateProps> = ({
                     </div>
                 </div>
                 <div className="flex gap-3">
-                    <button className="px-6 py-2 bg-white border border-gray-200 rounded-xl text-sm font-bold hover:bg-gray-50 transition">保存草稿</button>
-                    <button className="px-6 py-2 bg-black text-white rounded-xl text-sm font-bold hover:opacity-80 transition shadow-lg shadow-black/10">发送给会员签署</button>
+                    <button
+                        onClick={() => onDemoAction(`${sourceSummary.productName} 合同草稿已保存，真实持久化待后续接口接入`)}
+                        className="px-6 py-2 bg-white border border-gray-200 rounded-xl text-sm font-bold hover:bg-gray-50 transition"
+                    >
+                        保存草稿
+                    </button>
+                    <button
+                        onClick={() => onDemoAction(`${sourceSummary.memberName} 的合同签署已进入演示发送流程`)}
+                        className="px-6 py-2 bg-black text-white rounded-xl text-sm font-bold hover:opacity-80 transition shadow-lg shadow-black/10"
+                    >
+                        发送给会员签署
+                    </button>
                 </div>
             </div>
 
@@ -244,7 +259,7 @@ const MallContractCreate: React.FC<MallContractCreateProps> = ({
                                         className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-black transition appearance-none"
                                     >
                                         <option value="">请选择会员...</option>
-                                        {MOCK_MEMBERS.map(m => (
+                                        {members.map(m => (
                                             <option key={m.id} value={m.id}>{m.name} ({m.phone})</option>
                                         ))}
                                     </select>
@@ -269,11 +284,35 @@ const MallContractCreate: React.FC<MallContractCreateProps> = ({
                                 <div className="col-span-2">
                                     <div className="bg-gray-50 p-4 rounded-xl text-sm text-gray-600 border border-gray-100">
                                         当前合同类型：<span className="font-bold text-black">{contractData.productType === 'card' ? '会员卡服务合同' : '教培课程服务合同'}</span>
+                                        <div className={`mt-2 text-xs ${sourceSummary.isFallback ? 'text-orange-600' : 'text-gray-500'}`}>
+                                            来源链路：{sourceSummary.sourceSummary}，金额 {sourceSummary.amount ? `¥${sourceSummary.amount.toLocaleString()}` : '待填写'}
+                                        </div>
                                     </div>
                                 </div>
 
                                 {contractData.productType === 'card' ? (
                                     <>
+                                        <div className="col-span-2 relative">
+                                            <label className="block text-[10px] font-bold text-gray-400 mb-1.5">关联卡项商品</label>
+                                            <select
+                                                value={contractData.productId}
+                                                onChange={(e) => {
+                                                    const product = productOptions.find(item => item.id === e.target.value);
+                                                    setContractData(product
+                                                        ? current => applyMallProductToContractDraft(current, product)
+                                                        : { ...contractData, productId: '' });
+                                                }}
+                                                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-black transition appearance-none"
+                                            >
+                                                <option value="">不关联商品，使用手工合同字段</option>
+                                                {selectableProducts.map(product => (
+                                                    <option key={product.id} value={product.id}>
+                                                        {product.name} - ¥{product.amount.toLocaleString()}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <i className="fa-solid fa-chevron-down absolute right-4 top-[38px] text-gray-400 pointer-events-none"></i>
+                                        </div>
                                         <div>
                                             <label className="block text-[10px] font-bold text-gray-400 mb-1.5">会员类型</label>
                                             <select value={contractData.memberType} onChange={e => setContractData({...contractData, memberType: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-black transition">
@@ -380,6 +419,27 @@ const MallContractCreate: React.FC<MallContractCreateProps> = ({
                                     </>
                                 ) : (
                                     <>
+                                        <div className="col-span-2 relative">
+                                            <label className="block text-[10px] font-bold text-gray-400 mb-1.5">关联教培商品</label>
+                                            <select
+                                                value={contractData.productId}
+                                                onChange={(e) => {
+                                                    const product = productOptions.find(item => item.id === e.target.value);
+                                                    setContractData(product
+                                                        ? current => applyMallProductToContractDraft(current, product)
+                                                        : { ...contractData, productId: '' });
+                                                }}
+                                                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-black transition appearance-none"
+                                            >
+                                                <option value="">不关联商品，使用手工合同字段</option>
+                                                {selectableProducts.map(product => (
+                                                    <option key={product.id} value={product.id}>
+                                                        {product.name} - ¥{product.amount.toLocaleString()}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <i className="fa-solid fa-chevron-down absolute right-4 top-[38px] text-gray-400 pointer-events-none"></i>
+                                        </div>
                                         <div className="col-span-2">
                                             <label className="block text-[10px] font-bold text-gray-400 mb-1.5">课程名称</label>
                                             <input type="text" value={contractData.ttcCourseName} onChange={e => setContractData({...contractData, ttcCourseName: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-black transition" placeholder="例如：RYT200 培训课程" />

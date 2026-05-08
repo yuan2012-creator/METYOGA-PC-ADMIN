@@ -1,8 +1,19 @@
 import React, { useMemo, useState } from 'react';
 import type { MallOverviewModule } from './mallTypes';
+import type { MallClosureSummary } from '../../utils/mallSelectors';
 
 // --- Data Overview Component ---
-const MallDataOverview = ({ moduleType, venues }: { moduleType: MallOverviewModule, venues: string[] }) => {
+const MallDataOverview = ({
+    moduleType,
+    venues,
+    closureSummary,
+    onDemoAction,
+}: {
+    moduleType: MallOverviewModule;
+    venues: string[];
+    closureSummary?: MallClosureSummary;
+    onDemoAction?: (message: string) => void;
+}) => {
     type RankingTab = 'sales' | 'ctr' | 'conversion' | 'stagnant';
 
     const [rankingTab, setRankingTab] = useState<RankingTab>('sales');
@@ -142,7 +153,7 @@ const MallDataOverview = ({ moduleType, venues }: { moduleType: MallOverviewModu
                 </h3>
                 <div className="flex gap-3 items-center">
                     <button 
-                        onClick={() => alert('Gemini AI 正在分析商城数据...')}
+                        onClick={() => onDemoAction?.('AI 深度分析仍是演示入口，后续会接入真实商城漏斗数据')}
                         className="text-[10px] text-purple-600 font-bold flex items-center gap-1 hover:underline mr-2"
                     >
                         <i className="fa-solid fa-wand-magic-sparkles"></i> AI 深度分析
@@ -164,6 +175,27 @@ const MallDataOverview = ({ moduleType, venues }: { moduleType: MallOverviewModu
                     </select>
                 </div>
             </div>
+
+            {closureSummary && (
+                <div className="mb-5 grid grid-cols-4 gap-3">
+                    <div className="bg-gray-50 border border-gray-100 rounded-xl p-3">
+                        <div className="text-[10px] text-gray-400 font-bold mb-1">订单记录</div>
+                        <div className="text-base font-black font-mono">{closureSummary.totalOrders}</div>
+                    </div>
+                    <div className="bg-gray-50 border border-gray-100 rounded-xl p-3">
+                        <div className="text-[10px] text-gray-400 font-bold mb-1">已连会员资产</div>
+                        <div className="text-base font-black font-mono text-green-600">{closureSummary.linkedAssetCount}</div>
+                    </div>
+                    <div className="bg-gray-50 border border-gray-100 rounded-xl p-3">
+                        <div className="text-[10px] text-gray-400 font-bold mb-1">已连合同</div>
+                        <div className="text-base font-black font-mono text-blue-600">{closureSummary.linkedContractCount}</div>
+                    </div>
+                    <div className="bg-orange-50 border border-orange-100 rounded-xl p-3">
+                        <div className="text-[10px] text-orange-500 font-bold mb-1">待补链路</div>
+                        <div className="text-base font-black font-mono text-orange-600">{closureSummary.fallbackAssetCount}</div>
+                    </div>
+                </div>
+            )}
 
             {/* Row 1: Metric Cards */}
             <div className={`grid gap-4 mb-8 ${moduleType === 'cards' ? 'grid-cols-7' : moduleType === 'ttc' ? 'grid-cols-5' : 'grid-cols-6'}`}>
