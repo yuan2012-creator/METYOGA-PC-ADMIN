@@ -1,6 +1,23 @@
 
 import React, { useState } from 'react';
 import { MOCK_STAFF_LIST, MOCK_STORE_INFO } from '../constants';
+import {
+  INITIAL_MARKETING_CAMPAIGNS,
+  INITIAL_MARKETING_CREATIVE_DATA,
+  INITIAL_MARKETING_FORM_STATE,
+  MARKETING_COUPONS,
+  MARKETING_CREATIVE_IMAGES,
+  MARKETING_TABS,
+  buildMarketingCampaignFromForm,
+  buildMarketingCampaignSummary,
+  getCampaignStatusColor,
+  getCampaignStatusDotClass,
+  getMarketingActionLabel,
+  type MarketingCampaign,
+  type MarketingCampaignStatus,
+  type MarketingCreativeType,
+  type MarketingSubTab,
+} from '../utils/marketingPresentation';
 
 type MarketingToastTone = 'info' | 'success';
 
@@ -11,63 +28,23 @@ interface MarketingToast {
 }
 
 const Marketing: React.FC = () => {
-  const [subTab, setSubTab] = useState<'campaigns' | 'creatives' | 'coupons'>('campaigns');
+  const [subTab, setSubTab] = useState<MarketingSubTab>('campaigns');
   const [showModal, setShowModal] = useState(false);
   const [toast, setToast] = useState<MarketingToast | null>(null);
   
   // --- Creative State ---
-  const [creativeType, setCreativeType] = useState<'banner' | 'popup' | 'push'>('banner');
-  const [creativeData, setCreativeData] = useState({
-    title: '夏日焕新 · 普拉提专题',
-    desc: '限时 8 折优惠，新老会员皆可参与，感受核心力量的觉醒。',
-    image: 'https://images.unsplash.com/photo-1552196563-55cd4e45efb3?auto=format&fit=crop&q=80&w=600'
-  });
+  const [creativeType, setCreativeType] = useState<MarketingCreativeType>('banner');
+  const [creativeData, setCreativeData] = useState(INITIAL_MARKETING_CREATIVE_DATA);
 
   // --- Campaign State ---
-  const [campaignList, setCampaignList] = useState([
-    { id: 1, title: '夏日清凉瑜伽节', status: '进行中', dateRange: '06.01 - 06.30', image: 'https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?auto=format&fit=crop&q=80&w=200', views: '3.2k', signups: 120, rate: '3.8%', funnel: {pv: 3200, clicks: 1200, leads: 286, paid: 120} },
-    { id: 2, title: '新客 9.9 体验课', status: '进行中', dateRange: '长期有效', image: 'https://images.unsplash.com/photo-1544367563-12123d895e29?auto=format&fit=crop&q=80&w=200', views: '8.5k', signups: 450, rate: '5.2%', funnel: {pv: 8500, clicks: 3200, leads: 800, paid: 450} },
-    { id: 3, title: '老带新双人同行', status: '已结束', dateRange: '05.01 - 05.07', image: 'https://images.unsplash.com/photo-1571019613454-1cb2f57a69d7?auto=format&fit=crop&q=80&w=200', views: '1.1k', signups: 40, rate: '3.6%', funnel: {pv: 1100, clicks: 400, leads: 80, paid: 40} },
-  ]);
+  const [campaignList, setCampaignList] = useState<MarketingCampaign[]>(INITIAL_MARKETING_CAMPAIGNS);
   const [activeCampaign, setActiveCampaign] = useState(campaignList[0]);
 
   // --- New Campaign Form State ---
-  const initialFormState = {
-      title: '',
-      intro: '',
-      venue: '',
-      startDate: '',
-      endDate: '',
-      maxPeople: '',
-      minPeople: '',
-      priceMember: '',
-      priceNonMember: '',
-      allowPoints: false,
-      pointsDeductionLimit: '', // 积分抵扣额度
-      nonMemberAllowed: false, // 是否允许非会员
-      nonMemberRegStartTime: '', // 非会员报名开放时间
-      guests: [] as number[], // Staff IDs
-      imageLandscape: '',
-      imageSquare: '',
-      imageDetail: ''
-  };
-  const [formData, setFormData] = useState(initialFormState);
-
-  const coupons = [
-    { name: '新人体验券', value: '¥9.9', condition: '仅限首单', type: '体验券', validity: '有效期 7 天', claimed: 120 },
-    { name: '私教立减券', value: '¥100', condition: '满 3000 可用', type: '满减券', validity: '2024.12.31 前有效', claimed: 45 },
-    { name: '全场通用折扣', value: '8.8折', condition: '无门槛', type: '折扣券', validity: '限时领取', claimed: 88 },
-    { name: '生日礼遇', value: '免费课', condition: '仅限生日月', type: '兑换券', validity: '长期有效', claimed: 12 },
-    { name: '周年庆大礼包', value: '¥500', condition: '年卡专用', type: '抵扣券', validity: '2024.06.30 前有效', claimed: 5 },
-  ];
+  const [formData, setFormData] = useState(INITIAL_MARKETING_FORM_STATE);
+  const campaignSummary = buildMarketingCampaignSummary(campaignList);
 
   // --- Helpers ---
-  const getActionLabel = () => {
-    if(subTab === 'campaigns') return '创建活动';
-    if(subTab === 'creatives') return '新建素材';
-    return '创建优惠券';
-  };
-
   const showToast = (message: string, tone: MarketingToastTone = 'info') => {
     setToast({ id: Date.now(), message, tone });
     window.setTimeout(() => {
@@ -76,28 +53,19 @@ const Marketing: React.FC = () => {
   };
 
   const handleCreateAction = () => {
-    if(subTab === 'coupons') showToast('已打开优惠券配置演示入口', 'info');
+    if(subTab === 'coupons') showToast('优惠券配置仍为 demo 入口，真实券批次/发放规则待后续接入', 'info');
     else {
-        setFormData(initialFormState); // Reset form
+        setFormData(INITIAL_MARKETING_FORM_STATE);
         setShowModal(true);
     }
   };
 
-  const handleSaveCampaign = (status: '草稿' | '进行中') => {
-      const newCamp = {
-          id: Date.now(),
-          title: formData.title || '未命名活动',
-          status: status,
-          dateRange: `${formData.startDate.slice(5)} - ${formData.endDate.slice(5)}`,
-          image: formData.imageSquare || 'https://via.placeholder.com/200', 
-          views: '0',
-          signups: 0,
-          rate: '0%',
-          funnel: {pv: 0, clicks: 0, leads: 0, paid: 0}
-      };
+  const handleSaveCampaign = (status: MarketingCampaignStatus) => {
+      const newCamp = buildMarketingCampaignFromForm(formData, status);
       setCampaignList([newCamp, ...campaignList]);
       setActiveCampaign(newCamp);
       setShowModal(false);
+      showToast(status === '草稿' ? '活动已保存为前端草稿，后端持久化待后续接入' : '活动已进入前端上架演示，真实发布待后续接入', 'success');
   };
 
   const toggleGuest = (id: number) => {
@@ -108,19 +76,11 @@ const Marketing: React.FC = () => {
       }
   };
 
-  const getStatusColor = (s: string) => s === '进行中' ? 'text-green-600' : (s === '草稿' ? 'text-gray-400' : 'text-red-500');
-  const getStatusDotClass = (s: string) => s === '进行中' ? 'bg-green-500 shadow-[0_0_0_2px_rgba(34,197,94,0.2)]' : (s === '草稿' ? 'bg-gray-300' : 'bg-red-500');
-
   const changeImage = () => {
-    const imgs = [
-        'https://images.unsplash.com/photo-1518611012118-696072aa579a?auto=format&fit=crop&q=80&w=600',
-        'https://images.unsplash.com/photo-1575052814086-f385e2e2ad1b?auto=format&fit=crop&q=80&w=600',
-        'https://images.unsplash.com/photo-1552196563-55cd4e45efb3?auto=format&fit=crop&q=80&w=600'
-    ];
     const curr = creativeData.image;
-    let next = imgs[0];
-    if(curr === imgs[0]) next = imgs[1];
-    else if(curr === imgs[1]) next = imgs[2];
+    let next = MARKETING_CREATIVE_IMAGES[0];
+    if(curr === MARKETING_CREATIVE_IMAGES[0]) next = MARKETING_CREATIVE_IMAGES[1];
+    else if(curr === MARKETING_CREATIVE_IMAGES[1]) next = MARKETING_CREATIVE_IMAGES[2];
     setCreativeData({...creativeData, image: next});
   };
 
@@ -137,7 +97,7 @@ const Marketing: React.FC = () => {
                     onClick={handleCreateAction}
                     className="bg-black text-white text-xs px-5 py-2 rounded-lg font-bold hover:opacity-80 shadow-lg shadow-black/10 transition flex items-center gap-2"
                 >
-                    <i className="fa-solid fa-plus"></i> <span>{getActionLabel()}</span>
+                    <i className="fa-solid fa-plus"></i> <span>{getMarketingActionLabel(subTab)}</span>
                 </button>
             </div>
         </div>
@@ -145,14 +105,10 @@ const Marketing: React.FC = () => {
         {/* Sub Navigation (Unified Segmented Control) */}
         <div className="px-8 py-4 bg-[#F5F5F7]/95 backdrop-blur border-b border-gray-200/50 sticky top-16 z-10 flex justify-start">
             <div className="bg-gray-100 p-1 rounded-xl inline-flex relative">
-                {[
-                    { id: 'campaigns', label: '活动运营' },
-                    { id: 'creatives', label: '推广素材 (Banner)' },
-                    { id: 'coupons', label: '优惠券' }
-                ].map(tab => (
+                {MARKETING_TABS.map(tab => (
                     <button 
                         key={tab.id}
-                        onClick={() => setSubTab(tab.id as any)}
+                        onClick={() => setSubTab(tab.id)}
                         className={`relative z-10 px-4 py-2 text-[13px] font-medium text-center rounded-lg transition-all duration-200 ${
                             subTab === tab.id 
                             ? 'bg-white text-black shadow-sm font-bold' 
@@ -175,15 +131,16 @@ const Marketing: React.FC = () => {
                         <div className="grid grid-cols-3 gap-6">
                             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                                 <div className="text-xs text-gray-400 font-bold uppercase mb-2">进行中的活动</div>
-                                <div className="text-3xl font-bold text-gray-900">{campaignList.filter(c => c.status === '进行中').length} <span className="text-sm font-normal text-green-600 ml-2">Live</span></div>
+                                <div className="text-3xl font-bold text-gray-900">{campaignSummary.liveCount} <span className="text-sm font-normal text-green-600 ml-2">Live</span></div>
                             </div>
                             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                                 <div className="text-xs text-gray-400 font-bold uppercase mb-2">本月活动报名</div>
-                                <div className="text-3xl font-bold text-gray-900">286 <span className="text-sm font-normal text-gray-400 ml-2">人次</span></div>
+                                <div className="text-3xl font-bold text-gray-900">{campaignSummary.signupCount} <span className="text-sm font-normal text-gray-400 ml-2">人次</span></div>
                             </div>
                             <div className="bg-black text-white rounded-2xl p-6 shadow-lg shadow-black/20">
                                 <div className="text-xs text-white/60 font-bold uppercase mb-2">营销带来的营收</div>
-                                <div className="text-3xl font-bold">¥ 145,000</div>
+                                <div className="text-3xl font-bold">{campaignSummary.revenueText}</div>
+                                {campaignSummary.isFallbackRevenue && <div className="text-[10px] text-white/50 mt-2">fallback：按活动核销人数估算</div>}
                             </div>
                         </div>
 
@@ -204,8 +161,8 @@ const Marketing: React.FC = () => {
                                             <div>
                                                 <div className="flex justify-between items-start">
                                                     <h4 className="font-bold text-lg text-gray-900">{camp.title}</h4>
-                                                    <div className={`flex items-center text-xs font-bold ${getStatusColor(camp.status)}`}>
-                                                        <span className={`w-2 h-2 rounded-full mr-1.5 ${getStatusDotClass(camp.status)}`}></span>
+                                                    <div className={`flex items-center text-xs font-bold ${getCampaignStatusColor(camp.status)}`}>
+                                                        <span className={`w-2 h-2 rounded-full mr-1.5 ${getCampaignStatusDotClass(camp.status)}`}></span>
                                                         {camp.status}
                                                     </div>
                                                 </div>
@@ -456,7 +413,7 @@ const Marketing: React.FC = () => {
                         
                         <div className="flex justify-between items-center">
                             <div className="flex gap-2">
-                                <button onClick={() => showToast('已筛选全部优惠券', 'info')} className="px-4 py-2 bg-black text-white rounded-full text-xs font-medium">全部 (5)</button>
+                                <button onClick={() => showToast('已筛选全部优惠券，当前仍为前端列表过滤演示', 'info')} className="px-4 py-2 bg-black text-white rounded-full text-xs font-medium">全部 (5)</button>
                                 <button onClick={() => showToast('已筛选发放中优惠券', 'info')} className="px-4 py-2 bg-white border border-gray-200 text-gray-500 rounded-full text-xs font-medium hover:bg-gray-50">发放中</button>
                                 <button onClick={() => showToast('已筛选已结束优惠券', 'info')} className="px-4 py-2 bg-white border border-gray-200 text-gray-500 rounded-full text-xs font-medium hover:bg-gray-50">已结束</button>
                             </div>
@@ -464,7 +421,7 @@ const Marketing: React.FC = () => {
                         </div>
 
                         <div className="grid grid-cols-3 gap-6">
-                            {coupons.map((c, idx) => (
+                            {MARKETING_COUPONS.map((c, idx) => (
                                 <div key={idx} className="bg-gradient-to-br from-[#1D1D1F] to-[#434343] text-white rounded-xl p-6 relative shadow-lg transition hover:-translate-y-1 group coupon-mask">
                                     <div
                                         onClick={() => showToast(`已打开「${c.name}」更多操作演示`, 'info')}
