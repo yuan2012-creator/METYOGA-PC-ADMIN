@@ -229,20 +229,22 @@ const Settings: React.FC = () => {
         <div className="h-16 border-b border-gray-200 flex items-center justify-between px-8 bg-white/80 backdrop-blur-md sticky top-0 z-20">
             <div className="flex items-center gap-3">
                 <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                    系统设置
+                    规则配置
                     <button 
-                        onClick={() => showToast('Gemini AI 正在分析系统配置并生成优化建议...', 'info')}
+                        type="button"
+                        onClick={() => showToast('正在分析系统配置并生成优化建议…', 'info')}
                         className="text-[10px] text-purple-600 font-bold flex items-center gap-1 hover:underline ml-2 bg-purple-50 px-2 py-1 rounded-full border border-purple-100"
                     >
-                        <i className="fa-solid fa-wand-magic-sparkles"></i> AI 配置优化
+                        <i className="fa-solid fa-wand-magic-sparkles"></i> 智能分析
                     </button>
                 </h2>
                 <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded">V 2.2.0</span>
             </div>
             <div className="flex items-center gap-4">
-                <button className="text-xs text-gray-500 hover:text-black font-medium transition">重置更改</button>
+                <button type="button" className="met-secondary-button text-xs">重置更改</button>
                 <button 
-                    className="bg-black text-white text-xs px-5 py-2 rounded-lg font-bold hover:opacity-80 transition shadow-lg shadow-black/10"
+                    type="button"
+                    className="met-primary-button text-xs"
                     onClick={() => showToast('配置已在前端演示态生效，真实后台保存与同步待接口接入', 'success')}
                 >
                     保存配置
@@ -309,7 +311,7 @@ const Settings: React.FC = () => {
                                                 <span className={`flex-shrink-0 w-10 h-6 flex items-center justify-center rounded text-[10px] font-bold uppercase ${
                                                     index === 0 ? 'bg-gray-100 text-gray-500' : 
                                                     index === 1 ? 'bg-blue-50 text-blue-600' : 
-                                                    index === 2 ? 'bg-purple-50 text-purple-600' : 'bg-black text-white'
+                                                    index === 2 ? 'bg-purple-50 text-purple-600' : 'bg-[#1f5e3b] text-white'
                                                 }`}>LV{index + 1}</span>
                                                 <input type="text" value={lvl.name} onChange={(e) => updateLevel(lvl.id, 'name', e.target.value)} className="w-full font-bold text-gray-900 bg-transparent outline-none focus:text-black" />
                                             </div>
@@ -437,8 +439,9 @@ const Settings: React.FC = () => {
                                 <p className="text-sm text-gray-500 mt-1">点击角色卡片，配置该角色的详细权限与人员分配。</p>
                             </div>
                             <button 
+                                type="button"
                                 onClick={addNewRole}
-                                className="bg-black text-white text-xs px-5 py-2.5 rounded-xl font-bold hover:opacity-80 transition flex items-center gap-2 shadow-lg shadow-black/10"
+                                className="met-primary-button flex items-center gap-2 text-xs"
                             >
                                 <i className="fa-solid fa-plus"></i> 新增角色
                             </button>
@@ -452,7 +455,7 @@ const Settings: React.FC = () => {
                                     className="bg-white rounded-2xl p-6 border border-gray-200 hover:border-black hover:shadow-lg transition-all duration-300 cursor-pointer group relative overflow-hidden flex flex-col h-full"
                                 >
                                     <div className="flex justify-between items-start mb-4">
-                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl transition-colors ${role.type === 'system' ? 'bg-gray-100 text-gray-600' : 'bg-black text-white'}`}>
+                                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl transition-colors ${role.type === 'system' ? 'bg-gray-100 text-gray-600' : 'bg-[#1f5e3b] text-white'}`}>
                                             <i className={`fa-solid ${role.type === 'system' ? 'fa-shield-halved' : 'fa-user-tag'}`}></i>
                                         </div>
                                         {role.type === 'system' && <span className="bg-gray-100 text-gray-500 text-[10px] px-2 py-1 rounded-full font-bold uppercase tracking-wider">System</span>}
@@ -518,7 +521,7 @@ const Settings: React.FC = () => {
                                     disabled={activeRole.type === 'system'}
                                     className={`text-2xl font-bold text-gray-900 bg-transparent outline-none w-full ${activeRole.type === 'system' ? 'cursor-default' : 'hover:bg-gray-50 border-b border-transparent focus:border-black transition'}`}
                                 />
-                                {activeRole.type === 'system' && <span className="text-[10px] bg-black text-white px-2 py-1 rounded font-bold whitespace-nowrap">系统默认</span>}
+                                {activeRole.type === 'system' && <span className="text-[10px] bg-[#1f5e3b] text-white px-2 py-1 rounded font-bold whitespace-nowrap">系统默认</span>}
                             </div>
                             <input 
                                 type="text" 
@@ -558,12 +561,12 @@ const Settings: React.FC = () => {
                                                     onClick={() => toggleRoleMember(account.id)}
                                                     className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition select-none ${
                                                         isActive 
-                                                        ? 'bg-black text-white border-black shadow-md' 
+                                                        ? 'bg-[#eaf4ef] text-[#1f5e3b] border-[#1f5e3b] shadow-sm' 
                                                         : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                                                     }`}
                                                 >
                                                     <div className="flex items-center gap-3">
-                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${isActive ? 'bg-white text-black' : 'bg-gray-200 text-gray-600'}`}>
+                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${isActive ? 'bg-white text-[#1f5e3b]' : 'bg-gray-200 text-gray-600'}`}>
                                                             {account.avatar}
                                                         </div>
                                                         <span className="text-sm font-bold">{account.name}</span>
@@ -679,10 +682,10 @@ const Settings: React.FC = () => {
                                 confirmDialog.onConfirm();
                                 setConfirmDialog(null);
                             }}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold text-white transition ${
+                            className={`px-4 py-2 rounded-xl text-xs font-bold transition ${
                                 confirmDialog.tone === 'danger'
-                                ? 'bg-red-500 hover:bg-red-600'
-                                : 'bg-black hover:bg-gray-800'
+                                ? 'bg-red-500 hover:bg-red-600 text-white'
+                                : 'met-primary-button'
                             }`}
                         >
                             {confirmDialog.confirmLabel || '确认'}
@@ -715,9 +718,10 @@ const Settings: React.FC = () => {
                             取消
                         </button>
                         <button
+                            type="button"
                             onClick={submitInputDialog}
                             disabled={!inputDialogValue.trim()}
-                            className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-black hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition"
+                            className="met-primary-button px-4 py-2 text-xs disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none"
                         >
                             {inputDialog.confirmLabel || '确认'}
                         </button>

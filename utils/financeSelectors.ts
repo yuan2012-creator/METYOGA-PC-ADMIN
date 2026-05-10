@@ -588,8 +588,8 @@ export const buildFinanceExpenseRows = (ledgerEntries: FinanceLedgerEntry[]): Fi
       date: '演示周期',
       category: '房租水电',
       amount: 85000,
-      voucherLabel: 'fallback',
-      sourceSummary: 'fallback：费用分录尚未接入 FinanceLedgerEntry',
+      voucherLabel: '估算',
+      sourceSummary: '估算：费用分录尚未接入 FinanceLedgerEntry',
       isFallback: true,
     },
     {
@@ -597,8 +597,8 @@ export const buildFinanceExpenseRows = (ledgerEntries: FinanceLedgerEntry[]): Fi
       date: '演示周期',
       category: '市场推广',
       amount: 12000,
-      voucherLabel: 'fallback',
-      sourceSummary: 'fallback：费用分录尚未接入 FinanceLedgerEntry',
+      voucherLabel: '估算',
+      sourceSummary: '估算：费用分录尚未接入 FinanceLedgerEntry',
       isFallback: true,
     },
   ];
@@ -634,7 +634,7 @@ export const buildFinancePayrollRows = (ledgerEntries: FinanceLedgerEntry[]): Fi
       deduction: 1500,
       netPay: 21000,
       status: '待发放',
-      sourceSummary: 'fallback：薪酬分录尚未接入 FinanceLedgerEntry',
+      sourceSummary: '估算：薪酬分录尚未接入 FinanceLedgerEntry',
       isFallback: true,
     },
   ];
@@ -661,7 +661,7 @@ export const buildFinanceStaffPerformance = ({
       progress: getProgress(actual, staff.target),
       sourceSummary: staffOrderIds.length > 0
         ? `Orders ${staffOrderIds.join(', ')} -> Payments`
-        : 'fallback target：当前周期暂无销售订单',
+        : '估算：当前周期暂无销售订单',
       isFallbackTarget: true,
     };
   })
@@ -714,7 +714,7 @@ export const buildFinanceReportSummary = ({
         target: annualTarget,
         actual: annualActual,
         progress: getProgress(annualActual, annualTarget),
-        sourceSummary: '年度完成额 = 本年度 Payment - Refund；目标为门店配置 fallback',
+        sourceSummary: '年度完成额 = 本年度 Payment - Refund；目标为门店配置估算',
         isFallbackTarget: true,
       },
       period: {
@@ -722,7 +722,7 @@ export const buildFinanceReportSummary = ({
         target: periodTarget,
         actual: periodActual,
         progress: getProgress(periodActual, periodTarget),
-        sourceSummary: '区间完成额 = 查询区间 Payment - Refund；目标为门店配置 fallback',
+        sourceSummary: '区间完成额 = 查询区间 Payment - Refund；目标为门店配置估算',
         isFallbackTarget: true,
       },
     },

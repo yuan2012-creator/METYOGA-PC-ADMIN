@@ -889,7 +889,7 @@ export const MOCK_TEAM_TASKS: TeamTask[] = [
 // --- Mock Data for Shop & Staff ---
 
 export const MOCK_STORE_INFO: StoreInfo = {
-  id: 1, name: 'MetYoga 西湖馆', address: '杭州市西湖区北山路', phone: '0571-88886666', hours: '10:00 - 22:00', isOpen: true,
+  id: 1, name: 'MET YOGA 西湖馆', address: '杭州市西湖区北山路', phone: '0571-88886666', hours: '10:00 - 22:00', isOpen: true,
   gallery: ['https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&q=80&w=400', 'https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?auto=format&fit=crop&q=80&w=400', 'https://images.unsplash.com/photo-1549419137-023a17df302e?auto=format&fit=crop&q=80&w=400'],
   holidays: [ {name: '春节假期', date: '2026-01-20 至 2026-01-28'}, {name: '场馆维护', date: '2025-12-25'} ],
   rooms: [

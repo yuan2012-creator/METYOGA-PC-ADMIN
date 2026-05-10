@@ -100,7 +100,7 @@ const StaffPage: React.FC = () => {
       {/* --- STANDARD HEADER --- */}
       <div className="h-16 border-b border-gray-200 flex items-center justify-between px-8 bg-white/80 backdrop-blur-md sticky top-0 z-20">
           <div className="flex items-center gap-4">
-              <h2 className="text-xl font-bold text-gray-900">员工总览</h2>
+              <h2 className="text-xl font-bold text-gray-900">师资与团队</h2>
           </div>
           <div className="flex items-center gap-4">
               <div className="relative group">
@@ -113,7 +113,7 @@ const StaffPage: React.FC = () => {
                       className="pl-8 pr-4 py-2 bg-gray-100 border border-transparent focus:bg-white focus:border-gray-300 rounded-lg text-xs w-64 transition-all outline-none"
                   />
               </div>
-              <button className="bg-black text-white text-xs px-4 py-2 rounded-lg font-bold hover:opacity-80 transition shadow-lg shadow-black/10">
+              <button type="button" className="met-primary-button text-xs">
                   + 新增员工
               </button>
           </div>

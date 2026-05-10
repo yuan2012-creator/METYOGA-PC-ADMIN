@@ -144,7 +144,7 @@ const getAssetCards = (member: Member): AssetCardView[] => {
     }));
   }
 
-  // Legacy compatibility: old member detail cards remain as display fallback.
+  // Legacy compatibility: old member detail cards remain as display estimate path.
   return member.cards.map((card, idx) => ({
     id: `legacy-card-${idx}-${card.name}`,
     name: card.name,
@@ -276,7 +276,7 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }
             </div>
             <div className="flex items-center gap-3">
                 <button 
-                    onClick={() => showToast('Gemini AI 正在生成会员深度洞察报告...')}
+                    onClick={() => showToast('正在生成会员深度洞察报告…')}
                     className="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-xl text-xs font-bold hover:opacity-90 transition shadow-sm flex items-center gap-2"
                 >
                     <i className="fa-solid fa-wand-magic-sparkles"></i> AI 洞察
@@ -419,7 +419,7 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }
                                     <span className={card.badgeClass}>{card.statusLabel}</span>
                                 </div>
                                 <div className="flex justify-between items-end relative z-10 mt-2">
-                                    <div className="text-[9px] opacity-70">MetYoga</div>
+                                    <div className="text-[9px] opacity-70">MET YOGA</div>
                                     <div className="text-right">
                                         <div className="text-base font-bold">{card.balanceText}</div>
                                         {card.expiryText && <div className="text-[9px] opacity-80 font-mono">{card.expiryText}</div>}
@@ -523,7 +523,7 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }
                         <div>
                             <h3 className="text-sm font-bold text-gray-900">全景动态追踪</h3>
                             <p className="text-[10px] text-gray-400 mt-1">
-                                优先展示订单、预约、签到、退款链路；缺口由 Legacy timeline fallback 补充
+                                优先展示订单、预约、签到、退款链路；缺口由历史时间线估算补充
                             </p>
                         </div>
                         <div className="flex gap-4">

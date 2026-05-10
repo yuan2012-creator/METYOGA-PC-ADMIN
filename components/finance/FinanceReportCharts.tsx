@@ -170,7 +170,7 @@ const FinanceReportCharts: React.FC<FinanceReportChartsProps> = ({
               <tr>
                 <td className="py-3 font-bold text-gray-900">课时费支出总额</td>
                 <td className="font-mono text-gray-900">¥{reportExpenseTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                <td className="text-blue-600 text-xs">费用/薪酬分录口径，缺失时显示 fallback</td>
+                <td className="text-blue-600 text-xs">费用/薪酬分录口径，缺失时显示估算</td>
               </tr>
             </tbody>
           </table>

@@ -241,7 +241,7 @@ export const buildMallContractSourceSummary = ({
   return {
     memberName: member?.name ?? '未选择会员',
     productName: product?.name ?? fallbackProductName,
-    productLabel: product?.sourceLabel ?? '合同表单 fallback',
+    productLabel: product?.sourceLabel ?? '合同表单估算',
     amount,
     sourceSummary: product
       ? `${product.sourceLabel} ${product.id} -> 合同草稿 ${contractData.contractNo}`

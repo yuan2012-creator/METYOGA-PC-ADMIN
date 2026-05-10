@@ -18,7 +18,7 @@ export const createInitialContractData = () => ({
     contractNo: `CON-${Date.now().toString().slice(-8)}`,
     partyAVenueId: 'v1',
     partyACompany: '杭州迈特瑜伽健身有限公司',
-    partyAVenue: 'MetYoga 万象城店',
+    partyAVenue: 'MET YOGA 万象城店',
     partyACode: '91330100XXXXXXX',
     partyAAddress: '杭州市上城区万象城',
     partyAPhone: '0571-88888888',
@@ -54,7 +54,7 @@ export type MallContractData = ReturnType<typeof createInitialContractData>;
 const MOCK_VENUES_LIST = [
     {
         id: 'v1',
-        name: 'MetYoga 万象城店',
+        name: 'MET YOGA 万象城店',
         company: '杭州迈特瑜伽健身有限公司',
         code: '91330100XXXXXXX',
         address: '杭州市上城区万象城',
@@ -65,7 +65,7 @@ const MOCK_VENUES_LIST = [
     },
     {
         id: 'v2',
-        name: 'MetYoga 西湖旗舰店',
+        name: 'MET YOGA 西湖旗舰店',
         company: '杭州迈特瑜伽健身有限公司西湖分公司',
         code: '91330100YYYYYYY',
         address: '杭州市西湖区湖滨银泰',
@@ -586,7 +586,7 @@ const MallContractCreate: React.FC<MallContractCreateProps> = ({
                                     <div ref={sectionRefs.courseDetails}>
                                         <h3 className="font-bold text-base mb-2">一、会员购买及账户信息</h3>
                                         <div className="space-y-2 pl-4">
-                                            <p>1.服务内容：甲方提供MET YOGA场馆通用的团课、小班课、私教课等服务；具体课程类型、扣点/扣课规则及适用范围以本合同约定及甲方小程序公示为准。</p>
+                                            <p>1.服务内容：甲方提供 MET YOGA 场馆通用的团课、小班课、私教课等服务；具体课程类型、扣点/扣课规则及适用范围以本合同约定及甲方小程序公示为准。</p>
                                             <p>2.会员类型： {contractData.memberType === '新购' ? '☑' : '□'} 新购 &emsp; {contractData.memberType === '续费' ? '☑' : '□'} 续费 &emsp; {contractData.memberType === '升级' ? '☑' : '□'} 升级</p>
                                             
                                             <p>3.会员卡种：</p>
@@ -654,7 +654,7 @@ const MallContractCreate: React.FC<MallContractCreateProps> = ({
                                                 <div className="font-bold">法定代表人/授权代表（签字）:</div>
                                                 <div className="relative h-24">
                                                     <div className="absolute top-0 left-0 w-24 h-24 border-4 border-red-500/30 rounded-full flex items-center justify-center text-red-500/30 font-bold text-[10px] rotate-12">
-                                                        MetYoga 合同专用章
+                                                        MET YOGA 合同专用章
                                                     </div>
                                                 </div>
                                                 <div className="text-xs text-gray-400">日期：{new Date().toLocaleDateString()}</div>
@@ -686,7 +686,7 @@ const MallContractCreate: React.FC<MallContractCreateProps> = ({
 
                                     <div ref={sectionRefs.partyA}>
                                         <div className="grid grid-cols-[140px_1fr] gap-y-2">
-                                            <span className="font-bold">乙&emsp;&emsp;方：</span><span className="border-b border-gray-300">{contractData.partyACompany || '杭州茶瑜梵逅健康管理有限公司 （Met Yoga）'}</span>
+                                            <span className="font-bold">乙&emsp;&emsp;方：</span><span className="border-b border-gray-300">{contractData.partyACompany || '杭州茶瑜梵逅健康管理有限公司 （MET YOGA）'}</span>
                                             <span className="font-bold">统一社会信用代码：</span><span className="border-b border-gray-300">{contractData.partyACode || '91330101MA2J244726'}</span>
                                             <span className="font-bold">地&emsp;&emsp;址：</span><span className="border-b border-gray-300">{contractData.partyAAddress || '浙江省杭州市西湖风景名胜区四眼井 101 号'}</span>
                                             <span className="font-bold">联系电话：</span><span className="border-b border-gray-300">{contractData.partyAPhone || '19157979531'}</span>
@@ -703,7 +703,7 @@ const MallContractCreate: React.FC<MallContractCreateProps> = ({
                                             <p className="font-bold">（一）学员资格确定</p>
                                             <p>1. 甲方是年满 18 周岁的具有完全民事行为能力人，具有良好身体状况，可以正常接受乙方提供的教培服务内容。</p>
                                             <p>2. 甲方应详细填写报名表中所列内容， 并保证填写信息的真实性、准确性及合法性。乙方依据甲方填写的信息确认甲方学员身份及享有的学员服务。如因甲方未正确填写而导致未能及时享受课程服务，由甲方承担相应责任，与乙方无关。</p>
-                                            <p>3. 符合本协议条件并且办理学员登记后方可取得 Met Yoga 学员资格。</p>
+                                            <p>3. 符合本协议条件并且办理学员登记后方可取得 MET YOGA 学员资格。</p>
                                             <p>即便存在前述约定， 乙方仍可按照实际情况最终确定甲方是否可以成为乙方学员（无论在协议开始履行前，还是协议履行中）。乙方依据本条款行使权利，不作为乙方违约。</p>
                                             
                                             <p className="font-bold mt-4">（二） 甲方健康保证</p>
@@ -770,7 +770,7 @@ const MallContractCreate: React.FC<MallContractCreateProps> = ({
                                                     <div className="font-bold">乙方（签章）:</div>
                                                     <div className="relative h-24">
                                                         <div className="absolute top-0 left-0 w-24 h-24 border-4 border-red-500/30 rounded-full flex items-center justify-center text-red-500/30 font-bold text-[10px] rotate-12">
-                                                            MetYoga 合同专用章
+                                                            MET YOGA 合同专用章
                                                         </div>
                                                     </div>
                                                     <div className="text-xs text-gray-400">日期：{new Date().toLocaleDateString()}</div>
@@ -784,7 +784,7 @@ const MallContractCreate: React.FC<MallContractCreateProps> = ({
 
                         {/* Watermark */}
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03] rotate-[-35deg] select-none overflow-hidden">
-                            <div className="text-8xl font-black whitespace-nowrap">MetYoga PRO</div>
+                            <div className="text-8xl font-black whitespace-nowrap">MET YOGA PRO</div>
                         </div>
                     </div>
                 </div>

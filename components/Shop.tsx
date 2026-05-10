@@ -130,12 +130,13 @@ const Shop: React.FC = () => {
         <div className="h-16 border-b border-gray-200 flex items-center justify-between px-8 bg-white/80 backdrop-blur-md sticky top-0 z-20">
             <div className="flex items-center gap-4">
                 <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                    店铺管理
+                    门店管理
                     <button
-                        onClick={() => showToast('Gemini AI 正在分析店铺运营数据并生成优化建议...', 'info')}
+                        type="button"
+                        onClick={() => showToast('正在分析门店运营数据并生成优化建议…', 'info')}
                         className="text-[10px] text-purple-600 font-bold flex items-center gap-1 hover:underline ml-2 bg-purple-50 px-2 py-1 rounded-full border border-purple-100"
                     >
-                        <i className="fa-solid fa-wand-magic-sparkles"></i> AI 店铺优化
+                        <i className="fa-solid fa-wand-magic-sparkles"></i> 智能分析
                     </button>
                 </h2>
 
@@ -168,7 +169,7 @@ const Shop: React.FC = () => {
                                     </div>
                                 ))}
                                 <div className="h-px bg-gray-100 my-1"></div>
-                                <button className="w-full text-left px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg font-medium flex items-center gap-2">
+                                <button type="button" className="met-secondary-button w-full justify-start text-left text-sm py-2 text-blue-600 border-blue-100 hover:bg-blue-50/50">
                                     <i className="fa-solid fa-plus"></i> 新增店铺
                                 </button>
                             </div>
@@ -189,8 +190,9 @@ const Shop: React.FC = () => {
                     />
                 </div>
                 <button 
+                    type="button"
                     onClick={saveAll}
-                    className="bg-black text-white text-xs px-5 py-2 rounded-lg font-bold hover:opacity-80 shadow-lg shadow-black/10 transition"
+                    className="met-primary-button text-xs"
                 >
                     保存配置
                 </button>
@@ -248,7 +250,7 @@ const Shop: React.FC = () => {
                                                 <i className="fa-solid fa-star text-yellow-400"></i> 5.0 · <span>{activeStore.address}</span>
                                             </div>
                                             <div className="flex gap-2">
-                                                <span className="bg-black text-white text-[10px] px-3 py-1.5 rounded-full font-bold">预约课程</span>
+                                                <span className="met-primary-button text-[10px] px-3 py-1.5 !rounded-full pointer-events-none">预约课程</span>
                                                 <span className="bg-gray-100 text-gray-600 text-[10px] px-3 py-1.5 rounded-full font-bold">联系我们</span>
                                             </div>
                                         </div>
@@ -316,7 +318,7 @@ const Shop: React.FC = () => {
                                         <h3 className="font-bold text-lg text-gray-900">门店相册</h3>
                                         <p className="text-xs text-gray-400 mt-1">首张图片将作为封面展示</p>
                                     </div>
-                                    <button onClick={uploadStoreImage} className="bg-black text-white text-xs px-4 py-2 rounded-lg font-bold hover:bg-gray-800 transition">
+                                    <button type="button" onClick={uploadStoreImage} className="met-primary-button text-xs">
                                         <i className="fa-solid fa-cloud-arrow-up mr-2"></i>上传图片
                                     </button>
                                 </div>
@@ -349,7 +351,7 @@ const Shop: React.FC = () => {
                                     <h3 className="font-bold text-lg text-gray-900">教室资源管理</h3>
                                     <p className="text-xs text-gray-400 mt-1">管理团课与私教教室的容量及设备标签</p>
                                 </div>
-                                <button className="bg-black text-white text-xs px-4 py-2 rounded-lg font-bold hover:bg-gray-800 transition">+ 新增教室</button>
+                                <button type="button" className="met-primary-button text-xs">+ 新增教室</button>
                             </div>
                             <div className="grid grid-cols-3 gap-6">
                                 {filteredRooms.map((room) => (
@@ -461,9 +463,10 @@ const Shop: React.FC = () => {
                             取消
                         </button>
                         <button
+                            type="button"
                             onClick={submitHoliday}
                             disabled={!holidayForm.name.trim() || !holidayForm.date.trim()}
-                            className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-black hover:bg-gray-800 disabled:bg-gray-300 disabled:cursor-not-allowed transition"
+                            className="met-primary-button px-4 py-2 text-xs disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none"
                         >
                             添加假期
                         </button>

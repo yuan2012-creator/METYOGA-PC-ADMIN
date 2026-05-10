@@ -150,12 +150,12 @@ const Members: React.FC = () => {
       {/* 1. TOP HEADER (Row 1 - White) */}
       <header className="h-16 border-b border-gray-200 flex items-center justify-between px-8 bg-white/80 backdrop-blur-md sticky top-0 z-30">
           <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-              会员管理中心
+              会员经营
               <button 
-                  onClick={() => showToast('AI 会员洞察仍为演示入口，后续会接入真实会员运营分析')}
+                  onClick={() => showToast('智能分析仍为演示入口，后续会接入真实会员运营分析')}
                   className="text-[10px] text-purple-600 font-bold flex items-center gap-1 hover:underline ml-2 bg-purple-50 px-2 py-1 rounded-full border border-purple-100"
               >
-                  <i className="fa-solid fa-wand-magic-sparkles"></i> AI 会员洞察
+                  <i className="fa-solid fa-wand-magic-sparkles"></i> 智能分析
               </button>
           </h1>
           <div className="flex items-center gap-4">
@@ -169,7 +169,7 @@ const Members: React.FC = () => {
                     className="pl-9 pr-4 py-2 bg-gray-100 border border-transparent focus:bg-white focus:border-gray-300 rounded-lg text-xs w-64 transition-all outline-none" 
                   />
               </div>
-              <button className="bg-black text-white px-5 py-2 rounded-lg text-xs font-bold hover:opacity-80 transition shadow-lg shadow-black/10">
+              <button type="button" className="met-primary-button text-xs">
                   + 新增会员
               </button>
           </div>
@@ -210,13 +210,13 @@ const Members: React.FC = () => {
                             <div 
                               key={item.id} 
                               onClick={() => setAlertFilter(alertFilter === item.id ? null : item.id)}
-                              className={`p-6 bg-white rounded-[28px] border transition-all duration-300 cursor-pointer group relative overflow-hidden flex flex-col justify-between h-40 ${alertFilter === item.id ? 'border-black ring-4 ring-black/5 shadow-xl' : 'border-transparent shadow-sm hover:shadow-md'}`}
+                              className={`p-6 bg-white rounded-[28px] border transition-all duration-300 cursor-pointer group relative overflow-hidden flex flex-col justify-between h-40 ${alertFilter === item.id ? 'border-[#1f5e3b] ring-4 ring-[#1f5e3b]/10 shadow-xl' : 'border-transparent shadow-sm hover:shadow-md'}`}
                             >
                                 <div className="flex justify-between items-start">
-                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${alertFilter === item.id ? 'bg-black text-white' : 'bg-gray-50 text-gray-400'}`}>
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center ${alertFilter === item.id ? 'bg-[#1f5e3b] text-white' : 'bg-gray-50 text-gray-400'}`}>
                                         <i className={`fa-solid ${item.cardIcon} text-sm`}></i>
                                     </div>
-                                    {alertFilter === item.id && <i className="fa-solid fa-circle-check text-black text-sm"></i>}
+                                    {alertFilter === item.id && <i className="fa-solid fa-circle-check text-[#1f5e3b] text-sm"></i>}
                                 </div>
                                 <div>
                                     <div className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">{item.label}</div>
@@ -265,7 +265,7 @@ const Members: React.FC = () => {
                                             <div className="text-[10px] text-gray-400">来源: 大众点评</div>
                                         </div>
                                     </div>
-                                    <button className="text-[10px] font-bold bg-black text-white px-3 py-1.5 rounded-lg hover:opacity-80">去回访</button>
+                                    <button type="button" className="met-secondary-button px-3 py-1.5 text-[10px]">去回访</button>
                                 </div>
                             ))}
                         </div>

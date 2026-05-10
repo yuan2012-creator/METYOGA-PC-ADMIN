@@ -26,7 +26,7 @@ const AlertPanel: React.FC<AlertPanelProps> = ({ alerts }) => {
       <h3 className="font-bold text-lg text-[#1D1D1F] flex items-center gap-2">
         ⚠️ 智能预警中心
         <button 
-          onClick={() => showToast('Gemini AI 正在分析门店数据并生成预警...')}
+          onClick={() => showToast('正在分析门店数据并生成预警…')}
           className="text-[10px] text-purple-600 font-bold flex items-center gap-1 hover:underline ml-2 bg-purple-50 px-2 py-1 rounded-full border border-purple-100"
         >
           <i className="fa-solid fa-wand-magic-sparkles"></i> AI 预警分析

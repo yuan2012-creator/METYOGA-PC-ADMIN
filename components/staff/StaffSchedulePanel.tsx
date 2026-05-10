@@ -190,7 +190,7 @@ const StaffSchedulePanel: React.FC<StaffSchedulePanelProps> = (props) => {
                                         <i className="fa-solid fa-wand-magic-sparkles text-purple-500"></i> 智能调度建议
                                     </h3>
                                     <button 
-                                        onClick={() => onDemoAction('Gemini AI 正在重新生成智能调度建议，真实排班重算待后续接入')}
+                                        onClick={() => onDemoAction('正在重新生成智能调度建议，真实排班重算待后续接入')}
                                         className="text-[10px] text-purple-600 font-bold flex items-center gap-1 hover:underline"
                                     >
                                         <i className="fa-solid fa-rotate-right"></i> AI 重新生成

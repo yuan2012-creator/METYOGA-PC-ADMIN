@@ -146,8 +146,9 @@ const Data: React.FC = () => {
             </div>
             {action && (
                 <button
+                    type="button"
                     onClick={() => showToast(`已进入「${action}」演示流程`)}
-                    className="text-[10px] bg-white border border-gray-200 px-2 py-1 rounded shadow-sm hover:bg-gray-50 transition"
+                    className="met-secondary-button !px-2 !py-1 text-[10px]"
                 >
                     {action}
                 </button>
@@ -185,16 +186,17 @@ const Data: React.FC = () => {
         {/* Header */}
         <div className="h-16 border-b border-gray-200 flex items-center justify-between px-8 bg-white/80 backdrop-blur-md sticky top-0 z-20">
             <div className="flex items-center gap-4">
-                <h2 className="text-xl font-bold text-gray-900">经营数据智能中台</h2>
-                <span className="px-2 py-0.5 bg-black text-white text-[10px] rounded font-bold">PRO</span>
+                <h2 className="text-xl font-bold text-gray-900">数据中心</h2>
+                <span className="px-2 py-0.5 bg-[#1f5e3b] text-white text-[10px] rounded font-bold">PRO</span>
             </div>
             
             <div className="flex items-center gap-3">
                 <button 
-                    onClick={() => showToast('Gemini AI 正在生成深度经营分析报告...')}
-                    className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white px-4 py-1.5 rounded-lg text-xs font-bold hover:opacity-90 transition shadow-sm"
+                    type="button"
+                    onClick={() => showToast('正在生成深度经营分析报告…')}
+                    className="met-secondary-button flex items-center gap-2 text-xs"
                 >
-                    <i className="fa-solid fa-wand-magic-sparkles"></i> AI 深度分析
+                    <i className="fa-solid fa-wand-magic-sparkles"></i> 智能分析
                 </button>
                 <div className="flex bg-gray-100 p-1 rounded-lg">
                     {['本周', '本月', '本季', '全年'].map(r => (
@@ -208,8 +210,9 @@ const Data: React.FC = () => {
                     ))}
                 </div>
                 <button
+                    type="button"
                     onClick={() => showToast(`${dateRange}经营数据导出演示已准备`, 'success')}
-                    className="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center hover:bg-gray-50 text-gray-600 transition"
+                    className="met-secondary-button w-8 h-8 !p-0 !rounded-full flex items-center justify-center text-gray-600"
                 >
                     <i className="fa-solid fa-download text-xs"></i>
                 </button>
@@ -285,7 +288,7 @@ const Data: React.FC = () => {
                                     title="周二晚间空置预警" 
                                     status="warning" 
                                     desc="下周二晚间 19:00 - 21:00 团课预约率仅 30%，建议发起闪购活动。" 
-                                    action="一键排期促销"
+                                    action="推荐补排促销"
                                 />
                             </div>
                         </div>
@@ -835,8 +838,9 @@ const Data: React.FC = () => {
                             <div className="flex justify-between items-center mb-6">
                                 <h3 className="font-bold text-gray-900">即将开班 (Upcoming Cohorts)</h3>
                                 <button
+                                    type="button"
                                     onClick={() => showToast('已进入 TTC 新增排期演示')}
-                                    className="text-xs bg-black text-white px-3 py-1.5 rounded-lg font-bold"
+                                    className="met-primary-button px-3 py-1.5 text-xs"
                                 >
                                     新增排期
                                 </button>

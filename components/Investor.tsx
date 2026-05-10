@@ -60,19 +60,21 @@ const Investor: React.FC = () => {
         {/* Header */}
         <div className="h-16 border-b border-gray-200 flex items-center justify-between px-8 bg-white/80 backdrop-blur-md sticky top-0 z-20">
             <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                投资人看板 (Investor Relations)
+                投资测算
                 <button 
-                    onClick={() => showToast('Gemini AI 正在生成投资分析报告...')}
+                    type="button"
+                    onClick={() => showToast('正在生成投资分析报告…')}
                     className="text-[10px] text-purple-600 font-bold flex items-center gap-1 hover:underline ml-2 bg-purple-50 px-2 py-1 rounded-full border border-purple-100"
                 >
-                    <i className="fa-solid fa-wand-magic-sparkles"></i> AI 投资分析
+                    <i className="fa-solid fa-wand-magic-sparkles"></i> 智能分析
                 </button>
             </h2>
             <div className="flex items-center gap-3">
                 <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1.5 rounded-lg">数据更新至: 2023-11-25</span>
                 <button
+                    type="button"
                     onClick={() => showToast('投资人月报导出演示已准备')}
-                    className="bg-black text-white text-xs px-4 py-2 rounded-lg font-bold hover:opacity-80 transition shadow-lg shadow-black/10"
+                    className="met-primary-button text-xs"
                 >
                     <i className="fa-solid fa-file-pdf mr-2"></i>导出月报
                 </button>

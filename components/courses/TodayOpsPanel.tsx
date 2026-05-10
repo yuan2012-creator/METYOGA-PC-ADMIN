@@ -39,11 +39,11 @@ const TodayOpsPanel: React.FC<TodayOpsPanelProps> = ({
                                   <p className="text-xs text-gray-400 mt-1">2026年05月05日 · 星期二</p>
                               </div>
                               <div className="flex gap-3">
-                                  <button className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg text-xs font-bold transition text-gray-700">
-                                      <i className="fa-solid fa-qrcode"></i> 扫码消课
+                                  <button type="button" className="met-secondary-button flex items-center gap-2 text-xs">
+                                      <i className="fa-solid fa-qrcode"></i> 签到核验
                                   </button>
-                                  <button className="flex items-center gap-2 bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-lg text-xs font-bold transition text-gray-700">
-                                      <i className="fa-solid fa-clipboard-check"></i> 批量补签
+                                  <button type="button" className="met-secondary-button flex items-center gap-2 text-xs">
+                                      <i className="fa-solid fa-clipboard-check"></i> 异常处理
                                   </button>
                               </div>
                           </div>
@@ -51,20 +51,23 @@ const TodayOpsPanel: React.FC<TodayOpsPanelProps> = ({
                           {/* Filter Toggle */}
                           <div className="flex gap-2 mb-4">
                               <button 
+                                  type="button"
                                   onClick={() => setOpsFilter('all')}
-                                  className={`px-4 py-1.5 rounded-full text-xs font-bold transition ${opsFilter === 'all' ? 'bg-black text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                                  className={`px-4 py-1.5 rounded-full text-xs font-bold transition ${opsFilter === 'all' ? 'bg-[#1f5e3b] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                               >
                                   全部课程
                               </button>
                               <button 
+                                  type="button"
                                   onClick={() => setOpsFilter('group')}
-                                  className={`px-4 py-1.5 rounded-full text-xs font-bold transition ${opsFilter === 'group' ? 'bg-black text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                                  className={`px-4 py-1.5 rounded-full text-xs font-bold transition ${opsFilter === 'group' ? 'bg-[#1f5e3b] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                               >
                                   团课/小班
                               </button>
                               <button 
+                                  type="button"
                                   onClick={() => setOpsFilter('private')}
-                                  className={`px-4 py-1.5 rounded-full text-xs font-bold transition ${opsFilter === 'private' ? 'bg-black text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                                  className={`px-4 py-1.5 rounded-full text-xs font-bold transition ${opsFilter === 'private' ? 'bg-[#1f5e3b] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                               >
                                   私教预约
                               </button>
@@ -133,10 +136,10 @@ const TodayOpsPanel: React.FC<TodayOpsPanelProps> = ({
                                                       <div className="font-bold text-lg font-mono text-gray-900">{cls.signed} <span className="text-gray-400 text-xs font-normal">/ {cls.enrolled}</span></div>
                                                   </div>
                                                   <div className="flex gap-2">
-                                                      <button className="bg-white border border-gray-200 hover:border-black text-gray-600 hover:text-black text-xs px-3 py-1.5 rounded transition" onClick={() => onBookDemo(cls.id)}>预约</button>
-                                                      <button className="bg-white border border-gray-200 hover:border-black text-gray-600 hover:text-black text-xs px-3 py-1.5 rounded transition" onClick={() => onSubstitute(cls.id)}>代课</button>
-                                                      <button className="bg-black text-white text-xs px-4 py-1.5 rounded hover:opacity-80 transition shadow-sm" onClick={() => onCheckIn(cls.id)}>签到</button>
-                                                      <button className="bg-black text-white text-xs px-4 py-1.5 rounded hover:opacity-80 transition shadow-sm" onClick={() => onComplete(cls.id)}>完成</button>
+                                                      <button type="button" className="met-secondary-button !px-3 !py-1.5 text-xs" onClick={() => onBookDemo(cls.id)}>预约</button>
+                                                      <button type="button" className="met-secondary-button !px-3 !py-1.5 text-xs" onClick={() => onSubstitute(cls.id)}>代课</button>
+                                                      <button type="button" className="met-primary-button !px-4 !py-1.5 text-xs" onClick={() => onCheckIn(cls.id)}>查看签到</button>
+                                                      <button type="button" className="met-primary-button !px-4 !py-1.5 text-xs" onClick={() => onComplete(cls.id)}>完课确认</button>
                                                   </div>
                                               </div>
                                           </div>
@@ -171,7 +174,7 @@ const TodayOpsPanel: React.FC<TodayOpsPanelProps> = ({
                               <div className="flex items-center gap-3 bg-gray-50 px-4 py-2.5 rounded-lg border border-gray-100 flex-1 lg:max-w-md">
                                   <i className="fa-solid fa-wand-magic-sparkles text-black"></i>
                                   <span className="text-xs text-gray-700 font-medium leading-relaxed">{aiGuidance}</span>
-                                  <button className="ml-auto text-xs bg-black text-white px-3 py-1.5 rounded hover:opacity-80 transition whitespace-nowrap shadow-sm">去处理</button>
+                                  <button type="button" className="met-secondary-button ml-auto !px-3 !py-1.5 text-xs whitespace-nowrap">查看异常</button>
                               </div>
                           </div>
                       </div>

@@ -53,7 +53,7 @@ const Marketing: React.FC = () => {
   };
 
   const handleCreateAction = () => {
-    if(subTab === 'coupons') showToast('优惠券配置仍为 demo 入口，真实券批次/发放规则待后续接入', 'info');
+    if(subTab === 'coupons') showToast('优惠券配置仍为演示入口，真实券批次/发放规则待后续接入', 'info');
     else {
         setFormData(INITIAL_MARKETING_FORM_STATE);
         setShowModal(true);
@@ -90,12 +90,13 @@ const Marketing: React.FC = () => {
         {/* Header */}
         <div className="h-16 border-b border-gray-200 flex items-center justify-between px-8 bg-white/80 backdrop-blur-md sticky top-0 z-20">
             <div className="flex items-center gap-4">
-                <h2 className="text-xl font-bold text-gray-900">营销与增长中心</h2>
+                <h2 className="text-xl font-bold text-gray-900">活动运营</h2>
             </div>
             <div className="flex items-center gap-4">
                 <button 
+                    type="button"
                     onClick={handleCreateAction}
-                    className="bg-black text-white text-xs px-5 py-2 rounded-lg font-bold hover:opacity-80 shadow-lg shadow-black/10 transition flex items-center gap-2"
+                    className="met-primary-button flex items-center gap-2 text-xs"
                 >
                     <i className="fa-solid fa-plus"></i> <span>{getMarketingActionLabel(subTab)}</span>
                 </button>
@@ -140,7 +141,7 @@ const Marketing: React.FC = () => {
                             <div className="bg-black text-white rounded-2xl p-6 shadow-lg shadow-black/20">
                                 <div className="text-xs text-white/60 font-bold uppercase mb-2">营销带来的营收</div>
                                 <div className="text-3xl font-bold">{campaignSummary.revenueText}</div>
-                                {campaignSummary.isFallbackRevenue && <div className="text-[10px] text-white/50 mt-2">fallback：按活动核销人数估算</div>}
+                                {campaignSummary.isFallbackRevenue && <div className="text-[10px] text-white/50 mt-2">估算：按活动核销人数</div>}
                             </div>
                         </div>
 
@@ -266,7 +267,7 @@ const Marketing: React.FC = () => {
                                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-gray-900 rounded-b-xl z-20"></div>
                                 
                                 <div className="h-full bg-gray-100 relative overflow-y-auto no-scrollbar">
-                                    <div className="h-20 bg-white flex items-end pb-2 px-4 font-bold text-sm shadow-sm sticky top-0 z-10">MetYoga</div>
+                                    <div className="h-20 bg-white flex items-end pb-2 px-4 font-bold text-sm shadow-sm sticky top-0 z-10">MET YOGA</div>
                                     
                                     <div className="p-4 space-y-4">
                                         {creativeType === 'banner' && (
@@ -286,8 +287,9 @@ const Marketing: React.FC = () => {
                                                         <h3 className="font-bold text-lg mb-1">{creativeData.title}</h3>
                                                         <p className="text-xs text-gray-500 mb-4">{creativeData.desc}</p>
                                                         <button
+                                                            type="button"
                                                             onClick={() => showToast('已打开活动弹窗跳转演示', 'info')}
-                                                            className="w-full bg-black text-white py-2 rounded-lg text-xs font-bold"
+                                                            className="met-primary-button w-full py-2 text-xs"
                                                         >
                                                             立即查看
                                                         </button>
@@ -302,7 +304,7 @@ const Marketing: React.FC = () => {
                                                 <div className="w-10 h-10 bg-black rounded-lg flex items-center justify-center text-white"><i className="fa-solid fa-spa"></i></div>
                                                 <div className="flex-1">
                                                     <div className="flex justify-between items-center mb-0.5">
-                                                        <span className="font-bold text-xs text-gray-900">MetYoga</span>
+                                                        <span className="font-bold text-xs text-gray-900">MET YOGA</span>
                                                         <span className="text-[10px] text-gray-400">现在</span>
                                                     </div>
                                                     <div className="font-bold text-xs text-gray-800">{creativeData.title}</div>
@@ -354,10 +356,11 @@ const Marketing: React.FC = () => {
                                         <div className="flex justify-between items-end mb-2">
                                             <label className="block text-xs font-bold text-gray-500 uppercase">详细描述</label>
                                             <button 
-                                                onClick={() => setCreativeData({...creativeData, desc: '【Gemini AI生成】限时8折！普拉提核心床小班课，专业导师带你唤醒深层肌肉，重塑优雅体态。名额有限，先到先得！'})}
+                                                type="button"
+                                                onClick={() => setCreativeData({...creativeData, desc: '【智能生成】限时8折！普拉提核心床小班课，专业导师带你唤醒深层肌肉，重塑优雅体态。名额有限，先到先得！'})}
                                                 className="text-[10px] text-purple-600 font-bold flex items-center gap-1 hover:underline"
                                             >
-                                                <i className="fa-solid fa-wand-magic-sparkles"></i> AI 智能生成文案
+                                                <i className="fa-solid fa-wand-magic-sparkles"></i> 重新计算
                                             </button>
                                         </div>
                                         <textarea 
@@ -396,8 +399,9 @@ const Marketing: React.FC = () => {
 
                                 <div className="mt-8 pt-6 border-t border-gray-50 flex justify-end">
                                     <button
+                                        type="button"
                                         onClick={() => showToast('推广素材已保存并发布到演示环境', 'success')}
-                                        className="bg-black text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:opacity-80 transition shadow-lg"
+                                        className="met-primary-button px-6 py-2.5 text-sm"
                                     >
                                         保存并发布
                                     </button>
@@ -413,11 +417,11 @@ const Marketing: React.FC = () => {
                         
                         <div className="flex justify-between items-center">
                             <div className="flex gap-2">
-                                <button onClick={() => showToast('已筛选全部优惠券，当前仍为前端列表过滤演示', 'info')} className="px-4 py-2 bg-black text-white rounded-full text-xs font-medium">全部 (5)</button>
-                                <button onClick={() => showToast('已筛选发放中优惠券', 'info')} className="px-4 py-2 bg-white border border-gray-200 text-gray-500 rounded-full text-xs font-medium hover:bg-gray-50">发放中</button>
-                                <button onClick={() => showToast('已筛选已结束优惠券', 'info')} className="px-4 py-2 bg-white border border-gray-200 text-gray-500 rounded-full text-xs font-medium hover:bg-gray-50">已结束</button>
+                                <button type="button" onClick={() => showToast('已筛选全部优惠券，当前仍为前端列表过滤演示', 'info')} className="met-secondary-button !rounded-full px-4 py-2 text-xs">全部 (5)</button>
+                                <button type="button" onClick={() => showToast('已筛选发放中优惠券', 'info')} className="met-secondary-button !rounded-full px-4 py-2 text-xs text-gray-600">发放中</button>
+                                <button type="button" onClick={() => showToast('已筛选已结束优惠券', 'info')} className="met-secondary-button !rounded-full px-4 py-2 text-xs text-gray-600">已结束</button>
                             </div>
-                            <button className="bg-white border border-gray-200 text-black text-xs px-4 py-2 rounded-lg font-medium hover:bg-gray-50" onClick={() => showToast('已打开优惠券配置演示入口', 'info')}>+ 新建优惠券</button>
+                            <button type="button" className="met-secondary-button text-xs" onClick={() => showToast('已打开优惠券配置演示入口', 'info')}>+ 新建优惠券</button>
                         </div>
 
                         <div className="grid grid-cols-3 gap-6">
@@ -603,7 +607,7 @@ const Marketing: React.FC = () => {
                                     <div className="flex flex-col gap-3 p-3 bg-gray-50 rounded-xl border border-transparent hover:border-gray-200 transition">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-3 cursor-pointer select-none" onClick={() => setFormData({...formData, allowPoints: !formData.allowPoints})}>
-                                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition ${formData.allowPoints ? 'bg-black border-black text-white' : 'bg-white border-gray-300'}`}>
+                                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition ${formData.allowPoints ? 'bg-[#1f5e3b] border-[#1f5e3b] text-white' : 'bg-white border-gray-300'}`}>
                                                     {formData.allowPoints && <i className="fa-solid fa-check text-xs"></i>}
                                                 </div>
                                                 <span className="text-xs font-bold text-gray-700">允许会员使用积分抵扣</span>
@@ -627,7 +631,7 @@ const Marketing: React.FC = () => {
                                     <div className="flex flex-col gap-3 p-3 bg-gray-50 rounded-xl border border-transparent hover:border-gray-200 transition">
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-3 cursor-pointer select-none" onClick={() => setFormData({...formData, nonMemberAllowed: !formData.nonMemberAllowed})}>
-                                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition ${formData.nonMemberAllowed ? 'bg-black border-black text-white' : 'bg-white border-gray-300'}`}>
+                                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition ${formData.nonMemberAllowed ? 'bg-[#1f5e3b] border-[#1f5e3b] text-white' : 'bg-white border-gray-300'}`}>
                                                     {formData.nonMemberAllowed && <i className="fa-solid fa-check text-xs"></i>}
                                                 </div>
                                                 <span className="text-xs font-bold text-gray-700">允许非会员报名参加</span>
@@ -657,7 +661,7 @@ const Marketing: React.FC = () => {
                                     {formData.guests.map(id => {
                                         const staff = MOCK_STAFF_LIST.find(s => s.id === id);
                                         return staff ? (
-                                            <div key={id} className="flex items-center gap-2 bg-black text-white px-3 py-1.5 rounded-full text-xs">
+                                            <div key={id} className="flex items-center gap-2 bg-[#1f5e3b] text-white px-3 py-1.5 rounded-full text-xs">
                                                 <img src={staff.avatar} className="w-4 h-4 rounded-full" alt=""/>
                                                 <span>{staff.name}</span>
                                                 <i className="fa-solid fa-xmark cursor-pointer hover:text-gray-300" onClick={() => toggleGuest(id)}></i>
@@ -733,8 +737,9 @@ const Marketing: React.FC = () => {
                             保存到草稿
                         </button>
                         <button 
+                            type="button"
                             onClick={() => handleSaveCampaign('进行中')}
-                            className="px-6 py-2.5 rounded-xl text-sm font-bold bg-black text-white hover:opacity-90 transition shadow-lg"
+                            className="met-primary-button px-6 py-2.5 text-sm"
                         >
                             上架活动
                         </button>

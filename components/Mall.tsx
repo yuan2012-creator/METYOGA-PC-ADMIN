@@ -70,10 +70,10 @@ const applyMallEditorUpdate = <T,>(
 };
 
 const MALL_MODULE_TABS: { id: MallModule; label: string }[] = [
-  { id: 'cards', label: '会员卡项 (Cards)' },
-  { id: 'ttc', label: '研学中心 (TTC)' },
-  { id: 'points', label: '积分商品 (Points)' },
-  { id: 'orders', label: '销售与订单 (Orders)' },
+  { id: 'cards', label: '会员卡项' },
+  { id: 'ttc', label: '教培产品' },
+  { id: 'points', label: '积分商品' },
+  { id: 'orders', label: '销售订单' },
 ];
 
 const Mall: React.FC = () => {
@@ -324,14 +324,14 @@ const Mall: React.FC = () => {
       <div className="mt-4 pt-4 border-t border-gray-100 flex gap-2 opacity-0 group-hover:opacity-100 transition translate-y-2 group-hover:translate-y-0">
           <button 
             onClick={(e) => { e.stopPropagation(); handlers.edit(item, type); }}
-            className="flex-1 bg-black text-white text-xs py-2 rounded-lg font-bold hover:opacity-80 transition shadow-lg"
+            className="met-secondary-button flex-1 text-xs py-2"
           >
               编辑
           </button>
           {canDuplicateMallItem(type) && (
               <button 
-                onClick={(e) => { e.stopPropagation(); handlers.duplicate(item as MallDuplicableItem, type); }}
-                className="flex-1 bg-white border border-gray-200 text-gray-600 text-xs py-2 rounded-lg font-bold hover:bg-gray-50 hover:text-black transition"
+                  onClick={(e) => { e.stopPropagation(); handlers.duplicate(item as MallDuplicableItem, type); }}
+                  className="met-secondary-button flex-1 text-xs py-2"
               >
                   复制
               </button>
@@ -441,7 +441,7 @@ const Mall: React.FC = () => {
     <div className="h-full flex flex-col animate-fadeIn relative bg-[#F5F5F7]">
         {/* Header */}
         <div className="h-16 border-b border-gray-200 flex items-center justify-between px-8 bg-white/80 backdrop-blur-md sticky top-0 z-20">
-            <div className="flex items-center gap-4"><h2 className="text-xl font-bold text-gray-900">商城管理中心</h2></div>
+            <div className="flex items-center gap-4"><h2 className="text-xl font-bold text-gray-900">产品与合同</h2></div>
             {subView === 'list' && (
                 <div className="flex items-center gap-4">
                     <div className="relative"><i className="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i><input type="text" placeholder={`搜索${activeModule === 'cards' ? '卡项' : activeModule === 'ttc' ? '课程' : '商品'}...`} className="pl-9 pr-4 py-2 bg-gray-100 border border-transparent focus:bg-white focus:border-gray-300 rounded-lg text-xs w-64 transition-all outline-none" /></div>
@@ -481,7 +481,7 @@ const Mall: React.FC = () => {
                         </div>
                     )}
 
-                    {activeModule !== 'orders' && (<button onClick={() => handleCreate(activeModule === 'cards' ? 'card' : activeModule === 'ttc' ? 'ttc_course' : 'product')} className="bg-black text-white text-xs px-4 py-2 rounded-lg font-bold hover:opacity-80 transition shadow-lg shadow-black/10">+ 新建{activeModule === 'cards' ? '卡项' : activeModule === 'ttc' ? '课程' : '商品'}</button>)}
+                    {activeModule !== 'orders' && (<button type="button" onClick={() => handleCreate(activeModule === 'cards' ? 'card' : activeModule === 'ttc' ? 'ttc_course' : 'product')} className="met-primary-button text-xs">+ 新建{activeModule === 'cards' ? '卡项' : activeModule === 'ttc' ? '课程' : '商品'}</button>)}
                 </div>
             )}
         </div>

@@ -34,7 +34,7 @@ const ExpensePayrollPanel: React.FC<ExpensePayrollPanelProps> = ({
               <td className="p-3 font-mono text-gray-600">¥{row.baseSalary.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
               <td className="p-3 font-mono text-blue-600 font-bold">
                 ¥{row.classFee.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                <span className="text-[10px] text-gray-400 block font-normal">FinanceLedgerEntry / fallback</span>
+                <span className="text-[10px] text-gray-400 block font-normal">FinanceLedgerEntry / 估算</span>
               </td>
               <td className="p-3 font-mono text-gray-600">¥{row.commission.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
               <td className="p-3 font-mono text-red-500">-¥{row.deduction.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>

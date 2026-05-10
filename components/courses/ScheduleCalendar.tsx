@@ -52,12 +52,13 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                               </h3>
                               <div className="flex items-center gap-4">
                                   <button 
+                                      type="button"
                                       onClick={onRegenerateAi}
                                       className="text-[10px] text-purple-600 font-bold flex items-center gap-1 hover:underline"
                                   >
-                                      <i className="fa-solid fa-rotate-right"></i> AI 重新生成
+                                      <i className="fa-solid fa-rotate-right"></i> 重新计算
                                   </button>
-                                  <button className="text-xs text-gray-500 hover:text-black transition">查看更多建议 <i className="fa-solid fa-arrow-right ml-1"></i></button>
+                                  <button type="button" className="met-secondary-button !px-3 !py-1.5 text-xs text-gray-600">查看建议 <i className="fa-solid fa-arrow-right ml-1"></i></button>
                               </div>
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -70,7 +71,7 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                                   <p className="text-xs text-gray-600 leading-relaxed">
                                       <span className="font-bold text-gray-900">周二晚间</span> 普拉提教室空置率预测 <span className="text-red-500 font-bold">60%</span>。
                                   </p>
-                                  <button className="mt-3 text-xs text-black bg-white border border-gray-200 hover:border-black px-3 py-1.5 rounded transition shadow-sm">一键排热门课</button>
+                                  <button type="button" className="met-secondary-button mt-3 !px-3 !py-1.5 text-xs">推荐补排</button>
                               </div>
                               {/* Suggestion 2 */}
                               <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 relative overflow-hidden group hover:border-gray-200 transition">

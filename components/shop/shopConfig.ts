@@ -23,7 +23,7 @@ export const SHOP_SUB_TABS: Array<{ id: ShopSubTab; label: string }> = [
 ];
 
 export const DEFAULT_STORE_OPTIONS: StoreOption[] = [
-  { id: 1, name: 'MetYoga 西湖馆' },
+  { id: 1, name: 'MET YOGA 西湖馆' },
   { id: 2, name: '万象城馆' },
   { id: 3, name: '城西银泰馆' },
 ];

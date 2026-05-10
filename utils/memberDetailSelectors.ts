@@ -305,7 +305,7 @@ export const buildMemberDetailBusinessRecordSlots = (
 export const getMemberDetailTimelineSourceLabel = (sourceType: MemberDetailTimelineSourceType): string => {
   switch (sourceType) {
     case 'legacy_timeline':
-      return 'Legacy timeline fallback';
+      return '历史时间线估算';
     case 'order':
       return '订单';
     case 'booking':

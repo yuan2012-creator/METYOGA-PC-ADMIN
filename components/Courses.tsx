@@ -335,12 +335,12 @@ const Courses: React.FC = () => {
       {/* Header */}
       <div className="h-16 border-b border-gray-200 flex items-center justify-between px-8 bg-white/80 backdrop-blur-md sticky top-0 z-20">
           <div className="flex items-center gap-4">
-              <h2 className="text-xl font-bold text-gray-900">教务中心</h2>
+              <h2 className="text-xl font-bold text-gray-900">课程运营</h2>
           </div>
           <div className="flex items-center gap-4">
               <button 
                   onClick={handleGlobalCreate} 
-                  className="bg-black text-white text-xs px-4 py-2 rounded-lg font-bold hover:bg-gray-800 transition flex items-center gap-2 shadow-lg shadow-black/10"
+                  className="met-primary-button flex items-center gap-2 text-xs"
               >
                   <i className="fa-solid fa-plus"></i> {getCreateLabel()}
               </button>
@@ -396,7 +396,7 @@ const Courses: React.FC = () => {
                           handleDrop={handleDrop}
                           handleGridClick={handleGridClick}
                           openEditModal={openEditModal}
-                          onRegenerateAi={() => showToast('Gemini AI 正在根据历史数据生成排课建议...', 'info')}
+                          onRegenerateAi={() => showToast('正在根据历史数据重新计算排课建议…', 'info')}
                       />
                   </div>
               )}

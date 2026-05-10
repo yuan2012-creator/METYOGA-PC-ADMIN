@@ -188,12 +188,13 @@ const Finance: React.FC = () => {
         {/* Header */}
         <div className="h-16 border-b border-gray-200 flex items-center justify-between px-8 bg-white/80 backdrop-blur-md sticky top-0 z-20">
             <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                财务管理中心
+                财务管理
                 <button 
-                    onClick={() => showToast('Gemini AI 正在生成财务分析报告...')}
+                    type="button"
+                    onClick={() => showToast('正在生成财务分析报告…')}
                     className="text-[10px] text-purple-600 font-bold flex items-center gap-1 hover:underline ml-2 bg-purple-50 px-2 py-1 rounded-full border border-purple-100"
                 >
-                    <i className="fa-solid fa-wand-magic-sparkles"></i> AI 财务分析
+                    <i className="fa-solid fa-wand-magic-sparkles"></i> 智能分析
                 </button>
             </h2>
             <div className="flex items-center gap-4">
@@ -202,18 +203,20 @@ const Finance: React.FC = () => {
                     <input type="date" value={dateRange.start} onChange={e => setDateRange({...dateRange, start: e.target.value})} className="bg-transparent outline-none w-24 text-black mr-2 font-mono" />
                     <span className="text-gray-400">-</span>
                     <input type="date" value={dateRange.end} onChange={e => setDateRange({...dateRange, end: e.target.value})} className="bg-transparent outline-none w-24 text-black ml-2 font-mono" />
-                    <button onClick={() => showToast(`数据已更新至 ${dateRange.start} ~ ${dateRange.end}`, 'success')} className="bg-black text-white px-3 py-1.5 rounded-lg ml-3 text-xs font-medium hover:opacity-80 transition">查询</button>
+                    <button type="button" onClick={() => showToast(`数据已更新至 ${dateRange.start} ~ ${dateRange.end}`, 'success')} className="met-secondary-button ml-3 px-3 py-1.5 text-xs">查询</button>
                 </div>
 
                 <button
+                    type="button"
                     onClick={() => showToast('财务报表导出演示已准备', 'success')}
-                    className="bg-white border border-gray-200 text-black text-xs px-4 py-2 rounded-lg font-medium hover:bg-gray-50 transition flex items-center gap-2"
+                    className="met-secondary-button flex items-center gap-2 text-xs"
                 >
                     <i className="fa-solid fa-file-export"></i> 导出报表
                 </button>
                 <button
+                    type="button"
                     onClick={() => showToast('已打开录入支出演示')}
-                    className="bg-black text-white text-xs px-4 py-2 rounded-lg font-medium hover:opacity-80 transition"
+                    className="met-primary-button text-xs"
                 >
                     + 录入支出
                 </button>
@@ -336,7 +339,8 @@ const Finance: React.FC = () => {
                                 <h3 className="font-bold text-lg flex items-center text-gray-900"><i className="fa-solid fa-user-friends mr-2 text-gray-400"></i> 门店业绩分配与实时进度</h3>
                                 <button
                                     onClick={() => showToast('已进入业绩目标重新分配演示')}
-                                    className="bg-black text-white text-xs px-3 py-1.5 rounded-lg font-bold hover:opacity-80 transition"
+                                    type="button"
+                                    className="met-primary-button px-3 py-1.5 text-xs"
                                 >
                                     重新分配目标
                                 </button>
