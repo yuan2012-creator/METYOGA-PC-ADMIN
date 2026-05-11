@@ -120,6 +120,29 @@ const orderPaidTotal = (orderId: string, payments: Payment[]): number => (
     .reduce((sum, p) => sum + p.amount, 0)
 );
 
+const buildOrderLinksDisplay = (
+  order: Order,
+  contracts: Contract[],
+  memberAssets: MemberAsset[],
+): string => {
+  const parts: string[] = [];
+  const products = order.items.map(i => i.productName).filter(Boolean).join('、');
+  if (products) parts.push(`订单产品：${products}`);
+  if (order.contractId) {
+    const ct = contracts.find(c => c.id === order.contractId);
+    if (ct?.title?.trim()) parts.push(`关联合同：${ct.title.trim()}`);
+    else parts.push('关联合同：暂未记录');
+  }
+  const assetNames = new Set<string>();
+  for (const it of order.items) {
+    if (!it.memberAssetId) continue;
+    const a = memberAssets.find(x => x.id === it.memberAssetId);
+    if (a?.name?.trim()) assetNames.add(a.name.trim());
+  }
+  if (assetNames.size > 0) parts.push(`关联资产：${[...assetNames].join('、')}`);
+  return parts.length > 0 ? parts.join('；') : '暂未记录';
+};
+
 const formatAssetBalance = (asset: MemberAsset): string => {
   if (typeof asset.remainingAmount !== 'number') return ASSET_STATUS_LABELS[asset.status];
   const amount = asset.remainingAmount;
@@ -455,7 +478,9 @@ export const buildMemberDetailViewModel = (input: BuildMemberDetailViewModelInpu
       ? contracts.find(c => c.id === order.contractId)
       : undefined;
     const productSummary = order.items.map(i => i.productName).join('、') || '暂未记录';
-    const payStatus = paid >= order.totalAmount ? '已支付' : ORDER_STATUS_LABELS[order.status] ?? order.status;
+    const payStatus = paid >= order.totalAmount
+      ? '已支付'
+      : (ORDER_STATUS_LABELS[order.status] ?? '暂未识别');
     return {
       id: order.id,
       orderLabel: order.id,
@@ -463,12 +488,11 @@ export const buildMemberDetailViewModel = (input: BuildMemberDetailViewModelInpu
       payAmountDisplay: `¥${paid.toLocaleString()}`,
       payStatusDisplay: payStatus,
       contractNameDisplay: contract?.title ?? '暂未记录',
-      contractStatusDisplay: contract ? CONTRACT_STATUS_LABELS[contract.status] : '暂未记录',
+      contractStatusDisplay: contract
+        ? (CONTRACT_STATUS_LABELS[contract.status] ?? '暂未识别')
+        : '暂未记录',
       signedAtDisplay: contract?.signedAt ? formatDateTime(contract.signedAt) : '暂未记录',
-      linksDisplay: [
-        order.contractId ? `合同：${order.contractId}` : '',
-        order.items[0]?.memberAssetId ? `资产：${order.items[0].memberAssetId}` : '',
-      ].filter(Boolean).join('；') || '暂未记录',
+      linksDisplay: buildOrderLinksDisplay(order, contracts, memberAssets),
     };
   });
 
@@ -476,10 +500,15 @@ export const buildMemberDetailViewModel = (input: BuildMemberDetailViewModelInpu
     .filter(c => c.memberId === member.id)
     .map((c) => ({
       id: c.id,
-      titleDisplay: c.title ?? c.id,
-      statusDisplay: CONTRACT_STATUS_LABELS[c.status],
+      titleDisplay: c.title?.trim() ? c.title.trim() : '暂未记录',
+      statusDisplay: CONTRACT_STATUS_LABELS[c.status] ?? '暂未识别',
       signedAtDisplay: c.signedAt ? formatDateTime(c.signedAt) : '暂未记录',
-      orderRef: c.orderId ?? '暂未记录',
+      orderRef: (() => {
+        if (!c.orderId) return '暂未记录';
+        const linked = orders.find(o => o.id === c.orderId);
+        const names = linked?.items.map(i => i.productName).filter(Boolean).join('、');
+        return names || '暂未记录';
+      })(),
     }));
 
   const refundRows: MemberDetailRefundRowVM[] = refunds
@@ -487,7 +516,7 @@ export const buildMemberDetailViewModel = (input: BuildMemberDetailViewModelInpu
     .map((r) => ({
       id: r.id,
       amountDisplay: `¥${r.amount.toLocaleString()}`,
-      statusDisplay: REFUND_STATUS_LABELS[r.status],
+      statusDisplay: REFUND_STATUS_LABELS[r.status] ?? '暂未识别',
       timeDisplay: formatDateTime(r.completedAt ?? r.approvedAt ?? r.requestedAt),
       reasonDisplay: r.reason?.trim() ? r.reason : '暂未记录',
     }));

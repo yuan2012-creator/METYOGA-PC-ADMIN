@@ -20,7 +20,7 @@ import type {
 } from '../types';
 import { buildMemberBusinessRecordSummary } from '../utils/memberDetailSelectors';
 import { buildMemberDetailViewModel } from '../utils/memberDetailViewModel';
-import { getMemberLifecyclePresentation, getMemberRiskPresentation } from '../utils/memberPresentation';
+import { getMemberLifecyclePresentation } from '../utils/memberPresentation';
 
 const PLACEHOLDER_ACTION_TOAST = '功能待接入，正式版本需接入权限与操作日志';
 
@@ -131,7 +131,6 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({
   );
 
   const stageView = getMemberLifecyclePresentation(member);
-  const riskView = getMemberRiskPresentation(member);
 
   const preferenceData = member.topCourses && member.topCourses.length > 0
     ? member.topCourses.map((c, i) => ({ name: c, value: 40 - i * 10 }))
@@ -196,12 +195,14 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({
                 >
                   {overview.lifecycleLabel}
                 </span>
-                {riskView && (
-                  <span className={`rounded-md bg-gray-50 px-2 py-0.5 text-[10px] font-bold ${riskView.textClass}`}>
-                    <i className={`${riskView.iconClass} mr-1`} />
-                    {riskView.label}
+                {overview.riskTags.map(tag => (
+                  <span
+                    key={tag}
+                    className="rounded-md border border-gray-200/90 bg-gray-50/90 px-2 py-0.5 text-[10px] font-semibold text-gray-600"
+                  >
+                    {tag}
                   </span>
-                )}
+                ))}
               </div>
               <div className="mt-0.5 truncate text-[11px] text-gray-400">
                 <i className="fa-solid fa-phone mr-1" />

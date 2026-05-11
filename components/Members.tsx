@@ -67,7 +67,7 @@ const Members: React.FC = () => {
   const [funnelRange, setFunnelRange] = useState<'week' | 'month'>('month');
   const [toast, setToast] = useState<{ id: number; message: string } | null>(null);
 
-  const showToast = (message: string) => {
+  const showToast = (message: string, _tone?: 'info' | 'success') => {
     setToast({ id: Date.now(), message });
     window.setTimeout(() => {
       setToast(current => (current?.message === message ? null : current));
@@ -319,7 +319,16 @@ const Members: React.FC = () => {
                                             <div className="text-[10px] text-gray-400">来源: 大众点评</div>
                                         </div>
                                     </div>
-                                    <button type="button" className="met-secondary-button px-3 py-1.5 text-[10px]">去回访</button>
+                                    <button
+                                      type="button"
+                                      className="met-secondary-button px-3 py-1.5 text-[10px]"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        showToast('回访任务功能待接入，正式版本需接入权限与操作日志。', 'info');
+                                      }}
+                                    >
+                                      去回访
+                                    </button>
                                 </div>
                             ))}
                         </div>
@@ -394,16 +403,28 @@ const Members: React.FC = () => {
                               </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-50">
-                              {visibleMembers.map(member => {
-                                const row = rowByMemberId.get(member.id);
-                                if (!row) return null;
+                              {visibleMembers.length === 0 ? (
+                                <tr>
+                                  <td colSpan={8} className="px-8 py-16">
+                                    <div className="mx-auto max-w-md rounded-2xl border border-gray-200 bg-white px-8 py-10 text-center shadow-sm">
+                                      <div className="text-sm font-bold text-gray-800">暂无符合条件的会员</div>
+                                      <p className="mt-2 text-xs leading-relaxed text-gray-500">
+                                        可调整筛选条件，或返回全部会员查看。
+                                      </p>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ) : (
+                                visibleMembers.map(member => {
+                                  const row = rowByMemberId.get(member.id);
+                                  if (!row) return null;
 
-                                return (
-                                  <tr 
-                                    key={member.id} 
-                                    onClick={() => setSelectedMember(member)}
-                                    className="group cursor-pointer transition-all duration-200 hover:bg-[#FAFAFA]"
-                                  >
+                                  return (
+                                    <tr
+                                      key={member.id}
+                                      onClick={() => setSelectedMember(member)}
+                                      className="group cursor-pointer transition-all duration-200 hover:bg-[#FAFAFA]"
+                                    >
                                       <td className="px-6 py-4">
                                           <div className="flex items-center gap-3">
                                               <img src={member.avatar} alt="" className="h-10 w-10 shrink-0 rounded-full border border-white object-cover shadow-sm" />
@@ -465,9 +486,10 @@ const Members: React.FC = () => {
                                               </button>
                                           </div>
                                       </td>
-                                  </tr>
-                                );
-                              })}
+                                    </tr>
+                                  );
+                                })
+                              )}
                           </tbody>
                       </table>
                   </div>
