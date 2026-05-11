@@ -645,6 +645,8 @@ export interface MockCourseConsumptionRecord {
   courseSessionId: CourseSessionId;
   memberId: MemberId;
   memberName?: string;
+  /** 列表等场景的展示用课程名；缺省时由场次解析 */
+  courseTitle?: string;
   consumedAt: ISODateString;
   note?: string;
   amount?: MoneyAmount;

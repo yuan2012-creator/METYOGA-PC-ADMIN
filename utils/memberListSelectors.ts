@@ -264,7 +264,9 @@ export const buildMemberListRows = (input: MemberListRowsInput): MemberListRow[]
         const bb = safeParseDate(best.consumedAt)?.getTime() ?? 0;
         return tb > bb ? c : best;
       });
-      const title = getSessionTitle(courseSessions, courses, latest.courseSessionId);
+      const title = latest.courseTitle?.trim()
+        ? latest.courseTitle.trim()
+        : getSessionTitle(courseSessions, courses, latest.courseSessionId);
       const when = formatListDate(latest.consumedAt);
       lastConsumptionLabel = `最近耗课：${title} / ${when}`;
     }

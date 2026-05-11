@@ -17,6 +17,7 @@ import {
   getMemberLifecycleStatus,
 } from '../utils/memberLifecycle';
 import { MEMBER_RISK_PRESENTATION } from '../utils/memberPresentation';
+import { MEMBER_OPS_SCENARIO_CONSUMPTIONS } from '../utils/memberOpsScenarioFixtures';
 import { buildMemberListRows, type MemberListLifecycleTone } from '../utils/memberListSelectors';
 import MemberDetailModal from './MemberDetailModal';
 
@@ -95,7 +96,7 @@ const Members: React.FC = () => {
       memberAssets: MOCK_MEMBER_ASSETS,
       bookings: MOCK_BOOKINGS,
       attendances: MOCK_ATTENDANCES,
-      consumptions: [],
+      consumptions: MEMBER_OPS_SCENARIO_CONSUMPTIONS,
       orders: MOCK_ORDERS,
       contracts: MOCK_CONTRACTS,
       courseSessions: MOCK_COURSE_SESSIONS,
