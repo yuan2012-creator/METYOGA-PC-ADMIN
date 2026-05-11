@@ -23,6 +23,8 @@ interface ScheduleCalendarProps {
   handleGridClick: (e: React.MouseEvent, dayIndex: number) => void;
   openEditModal: (event: ScheduleEvent) => void;
   onRegenerateAi: () => void;
+  isLibraryManagementOpen?: boolean;
+  onToggleLibraryManagement?: () => void;
 }
 
 const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
@@ -42,6 +44,8 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
   handleGridClick,
   openEditModal,
   onRegenerateAi,
+  isLibraryManagementOpen = false,
+  onToggleLibraryManagement,
 }) => (
   <>
                       {/* SECTION 2: SMART SCHEDULING GUIDANCE (Moved here for better visibility) */}
@@ -82,7 +86,7 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                                   <p className="text-xs text-gray-600 leading-relaxed">
                                       <span className="font-bold text-gray-900">Sarah</span> 的哈他瑜伽上周满员，建议本周增加 1 节排期。
                                   </p>
-                                  <button className="mt-3 text-xs text-black bg-white border border-gray-200 hover:border-black px-3 py-1.5 rounded transition shadow-sm">去排课</button>
+                                  <button type="button" className="met-secondary-button mt-3 !px-3 !py-1.5 text-xs">去排课</button>
                               </div>
                               {/* Suggestion 3 */}
                               <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 relative overflow-hidden group hover:border-gray-200 transition">
@@ -93,7 +97,7 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                                   <p className="text-xs text-gray-600 leading-relaxed">
                                       [晨间唤醒] 连续3周取消率 &gt; 20%，建议调整时段或下架。
                                   </p>
-                                  <button className="mt-3 text-xs text-gray-600 bg-white border border-gray-200 hover:text-black hover:border-black px-3 py-1.5 rounded transition shadow-sm">查看详情</button>
+                                  <button type="button" className="met-secondary-button mt-3 !px-3 !py-1.5 text-xs text-gray-600">查看详情</button>
                               </div>
                           </div>
                       </div>
@@ -103,29 +107,49 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                           {/* SECTION 3: COURSE LIBRARY SIDEBAR */}
                           <div className="w-64 flex flex-col h-full sticky top-0">
                               {/* Course Library (Source for D&D) */}
-                              <div className="bg-white rounded-2xl border border-gray-200 shadow-sm flex-1 flex flex-col overflow-hidden">
-                                  <div className="p-4 border-b border-gray-100 bg-gray-50">
-                                      <h3 className="font-bold text-sm text-gray-900 flex items-center gap-2">
-                                          <i className="fa-solid fa-book-open text-gray-400"></i> 课程库 (拖拽排课)
-                                      </h3>
-                                      <input type="text" placeholder="搜索课程..." className="mt-3 w-full bg-white border border-gray-200 rounded-lg px-3 py-2 text-xs outline-none focus:border-black transition" />
+                              <div className="flex flex-1 flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+                                  <div className="border-b border-gray-100 bg-gray-50/90 p-4">
+                                      <div className="flex items-start justify-between gap-2">
+                                          <div className="min-w-0">
+                                              <h3 className="flex items-center gap-2 text-sm font-bold text-gray-900">
+                                                  <i className="fa-solid fa-book-open text-gray-400" aria-hidden /> 课程库
+                                              </h3>
+                                              <p className="mt-1 text-[11px] leading-snug text-gray-500">拖拽课程到日历生成排课</p>
+                                          </div>
+                                          {onToggleLibraryManagement ? (
+                                              <button
+                                                  type="button"
+                                                  onClick={onToggleLibraryManagement}
+                                                  className="met-secondary-button shrink-0 !h-8 !min-h-0 !px-2.5 !py-0 !text-[11px] whitespace-nowrap"
+                                              >
+                                                  {isLibraryManagementOpen ? '收起' : '管理课程库'}
+                                              </button>
+                                          ) : null}
+                                      </div>
+                                      <input
+                                          type="text"
+                                          placeholder="搜索课程..."
+                                          className="mt-3 w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs outline-none transition focus:border-[#1f5e3b]/40 focus:ring-1 focus:ring-[#1f5e3b]/15"
+                                      />
                                   </div>
-                                  <div className="flex-1 overflow-y-auto p-3 space-y-3 custom-scroll">
+                                  <div className="custom-scroll flex-1 space-y-2 overflow-y-auto p-3">
                                       {libraryList.map(course => (
-                                          <div 
+                                          <div
                                               key={course.id}
                                               draggable
-                                              onDragStart={(e) => handleCourseDragStart(e, course)}
-                                              className={`p-3 rounded-xl border border-gray-200 bg-white shadow-sm cursor-move hover:border-black hover:shadow-md transition group active:cursor-grabbing`}
+                                              onDragStart={e => handleCourseDragStart(e, course)}
+                                              className="group cursor-move rounded-xl border border-gray-200 bg-white p-3 transition-colors hover:border-gray-300 hover:bg-gray-50/70 active:cursor-grabbing"
                                           >
-                                              <div className="flex justify-between items-start mb-1">
-                                                  <div className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${course.colorTag}`}>{COURSE_TYPE_LABELS[course.type]}</div>
-                                                  <span className="text-xs text-gray-400">{course.durationMinutes}min</span>
+                                              <div className="mb-1.5 font-bold text-sm leading-snug text-gray-900">{course.name}</div>
+                                              <div className="mb-1 flex flex-wrap items-center gap-2 text-[10px] text-gray-600">
+                                                  <span className={`rounded px-1.5 py-0.5 font-semibold ${course.colorTag}`}>
+                                                      {COURSE_TYPE_LABELS[course.type]}
+                                                  </span>
+                                                  <span className="tabular-nums text-gray-500">{course.durationMinutes} 分钟</span>
                                               </div>
-                                              <div className="font-bold text-sm text-gray-900 mb-1">{course.name}</div>
-                                              <div className="text-[10px] text-gray-500">难度: {course.levelLabel}</div>
-                                              <div className="mt-2 pt-2 border-t border-gray-50 flex items-center gap-1 text-[10px] text-gray-400">
-                                                  <i className="fa-solid fa-grip-vertical"></i> 拖拽至日历
+                                              <div className="text-[10px] text-gray-500">难度 · {course.levelLabel}</div>
+                                              <div className="mt-2 flex items-center gap-1 border-t border-gray-100 pt-2 text-[10px] text-gray-400">
+                                                  <i className="fa-solid fa-grip-vertical" aria-hidden /> 拖拽至日历排课
                                               </div>
                                           </div>
                                       ))}
@@ -144,7 +168,7 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                                               <button 
                                                   key={room.id}
                                                   onClick={() => setActiveRoomId(room.id)}
-                                                  className={`flex items-center gap-2 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${activeRoomId === room.id ? 'bg-white text-black shadow-sm font-bold' : 'text-gray-500 hover:text-black'}`}
+                                                  className={`flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${activeRoomId === room.id ? 'bg-white font-bold text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-800'}`}
                                               >
                                                   <i className={`fa-solid ${room.icon} text-[10px]`}></i>
                                                   {room.name.split(' ')[0]}
@@ -162,8 +186,11 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                                           <span className="px-3 py-1 text-xs font-bold border-x border-gray-100 flex items-center min-w-[100px] justify-center">05.04 - 05.10</span>
                                           <button className="px-3 py-1 text-xs hover:bg-gray-50 text-gray-600"><i className="fa-solid fa-chevron-right"></i></button>
                                       </div>
-                                      <button className="bg-black text-white text-xs px-3 py-2 rounded-lg font-bold hover:opacity-80 transition shadow">
-                                          <i className="fa-solid fa-check mr-1"></i> 发布课表
+                                      <button
+                                          type="button"
+                                          className="rounded-lg border border-[#1f5e3b]/35 bg-white px-3 py-2 text-xs font-semibold text-[#1f5e3b] transition hover:bg-[#1f5e3b]/[0.06]"
+                                      >
+                                          <i className="fa-solid fa-check mr-1" aria-hidden /> 发布课表
                                       </button>
                                   </div>
                               </div>

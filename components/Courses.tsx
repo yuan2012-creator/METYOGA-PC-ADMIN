@@ -4,11 +4,11 @@ import {
   MOCK_BOOKINGS,
   MOCK_COURSE_SESSIONS,
   MOCK_COURSES,
+  MOCK_MEMBERS,
 } from '../constants';
 import {
   buildOpsSchedule,
   COURSE_ROOMS,
-  COURSE_SUB_TABS,
   assignSubstituteTeacher,
   bookDemoMemberForSession,
   cancelScheduleEvent,
@@ -27,7 +27,6 @@ import {
 } from '../utils/courseSelectors';
 import type {
   CourseLibraryItem,
-  CourseSubTab,
   OpsFilter,
   ScheduleEvent,
   ScheduleFormState,
@@ -35,6 +34,8 @@ import type {
 import CourseLibrary from './courses/CourseLibrary';
 import ScheduleCalendar from './courses/ScheduleCalendar';
 import ScheduleForm from './courses/ScheduleForm';
+import CourseSessionOpsDrawer from './courses/CourseSessionOpsDrawer';
+import type { CourseSessionOpsTab } from './courses/CourseSessionOpsDrawer';
 import TodayOpsPanel from './courses/TodayOpsPanel';
 
 const INITIAL_LIBRARY_LIST = MOCK_COURSES.map(toCourseLibraryItem);
@@ -58,10 +59,13 @@ interface CourseConfirmDialog {
 }
 
 const Courses: React.FC = () => {
-  const [currentSubTab, setCurrentSubTab] = useState<CourseSubTab>('schedule');
   const [opsFilter, setOpsFilter] = useState<OpsFilter>('all');
+  const [isLibraryManagementOpen, setIsLibraryManagementOpen] = useState(false);
   const [toast, setToast] = useState<CourseToast | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<CourseConfirmDialog | null>(null);
+  const [isOpsDrawerOpen, setIsOpsDrawerOpen] = useState(false);
+  const [activeOpsSessionId, setActiveOpsSessionId] = useState<string | null>(null);
+  const [activeOpsDrawerTab, setActiveOpsDrawerTab] = useState<CourseSessionOpsTab>('bookings');
   
   // --- Library State (Courses) ---
   const [libraryList, setLibraryList] = useState<CourseLibraryItem[]>(INITIAL_LIBRARY_LIST);
@@ -107,6 +111,31 @@ const Courses: React.FC = () => {
   const opsSummary = getOpsSummary(todayOpsSchedule);
   const aiGuidance = getOpsAiGuidance(todayOpsSchedule, opsSummary);
 
+  const activeOpsSession =
+    activeOpsSessionId != null
+      ? todayOpsSchedule.find(s => s.id === activeOpsSessionId) ?? null
+      : null;
+
+  const openSessionOpsDrawer = (tab: CourseSessionOpsTab, sessionId?: string) => {
+    const resolved =
+      sessionId ??
+      todayOpsSchedule.find(s => s.abnormal)?.id ??
+      todayOpsSchedule[0]?.id ??
+      null;
+    setActiveOpsDrawerTab(tab);
+    setActiveOpsSessionId(resolved);
+    setIsOpsDrawerOpen(true);
+  };
+
+  const openSessionCard = (sessionId: string) => {
+    const item = todayOpsSchedule.find(s => s.id === sessionId);
+    setActiveOpsDrawerTab(item?.abnormal ? 'exceptions' : 'bookings');
+    setActiveOpsSessionId(sessionId);
+    setIsOpsDrawerOpen(true);
+  };
+
+  const closeSessionOpsDrawer = () => setIsOpsDrawerOpen(false);
+
   // --- Actions ---
   const showToast = (message: string, tone: CourseToastTone = 'info') => {
       setToast({ id: Date.now(), message, tone });
@@ -143,42 +172,34 @@ const Courses: React.FC = () => {
   };
 
   const handleGlobalCreate = () => {
-      if (currentSubTab === 'library') {
-          const newCourse: CourseLibraryItem = {
-              id: `course-${Date.now()}`,
-              name: '新课程',
-              type: 'group',
-              durationMinutes: 60,
-              category: '瑜伽',
-              difficulty: 'beginner',
-              status: 'active',
-              levelLabel: 'L1 入门',
-              price: 0,
-              rating: 0,
-              suitable: [],
-              description: '',
-              goals: '',
-              notes: '',
-              colorTag: 'bg-gray-100 text-gray-700 border-gray-200'
-          };
-          setSelectedCourse(newCourse);
-          setEditMode(true);
-          setIsDetailModalOpen(true);
-          setLibraryList([newCourse, ...libraryList]);
-          return;
-      }
-
       const capacity = rooms.find(r => r.id === activeRoomId)?.capacity || 10;
       setScheduleForm(createScheduleFormDraft(4, activeRoomId, '10:00', capacity));
       setIsScheduleModalOpen(true);
   };
-  
-  const getCreateLabel = () => {
-    switch (currentSubTab) {
-        case 'schedule': return '排课';
-        case 'library': return '新建课程';
-        default: return '新建';
-    }
+
+  const handleCreateNewCourse = () => {
+      setIsLibraryManagementOpen(true);
+      const newCourse: CourseLibraryItem = {
+          id: `course-${Date.now()}`,
+          name: '新课程',
+          type: 'group',
+          durationMinutes: 60,
+          category: '瑜伽',
+          difficulty: 'beginner',
+          status: 'active',
+          levelLabel: 'L1 入门',
+          price: 0,
+          rating: 0,
+          suitable: [],
+          description: '',
+          goals: '',
+          notes: '',
+          colorTag: 'bg-gray-100 text-gray-700 border-gray-200',
+      };
+      setSelectedCourse(newCourse);
+      setEditMode(true);
+      setIsDetailModalOpen(true);
+      setLibraryList([newCourse, ...libraryList]);
   };
 
   // --- Drag & Drop Handlers ---
@@ -329,6 +350,23 @@ const Courses: React.FC = () => {
       showToast(feedback || '已完成课程演示状态', 'success');
   };
 
+  const handleOpenCheckInReview = () => {
+      showToast('签到核验记录待接入，当前仅展示课程执行状态。', 'info');
+  };
+
+  const handleOpenExceptionCenter = () => {
+      showToast('课程异常处理待接入，当前仅展示异常提醒。', 'info');
+  };
+
+  const handleRequestCompleteCourse = (sessionId: string) => {
+      setConfirmDialog({
+          title: '确认完课',
+          message: '确认后将把该课程场次标记为已完课，并更新当前演示状态。真实扣课、老师课时与财务确认需以后端记录为准。',
+          confirmLabel: '确认完课',
+          onConfirm: () => handleOpsComplete(sessionId),
+      });
+  };
+
   return (
     <div className="h-full flex flex-col animate-fadeIn relative bg-[#F5F5F7]">
       
@@ -338,86 +376,84 @@ const Courses: React.FC = () => {
               <h2 className="text-xl font-bold text-gray-900">课程运营</h2>
           </div>
           <div className="flex items-center gap-4">
-              <button 
-                  onClick={handleGlobalCreate} 
+              <button
+                  type="button"
+                  onClick={handleGlobalCreate}
                   className="met-primary-button flex items-center gap-2 text-xs"
               >
-                  <i className="fa-solid fa-plus"></i> {getCreateLabel()}
+                  <i className="fa-solid fa-plus" aria-hidden /> 排课
               </button>
           </div>
       </div>
 
-      {/* Sub Navigation */}
-      <div className="px-8 py-4 bg-[#F5F5F7]/95 backdrop-blur border-b border-gray-200/50 sticky top-16 z-10 flex justify-start">
-          <div className="bg-gray-100 p-1 rounded-xl inline-flex relative">
-              {COURSE_SUB_TABS.map(tab => (
-                  <button 
-                      key={tab.id}
-                      onClick={() => setCurrentSubTab(tab.id)}
-                      className={`relative z-10 px-4 py-2 text-[13px] font-medium text-center rounded-lg transition-all duration-200 ${currentSubTab === tab.id ? 'bg-white text-black shadow-sm font-bold' : 'text-gray-500 hover:text-black'}`}
-                  >
-                      {tab.label}
-                  </button>
-              ))}
-          </div>
-      </div>
-
       {/* Content Area */}
-      <div className="flex-1 overflow-y-auto p-8 custom-scroll">
-          <div className="max-w-[1440px] mx-auto space-y-6">
+      <div className="custom-scroll flex-1 overflow-y-auto p-8">
+          <div className="mx-auto max-w-[1440px] space-y-6">
+              <TodayOpsPanel
+                  opsFilter={opsFilter}
+                  setOpsFilter={setOpsFilter}
+                  filteredOpsSchedule={filteredOpsSchedule}
+                  opsSummary={opsSummary}
+                  aiGuidance={aiGuidance}
+                  onOpenSessionCard={openSessionCard}
+                  onOpenSessionOpsDrawer={openSessionOpsDrawer}
+                  onOpenCheckInReview={handleOpenCheckInReview}
+                  onOpenExceptionCenter={handleOpenExceptionCenter}
+              />
 
-              {/* --- TAB: SCHEDULE --- */}
-              {currentSubTab === 'schedule' && (
-                  <div className="space-y-6 animate-fadeIn">
-                      <TodayOpsPanel
-                          opsFilter={opsFilter}
-                          setOpsFilter={setOpsFilter}
-                          filteredOpsSchedule={filteredOpsSchedule}
-                          opsSummary={opsSummary}
-                          aiGuidance={aiGuidance}
-                          onBookDemo={handleOpsBooking}
-                          onSubstitute={handleSubstitute}
-                          onCheckIn={handleOpsCheckIn}
-                          onComplete={handleOpsComplete}
-                      />
-                      <ScheduleCalendar
-                          libraryList={libraryList}
-                          rooms={rooms}
-                          activeRoomId={activeRoomId}
-                          setActiveRoomId={setActiveRoomId}
-                          weekDays={weekDays}
-                          hoursArray={hoursArray}
-                          hourHeight={hourHeight}
-                          scheduleEvents={activeScheduleEvents}
-                          draggedEventId={draggedEventId}
-                          handleCourseDragStart={handleCourseDragStart}
-                          handleEventDragStart={handleEventDragStart}
-                          handleDragOver={handleDragOver}
-                          handleDrop={handleDrop}
-                          handleGridClick={handleGridClick}
-                          openEditModal={openEditModal}
-                          onRegenerateAi={() => showToast('正在根据历史数据重新计算排课建议…', 'info')}
-                      />
-                  </div>
-              )}
-
-              {/* --- TAB: LIBRARY (Existing) --- */}
-              {currentSubTab === 'library' && (
-                  <CourseLibrary
+              <section className="space-y-4">
+                  <h3 className="px-0.5 text-base font-bold text-gray-900">排课工作台</h3>
+                  <ScheduleCalendar
                       libraryList={libraryList}
-                      selectedCourse={selectedCourse}
-                      setSelectedCourse={setSelectedCourse}
-                      isDetailModalOpen={isDetailModalOpen}
-                      setIsDetailModalOpen={setIsDetailModalOpen}
-                      editMode={editMode}
-                      setEditMode={setEditMode}
-                      handleOpenDetail={handleOpenDetail}
-                      handleDuplicate={handleDuplicate}
-                      handleDelete={handleDelete}
-                      handleSaveCourse={handleSaveCourse}
+                      rooms={rooms}
+                      activeRoomId={activeRoomId}
+                      setActiveRoomId={setActiveRoomId}
+                      weekDays={weekDays}
+                      hoursArray={hoursArray}
+                      hourHeight={hourHeight}
+                      scheduleEvents={activeScheduleEvents}
+                      draggedEventId={draggedEventId}
+                      handleCourseDragStart={handleCourseDragStart}
+                      handleEventDragStart={handleEventDragStart}
+                      handleDragOver={handleDragOver}
+                      handleDrop={handleDrop}
+                      handleGridClick={handleGridClick}
+                      openEditModal={openEditModal}
+                      onRegenerateAi={() => showToast('正在根据历史数据重新计算排课建议…', 'info')}
+                      isLibraryManagementOpen={isLibraryManagementOpen}
+                      onToggleLibraryManagement={() => setIsLibraryManagementOpen(o => !o)}
                   />
-              )}
 
+                  {isLibraryManagementOpen ? (
+                      <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+                          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 bg-white px-5 py-4">
+                              <h4 className="text-sm font-bold text-gray-900">课程库管理</h4>
+                              <button
+                                  type="button"
+                                  onClick={() => setIsLibraryManagementOpen(false)}
+                                  className="met-secondary-button !h-8 !min-h-0 !px-3 !py-0 !text-[11px]"
+                              >
+                                  收起
+                              </button>
+                          </div>
+                          <CourseLibrary
+                              embedded
+                              onCreateCourse={handleCreateNewCourse}
+                              libraryList={libraryList}
+                              selectedCourse={selectedCourse}
+                              setSelectedCourse={setSelectedCourse}
+                              isDetailModalOpen={isDetailModalOpen}
+                              setIsDetailModalOpen={setIsDetailModalOpen}
+                              editMode={editMode}
+                              setEditMode={setEditMode}
+                              handleOpenDetail={handleOpenDetail}
+                              handleDuplicate={handleDuplicate}
+                              handleDelete={handleDelete}
+                              handleSaveCourse={handleSaveCourse}
+                          />
+                      </div>
+                  ) : null}
+              </section>
           </div>
       </div>
 
@@ -429,6 +465,17 @@ const Courses: React.FC = () => {
         libraryList={libraryList}
         confirmSchedule={confirmSchedule}
         deleteEvent={deleteEvent}
+      />
+
+      <CourseSessionOpsDrawer
+          isOpen={isOpsDrawerOpen}
+          onClose={closeSessionOpsDrawer}
+          tab={activeOpsDrawerTab}
+          onTabChange={setActiveOpsDrawerTab}
+          session={activeOpsSession}
+          bookings={bookings}
+          attendances={attendances}
+          members={MOCK_MEMBERS}
       />
 
       {toast && (

@@ -18,6 +18,9 @@ interface CourseLibraryProps {
   handleDuplicate: (course: CourseLibraryItem, e: React.MouseEvent) => void;
   handleDelete: (id: string, e: React.MouseEvent) => void;
   handleSaveCourse: (updatedCourse: CourseLibraryItem) => void;
+  /** 嵌入排课页时去掉外层卡片圆角与阴影，由外层容器承接样式 */
+  embedded?: boolean;
+  onCreateCourse?: () => void;
 }
 
 const CourseLibrary: React.FC<CourseLibraryProps> = ({
@@ -32,30 +35,51 @@ const CourseLibrary: React.FC<CourseLibraryProps> = ({
   handleDuplicate,
   handleDelete,
   handleSaveCourse,
+  embedded = false,
+  onCreateCourse,
 }) => (
   <>
-                  <div className="space-y-6 animate-fadeIn">
-                      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-                          <div className="p-5 border-b border-gray-100 flex justify-between items-center">
-                              <div className="flex gap-6 text-sm">
-                                  <button className="font-bold text-black border-b-2 border-black pb-1">全部课程</button>
-                                  <button className="text-gray-400 hover:text-black transition">小班团课</button>
-                                  <button className="text-gray-400 hover:text-black transition">私教</button>
+                  <div className={embedded ? '' : 'space-y-6 animate-fadeIn'}>
+                      <div
+                          className={`overflow-hidden bg-white ${embedded ? 'rounded-none border-0 shadow-none' : 'rounded-2xl border border-gray-200 shadow-sm'}`}
+                      >
+                          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 p-5">
+                              <div className="flex flex-wrap gap-4 text-sm sm:gap-6">
+                                  <button type="button" className="border-b-2 border-[#1f5e3b] pb-1 font-bold text-[#1f5e3b]">
+                                      全部课程
+                                  </button>
+                                  <button type="button" className="pb-1 text-gray-400 transition hover:text-gray-700">
+                                      小班团课
+                                  </button>
+                                  <button type="button" className="pb-1 text-gray-400 transition hover:text-gray-700">
+                                      私教
+                                  </button>
                               </div>
-                              <div className="relative">
-                                  <i className="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
-                                  <input type="text" placeholder="搜索课程..." className="pl-8 pr-4 py-2 bg-gray-50 border border-transparent rounded-lg text-xs w-48 focus:bg-white focus:border-gray-300 transition outline-none" />
+                              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                                  {onCreateCourse ? (
+                                      <button type="button" onClick={onCreateCourse} className="met-secondary-button !h-8 !min-h-0 !px-3 !py-0 !text-[11px]">
+                                          新建课程
+                                      </button>
+                                  ) : null}
+                                  <div className="relative">
+                                      <i className="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400" aria-hidden />
+                                      <input
+                                          type="text"
+                                          placeholder="搜索课程..."
+                                          className="w-48 rounded-lg border border-transparent bg-gray-50 py-2 pl-8 pr-4 text-xs outline-none transition focus:border-gray-200 focus:bg-white"
+                                      />
+                                  </div>
                               </div>
                           </div>
-                          <table className="w-full text-sm text-left">
-                              <thead className="bg-gray-50 text-gray-500 text-xs uppercase font-bold">
+                          <table className="w-full text-left text-sm">
+                              <thead className="bg-gray-50 text-xs font-bold text-gray-500">
                                   <tr>
                                       <th className="p-4 pl-6 font-bold">课程名称</th>
                                       <th className="p-4 font-bold">类型</th>
                                       <th className="p-4 font-bold">难度 / 时长</th>
-                                      <th className="p-4 font-bold">单节价格</th>
+                                      <th className="p-4 font-bold">单价 / 扣点</th>
                                       <th className="p-4 font-bold">适用标签</th>
-                                      <th className="p-4 font-bold text-right pr-6">操作</th>
+                                      <th className="p-4 pr-6 text-right font-bold">操作</th>
                                   </tr>
                               </thead>
                               <tbody className="divide-y divide-gray-50">
