@@ -7,9 +7,12 @@ import {
   MOCK_CONTRACTS,
   MOCK_COURSES,
   MOCK_COURSE_SESSIONS,
+  MOCK_FINANCE_LEDGER_ENTRIES,
   MOCK_MEMBER_ASSETS,
   MOCK_MEMBERS,
   MOCK_ORDERS,
+  MOCK_PAYMENTS,
+  MOCK_REFUNDS,
 } from '../constants';
 import { Member } from '../types';
 import {
@@ -435,9 +438,20 @@ const Members: React.FC = () => {
       </div>
 
       {selectedMember && (
-          <MemberDetailModal 
-            member={selectedMember} 
-            onClose={() => setSelectedMember(null)} 
+          <MemberDetailModal
+            member={selectedMember}
+            onClose={() => setSelectedMember(null)}
+            consumptions={MEMBER_OPS_SCENARIO_CONSUMPTIONS}
+            memberAssets={MOCK_MEMBER_ASSETS}
+            bookings={MOCK_BOOKINGS}
+            attendances={MOCK_ATTENDANCES}
+            orders={MOCK_ORDERS}
+            contracts={MOCK_CONTRACTS}
+            payments={MOCK_PAYMENTS}
+            refunds={MOCK_REFUNDS}
+            ledgerEntries={MOCK_FINANCE_LEDGER_ENTRIES}
+            courseSessions={MOCK_COURSE_SESSIONS}
+            courses={MOCK_COURSES}
           />
       )}
 
