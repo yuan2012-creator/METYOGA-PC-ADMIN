@@ -20,6 +20,7 @@ interface MallOrdersProps {
   orderFilters: MallOrderFilters;
   setOrderFilters: React.Dispatch<React.SetStateAction<MallOrderFilters>>;
   onDemoAction: (message: string) => void;
+  onOpenOrderDetail: (orderId: string) => void;
 }
 
 const MallOrders: React.FC<MallOrdersProps> = ({
@@ -32,6 +33,7 @@ const MallOrders: React.FC<MallOrdersProps> = ({
   orderFilters,
   setOrderFilters,
   onDemoAction,
+  onOpenOrderDetail,
 }) => {
   const renderOrders = () => {
       const detailedOrders = buildMallOrderRows({ orders, contracts, members, assetSourceLinks });
@@ -121,7 +123,19 @@ const MallOrders: React.FC<MallOrdersProps> = ({
                       </thead>
                       <tbody className="divide-y divide-gray-50">
                           {filteredOrders.map(order => (
-                              <tr key={order.id} className="hover:bg-gray-50 transition">
+                              <tr
+                                  key={order.id}
+                                  role="button"
+                                  tabIndex={0}
+                                  onClick={() => onOpenOrderDetail(order.id)}
+                                  onKeyDown={(e) => {
+                                      if (e.key === 'Enter' || e.key === ' ') {
+                                          e.preventDefault();
+                                          onOpenOrderDetail(order.id);
+                                      }
+                                  }}
+                                  className="hover:bg-gray-50 transition cursor-pointer"
+                              >
                                   <td className="p-4 pl-6 font-mono text-xs text-gray-500">{order.id}</td>
                                   <td className="p-4">
                                       <div className="font-bold text-gray-900">{order.user}</div>
@@ -155,7 +169,10 @@ const MallOrders: React.FC<MallOrdersProps> = ({
                                   <td className="p-4 text-right pr-6">
                                       <button
                                           type="button"
-                                          onClick={() => onDemoAction('订单详情抽屉待接入，正式版本需展示订单、合同、支付、资产与退款记录。')}
+                                          onClick={(e) => {
+                                              e.stopPropagation();
+                                              onOpenOrderDetail(order.id);
+                                          }}
                                           className="text-black hover:underline text-xs font-bold"
                                       >
                                           查看

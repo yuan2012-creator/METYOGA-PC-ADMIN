@@ -1,11 +1,18 @@
 import type {
   CardProduct,
   Contract,
+  ContractStatus,
   Member,
   MemberAsset,
+  MemberAssetStatus,
   Order,
   OrderItem,
+  OrderStatus,
+  Payment,
+  PaymentStatus,
   PointProduct,
+  Refund,
+  RefundStatus,
 } from '../types';
 import type { MallTtcCourse } from '../components/mall/MallTtc';
 import type { MallContractData } from '../components/mall/MallContractCreate';
@@ -376,3 +383,231 @@ export const buildMallClosureSummary = ({
   linkedContractCount: assetSourceLinks.filter(link => link.contractLinked).length,
   fallbackAssetCount: assetSourceLinks.filter(link => !link.orderLinked || !link.contractLinked).length,
 });
+
+/** 订单在后台是否呈现为「已收款 / 已履约」等与支付强相关的口径（用于风险提示，非财务确认） */
+export const mallOrderAppearsSettledForPaymentCheck = (order: Order): boolean => {
+  if (order.status === 'paid' || order.status === 'fulfilled' || order.status === 'closed') return true;
+  if (order.status === 'partially_refunded' || order.status === 'refunded') return true;
+  const paid = order.paidAmount ?? 0;
+  const total = order.totalAmount ?? 0;
+  if (total > 0 && paid >= total) return true;
+  return false;
+};
+
+export const mallOrderHasAnyPaymentRecord = (order: Order, payments: Payment[]): boolean =>
+  payments.some(p => p.orderId === order.id);
+
+export const formatMallMoneyYuan = (amount: number | undefined): string => {
+  if (amount === undefined || Number.isNaN(amount)) return '暂未记录';
+  return `¥${amount.toLocaleString()}`;
+};
+
+export const labelMallOrderStatusZh = (status: OrderStatus): string => {
+  const map: Record<OrderStatus, string> = {
+    draft: '草稿',
+    pending_payment: '待收款',
+    paid: '已收款',
+    fulfilled: '已履约',
+    closed: '已关闭',
+    cancelled: '已取消',
+    partially_refunded: '部分已退',
+    refunded: '已退款',
+  };
+  return map[status] ?? '暂未识别';
+};
+
+export const labelMallContractStatusZh = (status: ContractStatus): string => {
+  const map: Record<ContractStatus, string> = {
+    draft: '草稿',
+    pending_signature: '待签署',
+    signed: '已签署',
+    effective: '已生效',
+    voided: '已作废',
+    expired: '已到期',
+    terminated: '已终止',
+  };
+  return map[status] ?? '暂未识别';
+};
+
+export const labelMallPaymentStatusZh = (status: PaymentStatus): string => {
+  const map: Record<PaymentStatus, string> = {
+    initiated: '发起中',
+    paid: '已到账',
+    reconciled: '已对账',
+    failed: '失败',
+    cancelled: '已取消',
+    refunding: '退款处理中',
+    refunded: '已原路退回',
+  };
+  return map[status] ?? '暂未识别';
+};
+
+export const labelMallRefundStatusZh = (status: RefundStatus): string => {
+  const map: Record<RefundStatus, string> = {
+    requested: '已申请',
+    reviewing: '审核中',
+    approved: '已通过',
+    processing: '处理中',
+    completed: '已完成',
+    rejected: '已驳回',
+    cancelled: '已撤销',
+  };
+  return map[status] ?? '暂未识别';
+};
+
+export const labelMallMemberAssetStatusZh = (status: MemberAssetStatus): string => {
+  const map: Record<MemberAssetStatus, string> = {
+    inactive: '未激活',
+    effective: '生效中',
+    frozen: '已冻结',
+    expired: '已到期',
+    used_up: '已用尽',
+    transferred: '已转赠',
+    upgraded: '已升级',
+    cancelled: '已作废',
+  };
+  return map[status] ?? '暂未识别';
+};
+
+export const labelMallPaymentMethodZh = (method?: Payment['method']): string => {
+  if (!method) return '暂未记录';
+  const map: Record<NonNullable<Payment['method']>, string> = {
+    cash: '现金',
+    card: '银行卡',
+    wechat: '微信支付',
+    alipay: '支付宝',
+    bank_transfer: '银行转账',
+    other: '其他',
+  };
+  return map[method] ?? '暂未识别';
+};
+
+export const formatMallDateTimeDisplay = (iso?: string): string => {
+  if (!iso?.trim()) return '暂未记录';
+  return iso.replace('T', ' ').slice(0, 19);
+};
+
+export const mallStoreLabelFromId = (storeId?: string): string | undefined => {
+  if (!storeId) return undefined;
+  const map: Record<string, string> = {
+    '1': 'MET YOGA 万象城店',
+    'v1': 'MET YOGA 万象城店',
+    'v2': 'MET YOGA 西湖旗舰店',
+    custom: '自定义场馆',
+  };
+  return map[storeId];
+};
+
+export const formatMallAssetInitialSummary = (asset: MemberAsset): string => {
+  const { balanceType, totalAmount } = asset;
+  if (balanceType === 'time') return `共 ${totalAmount ?? '—'} 天`;
+  if (balanceType === 'count' || balanceType === 'course') return `共 ${totalAmount ?? '—'} 次`;
+  if (balanceType === 'value') return `额度 ${formatMallMoneyYuan(totalAmount)}`;
+  if (balanceType === 'points') return `共 ${totalAmount ?? '—'} 积分`;
+  return '暂未记录';
+};
+
+export const formatMallAssetEquitySummary = (asset: MemberAsset): string => {
+  const { balanceType, totalAmount, remainingAmount } = asset;
+  if (balanceType === 'time') {
+    const t = totalAmount ?? undefined;
+    const r = remainingAmount ?? undefined;
+    if (t === undefined && r === undefined) return '暂未记录';
+    return `期限权益：共 ${t ?? '—'} 天，剩余 ${r ?? '—'} 天`;
+  }
+  if (balanceType === 'count' || balanceType === 'course') {
+    const t = totalAmount ?? undefined;
+    const r = remainingAmount ?? undefined;
+    if (t === undefined && r === undefined) return '暂未记录';
+    return `次数权益：共 ${t ?? '—'} 次，剩余 ${r ?? '—'} 次`;
+  }
+  if (balanceType === 'value') {
+    return `额度：${formatMallMoneyYuan(totalAmount)}，剩余 ${formatMallMoneyYuan(remainingAmount)}`;
+  }
+  if (balanceType === 'points') {
+    const t = totalAmount ?? undefined;
+    const r = remainingAmount ?? undefined;
+    return `积分：共 ${t ?? '—'}，剩余 ${r ?? '—'}`;
+  }
+  return '暂未记录';
+};
+
+export const buildMallOrderDetailRiskMessages = ({
+  order,
+  contract,
+  payments,
+  refunds,
+  assets,
+}: {
+  order: Order;
+  contract?: Contract;
+  payments: Payment[];
+  refunds: Refund[];
+  assets: MemberAsset[];
+}): string[] => {
+  const messages: string[] = [];
+  const orderPayments = payments.filter(p => p.orderId === order.id);
+  const orderRefunds = refunds.filter(r => r.orderId === order.id);
+  const orderAssets = assets.filter(a => a.sourceOrderId === order.id);
+
+  if (mallOrderAppearsSettledForPaymentCheck(order) && orderPayments.length === 0) {
+    messages.push('订单显示已支付，但暂无支付记录。');
+  }
+
+  const paidIn = order.paidAmount ?? 0;
+  if (paidIn > 0 && contract && (contract.status === 'pending_signature' || contract.status === 'draft')) {
+    messages.push('订单已支付，合同仍待签署。');
+  }
+
+  if (
+    mallOrderAppearsSettledForPaymentCheck(order) &&
+    contract &&
+    (contract.status === 'signed' || contract.status === 'effective') &&
+    orderAssets.length === 0
+  ) {
+    messages.push('订单与合同已完成，但暂无会员资产发放记录。');
+  }
+
+  const hasCompletedRefund = orderRefunds.some(r => r.status === 'completed');
+  const assetStillUsable = orderAssets.some(
+    a => a.status === 'effective' && (a.remainingAmount ?? 0) > 0
+  );
+  if (hasCompletedRefund && assetStillUsable) {
+    messages.push('订单存在退款记录，请核对会员资产状态。');
+  }
+
+  if (messages.length === 0) {
+    messages.push('订单、合同、支付与资产链路暂无明显异常。');
+  }
+
+  return messages;
+};
+
+export const summarizeMallHeaderPaymentStateZh = (order: Order, payments: Payment[]): string => {
+  const list = payments.filter(p => p.orderId === order.id);
+  if (list.length === 0) {
+    if (order.status === 'pending_payment') {
+      const paid = order.paidAmount ?? 0;
+      if (paid > 0) return '部分已收（待收尾款）';
+      return '待收款';
+    }
+    return '暂无支付记录';
+  }
+  const allReconciled = list.every(p => p.status === 'reconciled' || p.status === 'paid');
+  if (allReconciled && list.length > 0) return '已登记支付';
+  return '支付处理中';
+};
+
+export const summarizeMallHeaderContractStateZh = (contract?: Contract): string => {
+  if (!contract) return '暂无合同';
+  return labelMallContractStatusZh(contract.status);
+};
+
+export const summarizeMallHeaderAssetStateZh = (order: Order, assets: MemberAsset[]): string => {
+  const list = assets.filter(a => a.sourceOrderId === order.id);
+  if (list.length === 0) return '未发放';
+  const allEffective = list.every(a => a.status === 'effective');
+  if (list.some(a => a.status === 'frozen')) return '含冻结资产';
+  if (allEffective) return '已发放';
+  return '已登记资产';
+};

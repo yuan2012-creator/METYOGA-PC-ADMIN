@@ -6,12 +6,15 @@ import {
   MOCK_MEMBERS,
   MOCK_MEMBER_ASSETS,
   MOCK_ORDERS,
+  MOCK_PAYMENTS,
   MOCK_POINT_PRODUCTS,
+  MOCK_REFUNDS,
   MOCK_TTC_PRODUCTS,
 } from '../constants';
 import MallCards from './mall/MallCards';
 import MallDataOverview from './mall/MallDataOverview';
 import MallContractCreate, { createInitialContractData, type MallContractData } from './mall/MallContractCreate';
+import MallOrderDetailDrawer from './mall/MallOrderDetailDrawer';
 import MallOrders, { type MallOrderCategory, type MallOrderFilters } from './mall/MallOrders';
 import MallPoints from './mall/MallPoints';
 import MallTtc, { type MallTtcCourse, type Student, type TTCTutor, toMallTtcCourse } from './mall/MallTtc';
@@ -31,7 +34,7 @@ import type {
   MallTtcEditorItem,
   PointProductTab,
 } from './mall/mallTypes';
-import type { CardProduct, Contract, MemberAsset, Order, PointProduct } from '../types';
+import type { CardProduct, Contract, MemberAsset, Order, Payment, PointProduct, Refund } from '../types';
 import {
   buildMallAssetSourceLinks,
   buildMallClosureSummary,
@@ -89,6 +92,8 @@ const Mall: React.FC = () => {
   // Order Management State
   const [orderTab, setOrderTab] = useState<MallOrderCategory>('cards');
   const [orderFilters, setOrderFilters] = useState<MallOrderFilters>({ date: 'all', type: 'all', status: 'all' });
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [isOrderDrawerOpen, setIsOrderDrawerOpen] = useState(false);
 
   // Contract Creation State
   const [contractData, setContractData] = useState<MallContractData>(() => createInitialContractData());
@@ -143,6 +148,8 @@ const Mall: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
   const [contracts, setContracts] = useState<Contract[]>(MOCK_CONTRACTS);
   const [memberAssets, setMemberAssets] = useState<MemberAsset[]>(MOCK_MEMBER_ASSETS);
+  const [payments] = useState<Payment[]>(MOCK_PAYMENTS);
+  const [refunds] = useState<Refund[]>(MOCK_REFUNDS);
   const [writeClosureDraft, setWriteClosureDraft] = useState<MallWriteClosureDraft | null>(null);
   const mallProductOptions = useMemo(
       () => buildMallProductOptions({ cards, ttcCourses, pointProducts: products }),
@@ -168,6 +175,16 @@ const Mall: React.FC = () => {
       () => buildMallClosureSummary({ orders, assetSourceLinks }),
       [orders, assetSourceLinks]
   );
+
+  const openOrderDetailDrawer = (orderId: string) => {
+      setSelectedOrderId(orderId);
+      setIsOrderDrawerOpen(true);
+  };
+
+  const closeOrderDetailDrawer = () => {
+      setIsOrderDrawerOpen(false);
+      setSelectedOrderId(null);
+  };
 
   useEffect(() => {
       setWriteClosureDraft(null);
@@ -419,6 +436,7 @@ const Mall: React.FC = () => {
           orderFilters={orderFilters}
           setOrderFilters={setOrderFilters}
           onDemoAction={showToast}
+          onOpenOrderDetail={openOrderDetailDrawer}
       />
   );
 
@@ -516,6 +534,23 @@ const Mall: React.FC = () => {
                 {subView === 'contract_create' && renderMallContractCreate()}
             </div>
         </div>
+
+        {isOrderDrawerOpen && (
+            <MallOrderDetailDrawer
+                open={isOrderDrawerOpen}
+                orderId={selectedOrderId}
+                onClose={closeOrderDetailDrawer}
+                orders={orders}
+                contracts={contracts}
+                payments={payments}
+                refunds={refunds}
+                memberAssets={memberAssets}
+                members={MOCK_MEMBERS}
+                cardProducts={cards}
+                ttcCourses={ttcCourses}
+                pointProducts={products}
+            />
+        )}
 
         {toast && (
             <div className="fixed top-20 right-8 z-[70] animate-fadeIn">
