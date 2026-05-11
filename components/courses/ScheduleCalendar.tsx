@@ -25,6 +25,7 @@ interface ScheduleCalendarProps {
   onRegenerateAi: () => void;
   isLibraryManagementOpen?: boolean;
   onToggleLibraryManagement?: () => void;
+  onPublishSchedule?: () => void;
 }
 
 const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
@@ -46,6 +47,7 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
   onRegenerateAi,
   isLibraryManagementOpen = false,
   onToggleLibraryManagement,
+  onPublishSchedule,
 }) => (
   <>
                       {/* SECTION 2: SMART SCHEDULING GUIDANCE (Moved here for better visibility) */}
@@ -188,7 +190,8 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                                       </div>
                                       <button
                                           type="button"
-                                          className="rounded-lg border border-[#1f5e3b]/35 bg-white px-3 py-2 text-xs font-semibold text-[#1f5e3b] transition hover:bg-[#1f5e3b]/[0.06]"
+                                          onClick={() => onPublishSchedule?.()}
+                                          className="met-primary-button !h-9 !min-h-0 !px-3 !py-0 !text-xs"
                                       >
                                           <i className="fa-solid fa-check mr-1" aria-hidden /> 发布课表
                                       </button>

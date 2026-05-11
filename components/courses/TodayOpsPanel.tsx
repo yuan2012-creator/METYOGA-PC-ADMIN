@@ -104,7 +104,7 @@ const TodayOpsPanel: React.FC<TodayOpsPanelProps> = ({
                                       const timeStart = timeParts[0]?.trim() ?? '';
                                       const timeEnd = timeParts[1]?.trim() ?? '';
                                       const cardBorder = cls.abnormal
-                                          ? 'border border-rose-200 bg-white'
+                                          ? 'border border-rose-100/90 bg-white'
                                           : 'border border-gray-200 bg-white';
 
                                       return (
@@ -125,9 +125,7 @@ const TodayOpsPanel: React.FC<TodayOpsPanelProps> = ({
                                                           onOpenSessionCard(cls.id);
                                                       }
                                                   }}
-                                                  className={`mt-2 flex min-h-0 cursor-pointer flex-col gap-3 rounded-2xl p-5 outline-none transition-colors ${cardBorder} ${
-                                                      cls.abnormal ? 'border-l-[3px] border-l-rose-300' : ''
-                                                  } hover:border-gray-300 hover:bg-gray-50/60 focus-visible:ring-2 focus-visible:ring-[#1f5e3b]/30`}
+                                                  className={`mt-2 flex min-h-0 cursor-pointer flex-col gap-3 rounded-2xl p-5 outline-none transition-colors ${cardBorder} hover:border-gray-300 hover:bg-gray-50/60 focus-visible:ring-2 focus-visible:ring-[#1f5e3b]/30 ${cls.abnormal ? 'hover:border-rose-100/90' : ''}`}
                                               >
                                                   {/* 第一层：顶部状态行 */}
                                                   <div className="flex items-start justify-between gap-2 border-b border-gray-100 pb-3">
@@ -205,12 +203,12 @@ const TodayOpsPanel: React.FC<TodayOpsPanelProps> = ({
                                                                           : 'bg-gray-100 text-gray-600 ring-1 ring-gray-200'
                                                                   }`}
                                                               >
-                                                                  {cls.abnormal ? '是' : '否'}
+                                                                  {cls.abnormal ? '有' : '无'}
                                                               </span>
                                                           </div>
                                                       </div>
                                                       {cls.abnormal && cls.abnormalReason ? (
-                                                          <p className="mt-2 border-t border-rose-100 pt-2 text-[10px] leading-relaxed text-rose-800">
+                                                          <p className="mt-2 border-t border-rose-50 pt-2 text-[10px] leading-relaxed text-rose-700/90">
                                                               {cls.abnormalReason}
                                                           </p>
                                                       ) : null}

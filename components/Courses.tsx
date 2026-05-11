@@ -88,6 +88,7 @@ const Courses: React.FC = () => {
 
   // Schedule Modal State
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [scheduleFormIsCreate, setScheduleFormIsCreate] = useState(true);
   const [scheduleForm, setScheduleForm] = useState<ScheduleFormState>({
       id: '',
       dayIndex: 0,
@@ -173,8 +174,13 @@ const Courses: React.FC = () => {
 
   const handleGlobalCreate = () => {
       const capacity = rooms.find(r => r.id === activeRoomId)?.capacity || 10;
+      setScheduleFormIsCreate(true);
       setScheduleForm(createScheduleFormDraft(4, activeRoomId, '10:00', capacity));
       setIsScheduleModalOpen(true);
+  };
+
+  const handlePublishSchedule = () => {
+      showToast('发布课表流程待接入，当前排课仅保存为前端草稿。', 'info');
   };
 
   const handleCreateNewCourse = () => {
@@ -240,7 +246,7 @@ const Courses: React.FC = () => {
           const capacity = rooms.find(r => r.id === activeRoomId)?.capacity || 10;
           const newEvent = createDraftEventFromCourse(draggedCourse, dayIndex, activeRoomId, dropTime, capacity);
           setScheduleEvents(current => [...current, newEvent]);
-          openEditModal(newEvent);
+          openScheduleFormFromEvent(newEvent, true);
       } else if (draggedEventId) {
           setScheduleEvents(current => current.map(evt => (
               evt.id === draggedEventId
@@ -256,12 +262,14 @@ const Courses: React.FC = () => {
       if (e.target === e.currentTarget) {
           const clickedTime = getClickedTime(e, e.currentTarget as HTMLDivElement);
           const capacity = rooms.find(r => r.id === activeRoomId)?.capacity || 10;
+          setScheduleFormIsCreate(true);
           setScheduleForm(createScheduleFormDraft(dayIndex, activeRoomId, clickedTime, capacity));
           setIsScheduleModalOpen(true);
       }
   };
 
-  const openEditModal = (evt: ScheduleEvent) => {
+  const openScheduleFormFromEvent = (evt: ScheduleEvent, isCreate: boolean) => {
+      setScheduleFormIsCreate(isCreate);
       setScheduleForm({
           id: evt.id, dayIndex: evt.dayIndex, roomId: evt.roomId, courseId: evt.courseId, teacherName: evt.teacher,
           startTime: evt.startTime, duration: evt.duration, capacity: evt.capacity
@@ -418,10 +426,11 @@ const Courses: React.FC = () => {
                       handleDragOver={handleDragOver}
                       handleDrop={handleDrop}
                       handleGridClick={handleGridClick}
-                      openEditModal={openEditModal}
+                      openEditModal={evt => openScheduleFormFromEvent(evt, false)}
                       onRegenerateAi={() => showToast('正在根据历史数据重新计算排课建议…', 'info')}
                       isLibraryManagementOpen={isLibraryManagementOpen}
                       onToggleLibraryManagement={() => setIsLibraryManagementOpen(o => !o)}
+                      onPublishSchedule={handlePublishSchedule}
                   />
 
                   {isLibraryManagementOpen ? (
@@ -465,6 +474,9 @@ const Courses: React.FC = () => {
         libraryList={libraryList}
         confirmSchedule={confirmSchedule}
         deleteEvent={deleteEvent}
+        scheduleFormIsCreate={scheduleFormIsCreate}
+        weekDays={weekDays}
+        rooms={rooms}
       />
 
       <CourseSessionOpsDrawer
