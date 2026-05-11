@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   MOCK_ATTENDANCES,
   MOCK_BOOKINGS,
@@ -23,11 +23,13 @@ import {
   getOpsSummary,
   moveScheduleEvent,
   toCourseLibraryItem,
+  toOpsScheduleItem,
   toScheduleEvent,
 } from '../utils/courseSelectors';
 import type {
   CourseLibraryItem,
   OpsFilter,
+  OpsScheduleItem,
   ScheduleEvent,
   ScheduleFormState,
 } from '../utils/courseSelectors';
@@ -53,6 +55,13 @@ const INITIAL_SCHEDULE_EVENTS = MOCK_COURSE_SESSIONS.map(session => (
   toScheduleEvent(session, INITIAL_LIBRARY_LIST, MOCK_BOOKINGS)
 ));
 
+const scheduleEventMatchesSessionId = (ev: ScheduleEvent, sid: string): boolean => {
+  if (!sid) return false;
+  if (ev.id === sid) return true;
+  const ext = ev as ScheduleEvent & { sessionId?: string; courseSessionId?: string; originalSessionId?: string };
+  return ext.sessionId === sid || ext.courseSessionId === sid || ext.originalSessionId === sid;
+};
+
 type CourseToastTone = 'info' | 'success' | 'warning';
 
 interface CourseToast {
@@ -75,7 +84,7 @@ const Courses: React.FC = () => {
   const [confirmDialog, setConfirmDialog] = useState<CourseConfirmDialog | null>(null);
   const [isOpsDrawerOpen, setIsOpsDrawerOpen] = useState(false);
   const [activeOpsSessionId, setActiveOpsSessionId] = useState<string | null>(null);
-  const [activeOpsDrawerTab, setActiveOpsDrawerTab] = useState<CourseSessionOpsTab>('bookings');
+  const [activeOpsDrawerTab, setActiveOpsDrawerTab] = useState<CourseSessionOpsTab>('overview');
   
   // --- Library State (Courses) ---
   const [libraryList, setLibraryList] = useState<CourseLibraryItem[]>(INITIAL_LIBRARY_LIST);
@@ -123,15 +132,19 @@ const Courses: React.FC = () => {
   const opsSummary = getOpsSummary(todayOpsSchedule);
   const aiGuidance = getOpsAiGuidance(todayOpsSchedule, opsSummary);
 
-  const activeOpsSession =
-    activeOpsSessionId != null
-      ? todayOpsSchedule.find(s => s.id === activeOpsSessionId) ?? null
-      : null;
+  const activeDrawerScheduleEvent = useMemo(() => {
+    if (activeOpsSessionId == null) return null;
+    return scheduleEvents.find(e => scheduleEventMatchesSessionId(e, activeOpsSessionId)) ?? null;
+  }, [activeOpsSessionId, scheduleEvents]);
 
-  const activeDrawerScheduleEvent =
-    activeOpsSessionId != null
-      ? scheduleEvents.find(e => e.id === activeOpsSessionId) ?? null
-      : null;
+  const activeOpsSession = useMemo((): OpsScheduleItem | null => {
+    if (activeOpsSessionId == null) return null;
+    const fromOps = todayOpsSchedule.find(s => s.id === activeOpsSessionId);
+    if (fromOps) return fromOps;
+    const ev = scheduleEvents.find(e => scheduleEventMatchesSessionId(e, activeOpsSessionId));
+    if (!ev) return null;
+    return toOpsScheduleItem(ev, libraryList, bookings, attendances);
+  }, [activeOpsSessionId, todayOpsSchedule, scheduleEvents, libraryList, bookings, attendances]);
 
   const openSessionOpsDrawer = (tab: CourseSessionOpsTab, sessionId?: string) => {
     const resolved =
@@ -146,7 +159,7 @@ const Courses: React.FC = () => {
 
   const openSessionCard = (sessionId: string) => {
     const item = todayOpsSchedule.find(s => s.id === sessionId);
-    setActiveOpsDrawerTab(item?.abnormal ? 'exceptions' : 'bookings');
+    setActiveOpsDrawerTab(item?.abnormal ? 'exceptions' : 'overview');
     setActiveOpsSessionId(sessionId);
     setIsOpsDrawerOpen(true);
   };

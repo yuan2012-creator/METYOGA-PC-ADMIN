@@ -1,21 +1,53 @@
 import React, { useEffect, useMemo } from 'react';
 import type { Attendance, Booking, CourseSession, Member } from '../../types';
 import type { OpsScheduleItem, ScheduleEvent } from '../../utils/courseSelectors';
-import { parseSessionChangeEntriesFromNotes } from '../../utils/courseSessionChange';
+import {
+  buildMockOperationLogEntries,
+  parseSessionChangeEntriesFromNotes,
+  parseSubstituteTeachersFromDetail,
+  sanitizeStaffFacingCopy,
+} from '../../utils/courseSessionChange';
 import {
   getCourseSessionDisplayStatus,
   getCourseSessionStatusMeta,
   getCourseSessionToneBadgeClass,
 } from '../../utils/courseSessionStatus';
 
-export type CourseSessionOpsTab = 'bookings' | 'attendance' | 'substitute' | 'exceptions';
+export type CourseSessionOpsTabId =
+  | 'overview'
+  | 'bookings'
+  | 'attendance'
+  | 'substitute'
+  | 'exceptions'
+  | 'ops_log';
 
-const TABS: { id: CourseSessionOpsTab; label: string }[] = [
+/** 抽屉 tab；兼容外部别名 `booking` / `exception` */
+export type CourseSessionOpsTab = CourseSessionOpsTabId | 'booking' | 'exception';
+
+const TAB_IDS: CourseSessionOpsTabId[] = [
+  'overview',
+  'bookings',
+  'attendance',
+  'substitute',
+  'exceptions',
+  'ops_log',
+];
+
+const TABS: { id: CourseSessionOpsTabId; label: string }[] = [
+  { id: 'overview', label: '课程概览' },
   { id: 'bookings', label: '预约名单' },
   { id: 'attendance', label: '签到记录' },
-  { id: 'substitute', label: '代课设置' },
+  { id: 'substitute', label: '代课记录' },
   { id: 'exceptions', label: '异常记录' },
+  { id: 'ops_log', label: '操作日志' },
 ];
+
+export const normalizeCourseSessionOpsTab = (tab: CourseSessionOpsTab): CourseSessionOpsTabId => {
+  let t: CourseSessionOpsTabId =
+    tab === 'booking' ? 'bookings' : tab === 'exception' ? 'exceptions' : (tab as CourseSessionOpsTabId);
+  if (!TAB_IDS.includes(t)) t = 'overview';
+  return t;
+};
 
 const courseSessionForDisplay = (cls: OpsScheduleItem, evt: ScheduleEvent | undefined): CourseSession => {
   if (evt) return evt;
@@ -309,11 +341,25 @@ const formatIsoDisplay = (iso?: string): string => {
   }
 };
 
+const formatIsoOrRecord = (iso?: string): string => {
+  if (!iso?.trim()) return '暂未记录';
+  try {
+    return new Date(iso).toLocaleString('zh-CN', {
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  } catch {
+    return iso;
+  }
+};
+
 const checkInMethodLabel = (notes?: string): string => {
-  if (!notes) return '暂未接入';
+  if (!notes) return '暂未记录';
   if (/前台|front/i.test(notes)) return '前台登记';
   if (/扫码|qr/i.test(notes)) return '扫码签到';
-  return '暂未接入';
+  return '暂未记录';
 };
 
 const attendanceAbnormalFlag = (a: Attendance): string => (a.status === 'absent' ? '是' : '否');
@@ -322,7 +368,7 @@ interface CourseSessionOpsDrawerProps {
   isOpen: boolean;
   onClose: () => void;
   tab: CourseSessionOpsTab;
-  onTabChange: (tab: CourseSessionOpsTab) => void;
+  onTabChange: (tab: CourseSessionOpsTabId) => void;
   session: OpsScheduleItem | null;
   scheduleEvent: ScheduleEvent | null;
   bookings: Booking[];
@@ -356,19 +402,29 @@ const CourseSessionOpsDrawer: React.FC<CourseSessionOpsDrawerProps> = ({
     return () => window.removeEventListener('keydown', onKey);
   }, [isOpen, onClose]);
 
-  const statusInput = useMemo(() => {
-    if (!isOpen || !session) return null;
-    return courseSessionForDisplay(session, scheduleEvent ?? undefined);
+  const statusInput = useMemo((): CourseSession | null => {
+    if (!isOpen) return null;
+    if (session) return courseSessionForDisplay(session, scheduleEvent ?? undefined);
+    if (scheduleEvent) return scheduleEvent;
+    return null;
   }, [isOpen, session, scheduleEvent]);
 
   const displayStatus = useMemo(() => {
     if (!statusInput) return null;
-    return getCourseSessionDisplayStatus({ session: statusInput, bookings, attendances });
+    try {
+      return getCourseSessionDisplayStatus({ session: statusInput, bookings, attendances });
+    } catch {
+      return null;
+    }
   }, [statusInput, bookings, attendances]);
 
   const statusMeta = useMemo(() => {
     if (!statusInput) return null;
-    return getCourseSessionStatusMeta({ session: statusInput, bookings, attendances });
+    try {
+      return getCourseSessionStatusMeta({ session: statusInput, bookings, attendances });
+    } catch {
+      return null;
+    }
   }, [statusInput, bookings, attendances]);
 
   const sessionChangeEntries = useMemo(
@@ -376,12 +432,40 @@ const CourseSessionOpsDrawer: React.FC<CourseSessionOpsDrawerProps> = ({
     [scheduleEvent?.notes],
   );
 
+  const canonicalTab = useMemo(() => normalizeCourseSessionOpsTab(tab), [tab]);
+
+  const operationLogEntries = useMemo(() => {
+    type OptionalAuditFields = {
+      publishedAt?: string;
+      publishedBy?: string;
+      createdAt?: string;
+      createdBy?: string;
+    };
+    const logSource = scheduleEvent ?? session ?? null;
+    const audit = (logSource ?? {}) as OptionalAuditFields;
+    const notesForLog = scheduleEvent?.notes;
+    return buildMockOperationLogEntries(notesForLog, {
+      publishedAt: audit.publishedAt,
+      publishedBy: audit.publishedBy,
+      createdAt: audit.createdAt,
+      createdBy: audit.createdBy,
+    });
+  }, [scheduleEvent, session]);
+
   const mainStatusBadgeClass = displayStatus ? getCourseSessionToneBadgeClass(displayStatus.tone) : '';
 
   if (!isOpen) return null;
 
-  const sessionId = session?.id ?? null;
+  const hasAnySession = !!(session || scheduleEvent);
+  const sessionId = session?.id ?? scheduleEvent?.id ?? null;
   const memberById = new Map(members.map(m => [m.id, m]));
+
+  const rawTitle = session?.name ?? scheduleEvent?.name ?? scheduleEvent?.title ?? '';
+  const titleSan = sanitizeStaffFacingCopy(rawTitle);
+  const displayTitle = hasAnySession
+    ? (titleSan && titleSan !== '—' ? titleSan : '未命名课程')
+    : '课程场次详情';
+  const displayType = session?.type ? sanitizeStaffFacingCopy(session.type) || '暂未记录' : '暂未记录';
 
   const sessionBookings = sessionId
     ? bookings.filter(b => b.courseSessionId === sessionId)
@@ -391,14 +475,27 @@ const CourseSessionOpsDrawer: React.FC<CourseSessionOpsDrawerProps> = ({
     ? attendances.filter(a => a.courseSessionId === sessionId)
     : [];
 
-  const isSessionCompleted = scheduleEvent?.status === 'completed';
+  const isSessionCompleted =
+    scheduleEvent?.status === 'completed' || session?.courseSessionStatus === 'completed';
   const isScheduleCanceled =
-    scheduleEvent?.status === 'cancelled' || scheduleEvent?.publishStatus === 'canceled';
+    scheduleEvent?.status === 'cancelled'
+    || scheduleEvent?.publishStatus === 'canceled'
+    || session?.courseSessionStatus === 'cancelled';
+
+  const opsBlockSessionId = scheduleEvent?.id ?? session?.id ?? null;
 
   const tabBtnClass = (active: boolean) =>
     active
       ? 'border-b-2 border-[#1F5E3B] pb-2.5 text-[13px] font-semibold text-[#1F5E3B]'
       : 'border-b-2 border-transparent pb-2.5 text-[13px] font-medium text-gray-500 hover:text-gray-700';
+
+  const overviewStatusLabels = statusMeta ?? {
+    publishStatusLabel: '暂未记录',
+    bookingStatusLabel: '暂未记录',
+    sessionStatusLabel: '暂未记录',
+    exceptionStatusLabel: '暂未记录',
+    settlementStatusLabel: '暂未记录',
+  };
 
   const rowHead = 'text-[11px] font-semibold tracking-wide text-gray-400';
   const cell = 'border-b border-gray-100 py-2.5 text-xs text-gray-700';
@@ -419,21 +516,25 @@ const CourseSessionOpsDrawer: React.FC<CourseSessionOpsDrawerProps> = ({
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
               <h2 id="course-session-ops-drawer-title" className="truncate text-base font-bold text-gray-900">
-                {session ? session.name : '课程场次详情'}
+                {displayTitle}
               </h2>
-              {session ? (
+              {hasAnySession ? (
                 <div className="mt-2 flex flex-wrap items-center gap-2">
                   <span className="rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600 ring-1 ring-gray-200/80">
-                    {session.type}
+                    {displayType}
                   </span>
                   {displayStatus ? (
                     <span className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${mainStatusBadgeClass}`}>
                       {displayStatus.label}
                     </span>
-                  ) : null}
+                  ) : (
+                    <span className="rounded-md border border-gray-200 bg-gray-50 px-2 py-0.5 text-[11px] font-medium text-gray-600">
+                      状态计算中
+                    </span>
+                  )}
                 </div>
               ) : (
-                <p className="mt-2 text-xs text-gray-500">今日暂无可用场次，或列表为空。</p>
+                <p className="mt-2 text-xs text-gray-500">暂未找到该课程场次信息</p>
               )}
             </div>
             <button
@@ -446,65 +547,10 @@ const CourseSessionOpsDrawer: React.FC<CourseSessionOpsDrawerProps> = ({
             </button>
           </div>
 
-          {session ? (
-            <dl className="mt-4 grid grid-cols-1 gap-x-4 gap-y-2.5 text-xs sm:grid-cols-2">
-              <div className="flex justify-between gap-2 border-b border-gray-100/90 pb-2 sm:block sm:border-0 sm:pb-0">
-                <dt className="text-gray-500">时间</dt>
-                <dd className="font-medium text-gray-800">{session.time}</dd>
-              </div>
-              <div className="flex justify-between gap-2 border-b border-gray-100/90 pb-2 sm:block sm:border-0 sm:pb-0">
-                <dt className="text-gray-500">老师</dt>
-                <dd className="font-medium text-gray-800">{session.teacher}</dd>
-              </div>
-              <div className="flex justify-between gap-2 border-b border-gray-100/90 pb-2 sm:block sm:border-0 sm:pb-0">
-                <dt className="text-gray-500">教室</dt>
-                <dd className="font-medium text-gray-800">{session.room}</dd>
-              </div>
-              <div className="flex justify-between gap-2 border-b border-gray-100/90 pb-2 sm:block sm:border-0 sm:pb-0">
-                <dt className="text-gray-500">预约人数 / 容量</dt>
-                <dd className="font-medium text-gray-800 tabular-nums">
-                  {session.enrolled} / {session.capacity}
-                </dd>
-              </div>
-              <div className="flex justify-between gap-2 sm:block">
-                <dt className="text-gray-500">已签到人数</dt>
-                <dd className="font-medium text-gray-800 tabular-nums">{session.signed}</dd>
-              </div>
-            </dl>
-          ) : null}
-
-          {session && statusMeta ? (
-            <div className="mt-4 rounded-xl border border-gray-100 bg-white/70 px-3 py-3">
-              <p className="mb-2 text-[11px] font-semibold tracking-wide text-gray-400">状态概览</p>
-              <dl className="grid grid-cols-1 gap-x-4 gap-y-2 text-xs sm:grid-cols-2">
-                <div className="flex justify-between gap-2 sm:block">
-                  <dt className="text-gray-500">发布状态</dt>
-                  <dd className="font-medium text-gray-800">{statusMeta.publishStatusLabel}</dd>
-                </div>
-                <div className="flex justify-between gap-2 sm:block">
-                  <dt className="text-gray-500">预约状态</dt>
-                  <dd className="font-medium text-gray-800">{statusMeta.bookingStatusLabel}</dd>
-                </div>
-                <div className="flex justify-between gap-2 sm:block">
-                  <dt className="text-gray-500">执行状态</dt>
-                  <dd className="font-medium text-gray-800">{statusMeta.sessionStatusLabel}</dd>
-                </div>
-                <div className="flex justify-between gap-2 sm:block">
-                  <dt className="text-gray-500">异常状态</dt>
-                  <dd className="font-medium text-gray-800">{statusMeta.exceptionStatusLabel}</dd>
-                </div>
-                <div className="flex justify-between gap-2 sm:col-span-2 sm:block">
-                  <dt className="text-gray-500">结算状态</dt>
-                  <dd className="font-medium text-gray-800">{statusMeta.settlementStatusLabel}</dd>
-                </div>
-              </dl>
-            </div>
-          ) : null}
-
-          {session && !isSessionCompleted && !isScheduleCanceled ? (
-            scheduleEvent ? (
+          {hasAnySession && !isSessionCompleted && !isScheduleCanceled ? (
+            opsBlockSessionId ? (
               <SessionChangeOpsBlock
-                sessionId={scheduleEvent.id}
+                sessionId={opsBlockSessionId}
                 isCanceled={isScheduleCanceled}
                 onCancelSession={onCancelSession}
                 onRescheduleSession={onRescheduleSession}
@@ -518,18 +564,113 @@ const CourseSessionOpsDrawer: React.FC<CourseSessionOpsDrawerProps> = ({
           ) : null}
         </header>
 
-        <nav className="shrink-0 border-b border-gray-200/80 bg-white/60 px-5 pt-1">
-          <div className="flex gap-5 overflow-x-auto">
+        <nav className="shrink-0 border-b border-gray-200/80 bg-white/60 px-4 pt-1 sm:px-5">
+          <div className="flex gap-4 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:thin] sm:gap-5">
             {TABS.map(t => (
-              <button key={t.id} type="button" className={tabBtnClass(tab === t.id)} onClick={() => onTabChange(t.id)}>
-                {t.label}
+              <button
+                key={t.id}
+                type="button"
+                className={`shrink-0 whitespace-nowrap ${tabBtnClass(canonicalTab === t.id)}`}
+                onClick={() => onTabChange(t.id)}
+              >
+                <span className="text-[12px] sm:text-[13px]">{t.label}</span>
               </button>
             ))}
           </div>
         </nav>
 
         <div className="custom-scroll min-h-0 flex-1 overflow-y-auto bg-white/40 px-5 py-4">
-          {tab === 'bookings' && (
+          {canonicalTab === 'overview' && (
+            <div className="space-y-4">
+              {!hasAnySession || !statusInput ? (
+                <p className="py-8 text-center text-sm text-gray-500">暂未找到该课程场次信息</p>
+              ) : (
+                <>
+                  <div className="rounded-xl border border-gray-200 bg-white px-4 py-4">
+                    <p className="mb-3 text-[11px] font-semibold tracking-wide text-gray-400">基础信息</p>
+                    <dl className="grid grid-cols-1 gap-x-4 gap-y-2.5 text-xs sm:grid-cols-2">
+                      <div className="flex justify-between gap-2 sm:block">
+                        <dt className="text-gray-500">课程名称</dt>
+                        <dd className="font-medium text-gray-900">{displayTitle}</dd>
+                      </div>
+                      <div className="flex justify-between gap-2 sm:block">
+                        <dt className="text-gray-500">课程类型</dt>
+                        <dd className="font-medium text-gray-800">{session?.type ?? '暂未记录'}</dd>
+                      </div>
+                      <div className="flex justify-between gap-2 sm:block">
+                        <dt className="text-gray-500">上课时间</dt>
+                        <dd className="font-medium text-gray-800">{session?.time ?? '暂未记录'}</dd>
+                      </div>
+                      <div className="flex justify-between gap-2 sm:block">
+                        <dt className="text-gray-500">老师</dt>
+                        <dd className="font-medium text-gray-800">{session?.teacher ?? scheduleEvent?.teacher ?? '暂未记录'}</dd>
+                      </div>
+                      <div className="flex justify-between gap-2 sm:block">
+                        <dt className="text-gray-500">教室</dt>
+                        <dd className="font-medium text-gray-800">{session?.room ?? '暂未记录'}</dd>
+                      </div>
+                      <div className="flex justify-between gap-2 sm:block">
+                        <dt className="text-gray-500">容量</dt>
+                        <dd className="font-medium text-gray-800 tabular-nums">{session?.capacity ?? scheduleEvent?.capacity ?? '暂未记录'}</dd>
+                      </div>
+                      <div className="flex justify-between gap-2 sm:block">
+                        <dt className="text-gray-500">预约人数</dt>
+                        <dd className="font-medium text-gray-800 tabular-nums">{session?.enrolled ?? '暂未记录'}</dd>
+                      </div>
+                      <div className="flex justify-between gap-2 sm:block">
+                        <dt className="text-gray-500">签到人数</dt>
+                        <dd className="font-medium text-gray-800 tabular-nums">{session?.signed ?? '暂未记录'}</dd>
+                      </div>
+                      <div className="flex justify-between gap-2 sm:col-span-2 sm:block">
+                        <dt className="text-gray-500">空位</dt>
+                        <dd className="font-medium text-gray-800 tabular-nums">
+                          {session
+                            ? session.capacity - session.enrolled
+                            : typeof scheduleEvent?.capacity === 'number' && typeof scheduleEvent?.bookedCount === 'number'
+                              ? scheduleEvent.capacity - scheduleEvent.bookedCount
+                              : '暂未记录'}
+                        </dd>
+                      </div>
+                    </dl>
+                  </div>
+                  <div className="rounded-xl border border-gray-200 bg-white px-4 py-4">
+                    <p className="mb-3 flex flex-wrap items-center gap-2 text-[11px] font-semibold tracking-wide text-gray-400">
+                      <span>状态信息</span>
+                      {displayStatus ? (
+                        <span className={`rounded-md px-2 py-0.5 text-[10px] font-semibold ${mainStatusBadgeClass}`}>
+                          {displayStatus.label}
+                        </span>
+                      ) : null}
+                    </p>
+                    <dl className="grid grid-cols-1 gap-x-4 gap-y-2 text-xs sm:grid-cols-2">
+                      <div className="flex justify-between gap-2 sm:block">
+                        <dt className="text-gray-500">发布状态</dt>
+                        <dd className="font-medium text-gray-800">{overviewStatusLabels.publishStatusLabel}</dd>
+                      </div>
+                      <div className="flex justify-between gap-2 sm:block">
+                        <dt className="text-gray-500">预约状态</dt>
+                        <dd className="font-medium text-gray-800">{overviewStatusLabels.bookingStatusLabel}</dd>
+                      </div>
+                      <div className="flex justify-between gap-2 sm:block">
+                        <dt className="text-gray-500">执行状态</dt>
+                        <dd className="font-medium text-gray-800">{overviewStatusLabels.sessionStatusLabel}</dd>
+                      </div>
+                      <div className="flex justify-between gap-2 sm:block">
+                        <dt className="text-gray-500">异常状态</dt>
+                        <dd className="font-medium text-gray-800">{overviewStatusLabels.exceptionStatusLabel}</dd>
+                      </div>
+                      <div className="flex justify-between gap-2 sm:col-span-2 sm:block">
+                        <dt className="text-gray-500">结算状态</dt>
+                        <dd className="font-medium text-gray-800">{overviewStatusLabels.settlementStatusLabel}</dd>
+                      </div>
+                    </dl>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {canonicalTab === 'bookings' && (
             <div>
               {!sessionId ? (
                 <p className="py-8 text-center text-sm text-gray-500">暂无预约记录</p>
@@ -538,9 +679,9 @@ const CourseSessionOpsDrawer: React.FC<CourseSessionOpsDrawerProps> = ({
               ) : (
                 <div className="overflow-hidden rounded-xl border border-gray-100 bg-white">
                   <div className={`grid grid-cols-12 gap-2 border-b border-gray-100 bg-gray-50/80 px-3 py-2 ${rowHead}`}>
-                    <div className="col-span-3">会员</div>
+                    <div className="col-span-3">会员姓名</div>
                     <div className="col-span-3">手机</div>
-                    <div className="col-span-2">状态</div>
+                    <div className="col-span-2">预约状态</div>
                     <div className="col-span-2">卡项/扣点</div>
                     <div className="col-span-2">预约时间</div>
                   </div>
@@ -551,8 +692,8 @@ const CourseSessionOpsDrawer: React.FC<CourseSessionOpsDrawerProps> = ({
                         <div className="col-span-3 truncate font-medium text-gray-900">{m?.name ?? '—'}</div>
                         <div className="col-span-3 truncate text-gray-600">{maskPhone(m?.phone)}</div>
                         <div className="col-span-2 text-gray-700">{bookingStatusLabel(b.status)}</div>
-                        <div className="col-span-2 text-gray-500">暂未接入</div>
-                        <div className="col-span-2 text-gray-600">{formatIsoDisplay(b.bookedAt)}</div>
+                        <div className="col-span-2 text-gray-500">暂未记录</div>
+                        <div className="col-span-2 text-gray-600">{formatIsoOrRecord(b.bookedAt)}</div>
                       </div>
                     );
                   })}
@@ -561,7 +702,7 @@ const CourseSessionOpsDrawer: React.FC<CourseSessionOpsDrawerProps> = ({
             </div>
           )}
 
-          {tab === 'attendance' && (
+          {canonicalTab === 'attendance' && (
             <div>
               {!sessionId ? (
                 <p className="py-8 text-center text-sm text-gray-500">暂无签到记录</p>
@@ -570,19 +711,20 @@ const CourseSessionOpsDrawer: React.FC<CourseSessionOpsDrawerProps> = ({
               ) : (
                 <div className="overflow-hidden rounded-xl border border-gray-100 bg-white">
                   <div className={`grid grid-cols-12 gap-2 border-b border-gray-100 bg-gray-50/80 px-3 py-2 ${rowHead}`}>
-                    <div className="col-span-2">会员</div>
+                    <div className="col-span-2">会员姓名</div>
                     <div className="col-span-2">签到状态</div>
                     <div className="col-span-3">签到时间</div>
                     <div className="col-span-3">签到方式</div>
-                    <div className="col-span-2">异常</div>
+                    <div className="col-span-2">异常标记</div>
                   </div>
                   {sessionAttendances.map(a => {
                     const m = memberById.get(a.memberId);
+                    const at = a.checkedInAt ?? a.attendedAt;
                     return (
                       <div key={a.id} className={`grid grid-cols-12 gap-2 px-3 ${cell}`}>
                         <div className="col-span-2 truncate font-medium text-gray-900">{m?.name ?? '—'}</div>
                         <div className="col-span-2 text-gray-700">{attendanceStatusLabel(a.status)}</div>
-                        <div className="col-span-3 text-gray-600">{formatIsoDisplay(a.checkedInAt ?? a.attendedAt)}</div>
+                        <div className="col-span-3 text-gray-600">{formatIsoOrRecord(at)}</div>
                         <div className="col-span-3 text-gray-600">{checkInMethodLabel(a.notes)}</div>
                         <div className="col-span-2 text-gray-700">{attendanceAbnormalFlag(a)}</div>
                       </div>
@@ -593,44 +735,77 @@ const CourseSessionOpsDrawer: React.FC<CourseSessionOpsDrawerProps> = ({
             </div>
           )}
 
-          {tab === 'substitute' && (
-            <div className="space-y-4 rounded-xl border border-gray-100 bg-white p-4">
-              <div className="space-y-2 text-xs">
-                <div className="flex justify-between gap-2 border-b border-gray-50 pb-2">
-                  <span className="text-gray-500">当前老师（排课）</span>
-                  <span className="font-medium text-gray-800">{session?.teacher ?? '—'}</span>
-                </div>
-                <div className="flex justify-between gap-2 border-b border-gray-50 pb-2">
-                  <span className="text-gray-500">代课老师</span>
-                  <span className="font-medium text-gray-800">
-                    {scheduleEvent?.sessionStatus === 'substitute' ? scheduleEvent.teacher : '—'}
-                  </span>
-                </div>
-                <div className="flex justify-between gap-2 border-b border-gray-50 pb-2">
-                  <span className="text-gray-500">代课原因（来自备注）</span>
-                  <span className="max-w-[58%] text-right text-gray-700">
-                    {sessionChangeEntries.find(e => e.tag === 'substitute')?.detail ?? '—'}
-                  </span>
-                </div>
-                <div className="flex justify-between gap-2">
-                  <span className="text-gray-500">操作记录</span>
-                  <span className="text-gray-600">当前仅记录后台状态</span>
-                </div>
+          {canonicalTab === 'substitute' && (() => {
+            const subEntry = sessionChangeEntries.find(e => e.tag === 'substitute');
+            const parsed = subEntry ? parseSubstituteTeachersFromDetail(subEntry.detail) : {};
+            const hasSubstituteRecord =
+              scheduleEvent?.sessionStatus === 'substitute' || !!subEntry;
+            const reasonFromDetail = subEntry?.detail
+              ? (/原因：(.+)/.exec(subEntry.detail)?.[1]?.trim() ?? subEntry.detail)
+              : '';
+            const reasonText = reasonFromDetail || '—';
+            return (
+              <div className="space-y-3">
+                {!hasSubstituteRecord ? (
+                  <p className="py-8 text-center text-sm text-gray-500">当前场次暂无代课记录</p>
+                ) : (
+                  <div className="space-y-4 rounded-xl border border-gray-100 bg-white p-4">
+                    <div className="space-y-2 text-xs">
+                      <div className="flex justify-between gap-2 border-b border-gray-50 pb-2">
+                        <span className="text-gray-500">当前老师（排课展示）</span>
+                        <span className="font-medium text-gray-800">
+                          {session?.teacher ?? scheduleEvent?.teacher ?? '—'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between gap-2 border-b border-gray-50 pb-2">
+                        <span className="text-gray-500">原老师</span>
+                        <span className="max-w-[55%] text-right font-medium text-gray-800">
+                          {parsed.original ?? '暂未记录'}
+                        </span>
+                      </div>
+                      <div className="flex justify-between gap-2 border-b border-gray-50 pb-2">
+                        <span className="text-gray-500">代课老师</span>
+                        <span className="max-w-[55%] text-right font-medium text-gray-800">
+                          {parsed.substitute ?? (scheduleEvent?.sessionStatus === 'substitute' ? scheduleEvent?.teacher : '—')}
+                        </span>
+                      </div>
+                      <div className="flex justify-between gap-2 border-b border-gray-50 pb-2">
+                        <span className="text-gray-500">代课原因</span>
+                        <span className="max-w-[58%] text-right text-gray-700">
+                          {sanitizeStaffFacingCopy(reasonText)}
+                        </span>
+                      </div>
+                      <div className="flex justify-between gap-2">
+                        <span className="text-gray-500">当前状态</span>
+                        <span className="font-medium text-gray-800">{displayStatus?.label ?? '—'}</span>
+                      </div>
+                    </div>
+                    <p className="rounded-lg bg-amber-50/60 px-3 py-2.5 text-[11px] leading-relaxed text-amber-900/90 ring-1 ring-amber-100/80">
+                      代课涉及老师课时、会员通知与排课记录，当前仅只读展示，正式修改需接入审核流程。
+                    </p>
+                  </div>
+                )}
               </div>
-              <p className="rounded-lg bg-amber-50/60 px-3 py-2.5 text-[11px] leading-relaxed text-amber-900/90 ring-1 ring-amber-100/80">
-                代课设置涉及老师课时、会员通知与排课记录，当前仅展示状态，正式修改需接入审核流程。
-              </p>
-            </div>
-          )}
+            );
+          })()}
 
-          {tab === 'exceptions' && (
+          {canonicalTab === 'exceptions' && (
             <div className="space-y-4">
-              {!session ? (
+              {!hasAnySession || !statusInput ? (
                 <p className="py-8 text-center text-sm text-gray-500">当前场次暂无异常记录</p>
-              ) : sessionChangeEntries.length === 0 && !session.abnormal ? (
+              ) : sessionChangeEntries.length === 0 && !session?.abnormal ? (
                 <p className="py-8 text-center text-sm text-gray-500">当前场次暂无异常记录</p>
               ) : (
                 <>
+                  <div className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-xs">
+                    <div className="mb-2 text-[11px] font-semibold text-gray-400">当前汇总</div>
+                    <dl className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      <div className="flex justify-between gap-2 sm:block">
+                        <dt className="text-gray-500">异常状态</dt>
+                        <dd className="font-medium text-gray-900">{overviewStatusLabels.exceptionStatusLabel}</dd>
+                      </div>
+                    </dl>
+                  </div>
                   {sessionChangeEntries.length > 0 ? (
                     <div className="space-y-3">
                       {sessionChangeEntries.map((entry, idx) => (
@@ -638,33 +813,94 @@ const CourseSessionOpsDrawer: React.FC<CourseSessionOpsDrawerProps> = ({
                           key={`${entry.tag}-${idx}`}
                           className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-xs text-gray-800"
                         >
-                          <div className="mb-1.5 font-semibold text-gray-900">异常类型 · {entry.typeLabel}</div>
-                          <p className="leading-relaxed text-gray-700">原因 / 备注：{entry.detail}</p>
-                          <p className="mt-2 border-t border-gray-100 pt-2 text-[11px] leading-relaxed text-gray-500">
-                            当前仅记录后台状态，正式通知和审批后续接入。
+                          <dl className="space-y-2">
+                            <div className="flex justify-between gap-2">
+                              <dt className="text-gray-500">异常状态</dt>
+                              <dd className="font-medium text-gray-900">{overviewStatusLabels.exceptionStatusLabel}</dd>
+                            </div>
+                            <div className="flex justify-between gap-2">
+                              <dt className="text-gray-500">异常类型</dt>
+                              <dd className="font-medium text-gray-900">{entry.typeLabel}</dd>
+                            </div>
+                            <div className="border-t border-gray-100 pt-2">
+                              <dt className="text-gray-500">异常说明</dt>
+                              <dd className="mt-1 leading-relaxed text-gray-700">{sanitizeStaffFacingCopy(entry.detail)}</dd>
+                            </div>
+                            <div className="flex justify-between gap-2 border-t border-gray-100 pt-2">
+                              <dt className="text-gray-500">处理状态</dt>
+                              <dd className="font-medium text-gray-800">已记录</dd>
+                            </div>
+                          </dl>
+                          <p className="mt-3 text-[11px] leading-relaxed text-gray-500">
+                            当前仅记录后台状态，正式通知与审批流程将在后续接入。
                           </p>
                         </div>
                       ))}
                     </div>
                   ) : null}
-                  {session.abnormal ? (
-                    <div className="space-y-3 rounded-xl border border-rose-100/90 bg-rose-50/50 px-4 py-4 text-xs text-rose-900/90">
-                      <div className="flex justify-between gap-2 border-b border-rose-100/70 pb-2">
-                        <span className="text-rose-800/80">预约侧提醒</span>
-                        <span className="font-semibold">是</span>
-                      </div>
-                      <div className="flex justify-between gap-2">
-                        <span className="text-rose-800/80">说明</span>
-                        <span className="max-w-[65%] text-right font-medium leading-relaxed">
-                          {session.abnormalReason || '—'}
-                        </span>
-                      </div>
-                      <p className="border-t border-rose-100/70 pt-2 text-[11px] leading-relaxed text-rose-900/85">
-                        当前仅记录后台状态，正式通知和审批后续接入。
+                  {session?.abnormal ? (
+                    <div className="rounded-xl border border-rose-100/90 bg-rose-50/50 px-4 py-4 text-xs text-rose-900/90">
+                      <dl className="space-y-2">
+                        <div className="flex justify-between gap-2">
+                          <dt className="text-rose-800/80">异常状态</dt>
+                          <dd className="font-semibold text-rose-950">{overviewStatusLabels.exceptionStatusLabel}</dd>
+                        </div>
+                        <div className="flex justify-between gap-2">
+                          <dt className="text-rose-800/80">异常类型</dt>
+                          <dd className="font-medium">预约侧提醒</dd>
+                        </div>
+                        <div>
+                          <dt className="text-rose-800/80">异常说明</dt>
+                          <dd className="mt-1 leading-relaxed">
+                            {sanitizeStaffFacingCopy(session.abnormalReason) || '—'}
+                          </dd>
+                        </div>
+                        <div className="flex justify-between gap-2 border-t border-rose-100/70 pt-2">
+                          <dt className="text-rose-800/80">处理状态</dt>
+                          <dd className="font-medium">待跟进</dd>
+                        </div>
+                      </dl>
+                      <p className="mt-3 border-t border-rose-100/70 pt-2 text-[11px] leading-relaxed text-rose-900/85">
+                        当前仅记录后台状态，正式通知与审批流程将在后续接入。
                       </p>
                     </div>
                   ) : null}
                 </>
+              )}
+            </div>
+          )}
+
+          {canonicalTab === 'ops_log' && (
+            <div>
+              {operationLogEntries.length === 0 ? (
+                <p className="py-8 text-center text-sm text-gray-500">暂无操作日志</p>
+              ) : (
+                <div className="space-y-3">
+                  {operationLogEntries.map((row, i) => (
+                    <div key={i} className="rounded-xl border border-gray-200 bg-white px-4 py-3 text-xs">
+                      <dl className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        <div className="sm:col-span-2">
+                          <dt className="text-gray-500">操作类型</dt>
+                          <dd className="mt-0.5 font-semibold text-gray-900">{row.actionType}</dd>
+                        </div>
+                        <div className="sm:col-span-2">
+                          <dt className="text-gray-500">操作说明</dt>
+                          <dd className="mt-0.5 leading-relaxed text-gray-700">
+                            {sanitizeStaffFacingCopy(row.detail)}
+                          </dd>
+                        </div>
+                        <div className="flex justify-between gap-2 sm:block">
+                          <dt className="text-gray-500">操作人</dt>
+                          <dd className="font-medium text-gray-800">{row.operatorName}</dd>
+                        </div>
+                        <div className="flex justify-between gap-2 sm:block">
+                          <dt className="text-gray-500">操作时间</dt>
+                          <dd className="font-medium text-gray-800">{row.timeLabel}</dd>
+                        </div>
+                      </dl>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           )}
