@@ -18,7 +18,7 @@ import {
   createEventFromScheduleForm,
   createScheduleFormDraft,
   filterOpsSchedule,
-  getActiveScheduleEvents,
+  getTodayOperationScheduleEvents,
   getOpsAiGuidance,
   getOpsSummary,
   moveScheduleEvent,
@@ -37,6 +37,11 @@ import ScheduleForm from './courses/ScheduleForm';
 import CourseSessionOpsDrawer from './courses/CourseSessionOpsDrawer';
 import type { CourseSessionOpsTab } from './courses/CourseSessionOpsDrawer';
 import TodayOpsPanel from './courses/TodayOpsPanel';
+import {
+  cancelScheduleEvent as markScheduleEventCanceled,
+  rescheduleScheduleEvent,
+  substituteScheduleEvent,
+} from '../utils/courseSessionChange';
 import {
   getPublishToastMessage,
   isScheduleEventPublishDraft,
@@ -89,7 +94,7 @@ const Courses: React.FC = () => {
   const [attendances, setAttendances] = useState(MOCK_ATTENDANCES);
   const [draggedCourse, setDraggedCourse] = useState<CourseLibraryItem | null>(null);
   const [draggedEventId, setDraggedEventId] = useState<string | null>(null);
-  const activeScheduleEvents = getActiveScheduleEvents(scheduleEvents);
+  const todayOperationScheduleEvents = getTodayOperationScheduleEvents(scheduleEvents);
   const draftScheduleCount = scheduleEvents.filter(isScheduleEventPublishDraft).length;
 
   // Schedule Modal State
@@ -113,7 +118,7 @@ const Courses: React.FC = () => {
   const hourHeight = 70; // pixels per hour for a slightly compact view
 
   // --- Today's Ops: CourseSession + Booking + Attendance ---
-  const todayOpsSchedule = buildOpsSchedule(activeScheduleEvents, libraryList, bookings, attendances);
+  const todayOpsSchedule = buildOpsSchedule(todayOperationScheduleEvents, libraryList, bookings, attendances);
   const filteredOpsSchedule = filterOpsSchedule(todayOpsSchedule, opsFilter);
   const opsSummary = getOpsSummary(todayOpsSchedule);
   const aiGuidance = getOpsAiGuidance(todayOpsSchedule, opsSummary);
@@ -200,6 +205,27 @@ const Courses: React.FC = () => {
       } else {
           showToast(message, 'warning');
       }
+  };
+
+  const handleCancelScheduleSession = (sessionId: string, reason: string) => {
+      setScheduleEvents(prev => prev.map(ev => (
+          ev.id === sessionId ? markScheduleEventCanceled(ev, { reason }) : ev
+      )));
+      showToast('课程已标记为已取消。会员通知与权益处理将在后续接入。', 'success');
+  };
+
+  const handleRescheduleSession = (sessionId: string, reason: string, note?: string) => {
+      setScheduleEvents(prev => prev.map(ev => (
+          ev.id === sessionId ? rescheduleScheduleEvent(ev, { reason, note }) : ev
+      )));
+      showToast('课程已标记为已调课。会员与老师通知将在后续接入。', 'success');
+  };
+
+  const handleSubstituteSession = (sessionId: string, substituteTeacherName: string, reason: string) => {
+      setScheduleEvents(prev => prev.map(ev => (
+          ev.id === sessionId ? substituteScheduleEvent(ev, { substituteTeacherName, reason }) : ev
+      )));
+      showToast('课程已标记为代课中。老师课时与通知规则将在后续接入。', 'success');
   };
 
   const handleCreateNewCourse = () => {
@@ -422,7 +448,7 @@ const Courses: React.FC = () => {
                   filteredOpsSchedule={filteredOpsSchedule}
                   opsSummary={opsSummary}
                   aiGuidance={aiGuidance}
-                  calendarSessions={activeScheduleEvents}
+                  calendarSessions={todayOperationScheduleEvents}
                   bookings={bookings}
                   attendances={attendances}
                   onOpenSessionCard={openSessionCard}
@@ -441,7 +467,7 @@ const Courses: React.FC = () => {
                       weekDays={weekDays}
                       hoursArray={hoursArray}
                       hourHeight={hourHeight}
-                      scheduleEvents={activeScheduleEvents}
+                      scheduleEvents={todayOperationScheduleEvents}
                       bookings={bookings}
                       attendances={attendances}
                       draggedEventId={draggedEventId}
@@ -514,6 +540,9 @@ const Courses: React.FC = () => {
           bookings={bookings}
           attendances={attendances}
           members={MOCK_MEMBERS}
+          onCancelSession={handleCancelScheduleSession}
+          onRescheduleSession={handleRescheduleSession}
+          onSubstituteSession={handleSubstituteSession}
       />
 
       {toast && (

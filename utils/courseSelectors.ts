@@ -272,9 +272,24 @@ export const getScheduleEventColor = (
   ?? 'bg-gray-100 text-gray-800 border-gray-200'
 );
 
+/** 活跃可执行场次（不含已取消），用于需要「仍在执行流」的筛选 */
 export const getActiveScheduleEvents = (events: ScheduleEvent[]): ScheduleEvent[] => (
   events.filter(event => event.status !== 'cancelled')
 );
+
+/**
+ * 今日运营与排课日历可见场次（含已取消，便于追溯；不做「删除」语义过滤）。
+ * 后续若需按门店营业日收紧范围，可在此集中扩展。
+ */
+export const getTodayOperationScheduleEvents = (events: ScheduleEvent[]): ScheduleEvent[] => [...events];
+
+const extractCancelDetailFromNotes = (notes?: string): string | null => {
+  if (!notes?.trim()) return null;
+  const hit = notes.split('；').map(s => s.trim()).find(s => s.startsWith('【取消】'));
+  if (!hit) return null;
+  const body = hit.slice('【取消】'.length).trim();
+  return body || null;
+};
 
 export const getCalendarEventStyle = (
   startTime: string,
@@ -621,11 +636,20 @@ export const toOpsScheduleItem = (
   const lateCancelledCount = bookings.filter(booking => (
     booking.courseSessionId === session.id && booking.status === 'late_cancelled'
   )).length;
+  const cancelDetail = extractCancelDetailFromNotes(session.notes);
+  const cancelTraceLine = session.status === 'cancelled'
+    ? (cancelDetail ?? '本场次已标记取消')
+    : '';
+  const lateReason = lateCancelledCount > 0 ? `${lateCancelledCount} 个迟取消预约` : '';
+  const abnormalReasonCombined = [lateReason, cancelTraceLine].filter(Boolean).join('；');
+  const abnormal = lateCancelledCount > 0 || (session.status === 'cancelled' && !!cancelTraceLine);
   const state: OpsScheduleItem['state'] = session.status === 'completed'
     ? 'finished'
     : session.status === 'in_progress'
       ? 'ongoing'
-      : 'upcoming';
+      : session.status === 'cancelled'
+        ? 'finished'
+        : 'upcoming';
 
   return {
     id: session.id,
@@ -641,8 +665,8 @@ export const toOpsScheduleItem = (
     status: signed >= enrolled && enrolled > 0 ? 'checked_in' : isEventFull(session) ? 'full' : 'upcoming',
     signed,
     state,
-    abnormal: lateCancelledCount > 0,
-    abnormalReason: lateCancelledCount > 0 ? `${lateCancelledCount} 个迟取消预约` : '',
+    abnormal,
+    abnormalReason: abnormalReasonCombined,
     startAt: session.startAt,
     endAt: session.endAt,
   };

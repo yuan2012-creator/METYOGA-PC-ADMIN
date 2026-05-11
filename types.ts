@@ -252,6 +252,8 @@ export interface CourseSession {
   storeId?: string;
   roomId?: string;
   teacherId?: string;
+  /** 展示用老师姓名（与排课事件 teacher 等并存，可选） */
+  teacherName?: string;
   startAt: ISODateString;
   endAt: ISODateString;
   capacity: number;

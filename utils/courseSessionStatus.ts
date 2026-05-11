@@ -265,14 +265,15 @@ export const getCourseSessionDisplayStatus = (input: CourseSessionStatusInput): 
   if (r.publish === 'canceled' || r.lifecycle === 'canceled') {
     return pick('canceled', '已取消', 'danger', 1);
   }
-  if (r.exception !== 'none') {
-    return pick('exception_pending', '异常待处理', 'danger', 2, EXCEPTION_LABEL[r.exception]);
-  }
+  /** 调课 / 代课主态优先于「待确认类」异常，便于与状态概览一致 */
   if (r.lifecycle === 'rescheduled') {
-    return pick('rescheduled', '已调课', 'warning', 3);
+    return pick('rescheduled', '已调课', 'warning', 2);
   }
   if (r.lifecycle === 'substitute') {
-    return pick('substitute', '代课中', 'warning', 4);
+    return pick('substitute', '代课中', 'warning', 3);
+  }
+  if (r.exception !== 'none') {
+    return pick('exception_pending', '异常待处理', 'danger', 4, EXCEPTION_LABEL[r.exception]);
   }
   if (r.lifecycle === 'completed') {
     return pick('completed', '已完课', 'success', 5);

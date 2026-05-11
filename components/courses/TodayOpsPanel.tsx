@@ -115,9 +115,6 @@ const TodayOpsPanel: React.FC<TodayOpsPanelProps> = ({
                                       const timeParts = cls.time.split(' - ');
                                       const timeStart = timeParts[0]?.trim() ?? '';
                                       const timeEnd = timeParts[1]?.trim() ?? '';
-                                      const cardBorder = cls.abnormal
-                                          ? 'border border-rose-100/90 bg-white'
-                                          : 'border border-gray-200 bg-white';
                                       const evt = calendarSessions.find(s => s.id === cls.id);
                                       const sessionRow = courseSessionForDisplay(cls, evt);
                                       const displayStatus = getCourseSessionDisplayStatus({
@@ -125,13 +122,24 @@ const TodayOpsPanel: React.FC<TodayOpsPanelProps> = ({
                                         bookings,
                                         attendances,
                                       });
+                                      const isCanceledCard =
+                                          displayStatus.key === 'canceled' || cls.courseSessionStatus === 'cancelled';
+                                      const cardBorder = isCanceledCard
+                                          ? 'border border-gray-200/90 bg-gray-50/40'
+                                          : cls.abnormal
+                                              ? 'border border-rose-100/90 bg-white'
+                                              : 'border border-gray-200 bg-white';
                                       const statusBadgeClass = getCourseSessionToneBadgeClass(displayStatus.tone);
 
                                       return (
                                           <div key={cls.id} className="relative w-[268px] max-w-[280px] flex-shrink-0 pt-5">
                                               <div
                                                   className={`absolute left-2 top-0 z-10 h-2.5 w-2.5 rounded-full border-2 border-white ${
-                                                      isPast ? 'bg-gray-300' : isOngoing ? 'bg-[#2d7a4f]' : 'bg-[#1f5e3b]/70'
+                                                      isCanceledCard || isPast
+                                                          ? 'bg-gray-300'
+                                                          : isOngoing
+                                                            ? 'bg-[#2d7a4f]'
+                                                            : 'bg-[#1f5e3b]/70'
                                                   }`}
                                                   aria-hidden
                                               />
@@ -145,7 +153,7 @@ const TodayOpsPanel: React.FC<TodayOpsPanelProps> = ({
                                                           onOpenSessionCard(cls.id);
                                                       }
                                                   }}
-                                                  className={`mt-2 flex min-h-0 cursor-pointer flex-col gap-3 rounded-2xl p-5 outline-none transition-colors ${cardBorder} hover:border-gray-300 hover:bg-gray-50/60 focus-visible:ring-2 focus-visible:ring-[#1f5e3b]/30 ${cls.abnormal ? 'hover:border-rose-100/90' : ''}`}
+                                                  className={`mt-2 flex min-h-0 cursor-pointer flex-col gap-3 rounded-2xl p-5 outline-none transition-colors ${cardBorder} hover:border-gray-300 hover:bg-gray-50/60 focus-visible:ring-2 focus-visible:ring-[#1f5e3b]/30 ${cls.abnormal && !isCanceledCard ? 'hover:border-rose-100/90' : ''}`}
                                               >
                                                   {/* 第一层：顶部状态行 */}
                                                   <div className="flex items-start justify-between gap-2 border-b border-gray-100 pb-3">
@@ -227,8 +235,14 @@ const TodayOpsPanel: React.FC<TodayOpsPanelProps> = ({
                                                               </span>
                                                           </div>
                                                       </div>
-                                                      {cls.abnormal && cls.abnormalReason ? (
-                                                          <p className="mt-2 border-t border-rose-50 pt-2 text-[10px] leading-relaxed text-rose-700/90">
+                                                      {cls.abnormalReason ? (
+                                                          <p
+                                                              className={`mt-2 border-t pt-2 text-[10px] leading-relaxed ${
+                                                                  isCanceledCard
+                                                                      ? 'border-gray-100 text-gray-600'
+                                                                      : 'border-rose-50 text-rose-700/90'
+                                                              }`}
+                                                          >
                                                               {cls.abnormalReason}
                                                           </p>
                                                       ) : null}
