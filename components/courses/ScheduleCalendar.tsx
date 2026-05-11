@@ -32,6 +32,8 @@ interface ScheduleCalendarProps {
   isLibraryManagementOpen?: boolean;
   onToggleLibraryManagement?: () => void;
   onPublishSchedule?: () => void;
+  /** 待发布草稿节数，用于发布按钮旁轻量提示 */
+  draftScheduleCount?: number;
 }
 
 const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
@@ -56,6 +58,7 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
   isLibraryManagementOpen = false,
   onToggleLibraryManagement,
   onPublishSchedule,
+  draftScheduleCount = 0,
 }) => (
   <>
                       {/* SECTION 2: SMART SCHEDULING GUIDANCE (Moved here for better visibility) */}
@@ -196,13 +199,20 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                                           <span className="px-3 py-1 text-xs font-bold border-x border-gray-100 flex items-center min-w-[100px] justify-center">05.04 - 05.10</span>
                                           <button className="px-3 py-1 text-xs hover:bg-gray-50 text-gray-600"><i className="fa-solid fa-chevron-right"></i></button>
                                       </div>
-                                      <button
-                                          type="button"
-                                          onClick={() => onPublishSchedule?.()}
-                                          className="met-primary-button !h-9 !min-h-0 !px-3 !py-0 !text-xs"
-                                      >
-                                          <i className="fa-solid fa-check mr-1" aria-hidden /> 发布课表
-                                      </button>
+                                      <div className="flex items-center gap-2">
+                                          {draftScheduleCount > 0 ? (
+                                              <span className="whitespace-nowrap text-[11px] text-gray-500 tabular-nums">
+                                                  草稿 {draftScheduleCount} 节
+                                              </span>
+                                          ) : null}
+                                          <button
+                                              type="button"
+                                              onClick={() => onPublishSchedule?.()}
+                                              className="met-primary-button !h-9 !min-h-0 !px-3 !py-0 !text-xs"
+                                          >
+                                              <i className="fa-solid fa-check mr-1" aria-hidden /> 发布课表
+                                          </button>
+                                      </div>
                                   </div>
                               </div>
 

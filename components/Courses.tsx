@@ -37,13 +37,18 @@ import ScheduleForm from './courses/ScheduleForm';
 import CourseSessionOpsDrawer from './courses/CourseSessionOpsDrawer';
 import type { CourseSessionOpsTab } from './courses/CourseSessionOpsDrawer';
 import TodayOpsPanel from './courses/TodayOpsPanel';
+import {
+  getPublishToastMessage,
+  isScheduleEventPublishDraft,
+  publishScheduleEvents,
+} from '../utils/courseSchedulePublish';
 
 const INITIAL_LIBRARY_LIST = MOCK_COURSES.map(toCourseLibraryItem);
 const INITIAL_SCHEDULE_EVENTS = MOCK_COURSE_SESSIONS.map(session => (
   toScheduleEvent(session, INITIAL_LIBRARY_LIST, MOCK_BOOKINGS)
 ));
 
-type CourseToastTone = 'info' | 'success';
+type CourseToastTone = 'info' | 'success' | 'warning';
 
 interface CourseToast {
   id: number;
@@ -85,6 +90,7 @@ const Courses: React.FC = () => {
   const [draggedCourse, setDraggedCourse] = useState<CourseLibraryItem | null>(null);
   const [draggedEventId, setDraggedEventId] = useState<string | null>(null);
   const activeScheduleEvents = getActiveScheduleEvents(scheduleEvents);
+  const draftScheduleCount = scheduleEvents.filter(isScheduleEventPublishDraft).length;
 
   // Schedule Modal State
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
@@ -185,7 +191,15 @@ const Courses: React.FC = () => {
   };
 
   const handlePublishSchedule = () => {
-      showToast('发布课表流程待接入，当前排课仅保存为前端草稿。', 'info');
+      const result = publishScheduleEvents(scheduleEvents);
+      const message = getPublishToastMessage(result);
+      if (result.publishedCount > 0) {
+          setScheduleEvents(result.nextEvents);
+          const hasIssues = result.invalidCount + result.blockedExceptionCount > 0;
+          showToast(message, hasIssues ? 'info' : 'success');
+      } else {
+          showToast(message, 'warning');
+      }
   };
 
   const handleCreateNewCourse = () => {
@@ -441,6 +455,7 @@ const Courses: React.FC = () => {
                       isLibraryManagementOpen={isLibraryManagementOpen}
                       onToggleLibraryManagement={() => setIsLibraryManagementOpen(o => !o)}
                       onPublishSchedule={handlePublishSchedule}
+                      draftScheduleCount={draftScheduleCount}
                   />
 
                   {isLibraryManagementOpen ? (
@@ -506,9 +521,17 @@ const Courses: React.FC = () => {
               <div className={`px-4 py-3 rounded-xl shadow-xl border text-sm font-bold flex items-center gap-3 ${
                   toast.tone === 'success'
                   ? 'bg-green-50 text-green-700 border-green-100'
-                  : 'bg-white text-gray-800 border-gray-100'
+                  : toast.tone === 'warning'
+                    ? 'bg-amber-50 text-amber-900 border-amber-100'
+                    : 'bg-white text-gray-800 border-gray-100'
               }`}>
-                  <i className={`fa-solid ${toast.tone === 'success' ? 'fa-circle-check' : 'fa-circle-info'}`}></i>
+                  <i className={`fa-solid ${
+                    toast.tone === 'success'
+                      ? 'fa-circle-check'
+                      : toast.tone === 'warning'
+                        ? 'fa-triangle-exclamation'
+                        : 'fa-circle-info'
+                  }`}></i>
                   {toast.message}
                   <button onClick={() => setToast(null)} className="ml-2 text-current opacity-50 hover:opacity-100">
                       <i className="fa-solid fa-xmark"></i>
