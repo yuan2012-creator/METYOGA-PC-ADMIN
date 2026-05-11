@@ -4,52 +4,51 @@ import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import {
   MOCK_ATTENDANCES,
   MOCK_BOOKINGS,
+  MOCK_CONTRACTS,
   MOCK_COURSES,
   MOCK_COURSE_SESSIONS,
-  MOCK_FINANCE_LEDGER_ENTRIES,
+  MOCK_MEMBER_ASSETS,
   MOCK_MEMBERS,
   MOCK_ORDERS,
-  MOCK_PAYMENTS,
-  MOCK_REFUNDS,
 } from '../constants';
 import { Member } from '../types';
-import type { Stage } from '../types';
-import { buildMemberBusinessRecordSummary } from '../utils/memberDetailSelectors';
 import {
   MEMBER_LIFECYCLE_GROUPS,
-  MEMBER_STAGE_CONFIG,
   getMemberLifecycleStatus,
-  getMemberStage,
 } from '../utils/memberLifecycle';
-import {
-  MEMBER_RISK_PRESENTATION,
-  getMemberLifecyclePresentation,
-  getMemberListBusinessSummary,
-} from '../utils/memberPresentation';
+import { MEMBER_RISK_PRESENTATION } from '../utils/memberPresentation';
+import { buildMemberListRows, type MemberListLifecycleTone } from '../utils/memberListSelectors';
 import MemberDetailModal from './MemberDetailModal';
 
-const LEAD_STATUS_LABELS: Record<NonNullable<Member['leadStatus']>, string> = {
-  new: '待回访',
-  following: '跟进中',
-  high_intent: '高意向',
-  pool: '公海',
-};
-
-type MemberMainTab = 'overview' | 'leads' | 'active' | 'churned';
+type MemberMainTab = 'all' | 'leads' | 'active' | 'churned' | 'risk';
 type MemberRiskFilter = Exclude<NonNullable<Member['riskTag']>, 'churn'>;
-type MemberStageFilter = 'all' | Stage;
 
 const MEMBER_MAIN_TABS: Array<{ id: MemberMainTab; label: string }> = [
-  { id: 'overview', label: '总览' },
-  { id: 'leads', label: '潜客公海' },
+  { id: 'all', label: '全部会员' },
+  { id: 'leads', label: '潜客' },
   { id: 'active', label: '正式会员' },
   { id: 'churned', label: '流失客户' },
+  { id: 'risk', label: '风险会员' },
 ];
+
+const lifecycleToneBadgeClass = (tone: MemberListLifecycleTone): string => {
+  switch (tone) {
+    case 'danger':
+      return 'border border-rose-100/90 bg-rose-50/80 text-rose-800';
+    case 'warning':
+      return 'border border-amber-100/90 bg-amber-50/85 text-amber-900';
+    case 'info':
+      return 'border border-sky-100/90 bg-sky-50/80 text-sky-900';
+    case 'success':
+      return 'border border-emerald-100/90 bg-emerald-50/85 text-emerald-900';
+    default:
+      return 'border border-gray-200/90 bg-gray-50 text-gray-700';
+  }
+};
 
 const Members: React.FC = () => {
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
-  const [mainTab, setMainTab] = useState<MemberMainTab>('overview');
-  const [filterStage, setFilterStage] = useState<MemberStageFilter>('all');
+  const [mainTab, setMainTab] = useState<MemberMainTab>('all');
   const [alertFilter, setAlertFilter] = useState<MemberRiskFilter | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [funnelRange, setFunnelRange] = useState<'week' | 'month'>('month');
@@ -68,8 +67,8 @@ const Members: React.FC = () => {
   const todayLost = 2;
 
   const chartData = [
-    { name: 'Active', value: 70, color: '#1D1D1F' },
-    { name: 'Other', value: 30, color: '#E5E5EA' },
+    { name: '在籍会员', value: 70, color: '#1D1D1F' },
+    { name: '其他', value: 30, color: '#E5E5EA' },
   ];
 
   // --- Mock Funnel Data ---
@@ -90,27 +89,51 @@ const Members: React.FC = () => {
 
   const activeFunnel = funnelMetrics[funnelRange];
 
+  const memberListRows = useMemo(
+    () => buildMemberListRows({
+      members: MOCK_MEMBERS,
+      memberAssets: MOCK_MEMBER_ASSETS,
+      bookings: MOCK_BOOKINGS,
+      attendances: MOCK_ATTENDANCES,
+      consumptions: [],
+      orders: MOCK_ORDERS,
+      contracts: MOCK_CONTRACTS,
+      courseSessions: MOCK_COURSE_SESSIONS,
+      courses: MOCK_COURSES,
+    }),
+    [],
+  );
+
+  const rowByMemberId = useMemo(
+    () => new Map(memberListRows.map(r => [r.memberId, r])),
+    [memberListRows],
+  );
+
   // --- Filter Logic ---
   const visibleMembers = useMemo(() => {
     let filtered = MOCK_MEMBERS;
-    
+
     if (mainTab === 'leads') filtered = filtered.filter(m => MEMBER_LIFECYCLE_GROUPS.leads.includes(getMemberLifecycleStatus(m)));
     else if (mainTab === 'active') filtered = filtered.filter(m => MEMBER_LIFECYCLE_GROUPS.active.includes(getMemberLifecycleStatus(m)));
     else if (mainTab === 'churned') filtered = filtered.filter(m => MEMBER_LIFECYCLE_GROUPS.churned.includes(getMemberLifecycleStatus(m)));
-
-    if (mainTab !== 'leads' && alertFilter) {
-        filtered = filtered.filter(m => m.riskTag === alertFilter);
+    else if (mainTab === 'risk') {
+      filtered = filtered.filter(m => {
+        const row = rowByMemberId.get(m.id);
+        return row && !row.riskTags.includes('暂无明显风险');
+      });
     }
 
-    if (filterStage !== 'all') filtered = filtered.filter(m => getMemberStage(m) === filterStage);
+    if (mainTab !== 'leads' && alertFilter) {
+      filtered = filtered.filter(m => m.riskTag === alertFilter);
+    }
 
     if (searchQuery) {
-        const q = searchQuery.toLowerCase();
-        filtered = filtered.filter(m => m.name.toLowerCase().includes(q) || m.phone.includes(q));
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter(m => m.name.toLowerCase().includes(q) || m.phone.includes(q));
     }
 
     return filtered;
-  }, [mainTab, filterStage, alertFilter, searchQuery]);
+  }, [mainTab, alertFilter, searchQuery, rowByMemberId]);
 
   const stats = {
     expiry: MOCK_MEMBERS.filter(m => m.riskTag === 'expiry').length,
@@ -122,23 +145,6 @@ const Members: React.FC = () => {
     () => MOCK_MEMBERS.filter(m => MEMBER_LIFECYCLE_GROUPS.leads.includes(getMemberLifecycleStatus(m)) && m.leadStatus === 'new'),
     []
   );
-
-  const memberBusinessSummaries = useMemo(() => (
-    new Map(MOCK_MEMBERS.map(member => [
-      member.id,
-      buildMemberBusinessRecordSummary({
-        member,
-        bookings: MOCK_BOOKINGS,
-        attendances: MOCK_ATTENDANCES,
-        courseSessions: MOCK_COURSE_SESSIONS,
-        courses: MOCK_COURSES,
-        orders: MOCK_ORDERS,
-        payments: MOCK_PAYMENTS,
-        refunds: MOCK_REFUNDS,
-        ledgerEntries: MOCK_FINANCE_LEDGER_ENTRIES,
-      }),
-    ]))
-  ), []);
 
   const FilterIcon = () => (
     <i className="fa-solid fa-filter text-[9px] opacity-20 group-hover/header:opacity-100 transition-opacity ml-1.5 cursor-pointer"></i>
@@ -152,7 +158,8 @@ const Members: React.FC = () => {
           <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
               会员经营
               <button 
-                  onClick={() => showToast('智能分析仍为演示入口，后续会接入真实会员运营分析')}
+                  type="button"
+                  onClick={() => showToast('智能分析待接入，正式版本需接入权限与操作日志')}
                   className="text-[10px] text-purple-600 font-bold flex items-center gap-1 hover:underline ml-2 bg-purple-50 px-2 py-1 rounded-full border border-purple-100"
               >
                   <i className="fa-solid fa-wand-magic-sparkles"></i> 智能分析
@@ -169,7 +176,11 @@ const Members: React.FC = () => {
                     className="pl-9 pr-4 py-2 bg-gray-100 border border-transparent focus:bg-white focus:border-gray-300 rounded-lg text-xs w-64 transition-all outline-none" 
                   />
               </div>
-              <button type="button" className="met-primary-button text-xs">
+              <button
+                  type="button"
+                  className="met-primary-button text-xs"
+                  onClick={() => showToast('新增会员功能待接入，正式版本需完善来源、权益与合同信息。')}
+              >
                   + 新增会员
               </button>
           </div>
@@ -180,8 +191,9 @@ const Members: React.FC = () => {
           <div className="bg-gray-100 p-1 rounded-xl inline-flex relative">
               {MEMBER_MAIN_TABS.map(tab => (
                   <button 
-                    key={tab.id}
-                    onClick={() => { setMainTab(tab.id); setFilterStage('all'); setAlertFilter(null); }}
+                      key={tab.id}
+                      type="button"
+                      onClick={() => { setMainTab(tab.id); setAlertFilter(null); }}
                     className={`relative z-10 px-6 py-2 text-[13px] font-medium text-center rounded-lg transition-all duration-200 ${
                         mainTab === tab.id 
                         ? 'bg-white text-black shadow-sm font-bold' 
@@ -311,146 +323,103 @@ const Members: React.FC = () => {
                   <div className="px-8 py-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/30">
                       <div className="flex items-center gap-3">
                           <span className="text-sm font-bold text-gray-900">
-                              {mainTab === 'leads' ? '潜客公海池' : mainTab === 'active' ? '正式会员列表' : mainTab === 'churned' ? '流失客户档案' : '全量会员档案'}
+                              {mainTab === 'leads'
+                                ? '潜客列表'
+                                : mainTab === 'active'
+                                  ? '正式会员列表'
+                                  : mainTab === 'churned'
+                                    ? '流失客户列表'
+                                    : mainTab === 'risk'
+                                      ? '风险会员列表'
+                                      : '全部会员列表'}
                           </span>
                           <span className="text-xs text-gray-300 font-medium font-mono">({visibleMembers.length} 记录)</span>
                       </div>
                   </div>
 
                   <div className="overflow-x-auto">
-                      <table className="w-full text-left">
+                      <table className="w-full min-w-[960px] text-left">
                           <thead className="bg-white">
-                              <tr className="text-[10px] font-bold text-gray-400 uppercase tracking-widest border-b border-gray-100">
-                                  <th className="px-8 py-5">会员名称 <FilterIcon /></th>
-                                  <th className="px-4 py-5">联系电话 <FilterIcon /></th>
-                                  {mainTab === 'leads' ? (
-                                      <>
-                                          <th className="px-4 py-5">线索来源</th>
-                                          <th className="px-4 py-5">体验时间</th>
-                                          <th className="px-4 py-5 text-center">意向度</th>
-                                          <th className="px-4 py-5">负责人</th>
-                                          <th className="px-4 py-5">状态</th>
-                                      </>
-                                  ) : (
-                                      <>
-                                          <th className="px-4 py-5 relative">
-                                              所处阶段 <FilterIcon />
-                                                  <select className="absolute inset-0 opacity-0 cursor-pointer" value={filterStage} onChange={(e) => setFilterStage(e.target.value as MemberStageFilter)}>
-                                                      <option value="all">全部</option>
-                                                  {Object.entries(MEMBER_STAGE_CONFIG).map(([key, config]) => <option key={key} value={key}>{config.label}</option>)}
-                                              </select>
-                                          </th>
-                                          <th className="px-4 py-5">课程记录</th>
-                                          <th className="px-4 py-5">卡项</th>
-                                          <th className="px-4 py-5">管家</th>
-                                          <th className="px-4 py-5">专属老师</th>
-                                      </>
-                                  )}
-                                  <th className="px-4 py-5 text-center">预警</th>
-                                  <th className="px-8 py-5 text-right">操作</th>
+                              <tr className="border-b border-gray-100 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                                  <th className="w-[200px] px-6 py-4">会员 <FilterIcon /></th>
+                                  <th className="min-w-[180px] px-4 py-4">当前权益</th>
+                                  <th className="min-w-[160px] px-4 py-4">最近到课</th>
+                                  <th className="min-w-[160px] px-4 py-4">最近耗课</th>
+                                  <th className="min-w-[140px] px-4 py-4">风险提示</th>
+                                  <th className="min-w-[120px] px-4 py-4">负责人</th>
+                                  <th className="min-w-[100px] px-4 py-4">下一步</th>
+                                  <th className="w-[100px] px-6 py-4 text-right">操作</th>
                               </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-50">
                               {visibleMembers.map(member => {
-                                const stageView = getMemberLifecyclePresentation(member);
-                                const recordSummary = memberBusinessSummaries.get(member.id) ?? buildMemberBusinessRecordSummary({
-                                  member,
-                                  bookings: MOCK_BOOKINGS,
-                                  attendances: MOCK_ATTENDANCES,
-                                  courseSessions: MOCK_COURSE_SESSIONS,
-                                  courses: MOCK_COURSES,
-                                  orders: MOCK_ORDERS,
-                                  payments: MOCK_PAYMENTS,
-                                  refunds: MOCK_REFUNDS,
-                                  ledgerEntries: MOCK_FINANCE_LEDGER_ENTRIES,
-                                });
-                                const listSummary = getMemberListBusinessSummary(member, recordSummary);
-                                const leadStatusLabel = member.leadStatus ? LEAD_STATUS_LABELS[member.leadStatus] : '待回访';
+                                const row = rowByMemberId.get(member.id);
+                                if (!row) return null;
 
                                 return (
                                   <tr 
                                     key={member.id} 
                                     onClick={() => setSelectedMember(member)}
-                                    className="hover:bg-[#FAFAFA] cursor-pointer transition-all duration-200 group"
+                                    className="group cursor-pointer transition-all duration-200 hover:bg-[#FAFAFA]"
                                   >
-                                      <td className="px-8 py-5">
+                                      <td className="px-6 py-4">
                                           <div className="flex items-center gap-3">
-                                              <img src={member.avatar} alt="" className="w-10 h-10 rounded-full object-cover border border-white shadow-sm" />
-                                              <span className="font-bold text-gray-900 text-sm">{member.name}</span>
+                                              <img src={member.avatar} alt="" className="h-10 w-10 shrink-0 rounded-full border border-white object-cover shadow-sm" />
+                                              <div className="min-w-0">
+                                                  <div className="truncate text-sm font-bold text-gray-900">{row.name}</div>
+                                                  <div className="truncate font-mono text-[11px] text-gray-500">{row.phoneMasked}</div>
+                                                  <span className={`mt-1 inline-block rounded-md px-2 py-0.5 text-[10px] font-semibold ${lifecycleToneBadgeClass(row.lifecycleTone)}`}>
+                                                      {row.lifecycleLabel}
+                                                  </span>
+                                              </div>
                                           </div>
                                       </td>
-                                      <td className="px-4 py-5 text-xs text-gray-500 font-mono tracking-tighter">{member.phone}</td>
-                                      
-                                      {mainTab === 'leads' ? (
-                                          <>
-                                              <td className="px-4 py-5 text-xs text-gray-600">大众点评</td>
-                                              <td className="px-4 py-5 text-xs text-gray-600">周三 14:00</td>
-                                              <td className="px-4 py-5">
-                                                  <div className="w-16 h-1 bg-gray-100 rounded-full mx-auto overflow-hidden">
-                                                      <div className="h-full bg-black rounded-full" style={{ width: `${member.leadProbability}%` }}></div>
-                                                  </div>
-                                              </td>
-                                              <td className="px-4 py-5 text-xs font-bold text-gray-900">{member.manager}</td>
-                                              <td className="px-4 py-5">
-                                                  <span className="px-2 py-0.5 rounded-lg bg-gray-100 text-gray-500 text-[10px] font-bold">{leadStatusLabel}</span>
-                                              </td>
-                                          </>
-                                      ) : (
-                                          <>
-                                              <td className="px-4 py-5">
-                                                  <div className="flex flex-col items-start gap-1">
-                                                      <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold border" style={{ color: stageView.color, backgroundColor: stageView.bgColor + '80', borderColor: stageView.color + '20' }}>
-                                                          {stageView.label}
-                                                      </span>
-                                                      {stageView.legacyLabel && (
-                                                          <span className="text-[9px] text-gray-400">Legacy: {stageView.legacyLabel}</span>
-                                                      )}
-                                                  </div>
-                                              </td>
-                                              <td className="px-4 py-5">
-                                                  <div className="max-w-[150px]">
-                                                      <div className="truncate text-[10px] font-bold text-gray-800">{listSummary.courseText}</div>
-                                                      <div className="text-[9px] text-gray-400 mt-0.5">{listSummary.courseSourceLabel}</div>
-                                                  </div>
-                                              </td>
-                                              <td className="px-4 py-5">
-                                                  {listSummary.assetText !== '无有效资产' ? (
-                                                      <div className="max-w-[140px]">
-                                                          <div className="truncate text-[10px] font-bold text-gray-800">{listSummary.assetText}</div>
-                                                          <div className="text-[9px] text-gray-400 mt-0.5">{listSummary.assetSourceLabel} · {listSummary.consumptionText}</div>
-                                                      </div>
-                                                  ) : <span className="text-gray-300 text-[10px]">无持卡</span>}
-                                              </td>
-                                              <td className="px-4 py-5 text-xs text-gray-600">{member.manager}</td>
-                                              <td className="px-4 py-5 text-xs text-gray-400">
-                                                  {member.privateTeachers && member.privateTeachers.length > 0 ? (
-                                                      <span className="text-gray-900 font-bold">{member.privateTeachers[0]}</span>
-                                                  ) : '-'}
-                                              </td>
-                                          </>
-                                      )}
-
-                                      <td className="px-4 py-5 text-center">
-                                          {listSummary.riskIconClass && (
-                                              <i
-                                                className={`${listSummary.riskIconClass} ${listSummary.riskTextClass}`}
-                                                title={`${listSummary.riskLabel ?? '风险提示'} · ${listSummary.consumptionSourceLabel}`}
-                                              ></i>
-                                          )}
+                                      <td className="px-4 py-4 align-top">
+                                          <div className="max-w-[200px] space-y-0.5">
+                                              <div className="truncate text-[11px] font-semibold text-gray-900">{row.mainAssetLabel}</div>
+                                              <div className="text-[10px] text-gray-600">{row.remainingLabel}</div>
+                                              <div className="text-[10px] text-gray-500">
+                                                  有效期 {row.expireLabel}
+                                                  {row.expireRiskLabel ? <span className="text-amber-800/85"> · {row.expireRiskLabel}</span> : null}
+                                              </div>
+                                          </div>
                                       </td>
-                                      <td className="px-8 py-5 text-right">
-                                          <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                      <td className="px-4 py-4 align-top text-[11px] leading-snug text-gray-700">{row.lastAttendanceLabel}</td>
+                                      <td className="px-4 py-4 align-top text-[11px] leading-snug text-gray-700">{row.lastConsumptionLabel}</td>
+                                      <td className="px-4 py-4 align-top">
+                                          <div className="flex flex-wrap gap-1">
+                                              {row.riskTags.map(tag => (
+                                                  <span
+                                                    key={`${member.id}-${tag}`}
+                                                    className="rounded-md border border-gray-200/90 bg-gray-50/90 px-1.5 py-0.5 text-[9px] font-semibold text-gray-600"
+                                                  >
+                                                      {tag}
+                                                  </span>
+                                              ))}
+                                          </div>
+                                      </td>
+                                      <td className="px-4 py-4 align-top text-[11px] text-gray-700">
+                                          <div>管家 {row.ownerLabel}</div>
+                                          <div className="mt-0.5 text-gray-500">老师 {row.teacherLabel}</div>
+                                      </td>
+                                      <td className="px-4 py-4 align-top text-[10px] leading-snug text-gray-500">{row.nextActionLabel}</td>
+                                      <td className="px-6 py-4 text-right align-top">
+                                          <div className="flex justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                                               <button
-                                                className="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-black transition"
-                                                onClick={(e) => { e.stopPropagation(); showToast(`${member.name} 档案编辑仍为演示入口，真实保存待后续接入`); }}
+                                                type="button"
+                                                className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition hover:bg-gray-100 hover:text-gray-800"
+                                                onClick={(e) => { e.stopPropagation(); showToast(`${member.name} 档案编辑功能待接入，正式版本需接入权限与操作日志`); }}
+                                                aria-label="编辑"
                                               >
-                                                <i className="fa-regular fa-pen-to-square"></i>
+                                                <i className="fa-regular fa-pen-to-square" aria-hidden />
                                               </button>
                                               <button
-                                                className="w-8 h-8 rounded-lg hover:bg-red-50 flex items-center justify-center text-gray-400 hover:text-red-500 transition"
-                                                onClick={(e) => { e.stopPropagation(); showToast(`${member.name} 删除/归档仍为演示入口，需接入会员生命周期动作`); }}
+                                                type="button"
+                                                className="flex h-8 w-8 items-center justify-center rounded-lg text-gray-400 transition hover:bg-rose-50 hover:text-rose-600"
+                                                onClick={(e) => { e.stopPropagation(); showToast('删除会员需审批与操作日志，当前功能待接入。'); }}
+                                                aria-label="删除"
                                               >
-                                                <i className="fa-regular fa-trash-can"></i>
+                                                <i className="fa-regular fa-trash-can" aria-hidden />
                                               </button>
                                           </div>
                                       </td>

@@ -268,7 +268,7 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }
                         {stageView.legacyLabel && (
                             <>
                                 <span className="text-gray-300">|</span>
-                                <span>Legacy stage: {stageView.legacyLabel}</span>
+                                <span>历史阶段：{stageView.legacyLabel}</span>
                             </>
                         )}
                     </div>
@@ -276,13 +276,15 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }
             </div>
             <div className="flex items-center gap-3">
                 <button 
-                    onClick={() => showToast('正在生成会员深度洞察报告…')}
+                    type="button"
+                    onClick={() => showToast('智能分析待接入，正式版本需接入权限与操作日志')}
                     className="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-xl text-xs font-bold hover:opacity-90 transition shadow-sm flex items-center gap-2"
                 >
-                    <i className="fa-solid fa-wand-magic-sparkles"></i> AI 洞察
+                    <i className="fa-solid fa-wand-magic-sparkles"></i> 智能分析待接入
                 </button>
                 <button
-                    onClick={() => showToast('已进入会员档案编辑演示')}
+                    type="button"
+                    onClick={() => showToast('档案编辑功能待接入，正式版本需接入权限与操作日志')}
                     className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold hover:bg-gray-50 transition text-gray-700 shadow-sm"
                 >
                     编辑档案
@@ -339,7 +341,7 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }
                             <span key={tag} className="px-2.5 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-bold text-gray-600 shadow-sm">{tag}</span>
                         ))}
                         <button
-                          onClick={() => showToast('已打开会员标签补充演示')}
+                          onClick={() => showToast('会员标签功能待接入，正式版本需接入权限与操作日志')}
                           className="px-2 py-1 border border-dashed border-gray-300 rounded-lg text-[10px] text-gray-400 hover:border-gray-400 transition"
                         >
                           +
@@ -349,7 +351,7 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }
                     {/* Action Buttons */}
                     <div className="grid grid-cols-4 gap-2 mb-3">
                         <button
-                          onClick={() => showToast('已进入微信触达演示')}
+                          onClick={() => showToast('微信触达功能待接入，正式版本需接入权限与操作日志')}
                           className="flex flex-col items-center justify-center py-3 bg-white border border-gray-200 rounded-xl hover:border-gray-300 hover:bg-gray-50 transition group shadow-sm"
                         >
                             <i className="fa-brands fa-weixin text-lg text-green-600 mb-1 group-hover:scale-110 transition"></i>
@@ -363,14 +365,14 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }
                             <span className="text-[10px] font-medium text-gray-500">电话</span>
                         </button>
                         <button
-                          onClick={() => showToast('已进入会员预约创建演示')}
+                          onClick={() => showToast('会员预约创建功能待接入，正式版本需接入权限与操作日志')}
                           className="flex flex-col items-center justify-center py-3 bg-white border border-gray-200 rounded-xl hover:border-gray-300 hover:bg-gray-50 transition group shadow-sm"
                         >
                             <i className="fa-solid fa-calendar-check text-lg text-black mb-1 group-hover:scale-110 transition"></i>
                             <span className="text-[10px] font-medium text-gray-500">预约</span>
                         </button>
                         <button
-                          onClick={() => showToast('已打开优惠券发放演示', 'success')}
+                          onClick={() => showToast('优惠券发放功能待接入，正式版本需接入权限与操作日志', 'success')}
                           className="flex flex-col items-center justify-center py-3 bg-white border border-gray-200 rounded-xl hover:border-gray-300 hover:bg-gray-50 transition group shadow-sm"
                         >
                             <i className="fa-solid fa-ticket text-lg text-orange-500 mb-1 group-hover:scale-110 transition"></i>
@@ -419,7 +421,7 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }
                                     <span className={card.badgeClass}>{card.statusLabel}</span>
                                 </div>
                                 <div className="flex justify-between items-end relative z-10 mt-2">
-                                    <div className="text-[9px] opacity-70">MET YOGA</div>
+                                    <div className="text-[9px] opacity-70">权益卡</div>
                                     <div className="text-right">
                                         <div className="text-base font-bold">{card.balanceText}</div>
                                         {card.expiryText && <div className="text-[9px] opacity-80 font-mono">{card.expiryText}</div>}
@@ -429,7 +431,7 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }
                         ))}
                          {assetCards.length === 0 && (
                             <div className="p-4 border border-dashed border-gray-200 rounded-xl text-center text-xs text-gray-400 bg-gray-50">
-                                暂无有效会员卡
+                                暂无会员资产
                             </div>
                          )}
                     </div>
@@ -523,7 +525,7 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }
                         <div>
                             <h3 className="text-sm font-bold text-gray-900">全景动态追踪</h3>
                             <p className="text-[10px] text-gray-400 mt-1">
-                                优先展示订单、预约、签到、退款链路；缺口由历史时间线估算补充
+                                优先展示购买记录、预约记录、到课记录与退款记录；缺口由历史时间线估算补充
                             </p>
                         </div>
                         <div className="flex gap-4">
@@ -587,7 +589,7 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }
                         )}
                         
                         <div className="pt-4 text-center">
-                            <span className="text-[10px] text-gray-300">End of Timeline</span>
+                            <span className="text-[10px] text-gray-300">已显示全部动态</span>
                         </div>
                     </div>
                 </div>
