@@ -20,7 +20,16 @@ import {
   getMemberLifecycleStatus,
 } from '../utils/memberLifecycle';
 import { MEMBER_RISK_PRESENTATION } from '../utils/memberPresentation';
-import { MEMBER_OPS_SCENARIO_CONSUMPTIONS } from '../utils/memberOpsScenarioFixtures';
+import {
+  MEMBER_OPS_SCENARIO_ASSETS,
+  MEMBER_OPS_SCENARIO_ATTENDANCES,
+  MEMBER_OPS_SCENARIO_BOOKINGS,
+  MEMBER_OPS_SCENARIO_CONSUMPTIONS,
+  MEMBER_OPS_SCENARIO_CONTRACTS,
+  MEMBER_OPS_SCENARIO_ORDERS,
+  MEMBER_OPS_SCENARIO_PAYMENTS,
+  mergeMemberOpsScenarioIntoMemberData,
+} from '../utils/memberOpsScenarioFixtures';
 import { buildMemberListRows, type MemberListLifecycleTone } from '../utils/memberListSelectors';
 import MemberDetailModal from './MemberDetailModal';
 
@@ -93,19 +102,48 @@ const Members: React.FC = () => {
 
   const activeFunnel = funnelMetrics[funnelRange];
 
+  const mergedMemberAssets = useMemo(
+    () => mergeMemberOpsScenarioIntoMemberData(MOCK_MEMBER_ASSETS, MEMBER_OPS_SCENARIO_ASSETS),
+    [],
+  );
+  const mergedBookings = useMemo(
+    () => mergeMemberOpsScenarioIntoMemberData(MOCK_BOOKINGS, MEMBER_OPS_SCENARIO_BOOKINGS),
+    [],
+  );
+  const mergedAttendances = useMemo(
+    () => mergeMemberOpsScenarioIntoMemberData(MOCK_ATTENDANCES, MEMBER_OPS_SCENARIO_ATTENDANCES),
+    [],
+  );
+  const mergedConsumptions = useMemo(
+    () => mergeMemberOpsScenarioIntoMemberData([], MEMBER_OPS_SCENARIO_CONSUMPTIONS),
+    [],
+  );
+  const mergedOrders = useMemo(
+    () => mergeMemberOpsScenarioIntoMemberData(MOCK_ORDERS, MEMBER_OPS_SCENARIO_ORDERS),
+    [],
+  );
+  const mergedContracts = useMemo(
+    () => mergeMemberOpsScenarioIntoMemberData(MOCK_CONTRACTS, MEMBER_OPS_SCENARIO_CONTRACTS),
+    [],
+  );
+  const mergedPayments = useMemo(
+    () => mergeMemberOpsScenarioIntoMemberData(MOCK_PAYMENTS, MEMBER_OPS_SCENARIO_PAYMENTS),
+    [],
+  );
+
   const memberListRows = useMemo(
     () => buildMemberListRows({
       members: MOCK_MEMBERS,
-      memberAssets: MOCK_MEMBER_ASSETS,
-      bookings: MOCK_BOOKINGS,
-      attendances: MOCK_ATTENDANCES,
-      consumptions: MEMBER_OPS_SCENARIO_CONSUMPTIONS,
-      orders: MOCK_ORDERS,
-      contracts: MOCK_CONTRACTS,
+      memberAssets: mergedMemberAssets,
+      bookings: mergedBookings,
+      attendances: mergedAttendances,
+      consumptions: mergedConsumptions,
+      orders: mergedOrders,
+      contracts: mergedContracts,
       courseSessions: MOCK_COURSE_SESSIONS,
       courses: MOCK_COURSES,
     }),
-    [],
+    [mergedMemberAssets, mergedBookings, mergedAttendances, mergedConsumptions, mergedOrders, mergedContracts],
   );
 
   const rowByMemberId = useMemo(
@@ -441,13 +479,13 @@ const Members: React.FC = () => {
           <MemberDetailModal
             member={selectedMember}
             onClose={() => setSelectedMember(null)}
-            consumptions={MEMBER_OPS_SCENARIO_CONSUMPTIONS}
-            memberAssets={MOCK_MEMBER_ASSETS}
-            bookings={MOCK_BOOKINGS}
-            attendances={MOCK_ATTENDANCES}
-            orders={MOCK_ORDERS}
-            contracts={MOCK_CONTRACTS}
-            payments={MOCK_PAYMENTS}
+            consumptions={mergedConsumptions}
+            memberAssets={mergedMemberAssets}
+            bookings={mergedBookings}
+            attendances={mergedAttendances}
+            orders={mergedOrders}
+            contracts={mergedContracts}
+            payments={mergedPayments}
             refunds={MOCK_REFUNDS}
             ledgerEntries={MOCK_FINANCE_LEDGER_ENTRIES}
             courseSessions={MOCK_COURSE_SESSIONS}

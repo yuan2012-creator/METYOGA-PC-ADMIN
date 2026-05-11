@@ -1,9 +1,18 @@
-import type { MockCourseConsumptionRecord } from '../types';
+import type {
+  Attendance,
+  Booking,
+  Contract,
+  MemberAsset,
+  MockCourseConsumptionRecord,
+  Order,
+  Payment,
+} from '../types';
 
 /**
- * 会员经营列表验收用耗课样本（与 MOCK_MEMBERS 中 memberId 对齐，不写入 constants）。
- * 日期相对门店演示时间轴（约 2026-05）编排，便于「最近耗课」列验收。
+ * 会员经营列表 / 详情验收用样本（与 MOCK_MEMBERS 中 memberId 对齐，不写入 constants）。
+ * 日期相对演示时间轴约 2026-05-10。
  */
+
 export const MEMBER_OPS_SCENARIO_CONSUMPTIONS: MockCourseConsumptionRecord[] = [
   {
     id: 'mops-cons-lisa-1',
@@ -33,21 +42,12 @@ export const MEMBER_OPS_SCENARIO_CONSUMPTIONS: MockCourseConsumptionRecord[] = [
     amount: 1,
   },
   {
-    id: 'mops-cons-linda-1',
-    courseSessionId: 'session-20260505-1000',
-    memberId: '101',
-    memberName: 'Linda Wu',
-    courseTitle: '普拉提大器械',
-    consumedAt: '2026-04-14T10:55:00+08:00',
-    amount: 1,
-  },
-  {
     id: 'mops-cons-tom-1',
     courseSessionId: 'session-20260505-1900',
     memberId: '102',
     memberName: 'Tom Chen',
     courseTitle: '流瑜伽',
-    consumedAt: '2026-04-18T19:30:00+08:00',
+    consumedAt: '2026-05-08T19:30:00+08:00',
     amount: 1,
   },
   {
@@ -60,3 +60,279 @@ export const MEMBER_OPS_SCENARIO_CONSUMPTIONS: MockCourseConsumptionRecord[] = [
     amount: 1,
   },
 ];
+
+export const MEMBER_OPS_SCENARIO_ASSETS: MemberAsset[] = [
+  {
+    id: 'mops-asset-101-expiring',
+    memberId: '101',
+    name: '验收｜30日内到期小班次卡',
+    status: 'effective',
+    sourceOrderId: 'mops-ord-101-pack',
+    contractId: 'mops-contract-101-signed',
+    productId: 'c7',
+    productType: 'card',
+    balanceType: 'count',
+    totalAmount: 20,
+    remainingAmount: 6,
+    effectiveDate: '2026-03-01T00:00:00+08:00',
+    expiryDate: '2026-06-04T23:59:59+08:00',
+    createdAt: '2026-03-01T10:00:00+08:00',
+  },
+  {
+    id: 'mops-asset-102-low',
+    memberId: '102',
+    name: '验收｜余额偏低私教包',
+    status: 'effective',
+    sourceOrderId: 'mops-ord-102-low',
+    contractId: 'mops-contract-102-signed',
+    productType: 'course',
+    balanceType: 'count',
+    totalAmount: 20,
+    remainingAmount: 2,
+    effectiveDate: '2026-01-01T00:00:00+08:00',
+    expiryDate: '2026-12-31T23:59:59+08:00',
+    createdAt: '2026-01-02T09:00:00+08:00',
+  },
+];
+
+export const MEMBER_OPS_SCENARIO_BOOKINGS: Booking[] = [
+  {
+    id: 'mops-book-lisa-20260508',
+    memberId: '1',
+    courseSessionId: 'session-20260506-1100',
+    status: 'booked',
+    bookedAt: '2026-05-07T16:00:00+08:00',
+    source: 'front_desk',
+  },
+  {
+    id: 'mops-book-coco-trial',
+    memberId: '201',
+    courseSessionId: 'session-20260505-1900',
+    status: 'booked',
+    bookedAt: '2026-05-09T14:00:00+08:00',
+    source: 'member_app',
+  },
+];
+
+export const MEMBER_OPS_SCENARIO_ATTENDANCES: Attendance[] = [
+  {
+    id: 'mops-att-lisa-20260508',
+    memberId: '1',
+    courseSessionId: 'session-20260506-1100',
+    bookingId: 'mops-book-lisa-20260508',
+    memberAssetId: 'asset-1-private-20',
+    status: 'consumed',
+    checkedInAt: '2026-05-08T10:50:00+08:00',
+    attendedAt: '2026-05-08T11:00:00+08:00',
+    consumedAt: '2026-05-08T11:55:00+08:00',
+  },
+  {
+    id: 'mops-att-amy-old',
+    memberId: '103',
+    courseSessionId: 'session-20260505-1000',
+    status: 'consumed',
+    checkedInAt: '2026-03-08T09:55:00+08:00',
+    attendedAt: '2026-03-08T10:00:00+08:00',
+    consumedAt: '2026-04-01T10:50:00+08:00',
+  },
+  {
+    id: 'mops-att-ruby-trial',
+    memberId: '203',
+    courseSessionId: 'session-20260505-1000',
+    status: 'attended',
+    attendedAt: '2026-05-04T10:30:00+08:00',
+  },
+];
+
+export const MEMBER_OPS_SCENARIO_ORDERS: Order[] = [
+  {
+    id: 'mops-ord-101-pack',
+    memberId: '101',
+    status: 'fulfilled',
+    items: [
+      {
+        id: 'mops-ord-101-item-1',
+        orderId: 'mops-ord-101-pack',
+        productType: 'card',
+        productId: 'c7',
+        productName: '验收｜小班次卡（近效期）',
+        quantity: 1,
+        unitPrice: 2800,
+        totalAmount: 2800,
+        memberAssetId: 'mops-asset-101-expiring',
+      },
+    ],
+    totalAmount: 2800,
+    paidAmount: 2800,
+    contractId: 'mops-contract-101-signed',
+    createdAt: '2026-03-01T10:00:00+08:00',
+    updatedAt: '2026-03-01T10:05:00+08:00',
+    storeId: '1',
+  },
+  {
+    id: 'mops-ord-102-low',
+    memberId: '102',
+    status: 'fulfilled',
+    items: [
+      {
+        id: 'mops-ord-102-item-1',
+        orderId: 'mops-ord-102-low',
+        productType: 'course',
+        productId: 'course-private-core',
+        productName: '验收｜私教包（低余额）',
+        quantity: 1,
+        unitPrice: 9600,
+        totalAmount: 9600,
+        memberAssetId: 'mops-asset-102-low',
+      },
+    ],
+    totalAmount: 9600,
+    paidAmount: 9600,
+    contractId: 'mops-contract-102-signed',
+    createdAt: '2026-01-02T09:00:00+08:00',
+    updatedAt: '2026-01-02T09:10:00+08:00',
+    storeId: '1',
+  },
+  {
+    id: 'mops-ord-103-renew',
+    memberId: '103',
+    status: 'paid',
+    items: [
+      {
+        id: 'mops-ord-103-item-1',
+        orderId: 'mops-ord-103-renew',
+        productType: 'card',
+        productId: 'c8',
+        productName: '验收｜年卡续费（待签协议）',
+        quantity: 1,
+        unitPrice: 8800,
+        totalAmount: 8800,
+      },
+    ],
+    totalAmount: 8800,
+    paidAmount: 8800,
+    contractId: 'mops-contract-103-pending',
+    createdAt: '2026-05-02T11:00:00+08:00',
+    updatedAt: '2026-05-02T11:05:00+08:00',
+    storeId: '1',
+  },
+  {
+    id: 'mops-ord-203-ttc',
+    memberId: '203',
+    status: 'fulfilled',
+    items: [
+      {
+        id: 'mops-ord-203-item-1',
+        orderId: 'mops-ord-203-ttc',
+        productType: 'ttc',
+        productId: 'ttc1',
+        productName: '验收｜教培报名（待发卡）',
+        quantity: 1,
+        unitPrice: 16800,
+        totalAmount: 16800,
+      },
+    ],
+    totalAmount: 16800,
+    paidAmount: 16800,
+    contractId: 'mops-contract-203-signed',
+    createdAt: '2026-04-20T10:00:00+08:00',
+    updatedAt: '2026-04-20T10:10:00+08:00',
+    storeId: '1',
+  },
+];
+
+export const MEMBER_OPS_SCENARIO_CONTRACTS: Contract[] = [
+  {
+    id: 'mops-contract-101-signed',
+    memberId: '101',
+    orderId: 'mops-ord-101-pack',
+    status: 'signed',
+    title: '验收｜小班次卡服务协议',
+    sentAt: '2026-03-01T10:01:00+08:00',
+    signedAt: '2026-03-01T10:15:00+08:00',
+    effectiveAt: '2026-03-01T10:20:00+08:00',
+  },
+  {
+    id: 'mops-contract-102-signed',
+    memberId: '102',
+    orderId: 'mops-ord-102-low',
+    status: 'effective',
+    title: '验收｜私教包服务协议',
+    sentAt: '2026-01-02T09:01:00+08:00',
+    signedAt: '2026-01-02T09:20:00+08:00',
+    effectiveAt: '2026-01-02T09:25:00+08:00',
+  },
+  {
+    id: 'mops-contract-103-pending',
+    memberId: '103',
+    orderId: 'mops-ord-103-renew',
+    status: 'pending_signature',
+    title: '验收｜年卡续费协议（待签）',
+    sentAt: '2026-05-02T11:10:00+08:00',
+  },
+  {
+    id: 'mops-contract-203-signed',
+    memberId: '203',
+    orderId: 'mops-ord-203-ttc',
+    status: 'signed',
+    title: '验收｜教培协议（待发卡）',
+    sentAt: '2026-04-20T10:05:00+08:00',
+    signedAt: '2026-04-20T10:18:00+08:00',
+    effectiveAt: '2026-04-20T10:25:00+08:00',
+  },
+];
+
+export const MEMBER_OPS_SCENARIO_PAYMENTS: Payment[] = [
+  {
+    id: 'mops-pay-101',
+    orderId: 'mops-ord-101-pack',
+    memberId: '101',
+    status: 'reconciled',
+    amount: 2800,
+    method: 'wechat',
+    transactionNo: 'wx-mops-101',
+    initiatedAt: '2026-03-01T10:00:00+08:00',
+    paidAt: '2026-03-01T10:04:00+08:00',
+    reconciledAt: '2026-03-02T09:00:00+08:00',
+  },
+  {
+    id: 'mops-pay-102',
+    orderId: 'mops-ord-102-low',
+    memberId: '102',
+    status: 'reconciled',
+    amount: 9600,
+    method: 'alipay',
+    transactionNo: 'ali-mops-102',
+    initiatedAt: '2026-01-02T09:00:00+08:00',
+    paidAt: '2026-01-02T09:08:00+08:00',
+    reconciledAt: '2026-01-03T10:00:00+08:00',
+  },
+  {
+    id: 'mops-pay-103',
+    orderId: 'mops-ord-103-renew',
+    memberId: '103',
+    status: 'reconciled',
+    amount: 8800,
+    method: 'wechat',
+    transactionNo: 'wx-mops-103',
+    initiatedAt: '2026-05-02T11:00:00+08:00',
+    paidAt: '2026-05-02T11:04:00+08:00',
+    reconciledAt: '2026-05-03T09:30:00+08:00',
+  },
+  {
+    id: 'mops-pay-203',
+    orderId: 'mops-ord-203-ttc',
+    memberId: '203',
+    status: 'reconciled',
+    amount: 16800,
+    method: 'bank_transfer',
+    transactionNo: 'bank-mops-203',
+    initiatedAt: '2026-04-20T10:00:00+08:00',
+    paidAt: '2026-04-20T10:12:00+08:00',
+    reconciledAt: '2026-04-21T09:00:00+08:00',
+  },
+];
+
+export function mergeMemberOpsScenarioIntoMemberData<T>(base: readonly T[], scenario: readonly T[]): T[] {
+  return [...base, ...scenario];
+}
