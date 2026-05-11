@@ -22,6 +22,7 @@ import {
   getOpsAiGuidance,
   getOpsSummary,
   moveScheduleEvent,
+  scheduleEventMatchesSessionId,
   toCourseLibraryItem,
   toOpsScheduleItem,
   toScheduleEvent,
@@ -54,13 +55,6 @@ const INITIAL_LIBRARY_LIST = MOCK_COURSES.map(toCourseLibraryItem);
 const INITIAL_SCHEDULE_EVENTS = MOCK_COURSE_SESSIONS.map(session => (
   toScheduleEvent(session, INITIAL_LIBRARY_LIST, MOCK_BOOKINGS)
 ));
-
-const scheduleEventMatchesSessionId = (ev: ScheduleEvent, sid: string): boolean => {
-  if (!sid) return false;
-  if (ev.id === sid) return true;
-  const ext = ev as ScheduleEvent & { sessionId?: string; courseSessionId?: string; originalSessionId?: string };
-  return ext.sessionId === sid || ext.courseSessionId === sid || ext.originalSessionId === sid;
-};
 
 type CourseToastTone = 'info' | 'success' | 'warning';
 
@@ -221,24 +215,51 @@ const Courses: React.FC = () => {
   };
 
   const handleCancelScheduleSession = (sessionId: string, reason: string) => {
-      setScheduleEvents(prev => prev.map(ev => (
-          ev.id === sessionId ? markScheduleEventCanceled(ev, { reason }) : ev
-      )));
-      showToast('课程已标记为已取消。会员通知与权益处理将在后续接入。', 'success');
+      let applied = false;
+      setScheduleEvents(prev => {
+          if (!prev.some(ev => scheduleEventMatchesSessionId(ev, sessionId))) return prev;
+          applied = true;
+          return prev.map(ev => (
+              scheduleEventMatchesSessionId(ev, sessionId) ? markScheduleEventCanceled(ev, { reason }) : ev
+          ));
+      });
+      if (applied) {
+          showToast('课程已标记为已取消。会员通知与权益处理将在后续接入。', 'success');
+      } else {
+          showToast('暂未找到该课程场次，操作未完成。', 'warning');
+      }
   };
 
   const handleRescheduleSession = (sessionId: string, reason: string, note?: string) => {
-      setScheduleEvents(prev => prev.map(ev => (
-          ev.id === sessionId ? rescheduleScheduleEvent(ev, { reason, note }) : ev
-      )));
-      showToast('课程已标记为已调课。会员与老师通知将在后续接入。', 'success');
+      let applied = false;
+      setScheduleEvents(prev => {
+          if (!prev.some(ev => scheduleEventMatchesSessionId(ev, sessionId))) return prev;
+          applied = true;
+          return prev.map(ev => (
+              scheduleEventMatchesSessionId(ev, sessionId) ? rescheduleScheduleEvent(ev, { reason, note }) : ev
+          ));
+      });
+      if (applied) {
+          showToast('课程已标记为已调课。会员与老师通知将在后续接入。', 'success');
+      } else {
+          showToast('暂未找到该课程场次，操作未完成。', 'warning');
+      }
   };
 
   const handleSubstituteSession = (sessionId: string, substituteTeacherName: string, reason: string) => {
-      setScheduleEvents(prev => prev.map(ev => (
-          ev.id === sessionId ? substituteScheduleEvent(ev, { substituteTeacherName, reason }) : ev
-      )));
-      showToast('课程已标记为代课中。老师课时与通知规则将在后续接入。', 'success');
+      let applied = false;
+      setScheduleEvents(prev => {
+          if (!prev.some(ev => scheduleEventMatchesSessionId(ev, sessionId))) return prev;
+          applied = true;
+          return prev.map(ev => (
+              scheduleEventMatchesSessionId(ev, sessionId) ? substituteScheduleEvent(ev, { substituteTeacherName, reason }) : ev
+          ));
+      });
+      if (applied) {
+          showToast('课程已标记为代课中。老师课时与通知规则将在后续接入。', 'success');
+      } else {
+          showToast('暂未找到该课程场次，操作未完成。', 'warning');
+      }
   };
 
   const handleCreateNewCourse = () => {

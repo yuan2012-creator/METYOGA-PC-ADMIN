@@ -27,6 +27,14 @@ export type ScheduleEvent = CourseSession & {
   color: string;
 };
 
+/** 抽屉与场次操作：用多种 id 别名匹配同一排课事件 */
+export const scheduleEventMatchesSessionId = (ev: ScheduleEvent, sid: string): boolean => {
+  if (!sid) return false;
+  if (ev.id === sid) return true;
+  const ext = ev as ScheduleEvent & { sessionId?: string; courseSessionId?: string; originalSessionId?: string };
+  return ext.sessionId === sid || ext.courseSessionId === sid || ext.originalSessionId === sid;
+};
+
 export type OpsScheduleItem = {
   id: string;
   courseId: string;
@@ -265,12 +273,21 @@ export const isEventFull = (
   (event.bookedCount ?? 0) >= event.capacity
 );
 
+const DEFAULT_SCHEDULE_EVENT_COLOR = 'bg-gray-100 text-gray-800 border-gray-200';
+
 export const getScheduleEventColor = (
-  course?: Pick<CourseLibraryItem, 'colorTag'>
-): string => (
-  course?.colorTag.replace('text-', 'border-').replace('700', '800')
-  ?? 'bg-gray-100 text-gray-800 border-gray-200'
-);
+  course?: Pick<CourseLibraryItem, 'colorTag'> | null,
+): string => {
+  const raw = course?.colorTag;
+  if (typeof raw !== 'string' || !raw.trim()) {
+    return DEFAULT_SCHEDULE_EVENT_COLOR;
+  }
+  try {
+    return raw.replace('text-', 'border-').replace('700', '800');
+  } catch {
+    return DEFAULT_SCHEDULE_EVENT_COLOR;
+  }
+};
 
 /** 活跃可执行场次（不含已取消），用于需要「仍在执行流」的筛选 */
 export const getActiveScheduleEvents = (events: ScheduleEvent[]): ScheduleEvent[] => (

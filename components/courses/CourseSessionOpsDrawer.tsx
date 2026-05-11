@@ -427,9 +427,21 @@ const CourseSessionOpsDrawer: React.FC<CourseSessionOpsDrawerProps> = ({
     }
   }, [statusInput, bookings, attendances]);
 
+  type SessionMaybeNotes = OpsScheduleItem & { notes?: string };
+
+  const mergedNotes = useMemo(() => {
+    const fromEvent = scheduleEvent?.notes;
+    if (fromEvent != null && String(fromEvent).trim() !== '') return String(fromEvent);
+    const fromSession = (session as SessionMaybeNotes | null)?.notes;
+    if (fromSession != null && String(fromSession).trim() !== '') return String(fromSession);
+    const fromStatus = statusInput?.notes;
+    if (fromStatus != null && String(fromStatus).trim() !== '') return String(fromStatus);
+    return '';
+  }, [scheduleEvent?.notes, session, statusInput?.notes]);
+
   const sessionChangeEntries = useMemo(
-    () => parseSessionChangeEntriesFromNotes(scheduleEvent?.notes),
-    [scheduleEvent?.notes],
+    () => parseSessionChangeEntriesFromNotes(mergedNotes),
+    [mergedNotes],
   );
 
   const canonicalTab = useMemo(() => normalizeCourseSessionOpsTab(tab), [tab]);
@@ -443,14 +455,13 @@ const CourseSessionOpsDrawer: React.FC<CourseSessionOpsDrawerProps> = ({
     };
     const logSource = scheduleEvent ?? session ?? null;
     const audit = (logSource ?? {}) as OptionalAuditFields;
-    const notesForLog = scheduleEvent?.notes;
-    return buildMockOperationLogEntries(notesForLog, {
+    return buildMockOperationLogEntries(mergedNotes || undefined, {
       publishedAt: audit.publishedAt,
       publishedBy: audit.publishedBy,
       createdAt: audit.createdAt,
       createdBy: audit.createdBy,
     });
-  }, [scheduleEvent, session]);
+  }, [scheduleEvent, session, mergedNotes]);
 
   const mainStatusBadgeClass = displayStatus ? getCourseSessionToneBadgeClass(displayStatus.tone) : '';
 
@@ -739,7 +750,9 @@ const CourseSessionOpsDrawer: React.FC<CourseSessionOpsDrawerProps> = ({
             const subEntry = sessionChangeEntries.find(e => e.tag === 'substitute');
             const parsed = subEntry ? parseSubstituteTeachersFromDetail(subEntry.detail) : {};
             const hasSubstituteRecord =
-              scheduleEvent?.sessionStatus === 'substitute' || !!subEntry;
+              scheduleEvent?.sessionStatus === 'substitute'
+              || statusInput?.sessionStatus === 'substitute'
+              || !!subEntry;
             const reasonFromDetail = subEntry?.detail
               ? (/原因：(.+)/.exec(subEntry.detail)?.[1]?.trim() ?? subEntry.detail)
               : '';
@@ -766,7 +779,10 @@ const CourseSessionOpsDrawer: React.FC<CourseSessionOpsDrawerProps> = ({
                       <div className="flex justify-between gap-2 border-b border-gray-50 pb-2">
                         <span className="text-gray-500">代课老师</span>
                         <span className="max-w-[55%] text-right font-medium text-gray-800">
-                          {parsed.substitute ?? (scheduleEvent?.sessionStatus === 'substitute' ? scheduleEvent?.teacher : '—')}
+                          {parsed.substitute
+                            ?? (scheduleEvent?.sessionStatus === 'substitute' || statusInput?.sessionStatus === 'substitute'
+                              ? (scheduleEvent?.teacher ?? session?.teacher)
+                              : '—')}
                         </span>
                       </div>
                       <div className="flex justify-between gap-2 border-b border-gray-50 pb-2">
