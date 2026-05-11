@@ -287,7 +287,7 @@ const Mall: React.FC = () => {
       }
 
       setWriteClosureDraft(draft);
-      showToast(`${draft.member.name} 的 ${draft.product.name} 已生成订单预览`);
+      showToast(`${draft.member.name} 的 ${draft.product.name} 已生成订单、合同与资产预览，请在预览区核对后再确认`);
   };
 
   const handleConfirmOrderPreview = () => {
@@ -302,7 +302,7 @@ const Mall: React.FC = () => {
       setOrderTab(writeClosureDraft.product.sourceType === 'ttc' ? 'ttc' : 'cards');
       setActiveModule('orders');
       setSubView('list');
-      showToast(`${writeClosureDraft.order.id} 已确认，会员资产来源已写入前端链路`);
+      showToast('已生成产品与合同模块内的订单、合同草稿与资产记录。支付记录、会员经营同步与财务入账需后续接入统一服务。');
       setWriteClosureDraft(null);
       setContractData(createInitialContractData());
   };
@@ -387,6 +387,7 @@ const Mall: React.FC = () => {
           handleViewStudents={handleViewStudents}
           availableVenues={AVAILABLE_VENUES}
           funnelData={funnelData}
+          onDemoAction={showToast}
       />
   );
 
@@ -473,7 +474,7 @@ const Mall: React.FC = () => {
                                 accept=".pdf,.doc,.docx" 
                                 onChange={(e) => {
                                     if (e.target.files && e.target.files.length > 0) {
-                                        showToast('标准合同上传成功！');
+                                        showToast('合同文件上传功能待接入，正式版本需绑定会员、订单、合同与操作日志。');
                                         e.target.value = '';
                                     }
                                 }} 

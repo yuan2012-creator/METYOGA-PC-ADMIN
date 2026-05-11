@@ -154,7 +154,8 @@ const MallOrders: React.FC<MallOrdersProps> = ({
                                   <td className="p-4 text-xs text-gray-400 font-mono">{order.time}</td>
                                   <td className="p-4 text-right pr-6">
                                       <button
-                                          onClick={() => onDemoAction(`${order.id}：${order.assetSourceLabel}`)}
+                                          type="button"
+                                          onClick={() => onDemoAction('订单详情抽屉待接入，正式版本需展示订单、合同、支付、资产与退款记录。')}
                                           className="text-black hover:underline text-xs font-bold"
                                       >
                                           查看

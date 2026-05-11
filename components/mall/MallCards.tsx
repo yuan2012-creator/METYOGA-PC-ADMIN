@@ -99,13 +99,13 @@ const MallCards: React.FC<MallCardsProps> = ({
                   <div className="p-8 space-y-8">
                       {/* Mode Selection */}
                       <div className="p-1 bg-gray-100 rounded-xl inline-flex">
-                          <button onClick={() => { setEditCardCategory('stored_value'); setEditingCard({ type: 'stored_value' }); }} className={`px-4 py-1.5 text-xs font-bold rounded-lg transition ${isStored ? 'bg-white shadow text-black' : 'text-gray-500'}`}>储值模式 (Stored)</button>
-                          <button onClick={() => { setEditCardCategory('term'); setEditingCard({ type: 'term' }); }} className={`px-4 py-1.5 text-xs font-bold rounded-lg transition ${!isStored ? 'bg-white shadow text-black' : 'text-gray-500'}`}>期限/次卡模式 (Term)</button>
+                          <button onClick={() => { setEditCardCategory('stored_value'); setEditingCard({ type: 'stored_value' }); }} className={`px-4 py-1.5 text-xs font-bold rounded-lg transition ${isStored ? 'bg-white shadow text-black' : 'text-gray-500'}`}>储值模式</button>
+                          <button onClick={() => { setEditCardCategory('term'); setEditingCard({ type: 'term' }); }} className={`px-4 py-1.5 text-xs font-bold rounded-lg transition ${!isStored ? 'bg-white shadow text-black' : 'text-gray-500'}`}>期限 / 次卡模式</button>
                       </div>
                       
                       {/* Marketing Info */}
                       <div className="space-y-4">
-                          <h4 className="text-sm font-bold text-gray-900 border-l-4 border-black pl-3">营销展示 (Marketing)</h4>
+                          <h4 className="text-sm font-bold text-gray-900 border-l-4 border-black pl-3">销售配置</h4>
                           <div className="grid grid-cols-2 gap-6">
                               <div className="col-span-1"><label className="text-xs font-bold text-gray-500 mb-1 block">卡项名称</label><input type="text" defaultValue={editingCard.name} onBlur={e => setEditingCard({name: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-black transition" /></div>
                               <div className="col-span-1"><label className="text-xs font-bold text-gray-500 mb-1 block">Slogan (副标题)</label><input type="text" defaultValue={editingCard.slogan} onBlur={e => setEditingCard({slogan: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-black transition" /></div>
@@ -115,7 +115,7 @@ const MallCards: React.FC<MallCardsProps> = ({
 
                       {/* Pricing */}
                       <div className="space-y-4">
-                          <h4 className="text-sm font-bold text-gray-900 border-l-4 border-black pl-3">价格与价值 (Pricing)</h4>
+                          <h4 className="text-sm font-bold text-gray-900 border-l-4 border-black pl-3">价格配置</h4>
                           <div className="grid grid-cols-3 gap-6">
                               <div><label className="text-xs font-bold text-gray-500 mb-1 block">售卖价格 (¥)</label><input type="number" defaultValue={editingCard.price} onBlur={e => setEditingCard({price: Number(e.target.value)})} className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-black transition font-mono" /></div>
                               <div className="relative">

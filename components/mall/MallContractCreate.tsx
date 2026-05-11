@@ -2,6 +2,7 @@ import React, { useRef } from 'react';
 import type { Member } from '../../types';
 import {
     applyMallProductToContractDraft,
+    getMallProductBusinessTypeLabel,
     type MallContractSourceSummary,
     type MallProductOption,
     type MallWriteClosureDraft,
@@ -168,10 +169,10 @@ const MallContractCreate: React.FC<MallContractCreateProps> = ({
                                 : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                         }`}
                     >
-                        确认订单并生成资产
+                        确认订单（本模块记录）
                     </button>
                     <button
-                        onClick={() => onDemoAction(`${sourceSummary.memberName} 的合同签署发送仍为演示入口，请先确认订单生成资产`)}
+                        onClick={() => onDemoAction('合同线上签署发送待接入，正式版本需绑定电子签服务、会员与订单，并写入操作日志。')}
                         className="px-6 py-2 bg-black text-white rounded-xl text-sm font-bold hover:opacity-80 transition shadow-lg shadow-black/10"
                     >
                         发送给会员签署
@@ -180,27 +181,32 @@ const MallContractCreate: React.FC<MallContractCreateProps> = ({
             </div>
 
             {writeClosureDraft && (
-                <div className="mb-6 shrink-0 bg-white border border-green-100 rounded-2xl p-4 shadow-sm grid grid-cols-4 gap-4 text-xs">
-                    <div>
-                        <div className="text-gray-400 font-bold mb-1">订单预览</div>
-                        <div className="font-black text-gray-900">{writeClosureDraft.order.id}</div>
-                        <div className="text-gray-500 mt-1">¥{writeClosureDraft.order.totalAmount.toLocaleString()}</div>
+                <div className="mb-6 shrink-0 bg-white border border-green-100 rounded-2xl p-4 shadow-sm">
+                    <div className="grid grid-cols-4 gap-4 text-xs">
+                        <div>
+                            <div className="text-gray-400 font-bold mb-1">订单预览</div>
+                            <div className="font-black text-gray-900">{writeClosureDraft.order.id}</div>
+                            <div className="text-gray-500 mt-1">¥{writeClosureDraft.order.totalAmount.toLocaleString()}</div>
+                        </div>
+                        <div>
+                            <div className="text-gray-400 font-bold mb-1">合同草稿</div>
+                            <div className="font-black text-gray-900">{writeClosureDraft.contract.id}</div>
+                            <div className="text-gray-500 mt-1">{writeClosureDraft.contract.title}</div>
+                        </div>
+                        <div>
+                            <div className="text-gray-400 font-bold mb-1">会员资产</div>
+                            <div className="font-black text-gray-900">{writeClosureDraft.asset.id}</div>
+                            <div className="text-gray-500 mt-1">{writeClosureDraft.asset.name}</div>
+                        </div>
+                        <div>
+                            <div className="text-gray-400 font-bold mb-1">来源链路</div>
+                            <div className="font-black text-green-700">商品 → 合同 → 订单 → 资产</div>
+                            <div className="text-gray-500 mt-1">{writeClosureDraft.member.name} / {getMallProductBusinessTypeLabel(writeClosureDraft.product.sourceType)}</div>
+                        </div>
                     </div>
-                    <div>
-                        <div className="text-gray-400 font-bold mb-1">合同草稿</div>
-                        <div className="font-black text-gray-900">{writeClosureDraft.contract.id}</div>
-                        <div className="text-gray-500 mt-1">{writeClosureDraft.contract.title}</div>
-                    </div>
-                    <div>
-                        <div className="text-gray-400 font-bold mb-1">会员资产</div>
-                        <div className="font-black text-gray-900">{writeClosureDraft.asset.id}</div>
-                        <div className="text-gray-500 mt-1">{writeClosureDraft.asset.name}</div>
-                    </div>
-                    <div>
-                        <div className="text-gray-400 font-bold mb-1">来源链路</div>
-                        <div className="font-black text-green-700">商品 → 合同 → 订单 → 资产</div>
-                        <div className="text-gray-500 mt-1">{writeClosureDraft.member.name} / {writeClosureDraft.product.sourceLabel}</div>
-                    </div>
+                    <p className="text-[10px] text-gray-500 mt-3 leading-relaxed border-t border-green-50 pt-3">
+                        当前仅记录在产品与合同模块内，正式版本需同步订单、合同、支付、会员资产与财务分录。
+                    </p>
                 </div>
             )}
 

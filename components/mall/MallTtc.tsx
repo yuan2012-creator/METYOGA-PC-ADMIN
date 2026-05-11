@@ -121,6 +121,7 @@ interface MallTtcProps {
   handleViewStudents: (item: MallTtcCourse) => void;
   availableVenues: string[];
   funnelData: { name: string; value: number }[];
+  onDemoAction?: (message: string) => void;
 }
 
 const MallTtc: React.FC<MallTtcProps> = ({
@@ -138,6 +139,7 @@ const MallTtc: React.FC<MallTtcProps> = ({
   handleViewStudents,
   availableVenues,
   funnelData,
+  onDemoAction,
 }) => {
   const renderTTCList = () => (
       <div className="animate-fadeIn space-y-12">
@@ -690,8 +692,14 @@ const MallTtc: React.FC<MallTtcProps> = ({
                                   </td>
                                   <td className="p-4 font-mono font-bold text-gray-900">¥{st.amount.toLocaleString()}</td>
                                   <td className="p-4 text-right pr-6">
-                                      <button className="text-blue-600 hover:underline text-xs font-bold mr-3">编辑</button>
-                                      <button className="text-red-500 hover:underline text-xs font-bold">退款</button>
+                                      <button type="button" className="text-blue-600 hover:underline text-xs font-bold mr-3">编辑</button>
+                                      <button
+                                          type="button"
+                                          onClick={() => onDemoAction?.('退款流程待接入，正式版本需审批、关联订单与会员资产，并写入操作日志。')}
+                                          className="text-red-500 hover:underline text-xs font-bold"
+                                      >
+                                          退款
+                                      </button>
                                   </td>
                               </tr>
                           ))}

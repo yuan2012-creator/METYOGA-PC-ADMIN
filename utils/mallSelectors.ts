@@ -83,13 +83,16 @@ const formatMoney = (value: number | undefined) => `¥${(value ?? 0).toLocaleStr
 
 const getOrderPrimaryItem = (order: Order): OrderItem | undefined => order.items[0];
 
-const getProductTypeLabel = (productType?: string): string => {
-  if (productType === 'card') return '会员卡项';
-  if (productType === 'ttc') return '教培';
+/** 订单与下拉等处的业务口径（勿用于代码标识展示） */
+export const getMallProductBusinessTypeLabel = (productType?: string): string => {
+  if (productType === 'card') return '卡项产品';
+  if (productType === 'ttc') return '教培产品';
   if (productType === 'point') return '积分商品';
   if (productType === 'course') return '课程权益';
-  return '自定义';
+  return '自选商品';
 };
+
+const getProductTypeLabel = getMallProductBusinessTypeLabel;
 
 const getOrderCategory = (item?: OrderItem): MallOrderRow['category'] => {
   if (item?.productType === 'ttc') return 'ttc';
@@ -126,7 +129,7 @@ export const buildMallProductOptions = ({
     name: card.name,
     sourceType: 'card' as const,
     amount: card.price,
-    sourceLabel: 'CardProduct',
+    sourceLabel: getProductTypeLabel('card'),
     status: card.status,
   })),
   ...ttcCourses.map(course => ({
@@ -134,7 +137,7 @@ export const buildMallProductOptions = ({
     name: course.name,
     sourceType: 'ttc' as const,
     amount: course.price,
-    sourceLabel: 'TtcProduct',
+    sourceLabel: getProductTypeLabel('ttc'),
     status: course.status,
   })),
   ...pointProducts.map(product => ({
@@ -142,7 +145,7 @@ export const buildMallProductOptions = ({
     name: product.name,
     sourceType: 'point' as const,
     amount: product.mixedCashPrice ?? product.mixedCash ?? 0,
-    sourceLabel: 'PointProduct',
+    sourceLabel: getProductTypeLabel('point'),
     status: product.status,
   })),
 ];
@@ -161,6 +164,10 @@ export const buildMallAssetSourceLinks = ({
     const contract = contracts.find(item => item.id === asset.contractId || item.orderId === asset.sourceOrderId);
     const orderItem = order?.items.find(item => item.memberAssetId === asset.id) ?? order?.items[0];
     const productType = asset.productType ?? orderItem?.productType;
+    const productNames =
+      order?.items.map(i => i.productName).filter(Boolean).join('、') || '暂未记录';
+    const contractTitle = contract?.title?.trim();
+    const contractLine = contractTitle ? `合同：${contractTitle}` : '合同：暂未记录';
 
     return {
       assetId: asset.id,
@@ -171,7 +178,7 @@ export const buildMallAssetSourceLinks = ({
       productId: asset.productId ?? orderItem?.productId,
       productType,
       sourceLabel: order
-        ? `${order.id}${contract ? ` / ${contract.id}` : ' / 未绑定合同'}`
+        ? `订单产品：${productNames}；${contractLine}`
         : '未找到来源订单',
       orderLinked: Boolean(order),
       contractLinked: Boolean(contract),
@@ -203,7 +210,7 @@ export const buildMallOrderRows = ({
       id: order.id,
       user: member?.name || order.memberId,
       phone: member?.phone || '-',
-      product: item?.productName || '未知商品',
+      product: item?.productName || '暂未记录',
       category: getOrderCategory(item),
       productType,
       type: getProductTypeLabel(item?.productType),
@@ -213,9 +220,11 @@ export const buildMallOrderRows = ({
       details: contractDisplay.details,
       subStatus: contractDisplay.subStatus,
       sourceSummary: assetLink
-        ? `资产来源：${assetLink.assetName}`
+        ? `资产：${assetLink.assetName}`
         : contract
-          ? `合同来源：${contract.id}`
+          ? contract.title?.trim()
+            ? `合同：${contract.title.trim()}`
+            : '合同：暂未记录'
           : '仅订单记录，待生成资产/合同',
       assetSourceLabel: assetLink?.sourceLabel ?? '未生成会员资产',
       hasAssetSource: Boolean(assetLink),
@@ -237,15 +246,16 @@ export const buildMallContractSourceSummary = ({
     ? contractData.cardSubCategory
     : contractData.ttcCourseName;
   const amount = product?.amount || contractData.amount || 0;
+  const productKind = product ? getProductTypeLabel(product.sourceType) : '';
 
   return {
     memberName: member?.name ?? '未选择会员',
     productName: product?.name ?? fallbackProductName,
-    productLabel: product?.sourceLabel ?? '合同表单估算',
+    productLabel: product ? productKind : '合同表单估算',
     amount,
     sourceSummary: product
-      ? `${product.sourceLabel} ${product.id} -> 合同草稿 ${contractData.contractNo}`
-      : `表单字段 -> 合同草稿 ${contractData.contractNo}`,
+      ? `产品「${product.name}」（${productKind}）→ 合同草稿 ${contractData.contractNo}`
+      : `表单填写 → 合同草稿 ${contractData.contractNo}`,
     isFallback: !product,
   };
 };
