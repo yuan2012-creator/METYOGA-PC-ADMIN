@@ -1,6 +1,16 @@
 import React, { useEffect, useMemo } from 'react';
-import type { Attendance, Booking, CourseSession, Member } from '../../types';
+import type {
+  Attendance,
+  Booking,
+  CourseSession,
+  FinanceLedgerEntry,
+  Member,
+  MockCourseConsumptionRecord,
+  MockTeacherSessionPayRecord,
+} from '../../types';
 import type { OpsScheduleItem, ScheduleEvent } from '../../utils/courseSelectors';
+import { scheduleEventMatchesSessionId } from '../../utils/courseSelectors';
+import { canCompleteCourseSession } from '../../utils/courseSessionSettlement';
 import {
   buildMockOperationLogEntries,
   parseSessionChangeEntriesFromNotes,
@@ -377,6 +387,10 @@ interface CourseSessionOpsDrawerProps {
   onCancelSession: (sessionId: string, reason: string) => void;
   onRescheduleSession: (sessionId: string, reason: string, note?: string) => void;
   onSubstituteSession: (sessionId: string, substituteTeacherName: string, reason: string) => void;
+  onCompleteCourseSettlement?: (sessionId: string) => void;
+  mockConsumptions?: MockCourseConsumptionRecord[];
+  mockTeacherSessionPays?: MockTeacherSessionPayRecord[];
+  mockFinanceLedgerEntries?: FinanceLedgerEntry[];
 }
 
 const CourseSessionOpsDrawer: React.FC<CourseSessionOpsDrawerProps> = ({
@@ -392,6 +406,10 @@ const CourseSessionOpsDrawer: React.FC<CourseSessionOpsDrawerProps> = ({
   onCancelSession,
   onRescheduleSession,
   onSubstituteSession,
+  onCompleteCourseSettlement,
+  mockConsumptions = [],
+  mockTeacherSessionPays = [],
+  mockFinanceLedgerEntries = [],
 }) => {
   useEffect(() => {
     if (!isOpen) return;
@@ -463,12 +481,122 @@ const CourseSessionOpsDrawer: React.FC<CourseSessionOpsDrawerProps> = ({
     });
   }, [scheduleEvent, session, mergedNotes]);
 
+  const eventForSettlementGate = useMemo((): ScheduleEvent | null => (
+    scheduleEvent ?? (statusInput as ScheduleEvent | null) ?? null
+  ), [scheduleEvent, statusInput]);
+
+  const settlementGate = useMemo(
+    () => canCompleteCourseSession(eventForSettlementGate, attendances, bookings),
+    [eventForSettlementGate, attendances, bookings],
+  );
+
+  const settlementScopeEvent = useMemo((): ScheduleEvent | null => (
+    scheduleEvent ?? (session ? { id: session.id } as ScheduleEvent : null)
+  ), [scheduleEvent, session]);
+
+  const scopedConsumptions = useMemo(() => {
+    if (!settlementScopeEvent) return [];
+    return mockConsumptions.filter(c => scheduleEventMatchesSessionId(settlementScopeEvent, c.courseSessionId));
+  }, [mockConsumptions, settlementScopeEvent]);
+
+  const scopedTeacherPays = useMemo(() => {
+    if (!settlementScopeEvent) return [];
+    return mockTeacherSessionPays.filter(t => scheduleEventMatchesSessionId(settlementScopeEvent, t.courseSessionId));
+  }, [mockTeacherSessionPays, settlementScopeEvent]);
+
+  const scopedFinanceEntries = useMemo(() => {
+    if (!settlementScopeEvent) return [];
+    return mockFinanceLedgerEntries.filter(
+      f => f.courseSessionId != null && scheduleEventMatchesSessionId(settlementScopeEvent, f.courseSessionId),
+    );
+  }, [mockFinanceLedgerEntries, settlementScopeEvent]);
+
+  const estTeacherPayTotal = useMemo(
+    () => scopedTeacherPays.reduce((s, t) => s + (typeof t.amount === 'number' ? t.amount : 0), 0),
+    [scopedTeacherPays],
+  );
+
+  const estIncomeTotal = useMemo(
+    () => scopedFinanceEntries.reduce(
+      (s, e) => s + (e.direction === 'income' && typeof e.amount === 'number' ? e.amount : 0),
+      0,
+    ),
+    [scopedFinanceEntries],
+  );
+
+  const hasAnySession = !!(session || scheduleEvent);
+  const sessionId = session?.id ?? scheduleEvent?.id ?? null;
+  const isSessionCompleted =
+    scheduleEvent?.status === 'completed' || session?.courseSessionStatus === 'completed';
+  const isScheduleCanceled =
+    scheduleEvent?.status === 'cancelled'
+    || scheduleEvent?.publishStatus === 'canceled'
+    || session?.courseSessionStatus === 'cancelled';
+
+  const settlementPreviewPrimaryLabel = useMemo(() => {
+    if (!statusInput) return '暂未记录';
+    const metaLabel = statusMeta?.settlementStatusLabel ?? '暂未记录';
+    if (statusInput.settlementStatus === 'revenue_confirmed') return '已确认收入';
+    const timeEnded = Date.now() >= new Date(statusInput.endAt).getTime();
+    if (!timeEnded || isScheduleCanceled) return metaLabel;
+    if (isSessionCompleted) return metaLabel;
+    if (settlementGate.allowed) return '待归档';
+    return '未开始结算';
+  }, [
+    statusInput,
+    statusMeta?.settlementStatusLabel,
+    isScheduleCanceled,
+    isSessionCompleted,
+    settlementGate.allowed,
+  ]);
+
+  const settlementPreviewHint = useMemo(() => {
+    if (!statusInput) return null;
+    if (statusInput.settlementStatus === 'revenue_confirmed') {
+      return {
+        text: '本场次已完成课程归档，以下为已生成的耗课、老师课时与确认收入估算记录。',
+        className: 'text-emerald-900/90',
+      };
+    }
+    const timeEnded = Date.now() >= new Date(statusInput.endAt).getTime();
+    if (!timeEnded || isScheduleCanceled || isSessionCompleted) return null;
+    if (settlementGate.allowed) {
+      return {
+        text: '课程具备归档条件，归档后将生成耗课、老师课时与确认收入估算记录。',
+        className: 'text-gray-600',
+      };
+    }
+    let text = '课程已结束，但缺少有效到课记录，暂不可归档。请先完成签到核验或异常处理。';
+    if (settlementGate.reason?.trim()) {
+      text = `${text}（${settlementGate.reason.trim()}）`;
+    }
+    return { text, className: 'text-gray-500' };
+  }, [statusInput, isScheduleCanceled, isSessionCompleted, settlementGate.allowed, settlementGate.reason]);
+
+  const showSettlementArchiveButton = useMemo(
+    () =>
+      !!statusInput
+      && statusInput.settlementStatus !== 'revenue_confirmed'
+      && Date.now() >= new Date(statusInput.endAt).getTime()
+      && !isScheduleCanceled
+      && !isSessionCompleted
+      && settlementGate.allowed
+      && !!onCompleteCourseSettlement
+      && !!sessionId,
+    [
+      statusInput,
+      isScheduleCanceled,
+      isSessionCompleted,
+      settlementGate.allowed,
+      onCompleteCourseSettlement,
+      sessionId,
+    ],
+  );
+
   const mainStatusBadgeClass = displayStatus ? getCourseSessionToneBadgeClass(displayStatus.tone) : '';
 
   if (!isOpen) return null;
 
-  const hasAnySession = !!(session || scheduleEvent);
-  const sessionId = session?.id ?? scheduleEvent?.id ?? null;
   const memberById = new Map(members.map(m => [m.id, m]));
 
   const rawTitle = session?.name ?? scheduleEvent?.name ?? scheduleEvent?.title ?? '';
@@ -485,13 +613,6 @@ const CourseSessionOpsDrawer: React.FC<CourseSessionOpsDrawerProps> = ({
   const sessionAttendances = sessionId
     ? attendances.filter(a => a.courseSessionId === sessionId)
     : [];
-
-  const isSessionCompleted =
-    scheduleEvent?.status === 'completed' || session?.courseSessionStatus === 'completed';
-  const isScheduleCanceled =
-    scheduleEvent?.status === 'cancelled'
-    || scheduleEvent?.publishStatus === 'canceled'
-    || session?.courseSessionStatus === 'cancelled';
 
   const opsBlockSessionId = scheduleEvent?.id ?? session?.id ?? null;
 
@@ -675,6 +796,63 @@ const CourseSessionOpsDrawer: React.FC<CourseSessionOpsDrawerProps> = ({
                         <dd className="font-medium text-gray-800">{overviewStatusLabels.settlementStatusLabel}</dd>
                       </div>
                     </dl>
+                  </div>
+                  <div className="rounded-xl border border-gray-200 bg-white px-4 py-4">
+                    <p className="mb-3 text-[11px] font-semibold tracking-wide text-gray-400">结算预览</p>
+                    <dl className="grid grid-cols-1 gap-x-4 gap-y-2 text-xs sm:grid-cols-2">
+                      <div className="flex justify-between gap-2 sm:block">
+                        <dt className="text-gray-500">当前结算状态</dt>
+                        <dd className="font-medium text-gray-800">{settlementPreviewPrimaryLabel}</dd>
+                      </div>
+                      <div className="flex justify-between gap-2 sm:block">
+                        <dt className="text-gray-500">已生成耗课记录数</dt>
+                        <dd className="font-medium text-gray-800 tabular-nums">{scopedConsumptions.length}</dd>
+                      </div>
+                      <div className="flex justify-between gap-2 sm:block">
+                        <dt className="text-gray-500">已生成老师课时记录数</dt>
+                        <dd className="font-medium text-gray-800 tabular-nums">{scopedTeacherPays.length}</dd>
+                      </div>
+                      <div className="flex justify-between gap-2 sm:block">
+                        <dt className="text-gray-500">已生成确认收入记录数</dt>
+                        <dd className="font-medium text-gray-800 tabular-nums">{scopedFinanceEntries.length}</dd>
+                      </div>
+                      <div className="flex justify-between gap-2 sm:block">
+                        <dt className="text-gray-500">预计耗课人数</dt>
+                        <dd className="font-medium text-gray-800 tabular-nums">
+                          {scopedConsumptions.length > 0 ? scopedConsumptions.length : '—'}
+                        </dd>
+                      </div>
+                      <div className="flex justify-between gap-2 sm:block">
+                        <dt className="text-gray-500">预计老师课时费</dt>
+                        <dd className="font-medium text-gray-800 tabular-nums">
+                          {estTeacherPayTotal > 0 ? `¥${estTeacherPayTotal}` : '—'}
+                        </dd>
+                      </div>
+                      <div className="flex justify-between gap-2 sm:col-span-2 sm:block">
+                        <dt className="text-gray-500">预计确认收入</dt>
+                        <dd className="font-medium text-gray-800 tabular-nums">
+                          {estIncomeTotal > 0 ? `¥${estIncomeTotal}` : '—'}
+                        </dd>
+                      </div>
+                    </dl>
+                    {settlementPreviewHint ? (
+                      <p
+                        className={`mt-4 border-t border-gray-100 pt-3 text-[11px] leading-relaxed ${settlementPreviewHint.className}`}
+                      >
+                        {settlementPreviewHint.text}
+                      </p>
+                    ) : null}
+                    {showSettlementArchiveButton && sessionId ? (
+                      <div className="mt-3">
+                        <button
+                          type="button"
+                          className="met-primary-button w-full text-xs sm:w-auto !h-9 !min-h-0 !px-4 !py-0"
+                          onClick={() => onCompleteCourseSettlement(sessionId)}
+                        >
+                          完成课程归档
+                        </button>
+                      </div>
+                    ) : null}
                   </div>
                 </>
               )}

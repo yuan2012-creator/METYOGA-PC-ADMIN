@@ -110,7 +110,7 @@ export const substituteScheduleEvent = (
 };
 
 export type ParsedSessionChangeEntry = {
-  tag: 'cancel' | 'reschedule' | 'substitute';
+  tag: 'cancel' | 'reschedule' | 'substitute' | 'complete';
   typeLabel: string;
   detail: string;
 };
@@ -130,6 +130,9 @@ export const parseSessionChangeEntriesFromNotes = (notes?: string): ParsedSessio
     } else if (seg.startsWith('【代课】')) {
       const d = sanitizeStaffFacingCopy(seg.slice('【代课】'.length).trim()) || '—';
       out.push({ tag: 'substitute', typeLabel: '代课说明', detail: d });
+    } else if (seg.startsWith('【完课】')) {
+      const d = sanitizeStaffFacingCopy(seg.slice('【完课】'.length).trim()) || '—';
+      out.push({ tag: 'complete', typeLabel: '课程归档', detail: d });
     }
   }
   return out;
@@ -181,6 +184,7 @@ export const buildMockOperationLogEntries = (
     cancel: '取消课程',
     reschedule: '标记调课',
     substitute: '标记代课',
+    complete: '完成课程归档',
   };
   for (const p of parsed) {
     rows.push({

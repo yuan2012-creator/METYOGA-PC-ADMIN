@@ -63,7 +63,7 @@ const TodayOpsPanel: React.FC<TodayOpsPanelProps> = ({
   onOpenExceptionCenter,
 }) => (
   <>
-                      <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+                      <div className="w-full max-w-full min-w-0 overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
                           <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
                               <div>
                                   <h3 className="flex items-center gap-2 text-lg font-bold text-gray-900">
@@ -105,9 +105,10 @@ const TodayOpsPanel: React.FC<TodayOpsPanelProps> = ({
                               </button>
                           </div>
 
-                          <div className="relative pb-2">
-                              <div className="absolute left-0 right-0 top-[7px] z-0 h-px min-w-max bg-gray-200" aria-hidden />
-                              <div className="relative z-10 flex min-w-max gap-5 px-1">
+                          <div className="relative w-full max-w-full min-w-0 overflow-hidden pb-2">
+                              <div className="pointer-events-none absolute left-0 right-0 top-[7px] z-0 h-px bg-gray-200" aria-hidden />
+                              <div className="w-full max-w-full min-w-0 overflow-x-auto overflow-y-hidden overscroll-x-contain">
+                                  <div className="relative z-10 flex w-max flex-nowrap gap-5 px-1 pb-0.5">
                                   {filteredOpsSchedule.map((cls) => {
                                       const emptySpots = cls.capacity - cls.enrolled;
                                       const isPast = cls.state === 'finished';
@@ -132,7 +133,7 @@ const TodayOpsPanel: React.FC<TodayOpsPanelProps> = ({
                                       const statusBadgeClass = getCourseSessionToneBadgeClass(displayStatus.tone);
 
                                       return (
-                                          <div key={cls.id} className="relative w-[268px] max-w-[280px] flex-shrink-0 pt-5">
+                                          <div key={cls.id} className="relative w-[280px] max-w-[280px] shrink-0 pt-5">
                                               <div
                                                   className={`absolute left-2 top-0 z-10 h-2.5 w-2.5 rounded-full border-2 border-white ${
                                                       isCanceledCard || isPast
@@ -252,12 +253,13 @@ const TodayOpsPanel: React.FC<TodayOpsPanelProps> = ({
                                       );
                                   })}
 
-                                  <div className="relative w-28 flex-shrink-0 pt-5">
+                                  <div className="relative w-28 shrink-0 pt-5">
                                       <div className="absolute left-2 top-0 z-10 h-2.5 w-2.5 rounded-full border-2 border-white bg-gray-200" aria-hidden />
                                       <div className="mt-2 flex min-h-[132px] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50/50 px-2 text-center text-gray-400 transition hover:border-gray-300 hover:bg-gray-50">
                                           <i className="fa-solid fa-plus mb-1.5 text-lg" aria-hidden />
                                           <span className="text-[11px] font-semibold">临时加课</span>
                                       </div>
+                                  </div>
                                   </div>
                               </div>
                           </div>

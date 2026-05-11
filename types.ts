@@ -260,6 +260,8 @@ export interface CourseSession {
   bookedCount?: number;
   waitlistCount?: number;
   notes?: string;
+  /** 单节对外标价估算（可选，仅前端演示归档用） */
+  price?: number;
   publishStatus?: CourseSessionPublishStatus;
   bookingStatus?: CourseSessionBookingStatus;
   sessionStatus?: CourseSessionLifecycleStatus;
@@ -637,6 +639,26 @@ export interface Refund {
   completedAt?: ISODateString;
 }
 
+/** 课程场次 mock 耗课记录（前端演示，不落库） */
+export interface MockCourseConsumptionRecord {
+  id: string;
+  courseSessionId: CourseSessionId;
+  memberId: MemberId;
+  memberName?: string;
+  consumedAt: ISODateString;
+  note?: string;
+  amount?: MoneyAmount;
+}
+
+/** 课程场次 mock 老师课时费（前端演示，不落库） */
+export interface MockTeacherSessionPayRecord {
+  id: string;
+  courseSessionId: CourseSessionId;
+  teacherName?: string;
+  amount: MoneyAmount;
+  courseTypeLabel?: string;
+}
+
 export interface FinanceLedgerEntry {
   id: string;
   // Ledger entries are accounting records derived from source objects.
@@ -651,4 +673,6 @@ export interface FinanceLedgerEntry {
   orderId?: OrderId;
   description?: string;
   createdBy?: string;
+  /** 前端演示用：关联课程场次 id（可选） */
+  courseSessionId?: CourseSessionId;
 }

@@ -331,7 +331,7 @@ export const toScheduleEvent = (
   return {
     ...session,
     name: session.title ?? course?.name ?? '自定义课程',
-    teacher: getTeacherName(session.teacherId),
+    teacher: session.teacherName?.trim() || getTeacherName(session.teacherId),
     dayIndex: getDayIndexFromIso(session.startAt),
     startTime: getTimeFromIso(session.startAt),
     duration: getDurationMinutes(session.startAt, session.endAt),

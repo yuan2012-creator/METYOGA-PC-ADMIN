@@ -45,6 +45,17 @@ type Resolved = {
   endMs: number;
 };
 
+const VALID_DISPLAY_ATTENDANCE_STATUSES: Attendance['status'][] = ['checked_in', 'attended', 'consumed'];
+
+const hasValidAttendanceForCourseSession = (
+  sessionId: string,
+  attendances: Attendance[],
+): boolean => (
+  attendances.some(
+    a => a.courseSessionId === sessionId && VALID_DISPLAY_ATTENDANCE_STATUSES.includes(a.status),
+  )
+);
+
 const countLateCancel = (sessionId: string, bookings: Booking[]): number => (
   bookings.filter(b => b.courseSessionId === sessionId && b.status === 'late_cancelled').length
 );
@@ -218,16 +229,18 @@ export const getCourseSessionStatusTone = (statusKey: string): DisplayTone => {
       return 'danger';
     case 'rescheduled':
     case 'substitute':
-    case 'pending_completion':
     case 'booking_closed':
+    case 'ended_pending':
       return 'warning';
     case 'completed':
+    case 'completed_revenue':
     case 'in_progress':
     case 'bookable':
       return 'success';
+    case 'pending_archive':
+      return 'info';
     case 'draft':
     case 'upcoming':
-    case 'ended':
     case 'full':
       return 'neutral';
     default:
@@ -253,6 +266,7 @@ export const getCourseSessionToneBadgeClass = (tone: DisplayTone): string => {
 export const getCourseSessionDisplayStatus = (input: CourseSessionStatusInput): CourseSessionDisplayStatus => {
   const r = resolveAll(input);
   const nowMs = (input.now ?? new Date()).getTime();
+  const attendances = input.attendances ?? [];
 
   const pick = (
     key: string,
@@ -272,32 +286,37 @@ export const getCourseSessionDisplayStatus = (input: CourseSessionStatusInput): 
   if (r.lifecycle === 'substitute') {
     return pick('substitute', '代课中', 'warning', 3);
   }
-  if (r.exception !== 'none') {
-    return pick('exception_pending', '异常待处理', 'danger', 4, EXCEPTION_LABEL[r.exception]);
+  if (r.lifecycle === 'exception_pending' || r.exception !== 'none') {
+    const desc = r.exception !== 'none' ? EXCEPTION_LABEL[r.exception] : undefined;
+    return pick('exception_pending', '异常待处理', 'danger', 4, desc);
   }
   if (r.lifecycle === 'completed') {
+    if (r.settlement === 'revenue_confirmed') {
+      return pick('completed_revenue', '已完课 · 已确认收入', 'success', 5);
+    }
     return pick('completed', '已完课', 'success', 5);
   }
-  if (r.lifecycle === 'pending_completion') {
-    return pick('pending_completion', '待完课', 'warning', 6);
-  }
-  if (r.lifecycle === 'ended') {
-    return pick('ended', '已结束', 'neutral', 7);
+  if (r.lifecycle === 'ended' || r.lifecycle === 'pending_completion') {
+    const hasValid = hasValidAttendanceForCourseSession(input.session.id, attendances);
+    if (hasValid) {
+      return pick('pending_archive', '待归档', 'success', 6);
+    }
+    return pick('ended_pending', '已结束 · 待处理', 'warning', 6);
   }
   if (r.lifecycle === 'in_progress' || (nowMs >= r.startMs && nowMs < r.endMs)) {
-    return pick('in_progress', '进行中', 'success', 8);
+    return pick('in_progress', '进行中', 'success', 7);
   }
   if (r.booking === 'full') {
-    return pick('full', '已满员', 'neutral', 9);
+    return pick('full', '已满员', 'neutral', 8);
   }
   if (r.booking === 'closed') {
-    return pick('booking_closed', '预约截止', 'warning', 10);
+    return pick('booking_closed', '预约截止', 'warning', 9);
   }
   if (r.booking === 'bookable') {
-    return pick('bookable', '可预约', 'success', 11);
+    return pick('bookable', '可预约', 'success', 10);
   }
   if (r.publish === 'draft') {
-    return pick('draft', '草稿', 'neutral', 12);
+    return pick('draft', '草稿', 'neutral', 11);
   }
-  return pick('upcoming', '未开始', 'neutral', 13);
+  return pick('upcoming', '未开始', 'neutral', 12);
 };

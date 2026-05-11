@@ -50,10 +50,28 @@ import {
   isScheduleEventPublishDraft,
   publishScheduleEvents,
 } from '../utils/courseSchedulePublish';
+import type { CourseSession, FinanceLedgerEntry, MockCourseConsumptionRecord, MockTeacherSessionPayRecord } from '../types';
+import {
+  canCompleteCourseSession,
+  completeCourseSessionMock,
+} from '../utils/courseSessionSettlement';
+import {
+  COURSE_OPS_SCENARIO_ATTENDANCES,
+  COURSE_OPS_SCENARIO_BOOKINGS,
+  COURSE_OPS_SCENARIO_EVENTS,
+} from '../utils/courseOpsScenarioFixtures';
 
 const INITIAL_LIBRARY_LIST = MOCK_COURSES.map(toCourseLibraryItem);
-const INITIAL_SCHEDULE_EVENTS = MOCK_COURSE_SESSIONS.map(session => (
-  toScheduleEvent(session, INITIAL_LIBRARY_LIST, MOCK_BOOKINGS)
+
+const COURSE_OPS_MERGED_SESSIONS: CourseSession[] = [
+  ...MOCK_COURSE_SESSIONS,
+  ...COURSE_OPS_SCENARIO_EVENTS,
+];
+const COURSE_OPS_MERGED_BOOKINGS = [...MOCK_BOOKINGS, ...COURSE_OPS_SCENARIO_BOOKINGS];
+const COURSE_OPS_MERGED_ATTENDANCES = [...MOCK_ATTENDANCES, ...COURSE_OPS_SCENARIO_ATTENDANCES];
+
+const INITIAL_SCHEDULE_EVENTS = COURSE_OPS_MERGED_SESSIONS.map(session => (
+  toScheduleEvent(session, INITIAL_LIBRARY_LIST, COURSE_OPS_MERGED_BOOKINGS)
 ));
 
 type CourseToastTone = 'info' | 'success' | 'warning';
@@ -93,10 +111,13 @@ const Courses: React.FC = () => {
   
   // DRAG & DROP STATE
   const [scheduleEvents, setScheduleEvents] = useState<ScheduleEvent[]>(INITIAL_SCHEDULE_EVENTS);
-  const [bookings, setBookings] = useState(MOCK_BOOKINGS);
-  const [attendances, setAttendances] = useState(MOCK_ATTENDANCES);
+  const [bookings, setBookings] = useState(COURSE_OPS_MERGED_BOOKINGS);
+  const [attendances, setAttendances] = useState(COURSE_OPS_MERGED_ATTENDANCES);
   const [draggedCourse, setDraggedCourse] = useState<CourseLibraryItem | null>(null);
   const [draggedEventId, setDraggedEventId] = useState<string | null>(null);
+  const [mockConsumptions, setMockConsumptions] = useState<MockCourseConsumptionRecord[]>([]);
+  const [mockTeacherSessionPays, setMockTeacherSessionPays] = useState<MockTeacherSessionPayRecord[]>([]);
+  const [mockFinanceLedgerEntries, setMockFinanceLedgerEntries] = useState<FinanceLedgerEntry[]>([]);
   const todayOperationScheduleEvents = getTodayOperationScheduleEvents(scheduleEvents);
   const draftScheduleCount = scheduleEvents.filter(isScheduleEventPublishDraft).length;
 
@@ -212,6 +233,33 @@ const Courses: React.FC = () => {
       } else {
           showToast(message, 'warning');
       }
+  };
+
+  const handleCompleteCourseSettlement = (sessionId: string) => {
+      const event = scheduleEvents.find(ev => scheduleEventMatchesSessionId(ev, sessionId));
+      if (!event) {
+          showToast('暂未找到该课程场次，操作未完成。', 'warning');
+          return;
+      }
+      const gate = canCompleteCourseSession(event, attendances, bookings);
+      if (!gate.allowed) {
+          showToast(gate.reason, 'warning');
+          return;
+      }
+      const result = completeCourseSessionMock(event, attendances, bookings, libraryList);
+      if (result.consumptions.length === 0 || result.financeEntries.length === 0) {
+          showToast(result.summary, 'warning');
+          return;
+      }
+      setScheduleEvents(prev => prev.map(ev => (
+          scheduleEventMatchesSessionId(ev, sessionId) ? result.nextEvent : ev
+      )));
+      setMockConsumptions(prev => [...prev, ...result.consumptions]);
+      if (result.teacherPay) {
+          setMockTeacherSessionPays(prev => [...prev, result.teacherPay]);
+      }
+      setMockFinanceLedgerEntries(prev => [...prev, ...result.financeEntries]);
+      showToast('课程已完成归档，已生成耗课、老师课时与确认收入估算记录。', 'success');
   };
 
   const handleCancelScheduleSession = (sessionId: string, reason: string) => {
@@ -455,7 +503,7 @@ const Courses: React.FC = () => {
   };
 
   return (
-    <div className="h-full flex flex-col animate-fadeIn relative bg-[#F5F5F7]">
+    <div className="relative flex h-full min-h-0 w-full max-w-full min-w-0 flex-col overflow-x-hidden bg-[#F5F5F7] animate-fadeIn">
       
       {/* Header */}
       <div className="h-16 border-b border-gray-200 flex items-center justify-between px-8 bg-white/80 backdrop-blur-md sticky top-0 z-20">
@@ -474,8 +522,8 @@ const Courses: React.FC = () => {
       </div>
 
       {/* Content Area */}
-      <div className="custom-scroll flex-1 overflow-y-auto p-8">
-          <div className="mx-auto max-w-[1440px] space-y-6">
+      <div className="custom-scroll min-h-0 w-full max-w-full min-w-0 flex-1 overflow-x-hidden overflow-y-auto p-8">
+          <div className="mx-auto w-full min-w-0 max-w-[1440px] space-y-6">
               <TodayOpsPanel
                   opsFilter={opsFilter}
                   setOpsFilter={setOpsFilter}
@@ -577,6 +625,10 @@ const Courses: React.FC = () => {
           onCancelSession={handleCancelScheduleSession}
           onRescheduleSession={handleRescheduleSession}
           onSubstituteSession={handleSubstituteSession}
+          onCompleteCourseSettlement={handleCompleteCourseSettlement}
+          mockConsumptions={mockConsumptions}
+          mockTeacherSessionPays={mockTeacherSessionPays}
+          mockFinanceLedgerEntries={mockFinanceLedgerEntries}
       />
 
       {toast && (
