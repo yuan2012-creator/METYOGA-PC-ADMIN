@@ -1,9 +1,15 @@
 import React from 'react';
+import type { Attendance, Booking, CourseSession } from '../../types';
 import type {
   CourseOpsSummary,
   OpsFilter,
   OpsScheduleItem,
+  ScheduleEvent,
 } from '../../utils/courseSelectors';
+import {
+  getCourseSessionDisplayStatus,
+  getCourseSessionToneBadgeClass,
+} from '../../utils/courseSessionStatus';
 import type { CourseSessionOpsTab } from './CourseSessionOpsDrawer';
 
 interface TodayOpsPanelProps {
@@ -12,24 +18,27 @@ interface TodayOpsPanelProps {
   filteredOpsSchedule: OpsScheduleItem[];
   opsSummary: CourseOpsSummary;
   aiGuidance: string;
+  calendarSessions: ScheduleEvent[];
+  bookings: Booking[];
+  attendances: Attendance[];
   onOpenSessionCard: (sessionId: string) => void;
   onOpenSessionOpsDrawer: (tab: CourseSessionOpsTab, sessionId?: string) => void;
   onOpenCheckInReview: () => void;
   onOpenExceptionCenter: () => void;
 }
 
-const sessionStatusLabel = (cls: OpsScheduleItem): string => {
-  if (cls.abnormal) return '异常';
-  if (cls.state === 'finished') return '已完课';
-  if (cls.state === 'ongoing') return '进行中';
-  return '未开始';
-};
-
-const sessionStatusBadgeClass = (cls: OpsScheduleItem): string => {
-  if (cls.abnormal) return 'bg-rose-50 text-rose-800 border border-rose-100';
-  if (cls.state === 'finished') return 'bg-stone-100 text-stone-700 border border-stone-200';
-  if (cls.state === 'ongoing') return 'bg-emerald-50 text-emerald-800 border border-emerald-100';
-  return 'bg-slate-100 text-slate-600 border border-slate-200';
+const courseSessionForDisplay = (cls: OpsScheduleItem, evt: ScheduleEvent | undefined): CourseSession => {
+  if (evt) return evt;
+  return {
+    id: cls.id,
+    courseId: cls.courseId,
+    status: cls.courseSessionStatus,
+    startAt: cls.startAt,
+    endAt: cls.endAt,
+    capacity: cls.capacity,
+    bookedCount: cls.enrolled,
+    title: cls.name,
+  };
 };
 
 const filterBtnClass = (active: boolean): string =>
@@ -45,6 +54,9 @@ const TodayOpsPanel: React.FC<TodayOpsPanelProps> = ({
   filteredOpsSchedule,
   opsSummary,
   aiGuidance,
+  calendarSessions,
+  bookings,
+  attendances,
   onOpenSessionCard,
   onOpenSessionOpsDrawer,
   onOpenCheckInReview,
@@ -106,6 +118,14 @@ const TodayOpsPanel: React.FC<TodayOpsPanelProps> = ({
                                       const cardBorder = cls.abnormal
                                           ? 'border border-rose-100/90 bg-white'
                                           : 'border border-gray-200 bg-white';
+                                      const evt = calendarSessions.find(s => s.id === cls.id);
+                                      const sessionRow = courseSessionForDisplay(cls, evt);
+                                      const displayStatus = getCourseSessionDisplayStatus({
+                                        session: sessionRow,
+                                        bookings,
+                                        attendances,
+                                      });
+                                      const statusBadgeClass = getCourseSessionToneBadgeClass(displayStatus.tone);
 
                                       return (
                                           <div key={cls.id} className="relative w-[268px] max-w-[280px] flex-shrink-0 pt-5">
@@ -136,9 +156,9 @@ const TodayOpsPanel: React.FC<TodayOpsPanelProps> = ({
                                                           </span>
                                                       </div>
                                                       <span
-                                                          className={`shrink-0 rounded-md px-2 py-1 text-[10px] font-semibold ${sessionStatusBadgeClass(cls)}`}
+                                                          className={`shrink-0 rounded-md px-2 py-1 text-[10px] font-semibold ${statusBadgeClass}`}
                                                       >
-                                                          {sessionStatusLabel(cls)}
+                                                          {displayStatus.label}
                                                       </span>
                                                   </div>
 

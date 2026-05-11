@@ -1,6 +1,11 @@
-import React, { useEffect } from 'react';
-import type { Attendance, Booking, Member } from '../../types';
-import type { OpsScheduleItem } from '../../utils/courseSelectors';
+import React, { useEffect, useMemo } from 'react';
+import type { Attendance, Booking, CourseSession, Member } from '../../types';
+import type { OpsScheduleItem, ScheduleEvent } from '../../utils/courseSelectors';
+import {
+  getCourseSessionDisplayStatus,
+  getCourseSessionStatusMeta,
+  getCourseSessionToneBadgeClass,
+} from '../../utils/courseSessionStatus';
 
 export type CourseSessionOpsTab = 'bookings' | 'attendance' | 'substitute' | 'exceptions';
 
@@ -11,11 +16,18 @@ const TABS: { id: CourseSessionOpsTab; label: string }[] = [
   { id: 'exceptions', label: '异常记录' },
 ];
 
-const sessionStatusLabel = (cls: OpsScheduleItem): string => {
-  if (cls.abnormal) return '异常';
-  if (cls.state === 'finished') return '已完课';
-  if (cls.state === 'ongoing') return '进行中';
-  return '未开始';
+const courseSessionForDisplay = (cls: OpsScheduleItem, evt: ScheduleEvent | undefined): CourseSession => {
+  if (evt) return evt;
+  return {
+    id: cls.id,
+    courseId: cls.courseId,
+    status: cls.courseSessionStatus,
+    startAt: cls.startAt,
+    endAt: cls.endAt,
+    capacity: cls.capacity,
+    bookedCount: cls.enrolled,
+    title: cls.name,
+  };
 };
 
 const bookingStatusLabel = (status: Booking['status']): string => {
@@ -91,6 +103,7 @@ interface CourseSessionOpsDrawerProps {
   tab: CourseSessionOpsTab;
   onTabChange: (tab: CourseSessionOpsTab) => void;
   session: OpsScheduleItem | null;
+  scheduleEvent: ScheduleEvent | null;
   bookings: Booking[];
   attendances: Attendance[];
   members: Member[];
@@ -102,6 +115,7 @@ const CourseSessionOpsDrawer: React.FC<CourseSessionOpsDrawerProps> = ({
   tab,
   onTabChange,
   session,
+  scheduleEvent,
   bookings,
   attendances,
   members,
@@ -114,6 +128,23 @@ const CourseSessionOpsDrawer: React.FC<CourseSessionOpsDrawerProps> = ({
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [isOpen, onClose]);
+
+  const statusInput = useMemo(() => {
+    if (!isOpen || !session) return null;
+    return courseSessionForDisplay(session, scheduleEvent ?? undefined);
+  }, [isOpen, session, scheduleEvent]);
+
+  const displayStatus = useMemo(() => {
+    if (!statusInput) return null;
+    return getCourseSessionDisplayStatus({ session: statusInput, bookings, attendances });
+  }, [statusInput, bookings, attendances]);
+
+  const statusMeta = useMemo(() => {
+    if (!statusInput) return null;
+    return getCourseSessionStatusMeta({ session: statusInput, bookings, attendances });
+  }, [statusInput, bookings, attendances]);
+
+  const mainStatusBadgeClass = displayStatus ? getCourseSessionToneBadgeClass(displayStatus.tone) : '';
 
   if (!isOpen) return null;
 
@@ -159,6 +190,11 @@ const CourseSessionOpsDrawer: React.FC<CourseSessionOpsDrawerProps> = ({
                   <span className="rounded-md bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-600 ring-1 ring-gray-200/80">
                     {session.type}
                   </span>
+                  {displayStatus ? (
+                    <span className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${mainStatusBadgeClass}`}>
+                      {displayStatus.label}
+                    </span>
+                  ) : null}
                 </div>
               ) : (
                 <p className="mt-2 text-xs text-gray-500">今日暂无可用场次，或列表为空。</p>
@@ -189,10 +225,6 @@ const CourseSessionOpsDrawer: React.FC<CourseSessionOpsDrawerProps> = ({
                 <dd className="font-medium text-gray-800">{session.room}</dd>
               </div>
               <div className="flex justify-between gap-2 border-b border-gray-100/90 pb-2 sm:block sm:border-0 sm:pb-0">
-                <dt className="text-gray-500">当前状态</dt>
-                <dd className="font-medium text-gray-800">{sessionStatusLabel(session)}</dd>
-              </div>
-              <div className="flex justify-between gap-2 border-b border-gray-100/90 pb-2 sm:block sm:border-0 sm:pb-0">
                 <dt className="text-gray-500">预约人数 / 容量</dt>
                 <dd className="font-medium text-gray-800 tabular-nums">
                   {session.enrolled} / {session.capacity}
@@ -203,6 +235,34 @@ const CourseSessionOpsDrawer: React.FC<CourseSessionOpsDrawerProps> = ({
                 <dd className="font-medium text-gray-800 tabular-nums">{session.signed}</dd>
               </div>
             </dl>
+          ) : null}
+
+          {session && statusMeta ? (
+            <div className="mt-4 rounded-xl border border-gray-100 bg-white/70 px-3 py-3">
+              <p className="mb-2 text-[11px] font-semibold tracking-wide text-gray-400">状态概览</p>
+              <dl className="grid grid-cols-1 gap-x-4 gap-y-2 text-xs sm:grid-cols-2">
+                <div className="flex justify-between gap-2 sm:block">
+                  <dt className="text-gray-500">发布状态</dt>
+                  <dd className="font-medium text-gray-800">{statusMeta.publishStatusLabel}</dd>
+                </div>
+                <div className="flex justify-between gap-2 sm:block">
+                  <dt className="text-gray-500">预约状态</dt>
+                  <dd className="font-medium text-gray-800">{statusMeta.bookingStatusLabel}</dd>
+                </div>
+                <div className="flex justify-between gap-2 sm:block">
+                  <dt className="text-gray-500">执行状态</dt>
+                  <dd className="font-medium text-gray-800">{statusMeta.sessionStatusLabel}</dd>
+                </div>
+                <div className="flex justify-between gap-2 sm:block">
+                  <dt className="text-gray-500">异常状态</dt>
+                  <dd className="font-medium text-gray-800">{statusMeta.exceptionStatusLabel}</dd>
+                </div>
+                <div className="flex justify-between gap-2 sm:col-span-2 sm:block">
+                  <dt className="text-gray-500">结算状态</dt>
+                  <dd className="font-medium text-gray-800">{statusMeta.settlementStatusLabel}</dd>
+                </div>
+              </dl>
+            </div>
           ) : null}
         </header>
 

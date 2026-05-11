@@ -1,10 +1,14 @@
 import React from 'react';
+import type { Attendance, Booking } from '../../types';
 import {
   COURSE_TYPE_LABELS,
   getCalendarEventStyle,
-  isEventFull,
 } from '../../utils/courseSelectors';
 import type { CourseLibraryItem, Room, ScheduleEvent } from '../../utils/courseSelectors';
+import {
+  getCourseSessionDisplayStatus,
+  getCourseSessionToneBadgeClass,
+} from '../../utils/courseSessionStatus';
 
 interface ScheduleCalendarProps {
   libraryList: CourseLibraryItem[];
@@ -15,6 +19,8 @@ interface ScheduleCalendarProps {
   hoursArray: number[];
   hourHeight: number;
   scheduleEvents: ScheduleEvent[];
+  bookings: Booking[];
+  attendances: Attendance[];
   draggedEventId: string | null;
   handleCourseDragStart: (e: React.DragEvent, course: CourseLibraryItem) => void;
   handleEventDragStart: (e: React.DragEvent, event: ScheduleEvent) => void;
@@ -37,6 +43,8 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
   hoursArray,
   hourHeight,
   scheduleEvents,
+  bookings,
+  attendances,
   draggedEventId,
   handleCourseDragStart,
   handleEventDragStart,
@@ -252,19 +260,37 @@ const ScheduleCalendar: React.FC<ScheduleCalendarProps> = ({
                                                                   draggable
                                                                   onDragStart={(e) => handleEventDragStart(e, evt)}
                                                                   onClick={(e) => { e.stopPropagation(); openEditModal(evt); }}
-                                                                  className={`absolute left-1 right-1 rounded-lg px-2 py-1.5 text-xs border cursor-move shadow-sm hover:shadow-md transition-all z-10 flex flex-col justify-between overflow-hidden ${evt.color}`}
+                                                                  className={`absolute left-1 right-1 rounded-lg border px-1.5 py-1 text-xs shadow-sm transition-colors z-10 flex cursor-move flex-col gap-0.5 overflow-hidden ${evt.color}`}
                                                                   style={{
                                                                       ...getCalendarEventStyle(evt.startTime, evt.duration, hoursArray[0] ?? 8, hourHeight),
                                                                       opacity: draggedEventId === evt.id ? 0.5 : 1
                                                                   }}
                                                               >
-                                                                  <div>
-                                                                      <div className="font-bold truncate">{evt.name}</div>
-                                                                      <div className="opacity-80 truncate text-[10px]">{evt.startTime} - {evt.teacher}</div>
-                                                                  </div>
-                                                                  {isEventFull(evt) && (
-                                                                      <div className="text-[9px] bg-red-500 text-white px-1 rounded w-fit self-end font-bold">FULL</div>
-                                                                  )}
+                                                                  {(() => {
+                                                                      const calDisplay = getCourseSessionDisplayStatus({
+                                                                          session: evt,
+                                                                          bookings,
+                                                                          attendances,
+                                                                      });
+                                                                      const calBadge = getCourseSessionToneBadgeClass(calDisplay.tone);
+                                                                      return (
+                                                                          <div className="flex min-h-0 flex-1 flex-col gap-0.5">
+                                                                              <div className="flex items-start justify-between gap-1">
+                                                                                  <div className="min-w-0 flex-1">
+                                                                                      <div className="truncate font-bold leading-tight">{evt.name}</div>
+                                                                                      <div className="truncate text-[9px] opacity-80">
+                                                                                          {evt.startTime} · {evt.teacher}
+                                                                                      </div>
+                                                                                  </div>
+                                                                                  <span
+                                                                                      className={`max-w-[52%] shrink-0 truncate rounded px-1 py-0.5 text-center text-[8px] font-semibold leading-tight ${calBadge}`}
+                                                                                  >
+                                                                                      {calDisplay.label}
+                                                                                  </span>
+                                                                              </div>
+                                                                          </div>
+                                                                      );
+                                                                  })()}
                                                               </div>
                                                           ))
                                                       }

@@ -117,6 +117,11 @@ const Courses: React.FC = () => {
       ? todayOpsSchedule.find(s => s.id === activeOpsSessionId) ?? null
       : null;
 
+  const activeDrawerScheduleEvent =
+    activeOpsSessionId != null
+      ? scheduleEvents.find(e => e.id === activeOpsSessionId) ?? null
+      : null;
+
   const openSessionOpsDrawer = (tab: CourseSessionOpsTab, sessionId?: string) => {
     const resolved =
       sessionId ??
@@ -403,6 +408,9 @@ const Courses: React.FC = () => {
                   filteredOpsSchedule={filteredOpsSchedule}
                   opsSummary={opsSummary}
                   aiGuidance={aiGuidance}
+                  calendarSessions={activeScheduleEvents}
+                  bookings={bookings}
+                  attendances={attendances}
                   onOpenSessionCard={openSessionCard}
                   onOpenSessionOpsDrawer={openSessionOpsDrawer}
                   onOpenCheckInReview={handleOpenCheckInReview}
@@ -420,6 +428,8 @@ const Courses: React.FC = () => {
                       hoursArray={hoursArray}
                       hourHeight={hourHeight}
                       scheduleEvents={activeScheduleEvents}
+                      bookings={bookings}
+                      attendances={attendances}
                       draggedEventId={draggedEventId}
                       handleCourseDragStart={handleCourseDragStart}
                       handleEventDragStart={handleEventDragStart}
@@ -485,6 +495,7 @@ const Courses: React.FC = () => {
           tab={activeOpsDrawerTab}
           onTabChange={setActiveOpsDrawerTab}
           session={activeOpsSession}
+          scheduleEvent={activeDrawerScheduleEvent}
           bookings={bookings}
           attendances={attendances}
           members={MOCK_MEMBERS}

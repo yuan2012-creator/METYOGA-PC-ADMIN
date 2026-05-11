@@ -3,6 +3,7 @@ import type {
   Booking,
   Course,
   CourseSession,
+  CourseSessionStatus,
 } from '../types';
 
 export type CourseSubTab = 'schedule' | 'library';
@@ -28,6 +29,8 @@ export type ScheduleEvent = CourseSession & {
 
 export type OpsScheduleItem = {
   id: string;
+  courseId: string;
+  courseSessionStatus: CourseSessionStatus;
   time: string;
   name: string;
   type: string;
@@ -40,6 +43,8 @@ export type OpsScheduleItem = {
   state: 'finished' | 'ongoing' | 'upcoming';
   abnormal: boolean;
   abnormalReason: string;
+  startAt: string;
+  endAt: string;
 };
 
 export type OpsFilter = 'all' | 'group' | 'private';
@@ -624,6 +629,8 @@ export const toOpsScheduleItem = (
 
   return {
     id: session.id,
+    courseId: session.courseId,
+    courseSessionStatus: session.status,
     time: formatSessionTimeRange(session),
     name: session.title ?? course?.name ?? '自定义课程',
     type: course ? COURSE_TYPE_LABELS[course.type] : '课程',
@@ -636,6 +643,8 @@ export const toOpsScheduleItem = (
     state,
     abnormal: lateCancelledCount > 0,
     abnormalReason: lateCancelledCount > 0 ? `${lateCancelledCount} 个迟取消预约` : '',
+    startAt: session.startAt,
+    endAt: session.endAt,
   };
 };
 

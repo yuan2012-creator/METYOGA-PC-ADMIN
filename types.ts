@@ -60,6 +60,47 @@ export type CourseSessionStatus =
   | 'cancelled'
   | 'rescheduled';
 
+/** 发布状态（可选扩展字段，与 legacy `status` 并存） */
+export type CourseSessionPublishStatus = 'draft' | 'published' | 'unpublished' | 'canceled';
+
+/** 预约开放状态（可选扩展字段） */
+export type CourseSessionBookingStatus = 'not_open' | 'bookable' | 'full' | 'closed' | 'suspended';
+
+/** 场次执行生命周期（可选扩展字段 `sessionStatus`，与 legacy `status` 并存） */
+export type CourseSessionLifecycleStatus =
+  | 'upcoming'
+  | 'in_progress'
+  | 'ended'
+  | 'pending_completion'
+  | 'completed'
+  | 'canceled'
+  | 'rescheduled'
+  | 'substitute'
+  | 'exception_pending';
+
+/** 异常分类（可选扩展字段） */
+export type CourseSessionExceptionStatus =
+  | 'none'
+  | 'booking_low'
+  | 'teacher_absent'
+  | 'attendance_conflict'
+  | 'late_cancel'
+  | 'no_show'
+  | 'room_conflict'
+  | 'teacher_conflict'
+  | 'reschedule_pending'
+  | 'substitute_pending'
+  | 'cancel_pending';
+
+/** 结算状态（可选扩展字段） */
+export type CourseSessionSettlementStatus =
+  | 'not_started'
+  | 'pending'
+  | 'consumed'
+  | 'teacher_pay_generated'
+  | 'revenue_confirmed'
+  | 'exception_hold';
+
 export type BookingStatus =
   | 'booked'
   | 'waitlisted'
@@ -217,6 +258,11 @@ export interface CourseSession {
   bookedCount?: number;
   waitlistCount?: number;
   notes?: string;
+  publishStatus?: CourseSessionPublishStatus;
+  bookingStatus?: CourseSessionBookingStatus;
+  sessionStatus?: CourseSessionLifecycleStatus;
+  exceptionStatus?: CourseSessionExceptionStatus;
+  settlementStatus?: CourseSessionSettlementStatus;
 }
 
 export interface Booking {
