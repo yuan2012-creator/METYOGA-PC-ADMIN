@@ -43,6 +43,13 @@ import {
   buildMallWriteClosureDraft,
   type MallWriteClosureDraft,
 } from '../utils/mallSelectors';
+import {
+  MALL_ORDER_SCENARIO_ASSETS,
+  MALL_ORDER_SCENARIO_CONTRACTS,
+  MALL_ORDER_SCENARIO_ORDERS,
+  MALL_ORDER_SCENARIO_PAYMENTS,
+  MALL_ORDER_SCENARIO_REFUNDS,
+} from '../utils/mallOrderScenarioFixtures';
 
 // --- Constants ---
 const AVAILABLE_VENUES = ['万象城馆', '西湖旗舰馆', '滨江宝龙馆', '城西银泰馆'];
@@ -145,11 +152,17 @@ const Mall: React.FC = () => {
       { id: 'st2', name: 'Mike Chen', phone: '139****1234', paymentStatus: 'deposit', amount: 5000, confirmed: false, batch: '2024 春季周末班', signupDate: '2023-11-22' },
   ]);
 
-  const [orders, setOrders] = useState<Order[]>(MOCK_ORDERS);
-  const [contracts, setContracts] = useState<Contract[]>(MOCK_CONTRACTS);
-  const [memberAssets, setMemberAssets] = useState<MemberAsset[]>(MOCK_MEMBER_ASSETS);
-  const [payments] = useState<Payment[]>(MOCK_PAYMENTS);
-  const [refunds] = useState<Refund[]>(MOCK_REFUNDS);
+  const mergedOrders = useMemo(() => [...MOCK_ORDERS, ...MALL_ORDER_SCENARIO_ORDERS], []);
+  const mergedContracts = useMemo(() => [...MOCK_CONTRACTS, ...MALL_ORDER_SCENARIO_CONTRACTS], []);
+  const mergedPayments = useMemo(() => [...MOCK_PAYMENTS, ...MALL_ORDER_SCENARIO_PAYMENTS], []);
+  const mergedRefunds = useMemo(() => [...MOCK_REFUNDS, ...MALL_ORDER_SCENARIO_REFUNDS], []);
+  const mergedMemberAssets = useMemo(() => [...MOCK_MEMBER_ASSETS, ...MALL_ORDER_SCENARIO_ASSETS], []);
+
+  const [orders, setOrders] = useState<Order[]>(mergedOrders);
+  const [contracts, setContracts] = useState<Contract[]>(mergedContracts);
+  const [memberAssets, setMemberAssets] = useState<MemberAsset[]>(mergedMemberAssets);
+  const [payments] = useState<Payment[]>(mergedPayments);
+  const [refunds] = useState<Refund[]>(mergedRefunds);
   const [writeClosureDraft, setWriteClosureDraft] = useState<MallWriteClosureDraft | null>(null);
   const mallProductOptions = useMemo(
       () => buildMallProductOptions({ cards, ttcCourses, pointProducts: products }),

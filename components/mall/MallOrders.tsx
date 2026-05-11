@@ -101,6 +101,10 @@ const MallOrders: React.FC<MallOrdersProps> = ({
                           <option value="all">全部状态</option>
                           <option value="paid">已支付</option>
                           <option value="pending">待支付</option>
+                          <option value="deposit">已付定金</option>
+                          <option value="refunded">已退款</option>
+                          <option value="cancelled">已取消</option>
+                          <option value="closed">已关闭</option>
                       </select>
                   </div>
               </div>
@@ -160,9 +164,24 @@ const MallOrders: React.FC<MallOrdersProps> = ({
                                   <td className="p-4">
                                       <span className={`px-2 py-1 rounded text-[10px] font-bold ${
                                           order.status === 'paid' || order.status === 'completed' ? 'text-green-600 bg-green-50' :
-                                          order.status === 'pending' || order.status === 'deposit' ? 'text-orange-600 bg-orange-50' : 'text-red-600 bg-red-50'
+                                          order.status === 'pending' || order.status === 'deposit' ? 'text-orange-600 bg-orange-50' :
+                                          order.status === 'refunded' ? 'text-red-600 bg-red-50' :
+                                          order.status === 'cancelled' || order.status === 'closed' ? 'text-gray-600 bg-gray-100' :
+                                          'text-red-600 bg-red-50'
                                       }`}>
-                                          {order.status === 'paid' ? '已支付' : order.status === 'deposit' ? '已付定金' : order.status === 'completed' ? '已完成' : '待支付'}
+                                          {order.status === 'paid'
+                                              ? '已支付'
+                                              : order.status === 'deposit'
+                                                ? '已付定金'
+                                                : order.status === 'completed'
+                                                  ? '已完成'
+                                                  : order.status === 'refunded'
+                                                    ? '已退款'
+                                                    : order.status === 'cancelled'
+                                                      ? '已取消'
+                                                      : order.status === 'closed'
+                                                        ? '已关闭'
+                                                        : '待支付'}
                                       </span>
                                   </td>
                                   <td className="p-4 text-xs text-gray-400 font-mono">{order.time}</td>

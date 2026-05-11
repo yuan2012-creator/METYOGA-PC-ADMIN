@@ -53,7 +53,7 @@ export interface MallOrderRow {
   productType: MallProductSourceType;
   type: string;
   amount: string;
-  status: 'paid' | 'pending' | 'refunded' | 'completed' | 'deposit';
+  status: 'paid' | 'pending' | 'refunded' | 'completed' | 'deposit' | 'cancelled' | 'closed';
   time: string;
   details: string;
   subStatus: string;
@@ -108,9 +108,11 @@ const getOrderCategory = (item?: OrderItem): MallOrderRow['category'] => {
 };
 
 const getOrderDisplayStatus = (order: Order): MallOrderRow['status'] => {
+  if (order.status === 'cancelled') return 'cancelled';
+  if (order.status === 'closed') return 'closed';
   if (order.status === 'pending_payment') return order.paidAmount ? 'deposit' : 'pending';
   if (order.status === 'refunded' || order.status === 'partially_refunded') return 'refunded';
-  if (order.status === 'fulfilled' || order.status === 'closed' || order.status === 'paid') return 'paid';
+  if (order.status === 'fulfilled' || order.status === 'paid') return 'paid';
   return 'pending';
 };
 
@@ -119,7 +121,11 @@ const getContractDisplay = (contract?: Contract): { details: string; subStatus: 
   if (contract.status === 'effective') return { details: '合同生效', subStatus: 'active' };
   if (contract.status === 'signed') return { details: '已签合同', subStatus: 'signed' };
   if (contract.status === 'pending_signature') return { details: '待签署', subStatus: 'pending' };
-  return { details: '合同异常', subStatus: contract.status };
+  if (contract.status === 'voided') return { details: '合同已作废', subStatus: 'inactive' };
+  if (contract.status === 'draft') return { details: '合同草稿', subStatus: 'pending' };
+  if (contract.status === 'expired') return { details: '合同已到期', subStatus: 'inactive' };
+  if (contract.status === 'terminated') return { details: '合同已终止', subStatus: 'inactive' };
+  return { details: '合同待核对', subStatus: 'inactive' };
 };
 
 export const buildMallProductOptions = ({
@@ -550,7 +556,16 @@ export const buildMallOrderDetailRiskMessages = ({
   const orderRefunds = refunds.filter(r => r.orderId === order.id);
   const orderAssets = assets.filter(a => a.sourceOrderId === order.id);
 
-  if (mallOrderAppearsSettledForPaymentCheck(order) && orderPayments.length === 0) {
+  if (order.status === 'cancelled' || order.status === 'closed') {
+    messages.push('该订单已取消或关闭，请按门店规则核对后续处理与留痕。');
+  }
+
+  if (
+    mallOrderAppearsSettledForPaymentCheck(order) &&
+    order.status !== 'cancelled' &&
+    order.status !== 'closed' &&
+    orderPayments.length === 0
+  ) {
     messages.push('订单显示已支付，但暂无支付记录。');
   }
 
@@ -565,7 +580,7 @@ export const buildMallOrderDetailRiskMessages = ({
     (contract.status === 'signed' || contract.status === 'effective') &&
     orderAssets.length === 0
   ) {
-    messages.push('订单与合同已完成，但暂无会员资产发放记录。');
+    messages.push('合同已签署，但暂无会员资产发放记录。');
   }
 
   const hasCompletedRefund = orderRefunds.some(r => r.status === 'completed');

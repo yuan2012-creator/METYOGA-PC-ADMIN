@@ -212,7 +212,7 @@ const MallOrderDetailDrawer: React.FC<MallOrderDetailDrawerProps> = ({
             (ctx.contract.status === 'signed' || ctx.contract.status === 'effective') &&
             mallOrderAppearsSettledForPaymentCheck(ctx.order) && (
               <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg p-3">
-                订单与合同已完成，但暂无会员资产发放记录。
+                合同已签署，但暂无会员资产发放记录。
               </p>
             )}
           </>
