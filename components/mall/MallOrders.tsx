@@ -50,7 +50,7 @@ const MallOrders: React.FC<MallOrdersProps> = ({
                       <h3 className="font-bold text-gray-900">销售与订单管理</h3>
                       <div className="flex gap-2">
                           <button
-                              onClick={() => onDemoAction('订单导出已接入站内反馈，真实导出仍为后续接口能力')}
+                              onClick={() => onDemoAction('订单导出已接入站内反馈，完整导出能力仍为后续接口接入')}
                               className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium hover:bg-gray-50"
                           >
                               导出数据

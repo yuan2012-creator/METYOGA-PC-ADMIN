@@ -57,6 +57,9 @@ const contractTemplateLabel = (templateId?: string): string => {
 const resolveItemTypeLabel = (productType: OrderItem['productType']): string =>
   getMallProductBusinessTypeLabel(productType);
 
+const MALL_MODULE_ASSET_SCOPE_COPY =
+  '已在产品与合同模块生成资产记录。会员经营同步与财务证据链需后续接入统一服务。';
+
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <section className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
     <h3 className="text-xs font-black text-gray-600 mb-3">{title}</h3>
@@ -241,8 +244,8 @@ const MallOrderDetailDrawer: React.FC<MallOrderDetailDrawerProps> = ({
             <p className="text-xs text-gray-500 bg-gray-50 rounded-lg p-3">暂无关联会员资产</p>
             {grantCheck.allowed && onGrantMemberAssetForOrder ? (
               <div className="rounded-lg border border-green-100 bg-green-50/40 p-3 space-y-2">
-                <p className="text-[10px] text-gray-600 leading-relaxed">
-                  当前仅在产品与合同模块生成资产记录，正式版本需同步会员经营与财务证据链。
+                <p className="text-[10px] text-slate-600 leading-relaxed">
+                  当前仅在产品与合同模块内登记资产，正式版本需同步会员经营与财务证据链。
                 </p>
                 <button
                   type="button"
@@ -285,8 +288,8 @@ const MallOrderDetailDrawer: React.FC<MallOrderDetailDrawerProps> = ({
                   }
                 />
                 {asset.mallGrantRecordNote?.trim() && (
-                  <p className="text-[10px] text-gray-500 mt-2 pt-2 border-t border-gray-100 leading-relaxed">
-                    {asset.mallGrantRecordNote.trim()}
+                  <p className="text-[10px] text-slate-600 mt-2 pt-2 border-t border-sky-100 bg-sky-50/60 rounded-lg px-2 py-2 leading-relaxed">
+                    {MALL_MODULE_ASSET_SCOPE_COPY}
                   </p>
                 )}
               </div>

@@ -42,6 +42,8 @@ export interface MallAssetSourceLink {
   contractLinked: boolean;
   order?: Order;
   contract?: Contract;
+  /** 本模块内点击生成的资产（用于列表与摘要口径） */
+  mallModuleGrantOnly?: boolean;
 }
 
 export interface MallOrderRow {
@@ -190,6 +192,7 @@ export const buildMallAssetSourceLinks = ({
       contractId: asset.contractId ?? contract?.id,
       productId: asset.productId ?? orderItem?.productId,
       productType,
+      mallModuleGrantOnly: Boolean(asset.mallGrantRecordNote?.trim()),
       sourceLabel: order
         ? `订单产品：${productNames}；${contractLine}`
         : '未找到来源订单',
@@ -219,6 +222,12 @@ export const buildMallOrderRows = ({
     const contractDisplay = getContractDisplay(contract);
     const productType = (item?.productType ?? 'custom') as MallProductSourceType;
 
+    const assetLine = assetLink
+      ? assetLink.mallModuleGrantOnly
+        ? `本模块已记录 · ${assetLink.assetName}`
+        : `资产：${assetLink.assetName}`
+      : '暂无资产记录';
+
     return {
       id: order.id,
       user: member?.name || order.memberId,
@@ -233,12 +242,12 @@ export const buildMallOrderRows = ({
       details: contractDisplay.details,
       subStatus: contractDisplay.subStatus,
       sourceSummary: assetLink
-        ? `资产：${assetLink.assetName}`
+        ? assetLine
         : contract
           ? contract.title?.trim()
-            ? `合同：${contract.title.trim()}`
-            : '合同：暂未记录'
-          : '仅订单记录，待生成资产/合同',
+            ? `${assetLine} · 合同：${contract.title.trim()}`
+            : `${assetLine} · 合同：暂未记录`
+          : assetLine,
       assetSourceLabel: assetLink?.sourceLabel ?? '未生成会员资产',
       hasAssetSource: Boolean(assetLink),
     };
@@ -555,6 +564,9 @@ export const buildMallOrderDetailRiskMessages = ({
   const orderPayments = payments.filter(p => p.orderId === order.id);
   const orderRefunds = refunds.filter(r => r.orderId === order.id);
   const orderAssets = assets.filter(a => a.sourceOrderId === order.id);
+  const effectiveOrderPayments = orderPayments.filter(
+    p => p.status === 'paid' || p.status === 'reconciled'
+  );
 
   if (order.status === 'cancelled' || order.status === 'closed') {
     messages.push('该订单已取消或关闭，请按门店规则核对后续处理与留痕。');
@@ -592,7 +604,21 @@ export const buildMallOrderDetailRiskMessages = ({
   }
 
   if (messages.length === 0) {
-    messages.push('订单、合同、支付与资产链路暂无明显异常。');
+    const contractSignedLike =
+      contract &&
+      (contract.status === 'signed' || contract.status === 'effective') &&
+      contract.status !== 'voided';
+    const chainOk =
+      mallOrderAppearsSettledForPaymentCheck(order) &&
+      effectiveOrderPayments.length > 0 &&
+      Boolean(contractSignedLike) &&
+      orderAssets.length > 0;
+
+    if (chainOk && orderAssets.some(a => a.mallGrantRecordNote?.trim())) {
+      messages.push('产品与合同模块内资产记录已生成；会员经营同步与财务证据链需后续接入统一服务。');
+    } else {
+      messages.push('订单、合同、支付与资产链路暂无明显异常。');
+    }
   }
 
   return messages;
@@ -620,7 +646,8 @@ export const summarizeMallHeaderContractStateZh = (contract?: Contract): string 
 
 export const summarizeMallHeaderAssetStateZh = (order: Order, assets: MemberAsset[]): string => {
   const list = assets.filter(a => a.sourceOrderId === order.id);
-  if (list.length === 0) return '未发放';
+  if (list.length === 0) return '暂无资产记录';
+  if (list.some(a => a.mallGrantRecordNote?.trim())) return '本模块已记录';
   const allEffective = list.every(a => a.status === 'effective');
   if (list.some(a => a.status === 'frozen')) return '含冻结资产';
   if (allEffective) return '已发放';
