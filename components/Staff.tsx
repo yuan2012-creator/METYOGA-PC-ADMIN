@@ -8,6 +8,8 @@ import {
   buildStaffGrowthReviewRows,
   buildStaffHourIncomeEstimateRows,
   buildStaffMatrixData,
+  buildStaffPermissionAuditDetailRows,
+  buildStaffRuleConfigDetailRows,
   buildStaffSessionHourRevenueRows,
   buildStaffTeacherArchiveDetailRows,
   buildStaffRankings,
@@ -124,6 +126,8 @@ const StaffPage: React.FC = () => {
     []
   );
   const staffQualityRows = useMemo(() => buildStaffTeachingQualityRows(MOCK_STAFF_LIST), []);
+  const staffRuleConfigDetailRows = useMemo(() => buildStaffRuleConfigDetailRows(), []);
+  const staffPermissionAuditDetailRows = useMemo(() => buildStaffPermissionAuditDetailRows(), []);
   const staffRulesRows = useMemo(() => buildStaffRulesPendingRows(), []);
 
   return (
@@ -184,6 +188,8 @@ const StaffPage: React.FC = () => {
                 growthRows={staffGrowthRows}
                 qualityRiskDetailRows={staffTeachingQualityRiskDetailRows}
                 qualityRows={staffQualityRows}
+                ruleConfigDetailRows={staffRuleConfigDetailRows}
+                permissionAuditDetailRows={staffPermissionAuditDetailRows}
                 rulesRows={staffRulesRows}
               />
             )}

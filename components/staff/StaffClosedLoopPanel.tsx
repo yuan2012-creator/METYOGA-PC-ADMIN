@@ -4,6 +4,8 @@ import type {
   StaffGrowthLevelReviewDetailRow,
   StaffGrowthReviewRow,
   StaffHourIncomeEstimateRow,
+  StaffPermissionAuditDetailRow,
+  StaffRuleConfigDetailRow,
   StaffRulesPendingRow,
   StaffSessionHourRevenueRow,
   StaffTeacherArchiveDetailRow,
@@ -11,6 +13,8 @@ import type {
   StaffTeachingQualityRow,
 } from '../../utils/staffSelectors';
 import StaffGrowthLevelReviewDetailTable from './StaffGrowthLevelReviewDetailTable';
+import StaffPermissionAuditDetailTable from './StaffPermissionAuditDetailTable';
+import StaffRuleConfigDetailTable from './StaffRuleConfigDetailTable';
 import StaffSessionHourRevenueTable from './StaffSessionHourRevenueTable';
 import StaffTeacherArchiveDetailTable from './StaffTeacherArchiveDetailTable';
 import StaffTeachingQualityRiskDetailTable from './StaffTeachingQualityRiskDetailTable';
@@ -24,6 +28,8 @@ interface StaffClosedLoopPanelProps {
   growthRows: StaffGrowthReviewRow[];
   qualityRiskDetailRows: StaffTeachingQualityRiskDetailRow[];
   qualityRows: StaffTeachingQualityRow[];
+  ruleConfigDetailRows: StaffRuleConfigDetailRow[];
+  permissionAuditDetailRows: StaffPermissionAuditDetailRow[];
   rulesRows: StaffRulesPendingRow[];
 }
 
@@ -50,6 +56,8 @@ const StaffClosedLoopPanel: React.FC<StaffClosedLoopPanelProps> = ({
   growthRows,
   qualityRiskDetailRows,
   qualityRows,
+  ruleConfigDetailRows,
+  permissionAuditDetailRows,
   rulesRows,
 }) => (
   <div className="space-y-8 animate-fadeIn">
@@ -223,6 +231,10 @@ const StaffClosedLoopPanel: React.FC<StaffClosedLoopPanelProps> = ({
         </table>
       </div>
     </div>
+
+    <StaffRuleConfigDetailTable rows={ruleConfigDetailRows} />
+
+    <StaffPermissionAuditDetailTable rows={permissionAuditDetailRows} />
 
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
       <div className="p-5 border-b border-gray-100 bg-gray-100/80">

@@ -721,3 +721,141 @@ export const buildStaffRulesPendingRows = (): StaffRulesPendingRow[] => [
     riskHints: ['待接入规则；待核对'],
   },
 ];
+
+export interface StaffRuleConfigDetailRow {
+  id: string;
+  ruleTypeLabel: string;
+  applicabilityLabel: string;
+  configStatusLabel: string;
+  impactScope: string;
+  pendingIntegrationNote: string;
+  riskHints: string[];
+}
+
+const RULE_CONFIG_BASE_RISK = '当前为模块内展示；尚未接入真实规则引擎；不自动应用到老师工资、等级、权限；后续需接入统一规则配置；仅用于经营核对';
+
+export const buildStaffRuleConfigDetailRows = (): StaffRuleConfigDetailRow[] => [
+  {
+    id: 'rc-fee',
+    ruleTypeLabel: '课时费规则',
+    applicabilityLabel: '教学老师、排课、店长核对（演示）',
+    configStatusLabel: '占位未接入（模块内展示）',
+    impactScope: '影响课时费口径展示与经营核对范围（模块内展示）',
+    pendingIntegrationNote: '待接入统一规则配置与正式计费口径（模块内展示）',
+    riskHints: [RULE_CONFIG_BASE_RISK, '课时费口径待接入规则后对齐（待接入规则）'],
+  },
+  {
+    id: 'rc-growth',
+    ruleTypeLabel: '成长等级规则',
+    applicabilityLabel: '教研、店长复核（演示）',
+    configStatusLabel: '占位未接入（模块内展示）',
+    impactScope: '影响成长展示与复核提示范围（模块内展示）',
+    pendingIntegrationNote: '待接入统一规则配置与正式复核流程（模块内展示）',
+    riskHints: [RULE_CONFIG_BASE_RISK, '不自动升降级；待接入成长规则'],
+  },
+  {
+    id: 'rc-leave',
+    ruleTypeLabel: '请假规则',
+    applicabilityLabel: '老师、排课、替补池（演示）',
+    configStatusLabel: '占位未接入（模块内展示）',
+    impactScope: '影响排班可用性与代课触发条件展示（模块内展示）',
+    pendingIntegrationNote: '待接入统一规则配置与请假审批链（模块内展示）',
+    riskHints: [RULE_CONFIG_BASE_RISK, '请假链路待接入规则（待接入规则）'],
+  },
+  {
+    id: 'rc-sub',
+    ruleTypeLabel: '代课规则',
+    applicabilityLabel: '排课、替补教练池（演示）',
+    configStatusLabel: '占位未接入（模块内展示）',
+    impactScope: '影响代课匹配与责任边界展示（模块内展示）',
+    pendingIntegrationNote: '待接入统一规则配置与代课登记口径（模块内展示）',
+    riskHints: [RULE_CONFIG_BASE_RISK, '代课口径待核对（模块内展示）'],
+  },
+  {
+    id: 'rc-sched-perm',
+    ruleTypeLabel: '排课权限规则',
+    applicabilityLabel: '排课专员、店长（演示）',
+    configStatusLabel: '占位未接入（模块内展示）',
+    impactScope: '影响排课操作边界与冲突校验展示（模块内展示）',
+    pendingIntegrationNote: '待接入统一规则配置与权限矩阵（模块内展示）',
+    riskHints: [RULE_CONFIG_BASE_RISK, '排课权限待接入规则（待接入规则）'],
+  },
+  {
+    id: 'rc-quality-review',
+    ruleTypeLabel: '教学质量复核规则',
+    applicabilityLabel: '教研、店长、质检角色（演示）',
+    configStatusLabel: '占位未接入（模块内展示）',
+    impactScope: '影响教学质量复核清单与关注项展示（模块内展示）',
+    pendingIntegrationNote: '待接入统一规则配置与评价汇总（模块内展示）',
+    riskHints: [RULE_CONFIG_BASE_RISK, '不生成正式考核结果；待接入规则'],
+  },
+];
+
+export interface StaffPermissionAuditDetailRow {
+  id: string;
+  roleOrPersonLabel: string;
+  permissionScopeLabel: string;
+  sensitiveOpsSummary: string;
+  auditStatusLabel: string;
+  pendingIntegrationNote: string;
+  riskHints: string[];
+}
+
+const PERM_AUDIT_BASE_RISK = '当前为只读审计入口；不修改员工权限；不生成审批记录；后续需接入角色权限与操作日志；仅用于经营核对';
+
+export const buildStaffPermissionAuditDetailRows = (): StaffPermissionAuditDetailRow[] => [
+  {
+    id: 'pa-teacher-view',
+    roleOrPersonLabel: '教学老师（演示）',
+    permissionScopeLabel: '老师查看权限',
+    sensitiveOpsSummary: '查看课表、会员基础档案片段（模块内展示）',
+    auditStatusLabel: '待接入权限审计（模块内展示）',
+    pendingIntegrationNote: '待接入角色权限与操作日志查询（模块内展示）',
+    riskHints: [PERM_AUDIT_BASE_RISK, '敏感查看边界待接入规则（待接入权限审计）'],
+  },
+  {
+    id: 'pa-schedule',
+    roleOrPersonLabel: '排课专员（演示）',
+    permissionScopeLabel: '排课权限',
+    sensitiveOpsSummary: '新增 / 调整排课、教室占用（模块内展示）',
+    auditStatusLabel: '待接入权限审计（模块内展示）',
+    pendingIntegrationNote: '待接入角色权限与排课操作留痕（模块内展示）',
+    riskHints: [PERM_AUDIT_BASE_RISK, '排课敏感操作待接入审计（待接入权限审计）'],
+  },
+  {
+    id: 'pa-substitute',
+    roleOrPersonLabel: '教学协调（演示）',
+    permissionScopeLabel: '代课权限',
+    sensitiveOpsSummary: '发起代课、确认替补（模块内展示）',
+    auditStatusLabel: '待接入权限审计（模块内展示）',
+    pendingIntegrationNote: '待接入代课审批与日志串联（模块内展示）',
+    riskHints: [PERM_AUDIT_BASE_RISK, '代课链路待接入权限审计（待接入权限审计）'],
+  },
+  {
+    id: 'pa-fee-view',
+    roleOrPersonLabel: '店长 / 财务核对（演示）',
+    permissionScopeLabel: '课时费查看权限',
+    sensitiveOpsSummary: '查看课时费估算与核对清单（模块内展示）',
+    auditStatusLabel: '待接入权限审计（模块内展示）',
+    pendingIntegrationNote: '待接入分级查看与水印审计（模块内展示）',
+    riskHints: [PERM_AUDIT_BASE_RISK, '课时费查看边界待接入规则（待接入规则）'],
+  },
+  {
+    id: 'pa-growth-view',
+    roleOrPersonLabel: '店长 / 教研（演示）',
+    permissionScopeLabel: '成长等级查看权限',
+    sensitiveOpsSummary: '查看成长展示与复核提示（模块内展示）',
+    auditStatusLabel: '待接入权限审计（模块内展示）',
+    pendingIntegrationNote: '待接入查看脱敏与复核留痕（模块内展示）',
+    riskHints: [PERM_AUDIT_BASE_RISK, '成长查看与复核待接入权限审计（待接入权限审计）'],
+  },
+  {
+    id: 'pa-approval-log',
+    roleOrPersonLabel: '门店管理员（演示）',
+    permissionScopeLabel: '审批 / 操作日志权限',
+    sensitiveOpsSummary: '查看审批入口占位、操作日志占位（模块内展示）',
+    auditStatusLabel: '待接入权限审计（模块内展示）',
+    pendingIntegrationNote: '待接入集中日志与审批查询（模块内展示）',
+    riskHints: [PERM_AUDIT_BASE_RISK, '审批与日志查询待接入（不生成审批记录）'],
+  },
+];
