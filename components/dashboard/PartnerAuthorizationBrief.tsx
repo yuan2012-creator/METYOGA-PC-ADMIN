@@ -10,7 +10,7 @@ const PartnerAuthorizationBrief: React.FC<PartnerAuthorizationBriefProps> = ({ r
     <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/90">
       <h2 className="text-base font-bold text-slate-900">合作授权 · 治理入口（第六阶段）</h2>
       <ul className="mt-2 text-xs text-slate-600 space-y-1 list-disc pl-5 leading-relaxed">
-        <li><strong>当前为授权治理入口</strong>；<strong>不自动变更授权状态</strong>；<strong>不生成正式合同或整改通知</strong>；<strong>待接入授权服务</strong>；<strong>仅用于经营判断</strong>。</li>
+        <li><strong>当前为授权治理入口</strong>；<strong>不自动变更授权状态</strong>；<strong>不生成正式整改通知</strong>；<strong>不生成正式合同</strong>；<strong>不自动续约</strong>；<strong>不自动摘牌</strong>；<strong>待接入授权服务</strong>；<strong>仅用于授权治理判断</strong>。</li>
       </ul>
     </div>
     {!rows.length ? (

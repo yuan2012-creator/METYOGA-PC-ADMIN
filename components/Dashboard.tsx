@@ -15,7 +15,13 @@ import {
   buildSnapshotItems,
   formatDashboardMoney,
 } from '../utils/dashboardSelectors';
-import { buildPartnerAuthorizationRows } from '../utils/partnerSelectors';
+import {
+  buildPartnerAuthorizationRows,
+  buildPartnerBrandCourseAuthRows,
+  buildPartnerDataQualityRows,
+  buildPartnerRectificationRenewalRows,
+  buildPartnerStoreDetailRows,
+} from '../utils/partnerSelectors';
 import type { MHSData } from '../types';
 import AlertPanel from './dashboard/AlertPanel';
 import DashboardBusinessSuggestionsTable from './dashboard/DashboardBusinessSuggestionsTable';
@@ -26,6 +32,11 @@ import DashboardTodayIssuesTable from './dashboard/DashboardTodayIssuesTable';
 import MhsHealthPanel from './dashboard/MhsHealthPanel';
 import MhsRadarPanel from './dashboard/MhsRadarPanel';
 import PartnerAuthorizationBrief from './dashboard/PartnerAuthorizationBrief';
+import PartnerBrandCourseAuthTable from './dashboard/PartnerBrandCourseAuthTable';
+import PartnerDataQualityTable from './dashboard/PartnerDataQualityTable';
+import PartnerGovernanceDetailBanner from './dashboard/PartnerGovernanceDetailBanner';
+import PartnerRectificationRenewalTable from './dashboard/PartnerRectificationRenewalTable';
+import PartnerStoreDetailTable from './dashboard/PartnerStoreDetailTable';
 import TeamTaskPanel from './dashboard/TeamTaskPanel';
 
 const Dashboard: React.FC = () => {
@@ -38,6 +49,10 @@ const Dashboard: React.FC = () => {
     [dashboardSummary]
   );
   const partnerAuthorizationRows = useMemo(() => buildPartnerAuthorizationRows(), []);
+  const partnerStoreDetailRows = useMemo(() => buildPartnerStoreDetailRows(), []);
+  const partnerBrandCourseAuthRows = useMemo(() => buildPartnerBrandCourseAuthRows(), []);
+  const partnerDataQualityRows = useMemo(() => buildPartnerDataQualityRows(), []);
+  const partnerRectificationRenewalRows = useMemo(() => buildPartnerRectificationRenewalRows(), []);
   const todayIssueRows = useMemo(() => buildDashboardTodayIssueRows(dashboardSummary), [dashboardSummary]);
   const storeHealthRows = useMemo(() => buildDashboardStoreHealthRows(dashboardSummary), [dashboardSummary]);
   const suggestionRows = useMemo(() => buildDashboardSuggestionRows(dashboardSummary), [dashboardSummary]);
@@ -87,6 +102,16 @@ const Dashboard: React.FC = () => {
       <DashboardBusinessSuggestionsTable rows={suggestionRows} />
 
       <PartnerAuthorizationBrief rows={partnerAuthorizationRows} />
+
+      <PartnerGovernanceDetailBanner />
+
+      <PartnerStoreDetailTable rows={partnerStoreDetailRows} />
+
+      <PartnerBrandCourseAuthTable rows={partnerBrandCourseAuthRows} />
+
+      <PartnerDataQualityTable rows={partnerDataQualityRows} />
+
+      <PartnerRectificationRenewalTable rows={partnerRectificationRenewalRows} />
 
       <style>{`
         @keyframes fadeIn {
