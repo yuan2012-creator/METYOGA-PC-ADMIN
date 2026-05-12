@@ -21,6 +21,7 @@ import {
   mallAssetIsPastExpiryClock,
   summarizeMallHeaderPaymentStateZh,
 } from '../../utils/mallSelectors';
+import { canOpenFreezeRequest } from '../../utils/mallFreezeRequest';
 import { canOpenRefundRequest } from '../../utils/mallRefundRequest';
 
 export interface MallAssetDetailDrawerProps {
@@ -35,6 +36,7 @@ export interface MallAssetDetailDrawerProps {
   members: Member[];
   onOpenRefundRequest?: (payload: { orderId: string; assetId?: string | null }) => void;
   refundRequestDraftSavedAt?: string | null;
+  onOpenFreezeRequest?: (assetId: string) => void;
 }
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
@@ -88,6 +90,7 @@ const MallAssetDetailDrawer: React.FC<MallAssetDetailDrawerProps> = ({
   members,
   onOpenRefundRequest,
   refundRequestDraftSavedAt,
+  onOpenFreezeRequest,
 }) => {
   const now = useMemo(() => new Date(), []);
 
@@ -160,6 +163,17 @@ const MallAssetDetailDrawer: React.FC<MallAssetDetailDrawerProps> = ({
     });
     return { incomplete: false as const, gate };
   }, [ctx, payments, refunds, memberAssets]);
+
+  const freezeGate = useMemo(() => {
+    if (!ctx) return null;
+    return canOpenFreezeRequest({
+      asset: ctx.asset,
+      order: ctx.order ?? null,
+      contract: ctx.contract ?? null,
+      payments,
+      refunds,
+    });
+  }, [ctx, payments, refunds]);
 
   if (!open) return null;
 
@@ -300,6 +314,25 @@ const MallAssetDetailDrawer: React.FC<MallAssetDetailDrawerProps> = ({
         <div className="mb-2">
           <div className="text-[11px] font-bold text-gray-600 mb-2">冻结记录</div>
           <p className="text-xs text-gray-500 bg-gray-50 rounded-lg p-3">暂无冻结记录</p>
+        </div>
+        <div className="mb-3 pt-2 border-t border-gray-100">
+          <div className="text-[11px] font-bold text-gray-600 mb-2">冻结申请入口</div>
+          <p className="text-[10px] text-slate-600 mb-3 leading-relaxed rounded-lg border border-slate-200/80 bg-slate-50/90 px-3 py-2.5">
+            冻结申请当前仅为流程设计入口，不会修改资产状态、有效期或预约权限。
+          </p>
+          {freezeGate?.allowed && onOpenFreezeRequest ? (
+            <button
+              type="button"
+              onClick={() => onOpenFreezeRequest(ctx.asset.id)}
+              className="w-full py-2.5 rounded-xl text-xs font-bold bg-indigo-600 text-white hover:bg-indigo-700 transition shadow-sm shadow-indigo-600/20"
+            >
+              申请冻结
+            </button>
+          ) : (
+            <p className="text-xs text-gray-500 bg-gray-100 border border-gray-200 rounded-lg p-3 leading-relaxed">
+              暂不可申请冻结：{freezeGate?.reason ?? '当前条件不满足。'}
+            </p>
+          )}
         </div>
         <p className="text-[10px] text-slate-600 mt-2 leading-relaxed rounded-lg border border-slate-200/80 bg-slate-50/90 px-3 py-2.5">
           {SENSITIVE_OPS_NOTE}

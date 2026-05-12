@@ -15,6 +15,7 @@ import MallCards from './mall/MallCards';
 import MallDataOverview from './mall/MallDataOverview';
 import MallContractCreate, { createInitialContractData, type MallContractData } from './mall/MallContractCreate';
 import MallAssetDetailDrawer from './mall/MallAssetDetailDrawer';
+import MallFreezeRequestDrawer from './mall/MallFreezeRequestDrawer';
 import MallOrderDetailDrawer from './mall/MallOrderDetailDrawer';
 import MallRefundRequestDrawer from './mall/MallRefundRequestDrawer';
 import MallOrders, { type MallOrderCategory, type MallOrderFilters } from './mall/MallOrders';
@@ -128,6 +129,8 @@ const Mall: React.FC = () => {
     assetId?: string | null;
   } | null>(null);
   const [refundRequestDrafts, setRefundRequestDrafts] = useState<Record<string, MallRefundRequestDraft>>({});
+  const [selectedFreezeAssetId, setSelectedFreezeAssetId] = useState<string | null>(null);
+  const [isFreezeDrawerOpen, setIsFreezeDrawerOpen] = useState(false);
 
   // Contract Creation State
   const [contractData, setContractData] = useState<MallContractData>(() => createInitialContractData());
@@ -234,6 +237,18 @@ const Mall: React.FC = () => {
   const closeAssetDetail = () => {
       setIsAssetDrawerOpen(false);
       setSelectedAssetId(null);
+      setIsFreezeDrawerOpen(false);
+      setSelectedFreezeAssetId(null);
+  };
+
+  const openFreezeRequestDrawer = (assetId: string) => {
+      setSelectedFreezeAssetId(assetId);
+      setIsFreezeDrawerOpen(true);
+  };
+
+  const closeFreezeRequestDrawer = () => {
+      setIsFreezeDrawerOpen(false);
+      setSelectedFreezeAssetId(null);
   };
 
   const openRefundRequestDrawer = (payload: { orderId: string; assetId?: string | null }) => {
@@ -699,6 +714,21 @@ const Mall: React.FC = () => {
                 members={MOCK_MEMBERS}
                 onOpenRefundRequest={openRefundRequestDrawer}
                 refundRequestDraftSavedAt={assetRefundDraftSavedAt}
+                onOpenFreezeRequest={openFreezeRequestDrawer}
+            />
+        )}
+
+        {isFreezeDrawerOpen && selectedFreezeAssetId && (
+            <MallFreezeRequestDrawer
+                open={isFreezeDrawerOpen}
+                assetId={selectedFreezeAssetId}
+                onClose={closeFreezeRequestDrawer}
+                orders={orders}
+                contracts={contracts}
+                payments={payments}
+                refunds={refunds}
+                memberAssets={memberAssets}
+                members={MOCK_MEMBERS}
             />
         )}
 

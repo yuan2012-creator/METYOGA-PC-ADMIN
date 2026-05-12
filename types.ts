@@ -704,6 +704,14 @@ export interface MallRefundRequestSubmitValidation {
   confirmationMessages: string[];
 }
 
+/** 冻结申请抽屉只读辅助标记（不写入资产、不驱动冻结） */
+export interface MallFreezeRequestPreviewDto {
+  nearExpiry: boolean;
+  lowEquity: boolean;
+  hasRefundSignal: boolean;
+  missingContract: boolean;
+}
+
 /** 会员资产转卡记录（可选展示模型，当前不接真实数据） */
 export type AssetTransferRecordStatus =
   | 'requested'
