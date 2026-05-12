@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import type {
+  Contract,
   MallRefundRequestDraft,
   Member,
   MemberAsset,
@@ -19,6 +20,7 @@ import {
   formatMallAssetUsedSummary,
   formatMallDateTimeDisplay,
   formatMallMoneyYuan,
+  formatMallSensitiveOrderDisplay,
   labelMallContractStatusZh,
   labelMallMemberAssetStatusZh,
   labelMallPaymentMethodZh,
@@ -110,8 +112,6 @@ const MallRefundRequestDrawer: React.FC<MallRefundRequestDrawerProps> = ({
     const member = members.find(m => m.id === order.memberId);
     const orderPayments = payments.filter(p => p.orderId === order.id);
     const orderRefunds = refunds.filter(r => r.orderId === order.id);
-    const primaryName =
-      order.items.map(i => i.productName).filter(Boolean).join('、') || '暂未记录';
     const preview = buildRefundRequestPreview({
       order,
       payments,
@@ -133,7 +133,6 @@ const MallRefundRequestDrawer: React.FC<MallRefundRequestDrawerProps> = ({
       member,
       orderPayments,
       orderRefunds,
-      primaryName,
       preview,
       gate,
     };
@@ -487,8 +486,9 @@ const MallRefundRequestDrawer: React.FC<MallRefundRequestDrawerProps> = ({
       <div className="flex justify-between items-start gap-3">
         <div className="min-w-0">
           <h2 className="text-base font-black text-gray-900">退款申请</h2>
-          <div className="text-[10px] font-mono text-gray-400 truncate mt-1">{ctx.order.id}</div>
-          <div className="text-xs text-gray-700 font-medium mt-1 truncate">{ctx.primaryName}</div>
+          <div className="text-xs text-gray-700 font-medium mt-1 leading-snug break-words">
+            {formatMallSensitiveOrderDisplay(ctx.order)}
+          </div>
           <div className="text-xs text-gray-500 mt-1">会员：{ctx.member?.name ?? '暂未记录'}</div>
         </div>
         <button

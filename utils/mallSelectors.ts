@@ -556,6 +556,17 @@ export const formatMallDateTimeDisplay = (iso?: string): string => {
   return iso.replace('T', ' ').slice(0, 19);
 };
 
+/** 敏感操作抽屉内来源订单一行：购买内容 + 弱化内部编号（无等宽字体、不全文突出长 id） */
+export const formatMallSensitiveOrderDisplay = (order: Order | null | undefined): string => {
+  if (!order) return '暂无来源订单';
+  const primary =
+    order.items.map(i => i.productName).filter(Boolean).join('、') || '暂未记录';
+  const id = order.id?.trim() ?? '';
+  if (!id) return primary;
+  const ref = id.length > 8 ? `尾段 ${id.slice(-6)}` : `编号 ${id}`;
+  return `${primary}（${ref}）`;
+};
+
 export const mallStoreLabelFromId = (storeId?: string): string | undefined => {
   if (!storeId) return undefined;
   const map: Record<string, string> = {
@@ -752,9 +763,7 @@ export const buildMallOrderDetailRiskMessages = ({
 
   if (messages.length === 0) {
     const contractSignedLike =
-      contract &&
-      (contract.status === 'signed' || contract.status === 'effective') &&
-      contract.status !== 'voided';
+      contract && (contract.status === 'signed' || contract.status === 'effective');
     const chainOk =
       mallOrderAppearsSettledForPaymentCheck(order) &&
       effectiveOrderPayments.length > 0 &&

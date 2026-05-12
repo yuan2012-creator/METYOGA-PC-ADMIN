@@ -1,6 +1,13 @@
 import type { Contract, MallFreezeRequestPreviewDto, MemberAsset, Order, Payment, Refund } from '../types';
 import { mallAssetExpiryWithinDaysAhead, mallAssetIsPastExpiryClock } from './mallSelectors';
 
+const REFUND_IN_FLIGHT_STATUSES: Refund['status'][] = [
+  'requested',
+  'reviewing',
+  'approved',
+  'processing',
+];
+
 /**
  * 是否允许打开「冻结申请」抽屉（只读判断，不修改数据）。
  */
@@ -35,8 +42,48 @@ export function canOpenFreezeRequest({
     return { allowed: false, reason: '资产来源订单缺失，暂不可申请冻结。', riskMessages };
   }
 
-  if (contract?.status === 'voided') {
+  if (!contract) {
+    return {
+      allowed: false,
+      reason: '暂不可申请冻结：缺少合同记录，无法核对冻结依据。',
+      riskMessages,
+    };
+  }
+
+  if (contract.status === 'voided') {
     return { allowed: false, reason: '合同已作废，请先核对合同状态。', riskMessages };
+  }
+
+  if (order.status === 'closed') {
+    return { allowed: false, reason: '来源订单已关闭，暂不可申请冻结。', riskMessages };
+  }
+  if (order.status === 'cancelled') {
+    return { allowed: false, reason: '来源订单已取消，暂不可申请冻结。', riskMessages };
+  }
+  if (order.status === 'refunded') {
+    return {
+      allowed: false,
+      reason:
+        '来源订单已登记全额关闭（退款），暂不可申请冻结；若资产仍显示可用，请先核对数据一致性。',
+      riskMessages,
+    };
+  }
+  if (order.status === 'draft' || order.status === 'pending_payment') {
+    return { allowed: false, reason: '来源订单未完成收款或仍为草稿，暂不可申请冻结。', riskMessages };
+  }
+
+  const freezeOkOrderStatuses: Order['status'][] = ['paid', 'fulfilled', 'partially_refunded'];
+  if (!freezeOkOrderStatuses.includes(order.status)) {
+    return {
+      allowed: false,
+      reason: '暂不可申请冻结：来源订单状态不支持冻结申请，请先核对订单与资产状态。',
+      riskMessages,
+    };
+  }
+
+  const orderRefundsEarly = refunds.filter(r => r.orderId === order.id);
+  if (orderRefundsEarly.some(r => REFUND_IN_FLIGHT_STATUSES.includes(r.status))) {
+    return { allowed: false, reason: '存在进行中的退款登记，暂不可申请冻结。', riskMessages };
   }
 
   if (asset.status === 'frozen') {
@@ -76,10 +123,6 @@ export function canOpenFreezeRequest({
 
   if (rem > 0 && rem <= 3) {
     pushRisk('剩余权益较低，请确认冻结必要性。');
-  }
-
-  if (!contract) {
-    pushRisk('当前资产缺少关联合同，请核对冻结依据。');
   }
 
   pushRisk('冻结记录需后续接入操作日志与财务/会员经营证据链。');

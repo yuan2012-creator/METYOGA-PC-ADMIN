@@ -1,9 +1,10 @@
 import React, { useMemo } from 'react';
-import type { Member, MemberAsset, Order, Payment, Refund } from '../../types';
+import type { Contract, Member, MemberAsset, Order, Payment, Refund } from '../../types';
 import { buildMallFreezeRequestPreviewDto, canOpenFreezeRequest } from '../../utils/mallFreezeRequest';
 import {
   formatMallAssetEquitySummary,
   formatMallDateTimeDisplay,
+  formatMallSensitiveOrderDisplay,
   labelMallContractStatusZh,
   labelMallMemberAssetStatusZh,
   mallAssetExpiryWithinDaysAhead,
@@ -131,7 +132,7 @@ const MallFreezeRequestDrawer: React.FC<MallFreezeRequestDrawerProps> = ({
       <Section title="1. 冻结依据">
         <Row label="资产名称" value={ctx.asset.name} />
         <Row label="资产状态" value={labelMallMemberAssetStatusZh(ctx.asset.status)} />
-        <Row label="来源订单" value={ctx.order ? ctx.order.id : '暂未记录'} />
+        <Row label="来源订单" value={ctx.order ? formatMallSensitiveOrderDisplay(ctx.order) : '暂未记录'} />
         {ctx.order && (
           <>
             <Row label="订单主状态" value={briefOrderStatusForFreeze(ctx.order.status)} />

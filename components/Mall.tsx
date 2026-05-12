@@ -16,6 +16,7 @@ import MallDataOverview from './mall/MallDataOverview';
 import MallContractCreate, { createInitialContractData, type MallContractData } from './mall/MallContractCreate';
 import MallAssetDetailDrawer from './mall/MallAssetDetailDrawer';
 import MallFreezeRequestDrawer from './mall/MallFreezeRequestDrawer';
+import MallTransferRequestDrawer from './mall/MallTransferRequestDrawer';
 import MallOrderDetailDrawer from './mall/MallOrderDetailDrawer';
 import MallRefundRequestDrawer from './mall/MallRefundRequestDrawer';
 import MallOrders, { type MallOrderCategory, type MallOrderFilters } from './mall/MallOrders';
@@ -41,6 +42,7 @@ import type {
   CardProduct,
   Contract,
   MallRefundRequestDraft,
+  MallTransferRequestDraft,
   Member,
   MemberAsset,
   Order,
@@ -70,6 +72,7 @@ import {
   selectGrantPaymentForOrder,
 } from '../utils/mallAssetGrant';
 import { getRefundRequestDraftKey } from '../utils/mallRefundRequest';
+import { getTransferRequestDraftKey } from '../utils/mallTransferRequest';
 
 // --- Constants ---
 const AVAILABLE_VENUES = ['万象城馆', '西湖旗舰馆', '滨江宝龙馆', '城西银泰馆'];
@@ -131,6 +134,9 @@ const Mall: React.FC = () => {
   const [refundRequestDrafts, setRefundRequestDrafts] = useState<Record<string, MallRefundRequestDraft>>({});
   const [selectedFreezeAssetId, setSelectedFreezeAssetId] = useState<string | null>(null);
   const [isFreezeDrawerOpen, setIsFreezeDrawerOpen] = useState(false);
+  const [selectedTransferAssetId, setSelectedTransferAssetId] = useState<string | null>(null);
+  const [isTransferDrawerOpen, setIsTransferDrawerOpen] = useState(false);
+  const [transferRequestDrafts, setTransferRequestDrafts] = useState<Record<string, MallTransferRequestDraft>>({});
 
   // Contract Creation State
   const [contractData, setContractData] = useState<MallContractData>(() => createInitialContractData());
@@ -239,6 +245,8 @@ const Mall: React.FC = () => {
       setSelectedAssetId(null);
       setIsFreezeDrawerOpen(false);
       setSelectedFreezeAssetId(null);
+      setIsTransferDrawerOpen(false);
+      setSelectedTransferAssetId(null);
   };
 
   const openFreezeRequestDrawer = (assetId: string) => {
@@ -250,6 +258,32 @@ const Mall: React.FC = () => {
       setIsFreezeDrawerOpen(false);
       setSelectedFreezeAssetId(null);
   };
+
+  const openTransferRequestDrawer = (assetId: string) => {
+      setSelectedTransferAssetId(assetId);
+      setIsTransferDrawerOpen(true);
+  };
+
+  const closeTransferRequestDrawer = () => {
+      setIsTransferDrawerOpen(false);
+      setSelectedTransferAssetId(null);
+  };
+
+  const handleSaveTransferRequestDraft = (draft: MallTransferRequestDraft) => {
+      const key = getTransferRequestDraftKey(draft.assetId);
+      setTransferRequestDrafts(prev => ({ ...prev, [key]: draft }));
+      showToast(
+          '转卡申请草稿已保存。本记录仅保存在产品与合同模块内，正式提交需接入审批、资产处理、财务记录与操作日志。',
+          'success'
+      );
+  };
+
+  const transferDrawerDraftKey =
+      selectedTransferAssetId !== null ? getTransferRequestDraftKey(selectedTransferAssetId) : null;
+  const transferDrawerExistingDraft =
+      transferDrawerDraftKey && transferRequestDrafts[transferDrawerDraftKey]
+          ? transferRequestDrafts[transferDrawerDraftKey]
+          : null;
 
   const openRefundRequestDrawer = (payload: { orderId: string; assetId?: string | null }) => {
       setRefundRequestDrawer(payload);
@@ -294,6 +328,13 @@ const Mall: React.FC = () => {
           ? refundRequestDrafts[assetRefundDraftKey].updatedAt
           : null;
 
+  const assetTransferDraftKey =
+      selectedAssetId !== null ? getTransferRequestDraftKey(selectedAssetId) : null;
+  const assetTransferDraftSavedAt =
+      assetTransferDraftKey && transferRequestDrafts[assetTransferDraftKey]
+          ? transferRequestDrafts[assetTransferDraftKey].updatedAt
+          : null;
+
   const handleGrantMemberAssetForOrder = (orderId: string) => {
       const order = orders.find(o => o.id === orderId);
       if (!order) {
@@ -312,7 +353,7 @@ const Mall: React.FC = () => {
           ttcProducts: ttcCourses,
           pointProducts: products,
       });
-      if (!gate.allowed) {
+      if (gate.allowed === false) {
           showToast(gate.reason, 'warning');
           return;
       }
@@ -715,6 +756,8 @@ const Mall: React.FC = () => {
                 onOpenRefundRequest={openRefundRequestDrawer}
                 refundRequestDraftSavedAt={assetRefundDraftSavedAt}
                 onOpenFreezeRequest={openFreezeRequestDrawer}
+                onOpenTransferRequest={openTransferRequestDrawer}
+                transferRequestDraftSavedAt={assetTransferDraftSavedAt}
             />
         )}
 
@@ -723,6 +766,22 @@ const Mall: React.FC = () => {
                 open={isFreezeDrawerOpen}
                 assetId={selectedFreezeAssetId}
                 onClose={closeFreezeRequestDrawer}
+                orders={orders}
+                contracts={contracts}
+                payments={payments}
+                refunds={refunds}
+                memberAssets={memberAssets}
+                members={MOCK_MEMBERS}
+            />
+        )}
+
+        {isTransferDrawerOpen && selectedTransferAssetId && (
+            <MallTransferRequestDrawer
+                open={isTransferDrawerOpen}
+                assetId={selectedTransferAssetId}
+                onClose={closeTransferRequestDrawer}
+                onSaveDraft={handleSaveTransferRequestDraft}
+                existingDraft={transferDrawerExistingDraft}
                 orders={orders}
                 contracts={contracts}
                 payments={payments}

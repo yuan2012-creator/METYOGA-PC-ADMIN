@@ -23,6 +23,7 @@ import {
 } from '../../utils/mallSelectors';
 import { canOpenFreezeRequest } from '../../utils/mallFreezeRequest';
 import { canOpenRefundRequest } from '../../utils/mallRefundRequest';
+import { canOpenTransferRequest } from '../../utils/mallTransferRequest';
 
 export interface MallAssetDetailDrawerProps {
   open: boolean;
@@ -37,6 +38,8 @@ export interface MallAssetDetailDrawerProps {
   onOpenRefundRequest?: (payload: { orderId: string; assetId?: string | null }) => void;
   refundRequestDraftSavedAt?: string | null;
   onOpenFreezeRequest?: (assetId: string) => void;
+  onOpenTransferRequest?: (assetId: string) => void;
+  transferRequestDraftSavedAt?: string | null;
 }
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
@@ -91,6 +94,8 @@ const MallAssetDetailDrawer: React.FC<MallAssetDetailDrawerProps> = ({
   onOpenRefundRequest,
   refundRequestDraftSavedAt,
   onOpenFreezeRequest,
+  onOpenTransferRequest,
+  transferRequestDraftSavedAt,
 }) => {
   const now = useMemo(() => new Date(), []);
 
@@ -167,6 +172,17 @@ const MallAssetDetailDrawer: React.FC<MallAssetDetailDrawerProps> = ({
   const freezeGate = useMemo(() => {
     if (!ctx) return null;
     return canOpenFreezeRequest({
+      asset: ctx.asset,
+      order: ctx.order ?? null,
+      contract: ctx.contract ?? null,
+      payments,
+      refunds,
+    });
+  }, [ctx, payments, refunds]);
+
+  const transferGate = useMemo(() => {
+    if (!ctx) return null;
+    return canOpenTransferRequest({
       asset: ctx.asset,
       order: ctx.order ?? null,
       contract: ctx.contract ?? null,
@@ -310,6 +326,30 @@ const MallAssetDetailDrawer: React.FC<MallAssetDetailDrawerProps> = ({
         <div className="mb-3">
           <div className="text-[11px] font-bold text-gray-600 mb-2">转卡记录</div>
           <p className="text-xs text-gray-500 bg-gray-50 rounded-lg p-3">暂无转卡记录</p>
+        </div>
+        <div className="mb-3 pt-2 border-t border-gray-100">
+          <div className="text-[11px] font-bold text-gray-600 mb-2">转卡申请入口</div>
+          <p className="text-[10px] text-slate-600 mb-3 leading-relaxed rounded-lg border border-slate-200/80 bg-slate-50/90 px-3 py-2.5">
+            转卡申请当前仅为流程设计入口，不会修改资产归属、权益余额、合同或财务数据。
+          </p>
+          {transferRequestDraftSavedAt && (
+            <p className="text-[10px] text-amber-900 mb-3 leading-relaxed rounded-lg border border-amber-200 bg-amber-50/90 px-3 py-2.5">
+              已有转卡申请草稿，尚未正式提交。最近保存：{formatMallDateTimeDisplay(transferRequestDraftSavedAt)}
+            </p>
+          )}
+          {transferGate?.allowed && onOpenTransferRequest ? (
+            <button
+              type="button"
+              onClick={() => onOpenTransferRequest(ctx.asset.id)}
+              className="w-full py-2.5 rounded-xl text-xs font-bold bg-teal-600 text-white hover:bg-teal-700 transition shadow-sm shadow-teal-600/20"
+            >
+              申请转卡
+            </button>
+          ) : (
+            <p className="text-xs text-gray-500 bg-gray-100 border border-gray-200 rounded-lg p-3 leading-relaxed">
+              暂不可申请转卡：{transferGate?.reason ?? '当前条件不满足。'}
+            </p>
+          )}
         </div>
         <div className="mb-2">
           <div className="text-[11px] font-bold text-gray-600 mb-2">冻结记录</div>
