@@ -18,6 +18,8 @@ import {
   MOCK_CONTRACTS,
   MOCK_COURSES,
   MOCK_COURSE_SESSIONS,
+  MOCK_FINANCE_CROSS_STORE_SETTLEMENTS,
+  MOCK_FINANCE_EXPENSE_ENTRIES,
   MOCK_FINANCE_LEDGER_ENTRIES,
   MOCK_FINANCE_TEACHER_SESSION_PAY_CHECKS,
   MOCK_MEMBER_ASSETS,
@@ -30,7 +32,9 @@ import {
 import {
   buildClosedLoopFivePillars,
   buildClosedLoopRefundAssetRiskRows,
+  buildFinanceCrossStoreSettlementRows,
   buildFinanceDeferredLiabilityDetailRows,
+  buildFinanceExpenseEntryRows,
   buildFinanceIncomeStructure,
   buildFinanceLedgerPendingIntegrationRows,
   buildFinanceOverviewSummary,
@@ -52,6 +56,8 @@ import DeferredRevenuePanel from './finance/DeferredRevenuePanel';
 import FinanceClosedLoopEntry from './finance/FinanceClosedLoopEntry';
 import FinanceDeferredLiabilityTable from './finance/FinanceDeferredLiabilityTable';
 import ExpensePayrollPanel from './finance/ExpensePayrollPanel';
+import FinanceCrossStoreSettlementTable from './finance/FinanceCrossStoreSettlementTable';
+import FinanceExpenseEntryTable from './finance/FinanceExpenseEntryTable';
 import FinanceLedgerPendingWireTable from './finance/FinanceLedgerPendingWireTable';
 import FinanceOverviewCards from './finance/FinanceOverviewCards';
 import FinancePendingRecognitionTable from './finance/FinancePendingRecognitionTable';
@@ -298,6 +304,20 @@ const Finance: React.FC = () => {
     []
   );
 
+  const crossStoreSettlementRows = useMemo(
+    () =>
+      buildFinanceCrossStoreSettlementRows({
+        settlements: MOCK_FINANCE_CROSS_STORE_SETTLEMENTS,
+        members: MOCK_MEMBERS,
+      }),
+    []
+  );
+
+  const financeExpenseEntryRows = useMemo(
+    () => buildFinanceExpenseEntryRows(MOCK_FINANCE_EXPENSE_ENTRIES),
+    []
+  );
+
   const incomeStructure = useMemo(
     () => buildFinanceIncomeStructure(periodOrders),
     [periodOrders]
@@ -409,6 +429,8 @@ const Finance: React.FC = () => {
                         ledgerEntries={MOCK_FINANCE_LEDGER_ENTRIES}
                         refundReconciliationRows={refundReconciliationRows}
                         financeRiskDetailRows={financeRiskDetailRows}
+                        crossStoreSettlementRows={crossStoreSettlementRows}
+                        financeExpenseEntryRows={financeExpenseEntryRows}
                     />
                 )}
 
@@ -461,10 +483,13 @@ const Finance: React.FC = () => {
 
                 {/* --- TAB: EXPENSE --- */}
                 {subTab === 'expense' && (
-                    <ExpensePayrollPanel
-                        payrollRows={reportSummary.payrollRows}
-                        expenseRows={reportSummary.expenseRows}
-                    />
+                    <div className="space-y-6 animate-fadeIn">
+                        <FinanceExpenseEntryTable rows={financeExpenseEntryRows} />
+                        <ExpensePayrollPanel
+                            payrollRows={reportSummary.payrollRows}
+                            expenseRows={reportSummary.expenseRows}
+                        />
+                    </div>
                 )}
 
                 {/* --- TAB: TARGET --- */}

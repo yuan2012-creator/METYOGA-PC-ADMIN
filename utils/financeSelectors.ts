@@ -7,6 +7,8 @@ import type {
   FinanceLedgerEntry,
   Member,
   MemberAsset,
+  MockCrossStoreSettlementRecord,
+  MockFinanceExpenseEntryRecord,
   MockTeacherSessionPayRecord,
   Order,
   Payment,
@@ -1738,3 +1740,90 @@ export const buildFinanceRiskDetailRows = ({
 
   return rows;
 };
+
+const CROSS_STORE_STATUS_LABELS: Record<MockCrossStoreSettlementRecord['status'], string> = {
+  pending_allocation: '待分配口径（模块内估算）',
+  pending_confirmation: '待各方确认（模块内估算）',
+  demo_placeholder: '演示占位（待核对）',
+};
+
+const EXPENSE_ENTRY_CATEGORY_LABELS: Record<MockFinanceExpenseEntryRecord['category'], string> = {
+  rent_property: '房租 / 物业',
+  teacher_cost: '老师成本',
+  marketing: '市场活动',
+  procurement: '物料采购',
+  other_ops: '其他运营支出',
+};
+
+export interface FinanceCrossStoreSettlementRow {
+  id: string;
+  sourceStoreLabel: string;
+  consumeStoreLabel: string;
+  memberOrderSummary: string;
+  courseConsumptionSummary: string;
+  settlementAmount: number;
+  statusLabel: string;
+  pendingIntegrationText: string;
+  riskHints: string[];
+}
+
+export const buildFinanceCrossStoreSettlementRows = ({
+  settlements,
+  members,
+}: {
+  settlements: MockCrossStoreSettlementRecord[];
+  members: Member[];
+}): FinanceCrossStoreSettlementRow[] => (
+  settlements.map(row => {
+    const riskHints: string[] = [
+      '不生成真实跨店结算单；不同步财务；后续需接入正式跨店结算规则（仅用于经营核对）',
+    ];
+    if (row.sourceStoreId === row.consumeStoreId) {
+      riskHints.push('来源与消课为同一门店：跨店分成口径待核对（模块内估算）');
+    }
+    if ((row.settlementAmount ?? 0) <= 0) {
+      riskHints.push('结算金额为 0 或缺失：待核对');
+    }
+
+    return {
+      id: row.id,
+      sourceStoreLabel: `${row.sourceStoreName}（门店编号 ${row.sourceStoreId}）`,
+      consumeStoreLabel: `${row.consumeStoreName}（门店编号 ${row.consumeStoreId}）`,
+      memberOrderSummary: `${getMemberName(row.memberId, members)} · 订单 ${row.orderId}`,
+      courseConsumptionSummary: row.courseOrConsumptionSummary,
+      settlementAmount: row.settlementAmount,
+      statusLabel: CROSS_STORE_STATUS_LABELS[row.status],
+      pendingIntegrationText: '待接入正式跨店结算规则；待生成正式分录；待接入真实财务分录服务；当前为模块内估算。',
+      riskHints,
+    };
+  })
+);
+
+export interface FinanceExpenseEntryRow {
+  id: string;
+  categoryLabel: string;
+  storeLabel: string;
+  amount: number;
+  occurredAtLabel: string;
+  statusLabel: string;
+  reconciliationNote: string;
+  riskHints: string[];
+}
+
+export const buildFinanceExpenseEntryRows = (
+  entries: MockFinanceExpenseEntryRecord[]
+): FinanceExpenseEntryRow[] => (
+  entries.map(entry => ({
+    id: entry.id,
+    categoryLabel: EXPENSE_ENTRY_CATEGORY_LABELS[entry.category],
+    storeLabel: `${entry.storeName}（门店编号 ${entry.storeId}）`,
+    amount: entry.amount,
+    occurredAtLabel: formatDateTime(entry.occurredAt),
+    statusLabel: '登记草稿（待核对）',
+    reconciliationNote: '当前仅用于经营核对；不生成真实费用凭证；不生成正式财务分录；待接入真实财务分录后复核。',
+    riskHints: [
+      '不生成费用凭证；不生成正式财务分录；不同步财务（仅用于经营核对）',
+      '待生成正式分录；待接入真实财务分录服务',
+    ],
+  }))
+);

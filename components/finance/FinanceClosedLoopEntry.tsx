@@ -10,11 +10,15 @@ import type {
 import type {
   ClosedLoopFivePillars,
   ClosedLoopRefundAssetRiskRow,
+  FinanceCrossStoreSettlementRow,
+  FinanceExpenseEntryRow,
   FinancePendingItem,
   FinanceRefundReconciliationRow,
   FinanceRiskDetailRow,
 } from '../../utils/financeSelectors';
 import { formatMallSensitiveOrderDisplay } from '../../utils/mallSelectors';
+import FinanceCrossStoreSettlementTable from './FinanceCrossStoreSettlementTable';
+import FinanceExpenseEntryTable from './FinanceExpenseEntryTable';
 import FinanceRefundReconciliationTable from './FinanceRefundReconciliationTable';
 import FinanceRiskDetailTable from './FinanceRiskDetailTable';
 
@@ -39,6 +43,8 @@ export interface FinanceClosedLoopEntryProps {
   ledgerEntries: FinanceLedgerEntry[];
   refundReconciliationRows: FinanceRefundReconciliationRow[];
   financeRiskDetailRows: FinanceRiskDetailRow[];
+  crossStoreSettlementRows: FinanceCrossStoreSettlementRow[];
+  financeExpenseEntryRows: FinanceExpenseEntryRow[];
 }
 
 const fmtMoney = (n: number): string => `¥${Number(n).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -53,7 +59,7 @@ const ledgerSourceZh = (e: FinanceLedgerEntry): string => {
     payroll: '老师课时费（模块内估算）',
     adjustment: '调整',
   };
-  return map[e.sourceType] ?? e.sourceType;
+  return map[e.sourceType] ?? '来源待核对';
 };
 
 const directionZh = (d: FinanceLedgerEntry['direction']): string => {
@@ -132,6 +138,8 @@ const FinanceClosedLoopEntry: React.FC<FinanceClosedLoopEntryProps> = ({
   ledgerEntries,
   refundReconciliationRows,
   financeRiskDetailRows,
+  crossStoreSettlementRows,
+  financeExpenseEntryRows,
 }) => {
   const example = useMemo(
     () => pickExampleOrder(orders, payments, ledgerEntries),
@@ -159,7 +167,9 @@ const FinanceClosedLoopEntry: React.FC<FinanceClosedLoopEntryProps> = ({
     { n: 6, t: '耗课', d: '交付发生；确认收入需以后续真实耗课记录为准。' },
     { n: 7, t: '待确认收入', d: '模块内估算；待生成正式分录、待接入真实财务分录。' },
     { n: 8, t: '老师课时费', d: '模块内估算；与课表、完课记录对齐，仅用于经营核对。' },
-    { n: 9, t: '财务分录', d: '当前为 mock 入口展示；正式总账分录待生成、待接入真实财务分录服务。' },
+    { n: 9, t: '跨店结算', d: '跨门店耗课与分成口径；不生成真实跨店结算单；模块内估算；仅用于经营核对。' },
+    { n: 10, t: '费用支出', d: '房租、市场、采购等日常支出登记；不生成费用凭证；待生成正式分录；仅用于经营核对。' },
+    { n: 11, t: '财务分录', d: '当前为 mock 入口展示；正式总账分录待生成、待接入真实财务分录服务。' },
   ];
 
   const refundFlowSteps = [
@@ -167,7 +177,7 @@ const FinanceClosedLoopEntry: React.FC<FinanceClosedLoopEntryProps> = ({
     { n: 2, t: '支付', d: '核对原收款渠道与金额。' },
     { n: 3, t: '退款', d: '登记与审核；不等于已完成全部财务处理。' },
     { n: 4, t: '资产处理', d: '冻结、冲减或作废权益；需与剩余课包一致。' },
-    { n: 5, t: '财务分录', d: '待生成正式分录；待接入真实财务分录。' },
+    { n: 5, t: '财务分录', d: '待生成正式分录；待接入真实财务分录；与跨店、费用支出口径一并核对。' },
   ];
 
   return (
@@ -175,18 +185,30 @@ const FinanceClosedLoopEntry: React.FC<FinanceClosedLoopEntryProps> = ({
       <div className="rounded-2xl border border-amber-200/80 bg-amber-50/90 px-5 py-4 text-sm text-amber-950 leading-relaxed">
         <p className="font-bold text-amber-950 mb-1">财务闭环入口（只读说明）</p>
         <p>
-          本页用于把<strong>订单 → 支付 → 合同 → 会员资产 → 预约 / 签到 → 耗课 → 待确认收入 → 老师课时费 → 财务分录</strong>
-          以及<strong>退款并行链路</strong>讲清楚。当前数据均为前端 mock，<strong>不向业务接口写入收款/退款/总账分录实体、不调后端</strong>。
+          本页用于把<strong>订单 → 支付 → 合同 → 会员资产 → 预约 / 签到 → 耗课 → 待确认收入 → 老师课时费 → 跨店结算 → 费用支出 → 待生成正式财务分录</strong>
+          以及<strong>退款并行链路</strong>讲清楚。当前数据均为前端 mock，<strong>不向业务接口写入收款/退款/跨店结算/费用凭证/总账分录实体、不调后端</strong>。
         </p>
       </div>
 
       <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">
         <div className="text-[10px] font-black text-gray-400 uppercase tracking-wide mb-2">闭环总览（只读）</div>
         <p className="text-base text-gray-900 font-medium leading-relaxed">
-          订单 → 支付 → 合同 → 会员资产 → 耗课 → 待确认收入 → 老师课时费 → 财务分录
+          订单 → 支付 → 合同 → 会员资产 → 预约 / 签到 → 耗课 → 待确认收入 → 老师课时费 → 跨店结算 → 费用支出 → 待生成正式财务分录
         </p>
         <p className="text-xs text-gray-600 mt-3 leading-relaxed">
-          收款与预收解决「钱先到哪里」；待确认收入解决「课已交付但分录未闭合」；老师课时费为成本侧<strong>模块内估算</strong>（<strong>不生成工资单</strong>、<strong>不视为费用已闭合</strong>）；财务分录统一<strong>待生成正式分录</strong>、<strong>待接入真实财务分录服务</strong>。全程<strong>仅用于经营核对</strong>。
+          收款与预收解决「钱先到哪里」；待确认收入解决「课已交付但分录未闭合」；老师课时费与<strong>跨店结算</strong>、<strong>费用支出</strong>为成本与门店间结算侧<strong>模块内估算</strong>（<strong>不生成工资单</strong>、<strong>不生成真实跨店结算单</strong>、<strong>不生成费用凭证</strong>）；财务分录统一<strong>待生成正式分录</strong>、<strong>待接入真实财务分录服务</strong>。全程<strong>仅用于经营核对</strong>，<strong>不同步财务</strong>。
+        </p>
+      </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-slate-50/90 p-5 shadow-sm">
+        <div className="text-[10px] font-black text-slate-500 uppercase tracking-wide mb-1">闭环延伸（模块内估算）</div>
+        <p className="text-sm text-slate-900 font-medium leading-relaxed">
+          订单 · 支付 · 退款 · 耗课 · 老师课时费 · <strong>跨店结算</strong> · <strong>费用支出</strong>
+          <span className="text-slate-600"> → </span>
+          <strong>待生成正式分录</strong>（<strong>待接入真实财务分录</strong>）
+        </p>
+        <p className="text-xs text-slate-600 mt-2 leading-relaxed">
+          跨店与费用行均为演示占位；后续需分别接入<strong>正式跨店结算规则</strong>与<strong>费用入账规则</strong>后再做经营与财务闭环核对。
         </p>
       </div>
 
@@ -342,6 +364,10 @@ const FinanceClosedLoopEntry: React.FC<FinanceClosedLoopEntryProps> = ({
           ))}
         </div>
       </div>
+
+      <FinanceCrossStoreSettlementTable rows={crossStoreSettlementRows} />
+
+      <FinanceExpenseEntryTable rows={financeExpenseEntryRows} />
 
       <div className="rounded-2xl border border-orange-100 bg-orange-50/30 p-6 shadow-sm">
         <h3 className="font-bold text-lg text-gray-900 mb-3">退款与资产风险（核对清单）</h3>

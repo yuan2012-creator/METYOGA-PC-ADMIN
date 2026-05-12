@@ -11,6 +11,8 @@ import {
   Member,
   MemberAsset,
   MHSData,
+  MockCrossStoreSettlementRecord,
+  MockFinanceExpenseEntryRecord,
   MockTeacherSessionPayRecord,
   Order,
   Payment,
@@ -713,6 +715,90 @@ export const MOCK_FINANCE_TEACHER_SESSION_PAY_CHECKS: MockTeacherSessionPayRecor
     teacherName: 'Mike',
     amount: 450,
     courseTypeLabel: '私教 · 核心稳定',
+  },
+];
+
+/** 财务模块演示：跨店结算核对（只读 mock；不生成真实跨店结算单；不同步财务） */
+export const MOCK_FINANCE_CROSS_STORE_SETTLEMENTS: MockCrossStoreSettlementRecord[] = [
+  {
+    id: 'xstore-001',
+    sourceStoreId: '1',
+    sourceStoreName: '徐汇滨江店',
+    consumeStoreId: '2',
+    consumeStoreName: '陆家嘴精品店',
+    memberId: '1',
+    orderId: 'ord-001',
+    courseOrConsumptionSummary: '普拉提大器械 · 跨店约课耗课（演示）',
+    settlementAmount: 86,
+    status: 'pending_allocation',
+  },
+  {
+    id: 'xstore-002',
+    sourceStoreId: '2',
+    sourceStoreName: '陆家嘴精品店',
+    consumeStoreId: '1',
+    consumeStoreName: '徐汇滨江店',
+    memberId: '5',
+    orderId: 'ord-004',
+    courseOrConsumptionSummary: '流瑜伽团课 · 会员持卡跨店签到（演示）',
+    settlementAmount: 52,
+    status: 'pending_confirmation',
+  },
+  {
+    id: 'xstore-003',
+    sourceStoreId: '1',
+    sourceStoreName: '徐汇滨江店',
+    consumeStoreId: '1',
+    consumeStoreName: '徐汇滨江店',
+    memberId: '3',
+    orderId: 'ord-003',
+    courseOrConsumptionSummary: '同店耗课 · 用于对照口径（演示）',
+    settlementAmount: 0,
+    status: 'demo_placeholder',
+  },
+];
+
+/** 财务模块演示：经营费用支出登记（只读 mock；不生成费用凭证；不生成正式财务分录） */
+export const MOCK_FINANCE_EXPENSE_ENTRIES: MockFinanceExpenseEntryRecord[] = [
+  {
+    id: 'fex-001',
+    category: 'rent_property',
+    storeId: '1',
+    storeName: '徐汇滨江店',
+    amount: 42000,
+    occurredAt: '2026-05-01T10:00:00+08:00',
+  },
+  {
+    id: 'fex-002',
+    category: 'teacher_cost',
+    storeId: '1',
+    storeName: '徐汇滨江店',
+    amount: 18600,
+    occurredAt: '2026-05-05T18:00:00+08:00',
+  },
+  {
+    id: 'fex-003',
+    category: 'marketing',
+    storeId: '2',
+    storeName: '陆家嘴精品店',
+    amount: 6800,
+    occurredAt: '2026-05-03T14:30:00+08:00',
+  },
+  {
+    id: 'fex-004',
+    category: 'procurement',
+    storeId: '1',
+    storeName: '徐汇滨江店',
+    amount: 3200,
+    occurredAt: '2026-05-08T11:20:00+08:00',
+  },
+  {
+    id: 'fex-005',
+    category: 'other_ops',
+    storeId: '2',
+    storeName: '陆家嘴精品店',
+    amount: 2100,
+    occurredAt: '2026-05-06T09:00:00+08:00',
   },
 ];
 

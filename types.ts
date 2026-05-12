@@ -696,6 +696,23 @@ export interface MallRefundRequestDraft {
   updatedAt: ISODateString;
 }
 
+/**
+ * 产品与合同模块内「转卡申请草稿」（仅存页面 state，非业务转卡登记、不驱动归属变更）。
+ */
+export interface MallTransferRequestDraft {
+  id: string;
+  assetId: string;
+  /** 接收方会员编号或姓名等登记用说明（前台草稿，非系统绑定） */
+  toMemberRef: string;
+  transferReason: string;
+  /** 是否同步调整合同归属：未选 / 是 / 否 */
+  syncContractReassign: '' | 'yes' | 'no';
+  feeSummary: string;
+  remark: string;
+  attachmentNote: string;
+  updatedAt: ISODateString;
+}
+
 /** 退款申请「提交前校验」结果（仅展示，不驱动真实提交） */
 export interface MallRefundRequestSubmitValidation {
   canSubmit: boolean;
@@ -710,6 +727,27 @@ export interface MallFreezeRequestPreviewDto {
   lowEquity: boolean;
   hasRefundSignal: boolean;
   missingContract: boolean;
+}
+
+/**
+ * 转卡申请抽屉只读预览（不写入资产、不驱动转卡）。
+ * `riskMessages` 可为补充说明；闸门级风险提示以 `canOpenTransferRequest` 返回值为准。
+ */
+export interface MallTransferRequestPreviewDto {
+  assetId: string;
+  orderId?: string;
+  memberId?: string;
+  memberName?: string;
+  assetName?: string;
+  assetStatusText?: string;
+  remainingSummary?: string;
+  validUntilText?: string;
+  sourceOrderSummary?: string;
+  contractSummary?: string;
+  refundSummary?: string;
+  transferRuleSummary?: string[];
+  riskMessages: string[];
+  disabledReason?: string;
 }
 
 /** 会员资产转卡记录（可选展示模型，当前不接真实数据） */
@@ -777,6 +815,42 @@ export interface MockTeacherSessionPayRecord {
   teacherName?: string;
   amount: MoneyAmount;
   courseTypeLabel?: string;
+}
+
+/** 财务模块 mock：跨店结算核对行（前端演示；不生成真实跨店结算单；不落库） */
+export type MockCrossStoreSettlementStatus =
+  | 'pending_allocation'
+  | 'pending_confirmation'
+  | 'demo_placeholder';
+
+export interface MockCrossStoreSettlementRecord {
+  id: string;
+  sourceStoreId: string;
+  sourceStoreName: string;
+  consumeStoreId: string;
+  consumeStoreName: string;
+  memberId: MemberId;
+  orderId: OrderId;
+  courseOrConsumptionSummary: string;
+  settlementAmount: MoneyAmount;
+  status: MockCrossStoreSettlementStatus;
+}
+
+/** 财务模块 mock：经营费用支出登记（前端演示；不生成费用凭证；不落库） */
+export type MockFinanceExpenseEntryCategory =
+  | 'rent_property'
+  | 'teacher_cost'
+  | 'marketing'
+  | 'procurement'
+  | 'other_ops';
+
+export interface MockFinanceExpenseEntryRecord {
+  id: string;
+  category: MockFinanceExpenseEntryCategory;
+  storeId: string;
+  storeName: string;
+  amount: MoneyAmount;
+  occurredAt: ISODateString;
 }
 
 export interface FinanceLedgerEntry {
