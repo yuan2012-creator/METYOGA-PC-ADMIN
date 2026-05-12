@@ -9,10 +9,14 @@ import {
   MOCK_ORDERS,
   MOCK_PAYMENTS,
   MOCK_REFUNDS,
+  MOCK_STAFF_LIST,
+  MOCK_TEAM_TASKS,
 } from '../constants';
 import type { Attendance } from '../types';
 import {
+  buildFinanceOverviewSummary,
   countPendingOrders,
+  countPendingRefunds,
   sumPayments,
   sumRecognizedIncome,
   sumRefunds,
@@ -155,8 +159,125 @@ export const buildSnapshotItems = (summary: DashboardSummary): DashboardSnapshot
   {
     label: '财务净额',
     value: formatDashboardMoney(summary.netCashFlow),
-    desc: `已确认收入 ${formatDashboardMoney(summary.recognizedIncomeAmount)}，退款 ${formatDashboardMoney(summary.refundAmount)}`,
+    desc: `分录侧已登记 ${formatDashboardMoney(summary.recognizedIncomeAmount)}（待核对），退款 ${formatDashboardMoney(summary.refundAmount)}`,
     icon: 'fa-solid fa-coins',
     tone: 'bg-orange-50 text-orange-600',
   },
 ];
+
+/** 第六阶段：经营总览「问题 / 动作 / 责任人」入口卡片（模块内展示；仅用于经营判断） */
+export interface DashboardOperatingZoneCard {
+  id: string;
+  title: string;
+  problem: string;
+  action: string;
+  owner: string;
+  metricLine: string;
+}
+
+const DEMO_BEGINNING_DEFERRED = 1_420_000;
+
+export const buildDashboardOperatingZoneCards = (summary: DashboardSummary): DashboardOperatingZoneCard[] => {
+  const financeOverview = buildFinanceOverviewSummary({
+    orders: MOCK_ORDERS,
+    payments: MOCK_PAYMENTS,
+    refunds: MOCK_REFUNDS,
+    ledgerEntries: MOCK_FINANCE_LEDGER_ENTRIES,
+    beginningDeferredRevenue: DEMO_BEGINNING_DEFERRED,
+  });
+  const pendingTeam = MOCK_TEAM_TASKS.filter(t => t.status === 'pending').length;
+  const absentLike = MOCK_ATTENDANCES.filter(a => a.status === 'absent').length;
+  const cancelledSessions = MOCK_COURSE_SESSIONS.filter(s => s.status === 'cancelled').length;
+  const teachers = MOCK_STAFF_LIST.filter(s => s.type === 'teacher');
+  const avgOcc = teachers.length
+    ? Math.round(teachers.reduce((sum, t) => sum + t.occupancyRate, 0) / teachers.length)
+    : 0;
+  const pendingRefundN = countPendingRefunds(MOCK_REFUNDS);
+  const unconfirmedIncomeDemo = Math.max(
+    0,
+    Math.round(financeOverview.cashIncomeTotal * 0.12 - financeOverview.recognizedIncomeTotal * 0.05)
+  );
+
+  return [
+    {
+      id: 'dz-today',
+      title: '今日待处理',
+      problem: `前台 / 运营队列堆积：订单待办 ${summary.pendingOrderCount}、团队任务待办 ${pendingTeam}（模块内展示）`,
+      action: '晨会 10 分钟对齐优先级，先清「待支付 / 待退款核对」',
+      owner: '值班店长',
+      metricLine: `待办信号：${summary.pendingOrderCount + pendingTeam} 条（待核对）`,
+    },
+    {
+      id: 'dz-store-health',
+      title: '门店健康概览',
+      problem: `MHS 综合 ${summary.mhsScore} 分 · ${summary.mhsStatusLabel}：需盯住短板维度（模块内展示）`,
+      action: '打开雷达图，优先复盘评分最低的维度并指派跟进人',
+      owner: '区域运营',
+      metricLine: `活跃会员约 ${summary.activeMemberCount} 人（待接入真实经营数据）`,
+    },
+    {
+      id: 'dz-cash',
+      title: '实收 / 退款 / 净收款',
+      problem: `净现金流 ${formatDashboardMoney(financeOverview.netCashFlow)}：需对齐收款登记与退款进度（模块内展示）`,
+      action: '按日核对支付流水与退款台账，标记异常金额',
+      owner: '店长 + 财务核对',
+      metricLine: `实收 ${formatDashboardMoney(financeOverview.cashIncomeTotal)} · 退款 ${formatDashboardMoney(financeOverview.refundTotal)}（待核对）`,
+    },
+    {
+      id: 'dz-deferred',
+      title: '预收负债 / 待确认收入',
+      problem: `预收负债（演示口径）约 ${formatDashboardMoney(financeOverview.endingDeferredRevenue)}；待确认收入（模块内测算）约 ${formatDashboardMoney(unconfirmedIncomeDemo)}`,
+      action: '拉出「未耗课 / 已耗课未入账」清单做人工抽样核对',
+      owner: '财务 BP',
+      metricLine: '后续需接入真实经营数据与正式分录服务（待接入规则）',
+    },
+    {
+      id: 'dz-attendance',
+      title: '预约 / 到课 / 缺席',
+      problem: `预约在册 ${summary.activeBookingCount}；已消课 ${summary.consumedAttendanceCount}；缺席登记 ${absentLike}（模块内展示）`,
+      action: '对缺席高发时段安排替补与提醒脚本（演示）',
+      owner: '排课主管',
+      metricLine: `今日场次约 ${summary.upcomingSessionCount}（待核对）`,
+    },
+    {
+      id: 'dz-member-risk',
+      title: '会员风险',
+      problem: `风险标签会员约 ${summary.riskMemberCount} 人：续费 / 沉默需分层跟进（模块内展示）`,
+      action: '今日优先回访「高价值 + 高风险」名单各 5 人',
+      owner: '会员顾问',
+      metricLine: `活跃会员约 ${summary.activeMemberCount} 人（待接入真实经营数据）`,
+    },
+    {
+      id: 'dz-course',
+      title: '课程异常',
+      problem: `异常场次信号：取消 / 改期类约 ${cancelledSessions} 场（演示占位，待核对）`,
+      action: '核对教室占用与教练可用性，避免连环爽约',
+      owner: '教务',
+      metricLine: '课程状态以教务系统为准（模块内展示）',
+    },
+    {
+      id: 'dz-staff-exec',
+      title: '老师执行',
+      problem: `满课率均值约 ${avgOcc}%：尾部教练需帮扶（模块内测算）`,
+      action: '本周安排 1 次课堂旁听与模板化反馈',
+      owner: '教学督导',
+      metricLine: `在册老师 ${teachers.length} 人（演示）`,
+    },
+    {
+      id: 'dz-finance-risk',
+      title: '财务风险',
+      problem: `在途退款 / 待核对约 ${pendingRefundN} 笔：证据链易断档（模块内展示）`,
+      action: '按「订单 → 资产 → 退款登记」顺序做抽样对齐',
+      owner: '财务核对',
+      metricLine: `待办财务信号 ${financeOverview.pendingCount} 条（待核对）`,
+    },
+    {
+      id: 'dz-suggest',
+      title: '经营建议',
+      problem: '问题优先：先收口现金流与退款核对，再拉升满课与人效（模块内展示）',
+      action: '本周固定三件事：①退款核对 ②满课尾部门店 ③风险会员回访',
+      owner: '总经理 / 区域',
+      metricLine: '仅用于经营判断；不生成正式报告（模块内测算）',
+    },
+  ];
+};

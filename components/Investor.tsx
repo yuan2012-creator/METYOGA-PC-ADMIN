@@ -1,5 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
+import InvestmentEntryPanel from './investment/InvestmentEntryPanel';
+import { buildInvestmentBreakevenModel } from '../utils/investmentSelectors';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   BarChart, Bar, AreaChart, Area, ComposedChart, Cell, PieChart, Pie
@@ -7,6 +9,7 @@ import {
 
 const Investor: React.FC = () => {
   const [toast, setToast] = useState<string | null>(null);
+  const investmentModel = useMemo(() => buildInvestmentBreakevenModel(), []);
 
   const showToast = (message: string) => {
     setToast(message);
@@ -63,27 +66,24 @@ const Investor: React.FC = () => {
                 投资测算
                 <button 
                     type="button"
-                    onClick={() => showToast('正在生成投资分析报告…')}
+                    onClick={() => showToast('演示：不生成正式报告；模块内测算（待核对）')}
                     className="text-[10px] text-purple-600 font-bold flex items-center gap-1 hover:underline ml-2 bg-purple-50 px-2 py-1 rounded-full border border-purple-100"
                 >
                     <i className="fa-solid fa-wand-magic-sparkles"></i> 智能分析
                 </button>
             </h2>
             <div className="flex items-center gap-3">
-                <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1.5 rounded-lg">数据更新至: 2023-11-25</span>
-                <button
-                    type="button"
-                    onClick={() => showToast('投资人月报导出演示已准备')}
-                    className="met-primary-button text-xs"
-                >
-                    <i className="fa-solid fa-file-pdf mr-2"></i>导出月报
-                </button>
+                <span className="text-xs text-gray-500 bg-gray-100 px-3 py-1.5 rounded-lg">数据更新至: 2023-11-25（演示）</span>
             </div>
         </div>
 
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto p-8 custom-scroll">
             <div className="max-w-[1400px] mx-auto space-y-8">
+                <InvestmentEntryPanel
+                  model={investmentModel}
+                  onMonthlyReportDemo={() => showToast('投资人月报：入口演示；不生成正式报告（模块内测算）')}
+                />
 
                 {/* 1. Key Investment Metrics */}
                 <div className="grid grid-cols-12 gap-6">
@@ -94,7 +94,7 @@ const Investor: React.FC = () => {
                                 <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2">
                                     <i className="fa-solid fa-sack-dollar"></i> 回本进度 (Payback Progress)
                                 </h3>
-                                <p className="text-xs text-gray-500 mt-1">预计完全回本日期: <span className="font-bold text-black">2024年11月</span></p>
+                                <p className="text-xs text-gray-500 mt-1">模块内测算回本参考：<span className="font-bold text-black">2024 年 11 月（待核对）</span></p>
                             </div>
                             <div className="flex gap-4 text-right">
                                 <div>
@@ -102,7 +102,7 @@ const Investor: React.FC = () => {
                                     <div className="text-lg font-mono font-bold">¥2,000,000</div>
                                 </div>
                                 <div>
-                                    <div className="text-[10px] text-gray-400 uppercase font-bold">已回收资金</div>
+                                    <div className="text-[10px] text-gray-400 uppercase font-bold">累计回流（演示）</div>
                                     <div className="text-lg font-mono font-bold text-green-600">¥1,340,000</div>
                                 </div>
                             </div>
@@ -190,7 +190,7 @@ const Investor: React.FC = () => {
                             <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
                                 <div className="text-xs text-gray-500 mb-1">毛利率 Gross Margin</div>
                                 <div className="text-2xl font-bold font-mono">65.2%</div>
-                                <div className="text-[10px] text-green-600 mt-1">行业优秀水平 (60%+)</div>
+                                <div className="text-[10px] text-gray-500 mt-1">对照参考（模块内测算）</div>
                             </div>
                             <div className="p-4 bg-gray-50 rounded-xl border border-gray-100">
                                 <div className="text-xs text-gray-500 mb-1">净利率 Net Margin</div>

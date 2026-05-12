@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   MOCK_ALERTS,
   MOCK_MHS_DATA,
@@ -6,23 +6,32 @@ import {
 } from '../constants';
 import {
   MHS_CIRCLE_LENGTH,
+  buildDashboardOperatingZoneCards,
   buildDashboardSummary,
   buildRadarData,
   buildSnapshotItems,
   formatDashboardMoney,
 } from '../utils/dashboardSelectors';
+import { buildPartnerAuthorizationRows } from '../utils/partnerSelectors';
 import type { MHSData } from '../types';
 import AlertPanel from './dashboard/AlertPanel';
+import DashboardOperatingBrief from './dashboard/DashboardOperatingBrief';
 import DashboardSnapshotCards from './dashboard/DashboardSnapshotCards';
 import MhsHealthPanel from './dashboard/MhsHealthPanel';
 import MhsRadarPanel from './dashboard/MhsRadarPanel';
+import PartnerAuthorizationBrief from './dashboard/PartnerAuthorizationBrief';
 import TeamTaskPanel from './dashboard/TeamTaskPanel';
 
 const Dashboard: React.FC = () => {
   const [activeDimension, setActiveDimension] = useState<MHSData>(MOCK_MHS_DATA['L']);
   const radarData = buildRadarData();
-  const dashboardSummary = buildDashboardSummary();
+  const dashboardSummary = useMemo(() => buildDashboardSummary(), []);
   const snapshotItems = buildSnapshotItems(dashboardSummary);
+  const operatingZones = useMemo(
+    () => buildDashboardOperatingZoneCards(dashboardSummary),
+    [dashboardSummary]
+  );
+  const partnerAuthorizationRows = useMemo(() => buildPartnerAuthorizationRows(), []);
 
   const handleRadarDimensionSelect = (activeLabel: string) => {
     const match = radarData.find(d => d.subject === activeLabel);
@@ -31,6 +40,8 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fadeIn">
+      <DashboardOperatingBrief zones={operatingZones} />
+
       {/* 1. MHS Overview Section */}
       <div className="bg-white rounded-[18px] border border-gray-100 shadow-sm overflow-hidden flex flex-col lg:flex-row h-auto lg:h-[420px]">
         <MhsHealthPanel
@@ -59,6 +70,9 @@ const Dashboard: React.FC = () => {
           <AlertPanel alerts={MOCK_ALERTS} />
           <TeamTaskPanel tasks={MOCK_TEAM_TASKS} />
       </div>
+
+      <PartnerAuthorizationBrief rows={partnerAuthorizationRows} />
+
       <style>{`
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
