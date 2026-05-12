@@ -1,4 +1,6 @@
 import type {
+  AssetFreezeRecordStatus,
+  AssetTransferRecordStatus,
   CardProduct,
   Contract,
   ContractStatus,
@@ -470,6 +472,29 @@ export const labelMallRefundStatusZh = (status: RefundStatus): string => {
   return map[status] ?? '暂未识别';
 };
 
+export const labelAssetTransferRecordStatusZh = (status: AssetTransferRecordStatus): string => {
+  const map: Record<AssetTransferRecordStatus, string> = {
+    requested: '已申请',
+    reviewing: '审核中',
+    approved: '已通过',
+    rejected: '已拒绝',
+    completed: '已完成',
+    cancelled: '已取消',
+  };
+  return map[status] ?? '暂未识别';
+};
+
+export const labelAssetFreezeRecordStatusZh = (status: AssetFreezeRecordStatus): string => {
+  const map: Record<AssetFreezeRecordStatus, string> = {
+    requested: '已申请',
+    active: '冻结中',
+    ended: '已结束',
+    rejected: '已拒绝',
+    cancelled: '已取消',
+  };
+  return map[status] ?? '暂未识别';
+};
+
 export const labelMallMemberAssetStatusZh = (status: MemberAssetStatus): string => {
   const map: Record<MemberAssetStatus, string> = {
     inactive: '未激活',
@@ -595,12 +620,19 @@ export const buildMallOrderDetailRiskMessages = ({
     messages.push('合同已签署，但暂无会员资产发放记录。');
   }
 
-  const hasCompletedRefund = orderRefunds.some(r => r.status === 'completed');
+  const hasRefundRecords = orderRefunds.length > 0;
   const assetStillUsable = orderAssets.some(
     a => a.status === 'effective' && (a.remainingAmount ?? 0) > 0
   );
-  if (hasCompletedRefund && assetStillUsable) {
+
+  if (order.status === 'partially_refunded') {
+    messages.push('订单存在部分退款，请核对剩余权益与资产状态。');
+  }
+
+  if (hasRefundRecords && assetStillUsable) {
     messages.push('订单存在退款记录，请核对会员资产状态。');
+  } else if (hasRefundRecords && !assetStillUsable) {
+    messages.push('订单存在退款记录，请核对退款金额、资产处理与财务记录。');
   }
 
   if (messages.length === 0) {

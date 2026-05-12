@@ -321,6 +321,9 @@ const MallOrderDetailDrawer: React.FC<MallOrderDetailDrawerProps> = ({
             <li key={i}>{t}</li>
           ))}
         </ul>
+        <p className="text-[10px] text-slate-600 mt-3 leading-relaxed rounded-lg border border-slate-200/80 bg-slate-50/90 px-3 py-2.5">
+          退款、转卡、冻结属于敏感操作，正式版本需审批、资产处理、财务记录与操作日志。
+        </p>
       </Section>
 
       <Section title="6. 操作记录">

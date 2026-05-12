@@ -641,6 +641,51 @@ export interface Refund {
   completedAt?: ISODateString;
 }
 
+/** 会员资产转卡记录（可选展示模型，当前不接真实数据） */
+export type AssetTransferRecordStatus =
+  | 'requested'
+  | 'reviewing'
+  | 'approved'
+  | 'rejected'
+  | 'completed'
+  | 'cancelled';
+
+export interface AssetTransferRecord {
+  id: string;
+  assetId: string;
+  fromMemberId: MemberId;
+  toMemberId: MemberId;
+  transferAmount: MoneyAmount;
+  transferFee?: MoneyAmount;
+  transferStatus: AssetTransferRecordStatus;
+  transferReason?: string;
+  requestedAt: ISODateString;
+  reviewedAt?: ISODateString;
+  completedAt?: ISODateString;
+}
+
+/** 会员资产冻结记录（可选展示模型，当前不接真实数据） */
+export type AssetFreezeRecordStatus =
+  | 'requested'
+  | 'active'
+  | 'ended'
+  | 'rejected'
+  | 'cancelled';
+
+export interface AssetFreezeRecord {
+  id: string;
+  assetId: string;
+  memberId: MemberId;
+  freezeStart: ISODateString;
+  freezeEnd?: ISODateString;
+  freezeDays?: number;
+  freezeStatus: AssetFreezeRecordStatus;
+  freezeReason?: string;
+  isValidityExtended?: boolean;
+  requestedAt: ISODateString;
+  completedAt?: ISODateString;
+}
+
 /** 课程场次 mock 耗课记录（前端演示，不落库） */
 export interface MockCourseConsumptionRecord {
   id: string;
