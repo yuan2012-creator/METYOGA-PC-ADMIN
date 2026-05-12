@@ -4,6 +4,7 @@ import { MOCK_STAFF_LIST, MOCK_STAFF_TEACHING_SESSIONS } from '../constants';
 import { Staff } from '../types';
 import {
   buildStaffClosedLoopSummary,
+  buildStaffGrowthLevelReviewDetailRows,
   buildStaffGrowthReviewRows,
   buildStaffHourIncomeEstimateRows,
   buildStaffMatrixData,
@@ -11,6 +12,7 @@ import {
   buildStaffTeacherArchiveDetailRows,
   buildStaffRankings,
   buildStaffRulesPendingRows,
+  buildStaffTeachingQualityRiskDetailRows,
   buildStaffTeachingQualityRows,
   buildStaffDemoMembers,
   filterStaffDemoMembers,
@@ -112,7 +114,15 @@ const StaffPage: React.FC = () => {
     []
   );
   const staffHourIncomeRows = useMemo(() => buildStaffHourIncomeEstimateRows(MOCK_STAFF_LIST), []);
+  const staffGrowthLevelReviewDetailRows = useMemo(
+    () => buildStaffGrowthLevelReviewDetailRows(MOCK_STAFF_LIST),
+    []
+  );
   const staffGrowthRows = useMemo(() => buildStaffGrowthReviewRows(MOCK_STAFF_LIST), []);
+  const staffTeachingQualityRiskDetailRows = useMemo(
+    () => buildStaffTeachingQualityRiskDetailRows(MOCK_STAFF_LIST),
+    []
+  );
   const staffQualityRows = useMemo(() => buildStaffTeachingQualityRows(MOCK_STAFF_LIST), []);
   const staffRulesRows = useMemo(() => buildStaffRulesPendingRows(), []);
 
@@ -170,7 +180,9 @@ const StaffPage: React.FC = () => {
                 teacherArchiveRows={staffTeacherArchiveRows}
                 sessionHourRevenueRows={staffSessionHourRevenueRows}
                 hourIncomeRows={staffHourIncomeRows}
+                growthLevelReviewDetailRows={staffGrowthLevelReviewDetailRows}
                 growthRows={staffGrowthRows}
+                qualityRiskDetailRows={staffTeachingQualityRiskDetailRows}
                 qualityRows={staffQualityRows}
                 rulesRows={staffRulesRows}
               />

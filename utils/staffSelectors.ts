@@ -510,6 +510,63 @@ export const buildStaffGrowthReviewRows = (staffList: Staff[]): StaffGrowthRevie
     })
 );
 
+export interface StaffGrowthLevelReviewDetailRow {
+  id: number;
+  teacherName: string;
+  currentLevelLabel: string;
+  targetLevelLabel: string;
+  recentCoursePerformance: string;
+  recentLessonPerformance: string;
+  privateGroupSmallSummary: string;
+  reviewStatusLabel: string;
+  riskHints: string[];
+}
+
+export const buildStaffGrowthLevelReviewDetailRows = (
+  staffList: Staff[]
+): StaffGrowthLevelReviewDetailRow[] => (
+  staffList
+    .filter(s => s.type === 'teacher')
+    .map(t => {
+      const target = getNextStaffLevel(t.level);
+      const targetLevelLabel = t.promotionStatus === 'pending'
+        ? `待复核等级倾向：${target}（模块内展示）`
+        : `目标等级参考：${target}（模块内展示）`;
+      const reviewStatusLabel = t.promotionStatus === 'pending'
+        ? '待复核（模块内展示）'
+        : '待核对（模块内展示）';
+
+      const recentCoursePerformance = `转化约 ${t.conversionRate}% · 续费结构新约 ${t.newvsRenewal.new}% / 续约约 ${t.newvsRenewal.renewal}%（模块内展示）`;
+      const recentLessonPerformance = `累计课时基数约 ${t.classHours} · 近阶段负荷系数约 ${t.loadFactor}%（模块内展示）`;
+      const privateGroupSmallSummary = `经营画像：${t.revenueModel === 'L2' ? '偏私教 / 小班侧重（演示）' : '偏团课侧重（演示）'} · 课种标签：${t.tags.slice(0, 4).join('、') || '—'}（模块内展示）`;
+
+      const riskHints: string[] = [
+        '当前为模块内展示；不自动升降级；不生成正式考核结果；后续需接入成长规则与正式复核流程；仅用于经营核对',
+      ];
+      if (t.promotionStatus === 'pending') {
+        riskHints.push('存在晋升待办信号：待复核（模块内展示）');
+      }
+      if (t.rating < 4.5) {
+        riskHints.push('评分偏低：待关注（模块内展示）');
+      }
+      if ((t.followUpRate ?? 100) < 70) {
+        riskHints.push('跟进率偏低：待复核口径（模块内展示）');
+      }
+
+      return {
+        id: t.id,
+        teacherName: t.name,
+        currentLevelLabel: levelDisplay(t.level),
+        targetLevelLabel,
+        recentCoursePerformance,
+        recentLessonPerformance,
+        privateGroupSmallSummary,
+        reviewStatusLabel,
+        riskHints,
+      };
+    })
+);
+
 export interface StaffTeachingQualityRow {
   id: number;
   teacherName: string;
@@ -538,6 +595,62 @@ export const buildStaffTeachingQualityRows = (staffList: Staff[]): StaffTeaching
           '教学质量为经营侧摘要；不生成正式考核结果；仅用于经营核对',
           t.rating < 4.5 ? '评分偏低：待关注（待核对）' : '建议持续例行巡检（待核对）',
         ],
+      };
+    })
+);
+
+export interface StaffTeachingQualityRiskDetailRow {
+  id: number;
+  teacherName: string;
+  courseExecutionSummary: string;
+  attendanceSummary: string;
+  feedbackOrWatchSummary: string;
+  teachingQualityStatusLabel: string;
+  riskHints: string[];
+  suggestedAction: string;
+}
+
+export const buildStaffTeachingQualityRiskDetailRows = (
+  staffList: Staff[]
+): StaffTeachingQualityRiskDetailRow[] => (
+  staffList
+    .filter(s => s.type === 'teacher')
+    .map(t => {
+      const absentRisk = t.occupancyRate < 60
+        ? '满课压力偏低，缺席 / 临缺风险需结合课表核对（模块内展示）'
+        : '满课与到课整体平稳（模块内展示）';
+      const feedbackOrWatchSummary = t.rating < 4.5
+        ? '会员评价存在波动：建议关注课堂反馈收集（待接入教学质量评价）'
+        : '暂无结构化会员反馈登记：待接入教学质量评价（模块内展示）';
+
+      const teachingQualityStatusLabel = t.rating < 4.5 || t.occupancyRate < 62
+        ? '待关注（模块内展示）'
+        : '相对平稳（模块内展示）';
+
+      let suggestedAction = '建议例行课堂巡检与反馈登记（模块内展示）';
+      if (t.rating < 4.5) {
+        suggestedAction = '建议店长抽查课堂与评价登记流程（待接入教学质量评价）';
+      } else if ((t.followUpRate ?? 100) < 70) {
+        suggestedAction = '建议补强课后跟进节奏与会员回访（模块内展示）';
+      } else if (t.occupancyRate < 62) {
+        suggestedAction = '建议结合排课与到课事实做专项复盘（模块内展示）';
+      }
+
+      const riskHints: string[] = [
+        '当前为模块内展示；不生成正式考核结果；待接入教学质量评价；仅用于经营核对',
+      ];
+      if (t.rating < 4.5) riskHints.push('评分偏低：待关注（模块内展示）');
+      if (t.occupancyRate < 62) riskHints.push('满课率偏低：待核对（模块内展示）');
+
+      return {
+        id: t.id,
+        teacherName: t.name,
+        courseExecutionSummary: `团课 / 小班 / 私教执行：负荷系数约 ${t.loadFactor}%（模块内展示）`,
+        attendanceSummary: `满课 / 到课侧：满课率约 ${t.occupancyRate}% · ${absentRisk}`,
+        feedbackOrWatchSummary,
+        teachingQualityStatusLabel,
+        riskHints,
+        suggestedAction,
       };
     })
 );

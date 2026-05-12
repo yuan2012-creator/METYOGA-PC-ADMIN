@@ -1,22 +1,28 @@
 import React from 'react';
 import type {
   StaffClosedLoopSummary,
+  StaffGrowthLevelReviewDetailRow,
   StaffGrowthReviewRow,
   StaffHourIncomeEstimateRow,
   StaffRulesPendingRow,
   StaffSessionHourRevenueRow,
   StaffTeacherArchiveDetailRow,
+  StaffTeachingQualityRiskDetailRow,
   StaffTeachingQualityRow,
 } from '../../utils/staffSelectors';
+import StaffGrowthLevelReviewDetailTable from './StaffGrowthLevelReviewDetailTable';
 import StaffSessionHourRevenueTable from './StaffSessionHourRevenueTable';
 import StaffTeacherArchiveDetailTable from './StaffTeacherArchiveDetailTable';
+import StaffTeachingQualityRiskDetailTable from './StaffTeachingQualityRiskDetailTable';
 
 interface StaffClosedLoopPanelProps {
   summary: StaffClosedLoopSummary;
   teacherArchiveRows: StaffTeacherArchiveDetailRow[];
   sessionHourRevenueRows: StaffSessionHourRevenueRow[];
   hourIncomeRows: StaffHourIncomeEstimateRow[];
+  growthLevelReviewDetailRows: StaffGrowthLevelReviewDetailRow[];
   growthRows: StaffGrowthReviewRow[];
+  qualityRiskDetailRows: StaffTeachingQualityRiskDetailRow[];
   qualityRows: StaffTeachingQualityRow[];
   rulesRows: StaffRulesPendingRow[];
 }
@@ -40,7 +46,9 @@ const StaffClosedLoopPanel: React.FC<StaffClosedLoopPanelProps> = ({
   teacherArchiveRows,
   sessionHourRevenueRows,
   hourIncomeRows,
+  growthLevelReviewDetailRows,
   growthRows,
+  qualityRiskDetailRows,
   qualityRows,
   rulesRows,
 }) => (
@@ -134,11 +142,13 @@ const StaffClosedLoopPanel: React.FC<StaffClosedLoopPanelProps> = ({
       </div>
     </div>
 
+    <StaffGrowthLevelReviewDetailTable rows={growthLevelReviewDetailRows} />
+
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
       <div className="p-5 border-b border-gray-100 bg-violet-50/50">
         <h3 className="font-bold text-lg text-gray-900">成长等级与复核</h3>
         <ul className="text-xs text-gray-600 mt-2 space-y-1 list-disc pl-5 leading-relaxed">
-          <li><strong>当前为展示入口</strong>；<strong>不自动升降级</strong>；<strong>不生成正式考核结果</strong>；后续需接入<strong>成长规则</strong>；<strong>仅用于经营核对</strong>。</li>
+          <li><strong>当前为模块内展示</strong>；<strong>不自动升降级</strong>；<strong>不生成正式考核结果</strong>；后续需接入<strong>成长规则</strong>；<strong>仅用于经营核对</strong>。</li>
         </ul>
       </div>
       <div className="overflow-x-auto">
@@ -174,6 +184,8 @@ const StaffClosedLoopPanel: React.FC<StaffClosedLoopPanelProps> = ({
         </table>
       </div>
     </div>
+
+    <StaffTeachingQualityRiskDetailTable rows={qualityRiskDetailRows} />
 
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
       <div className="p-5 border-b border-gray-100 bg-teal-50/50">
