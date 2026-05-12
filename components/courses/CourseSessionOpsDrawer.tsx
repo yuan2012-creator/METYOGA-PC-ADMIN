@@ -597,7 +597,7 @@ const CourseSessionOpsDrawer: React.FC<CourseSessionOpsDrawerProps> = ({
 
   if (!isOpen) return null;
 
-  const memberById = new Map(members.map(m => [m.id, m]));
+  const memberById = new Map<string, Member>(members.map(m => [m.id, m]));
 
   const rawTitle = session?.name ?? scheduleEvent?.name ?? scheduleEvent?.title ?? '';
   const titleSan = sanitizeStaffFacingCopy(rawTitle);

@@ -242,7 +242,7 @@ const Courses: React.FC = () => {
           return;
       }
       const gate = canCompleteCourseSession(event, attendances, bookings);
-      if (!gate.allowed) {
+      if (gate.allowed === false) {
           showToast(gate.reason, 'warning');
           return;
       }
