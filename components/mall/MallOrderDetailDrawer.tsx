@@ -10,6 +10,7 @@ import type {
   Refund,
 } from '../../types';
 import type { MallTtcCourse } from './MallTtc';
+import { canGrantMemberAssetForOrder } from '../../utils/mallAssetGrant';
 import {
   buildMallOrderDetailRiskMessages,
   formatMallAssetEquitySummary,
@@ -43,6 +44,7 @@ export interface MallOrderDetailDrawerProps {
   cardProducts: CardProduct[];
   ttcCourses: MallTtcCourse[];
   pointProducts: PointProduct[];
+  onGrantMemberAssetForOrder?: (orderId: string) => void;
 }
 
 const contractTemplateLabel = (templateId?: string): string => {
@@ -82,6 +84,7 @@ const MallOrderDetailDrawer: React.FC<MallOrderDetailDrawerProps> = ({
   cardProducts,
   ttcCourses,
   pointProducts,
+  onGrantMemberAssetForOrder,
 }) => {
   const productCatalog = useMemo(() => {
     const map = new Map<string, string>();
@@ -121,6 +124,34 @@ const MallOrderDetailDrawer: React.FC<MallOrderDetailDrawerProps> = ({
       risks,
     };
   }, [orderId, orders, contracts, payments, refunds, memberAssets, members, productCatalog]);
+
+  const grantCheck = useMemo(() => {
+    if (!orderId) return { allowed: false as const, reason: '' };
+    const order = orders.find(o => o.id === orderId);
+    if (!order) return { allowed: false as const, reason: '' };
+    return canGrantMemberAssetForOrder({
+      order,
+      contracts,
+      payments,
+      refunds,
+      memberAssets,
+      members,
+      cardProducts,
+      ttcProducts: ttcCourses,
+      pointProducts,
+    });
+  }, [
+    orderId,
+    orders,
+    contracts,
+    payments,
+    refunds,
+    memberAssets,
+    members,
+    cardProducts,
+    ttcCourses,
+    pointProducts,
+  ]);
 
   if (!open) return null;
 
@@ -206,16 +237,31 @@ const MallOrderDetailDrawer: React.FC<MallOrderDetailDrawerProps> = ({
 
       <Section title="3. 会员资产">
         {ctx.orderAssets.length === 0 ? (
-          <>
-            <p className="text-xs text-gray-500 bg-gray-50 rounded-lg p-3 mb-2">暂无关联会员资产</p>
-            {ctx.contract &&
-            (ctx.contract.status === 'signed' || ctx.contract.status === 'effective') &&
-            mallOrderAppearsSettledForPaymentCheck(ctx.order) && (
-              <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg p-3">
-                合同已签署，但暂无会员资产发放记录。
-              </p>
+          <div className="space-y-3">
+            <p className="text-xs text-gray-500 bg-gray-50 rounded-lg p-3">暂无关联会员资产</p>
+            {grantCheck.allowed && onGrantMemberAssetForOrder ? (
+              <div className="rounded-lg border border-green-100 bg-green-50/40 p-3 space-y-2">
+                <p className="text-[10px] text-gray-600 leading-relaxed">
+                  当前仅在产品与合同模块生成资产记录，正式版本需同步会员经营与财务证据链。
+                </p>
+                <button
+                  type="button"
+                  onClick={() => onGrantMemberAssetForOrder(ctx.order.id)}
+                  className="w-full py-2.5 rounded-xl text-xs font-bold bg-green-600 text-white hover:bg-green-700 transition shadow-sm shadow-green-600/20"
+                >
+                  生成资产记录
+                </button>
+              </div>
+            ) : (
+              !grantCheck.allowed &&
+              'reason' in grantCheck &&
+              grantCheck.reason && (
+                <p className="text-xs text-gray-500 bg-gray-100 border border-gray-200 rounded-lg p-3 leading-relaxed">
+                  暂不可生成资产记录：{grantCheck.reason}
+                </p>
+              )
             )}
-          </>
+          </div>
         ) : (
           <div className="space-y-3">
             {ctx.orderAssets.map(asset => (
@@ -238,6 +284,11 @@ const MallOrderDetailDrawer: React.FC<MallOrderDetailDrawerProps> = ({
                       : '暂未记录'
                   }
                 />
+                {asset.mallGrantRecordNote?.trim() && (
+                  <p className="text-[10px] text-gray-500 mt-2 pt-2 border-t border-gray-100 leading-relaxed">
+                    {asset.mallGrantRecordNote.trim()}
+                  </p>
+                )}
               </div>
             ))}
           </div>

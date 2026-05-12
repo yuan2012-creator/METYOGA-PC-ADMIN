@@ -464,11 +464,11 @@ export const labelMallRefundStatusZh = (status: RefundStatus): string => {
 export const labelMallMemberAssetStatusZh = (status: MemberAssetStatus): string => {
   const map: Record<MemberAssetStatus, string> = {
     inactive: '未激活',
-    effective: '生效中',
+    effective: '可用',
     frozen: '已冻结',
-    expired: '已到期',
+    expired: '已过期',
     used_up: '已用尽',
-    transferred: '已转赠',
+    transferred: '已转出',
     upgraded: '已升级',
     cancelled: '已作废',
   };

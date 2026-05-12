@@ -231,6 +231,8 @@ export interface MemberAsset {
   expiryDate?: ISODateString;
   createdAt?: ISODateString;
   updatedAt?: ISODateString;
+  /** 产品与合同模块内生成资产时的说明（可选，仅前端展示） */
+  mallGrantRecordNote?: string;
 }
 
 export interface Course {

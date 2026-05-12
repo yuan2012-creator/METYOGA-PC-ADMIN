@@ -34,7 +34,7 @@ import type {
   MallTtcEditorItem,
   PointProductTab,
 } from './mall/mallTypes';
-import type { CardProduct, Contract, MemberAsset, Order, Payment, PointProduct, Refund } from '../types';
+import type { CardProduct, Contract, Member, MemberAsset, Order, Payment, PointProduct, Refund } from '../types';
 import {
   buildMallAssetSourceLinks,
   buildMallClosureSummary,
@@ -50,6 +50,12 @@ import {
   MALL_ORDER_SCENARIO_PAYMENTS,
   MALL_ORDER_SCENARIO_REFUNDS,
 } from '../utils/mallOrderScenarioFixtures';
+import {
+  buildMemberAssetFromOrder,
+  canGrantMemberAssetForOrder,
+  resolveMallGrantProduct,
+  selectGrantPaymentForOrder,
+} from '../utils/mallAssetGrant';
 
 // --- Constants ---
 const AVAILABLE_VENUES = ['万象城馆', '西湖旗舰馆', '滨江宝龙馆', '城西银泰馆'];
@@ -63,6 +69,7 @@ interface MallActionHandlers {
 type MallToast = {
   id: number;
   message: string;
+  variant?: 'success' | 'warning';
 };
 
 const cloneMallItem = <T,>(item: T): T => JSON.parse(JSON.stringify(item)) as T;
@@ -106,8 +113,8 @@ const Mall: React.FC = () => {
   const [contractData, setContractData] = useState<MallContractData>(() => createInitialContractData());
   const [toast, setToast] = useState<MallToast | null>(null);
 
-  const showToast = (message: string) => {
-      setToast({ id: Date.now(), message });
+  const showToast = (message: string, variant: 'success' | 'warning' = 'success') => {
+      setToast({ id: Date.now(), message, variant });
       window.setTimeout(() => {
           setToast(current => (current?.message === message ? null : current));
       }, 2400);
@@ -197,6 +204,42 @@ const Mall: React.FC = () => {
   const closeOrderDetailDrawer = () => {
       setIsOrderDrawerOpen(false);
       setSelectedOrderId(null);
+  };
+
+  const handleGrantMemberAssetForOrder = (orderId: string) => {
+      const order = orders.find(o => o.id === orderId);
+      if (!order) {
+          showToast('未找到订单信息，暂不可生成资产记录。', 'warning');
+          return;
+      }
+      const membersList: Member[] = MOCK_MEMBERS;
+      const gate = canGrantMemberAssetForOrder({
+          order,
+          contracts,
+          payments,
+          refunds,
+          memberAssets,
+          members: membersList,
+          cardProducts: cards,
+          ttcProducts: ttcCourses,
+          pointProducts: products,
+      });
+      if (!gate.allowed) {
+          showToast(gate.reason, 'warning');
+          return;
+      }
+      const contract =
+          contracts.find(c => c.id === order.contractId) ?? contracts.find(c => c.orderId === order.id);
+      const payment = selectGrantPaymentForOrder(order, payments);
+      const member = membersList.find(m => m.id === order.memberId);
+      const product = resolveMallGrantProduct(order, cards, ttcCourses, products);
+      if (!contract || !payment || !member || !product) {
+          showToast('暂不满足生成条件，请刷新后重试。', 'warning');
+          return;
+      }
+      const newAsset = buildMemberAssetFromOrder({ order, contract, payment, product, member });
+      setMemberAssets(prev => [...prev, newAsset]);
+      showToast('已在产品与合同模块生成会员资产记录。会员经营同步与财务证据链需后续接入统一服务。', 'success');
   };
 
   useEffect(() => {
@@ -562,13 +605,24 @@ const Mall: React.FC = () => {
                 cardProducts={cards}
                 ttcCourses={ttcCourses}
                 pointProducts={products}
+                onGrantMemberAssetForOrder={handleGrantMemberAssetForOrder}
             />
         )}
 
         {toast && (
             <div className="fixed top-20 right-8 z-[70] animate-fadeIn">
-                <div className="px-4 py-3 rounded-xl shadow-xl border text-sm font-bold flex items-center gap-3 bg-green-50 text-green-700 border-green-100">
-                    <i className="fa-solid fa-circle-check"></i>
+                <div
+                    className={`px-4 py-3 rounded-xl shadow-xl border text-sm font-bold flex items-center gap-3 ${
+                        toast.variant === 'warning'
+                            ? 'bg-amber-50 text-amber-900 border-amber-200'
+                            : 'bg-green-50 text-green-700 border-green-100'
+                    }`}
+                >
+                    <i
+                        className={
+                            toast.variant === 'warning' ? 'fa-solid fa-triangle-exclamation' : 'fa-solid fa-circle-check'
+                        }
+                    ></i>
                     {toast.message}
                 </div>
             </div>
