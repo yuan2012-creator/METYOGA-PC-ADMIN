@@ -11,8 +11,12 @@ import type {
   ClosedLoopFivePillars,
   ClosedLoopRefundAssetRiskRow,
   FinancePendingItem,
+  FinanceRefundReconciliationRow,
+  FinanceRiskDetailRow,
 } from '../../utils/financeSelectors';
 import { formatMallSensitiveOrderDisplay } from '../../utils/mallSelectors';
+import FinanceRefundReconciliationTable from './FinanceRefundReconciliationTable';
+import FinanceRiskDetailTable from './FinanceRiskDetailTable';
 
 export interface FinanceClosedLoopEntryProps {
   dateRangeLabel: string;
@@ -33,6 +37,8 @@ export interface FinanceClosedLoopEntryProps {
   refunds: Refund[];
   memberAssets: MemberAsset[];
   ledgerEntries: FinanceLedgerEntry[];
+  refundReconciliationRows: FinanceRefundReconciliationRow[];
+  financeRiskDetailRows: FinanceRiskDetailRow[];
 }
 
 const fmtMoney = (n: number): string => `¥${Number(n).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -124,6 +130,8 @@ const FinanceClosedLoopEntry: React.FC<FinanceClosedLoopEntryProps> = ({
   refunds,
   memberAssets,
   ledgerEntries,
+  refundReconciliationRows,
+  financeRiskDetailRows,
 }) => {
   const example = useMemo(
     () => pickExampleOrder(orders, payments, ledgerEntries),
@@ -354,6 +362,10 @@ const FinanceClosedLoopEntry: React.FC<FinanceClosedLoopEntryProps> = ({
         </ul>
       </div>
 
+      <FinanceRefundReconciliationTable rows={refundReconciliationRows} />
+
+      <FinanceRiskDetailTable rows={financeRiskDetailRows} />
+
       <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm">
         <h3 className="font-bold text-lg text-gray-900 mb-2">示例：从一条订单串起关联数据（全量 mock）</h3>
         {!example || !chain ? (
@@ -435,7 +447,7 @@ const FinanceClosedLoopEntry: React.FC<FinanceClosedLoopEntryProps> = ({
             <div>
               <div className="text-xs font-bold text-gray-500 uppercase mb-1">财务分录（mock，同一订单）</div>
               <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50/80 p-3 text-xs text-gray-600 mb-3 space-y-1">
-                <p>· 当前为 <strong>mock / 入口展示</strong>，<strong>尚未生成正式 FinanceLedger</strong>。</p>
+                <p>· 当前为 <strong>mock / 入口展示</strong>，<strong>尚未生成可在总账直接核对的正式分录</strong>。</p>
                 <p>
                   · 后续需由<strong>订单、支付、退款、耗课、老师课时费</strong>等事实数据生成<strong>待生成正式分录</strong>，并<strong>待接入真实财务分录</strong>。
                 </p>

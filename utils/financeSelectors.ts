@@ -208,6 +208,16 @@ const REFUND_STATUS_TAGS: Record<Refund['status'], string> = {
 
 export const FINANCE_PRODUCT_TYPE_LABELS = PRODUCT_TYPE_LABELS;
 
+const ledgerEntrySourceTypeZh = (t: FinanceLedgerEntry['sourceType']): string => (
+  ({
+    payment: '订单收款',
+    refund: '退款',
+    course_consumption: '耗课确认收入',
+    payroll: '老师课时费',
+    adjustment: '调整项',
+  } as const)[t] ?? '来源待核对'
+);
+
 const formatDateTime = (iso?: string): string => {
   if (!iso) return '-';
   const date = new Date(iso);
@@ -329,7 +339,7 @@ export interface ClosedLoopFivePillars {
   netCollection: number;
   /** 预收负债：期末预收余额（模块内估算） */
   deferredLiability: number;
-  /** 待确认收入：耗课/到课交付侧、尚未接正式 FinanceLedger 的模块内估算 */
+  /** 待确认收入：耗课/到课交付侧、尚未接正式总账分录链路的模块内估算 */
   pendingRecognitionIncomeEstimate: number;
 }
 
@@ -399,7 +409,7 @@ export const buildClosedLoopRefundAssetRiskRows = ({
     const active = assets.filter(asset => ASSET_STILL_SERVICEABLE.includes(asset.status));
     if (active.length > 0) {
       hitRefundButAssetActive.push(
-        `退款 ${refund.id}（订单 ${refund.orderId}）后仍存在状态为「${active.map(a => a.status).join('、')}」的资产：${active.map(a => a.name).join('、')}`
+        `退款登记 ${refund.id}（订单 ${refund.orderId}）后仍存在状态为「${active.map(a => a.status).join('、')}」的资产：${active.map(a => a.name).join('、')}`
       );
     }
   });
@@ -428,7 +438,7 @@ export const buildClosedLoopRefundAssetRiskRows = ({
     if (!order || order.status === 'partially_refunded') return;
     const rsum = sumRefunds(refunds.filter(r => r.orderId === order.id && refundIsRegistered(r)));
     if (rsum > 0 && rsum < paidAmount(order) && refund.status === 'completed') {
-      const line = `订单 ${order.id}：已完成退款 ¥${rsum.toLocaleString('zh-CN')} 小于实付 ¥${paidAmount(order).toLocaleString('zh-CN')}，需核对剩余权益。`;
+      const line = `订单 ${order.id}：已登记退款累计 ¥${rsum.toLocaleString('zh-CN')} 小于实付 ¥${paidAmount(order).toLocaleString('zh-CN')}，需核对剩余权益。`;
       if (!hitPartial.includes(line)) hitPartial.push(line);
     }
   });
@@ -450,7 +460,7 @@ export const buildClosedLoopRefundAssetRiskRows = ({
     const rsum = sumRefunds(refunds.filter(r => r.orderId === order.id && r.status === 'completed'));
     if (rsum >= paidAmount(order) && order.status !== 'refunded') {
       hitFull.push(
-        `订单 ${order.id}：已完成退款累计 ¥${rsum.toLocaleString('zh-CN')} 已达到或超过实付 ¥${paidAmount(order).toLocaleString('zh-CN')}，需核对资产是否应作废。`
+        `订单 ${order.id}：已登记退款累计 ¥${rsum.toLocaleString('zh-CN')} 已达到或超过实付 ¥${paidAmount(order).toLocaleString('zh-CN')}，需核对资产是否应作废。`
       );
     }
   });
@@ -468,7 +478,7 @@ export const buildClosedLoopRefundAssetRiskRows = ({
     const itemHasAsset = order?.items.some(item => Boolean(item.memberAssetId));
     if (itemHasAsset && !refund.memberAssetId) {
       hitUnbound.push(
-        `退款 ${refund.id}（订单 ${refund.orderId}）未绑定 memberAssetId，建议核对资产处理链路。`
+        `退款登记 ${refund.id}（订单 ${refund.orderId}）未绑定订单行内对应会员资产，建议核对资产处理链路（仅用于经营核对）。`
       );
     }
   });
@@ -483,12 +493,12 @@ export const buildClosedLoopRefundAssetRiskRows = ({
   const hitNoLedger: string[] = [];
   refunds.filter(refundIsRegistered).forEach(refund => {
     if (!getLedgerEntryForSource(ledgerEntries, 'refund', refund.id)) {
-      hitNoLedger.push(`退款 ${refund.id}：列表中无对应演示分录，属待接入真实财务分录 / 待生成正式分录。`);
+      hitNoLedger.push(`退款登记 ${refund.id}：列表中无对应演示分录，属待接入真实财务分录 / 待生成正式分录。`);
     }
   });
   payments.filter(payment => COLLECTED_PAYMENT_STATUSES.includes(payment.status)).forEach(payment => {
     if (!getLedgerEntryForSource(ledgerEntries, 'payment', payment.id)) {
-      hitNoLedger.push(`收款 ${payment.id}：待生成正式分录（待接入真实财务分录）。`);
+      hitNoLedger.push(`收款流水 ${payment.id}：待生成正式分录（待接入真实财务分录）。`);
     }
   });
   rows.push({
@@ -496,7 +506,7 @@ export const buildClosedLoopRefundAssetRiskRows = ({
     title: '财务分录未接入',
     detailLines: hitNoLedger.length > 0
       ? hitNoLedger
-      : ['当前演示数据均已占位；上线后仍须逐笔核对是否已接真实 FinanceLedger。'],
+      : ['当前演示数据均已占位；上线后仍须逐笔核对是否已接真实财务分录服务。'],
   });
 
   return rows;
@@ -578,8 +588,8 @@ export const buildFinanceTransactionRows = ({
       ledgerEntryId: ledgerEntry?.id,
       productTypes,
       sourceSummary: payment
-        ? `Order ${order.id} -> Payment ${payment.id}${ledgerEntry ? ` -> Ledger ${ledgerEntry.id}` : ' -> 待生成正式分录（待接入真实财务分录）'}`
-        : `Order ${order.id} -> 待核对收款（仅用于经营核对）`,
+        ? `订单 ${order.id} → 收款流水 ${payment.id}${ledgerEntry ? ` → 分录占位 ${ledgerEntry.id}` : ' → 待生成正式分录（待接入真实财务分录）'}`
+        : `订单 ${order.id} → 待核对收款（仅用于经营核对）`,
     };
   };
 
@@ -612,7 +622,7 @@ export const buildFinanceTransactionRows = ({
       refundId: refund.id,
       ledgerEntryId: ledgerEntry?.id,
       productTypes,
-      sourceSummary: `Refund ${refund.id} -> Order ${refund.orderId}${ledgerEntry ? ` -> Ledger ${ledgerEntry.id}` : ' -> 待生成正式分录（待接入真实财务分录）'}`,
+      sourceSummary: `退款登记 ${refund.id} → 订单 ${refund.orderId}${ledgerEntry ? ` → 分录占位 ${ledgerEntry.id}` : ' → 待生成正式分录（待接入真实财务分录）'}`,
     };
   };
 
@@ -653,7 +663,7 @@ export const buildFinancePendingItems = ({
     title: '待处理退款申请',
     description: `¥${refund.amount.toLocaleString()}, ${getMemberName(refund.memberId, members)}`,
     actionLabel: refund.status === 'requested' || refund.status === 'reviewing' ? '去审核' : '去处理',
-    sourceSummary: `Refund ${refund.id} -> Order ${refund.orderId}`,
+    sourceSummary: `退款登记 ${refund.id} → 订单 ${refund.orderId}`,
   })),
   ...getPendingOrders(orders).map(order => ({
     id: order.id,
@@ -661,7 +671,7 @@ export const buildFinancePendingItems = ({
     title: order.status === 'pending_payment' ? '待核对收款订单（仅用于经营核对）' : '待处理订单',
     description: `¥${(order.paidAmount ?? order.totalAmount).toLocaleString()}, ${getMemberName(order.memberId, members)}`,
     actionLabel: order.status === 'pending_payment' ? '去核对' : '去处理',
-    sourceSummary: `Order ${order.id} -> ${order.contractId ?? '未绑定合同'}`,
+    sourceSummary: `订单 ${order.id} → ${order.contractId ?? '未绑定合同'}`,
   })),
 ];
 
@@ -781,7 +791,7 @@ export const buildFinanceExpenseRows = (ledgerEntries: FinanceLedgerEntry[]): Fi
       category: entry.sourceType === 'payroll' ? '薪酬支出' : entry.sourceType === 'refund' ? '退款支出' : '运营支出',
       amount: entry.amount,
       voucherLabel: entry.sourceId,
-      sourceSummary: `Ledger ${entry.id} -> ${entry.sourceType} ${entry.sourceId}`,
+      sourceSummary: `分录占位 ${entry.id} → ${ledgerEntrySourceTypeZh(entry.sourceType)} · 标识 ${entry.sourceId}`,
       isFallback: false,
     }));
   }
@@ -822,7 +832,7 @@ export const buildFinancePayrollRows = (ledgerEntries: FinanceLedgerEntry[]): Fi
       deduction: 0,
       netPay: entry.amount,
       status: '待核对（演示）',
-      sourceSummary: `Ledger ${entry.id} -> payroll ${entry.sourceId}`,
+      sourceSummary: `分录占位 ${entry.id} → 薪酬侧标识 ${entry.sourceId}`,
       isFallback: false,
     }));
   }
@@ -864,7 +874,7 @@ export const buildFinanceStaffPerformance = ({
       actual,
       progress: getProgress(actual, staff.target),
       sourceSummary: staffOrderIds.length > 0
-        ? `Orders ${staffOrderIds.join(', ')} -> Payments`
+        ? `订单 ${staffOrderIds.join('、')} → 对应收款流水（模块内估算）`
         : '估算：当前周期暂无销售订单',
       isFallbackTarget: true,
     };
@@ -918,7 +928,7 @@ export const buildFinanceReportSummary = ({
         target: annualTarget,
         actual: annualActual,
         progress: getProgress(annualActual, annualTarget),
-        sourceSummary: '年度完成额 = 本年度 Payment - Refund；目标为门店配置估算',
+        sourceSummary: '年度完成额 = 本年度实收减退款（模块内估算）；目标为门店配置估算',
         isFallbackTarget: true,
       },
       period: {
@@ -926,7 +936,7 @@ export const buildFinanceReportSummary = ({
         target: periodTarget,
         actual: periodActual,
         progress: getProgress(periodActual, periodTarget),
-        sourceSummary: '区间完成额 = 查询区间 Payment - Refund；目标为门店配置估算',
+        sourceSummary: '区间完成额 = 查询区间实收减退款（模块内估算）；目标为门店配置估算',
         isFallbackTarget: true,
       },
     },
@@ -1229,11 +1239,11 @@ const COURSE_TYPE_LABELS: Record<Course['type'], string> = {
 };
 
 const LEDGER_PENDING_SOURCE_TYPE_LABELS: Record<FinanceLedgerEntry['sourceType'], string> = {
-  payment: '订单收款',
-  refund: '退款',
-  course_consumption: '耗课确认收入',
-  payroll: '老师课时费',
-  adjustment: '调整项',
+  payment: ledgerEntrySourceTypeZh('payment'),
+  refund: ledgerEntrySourceTypeZh('refund'),
+  course_consumption: ledgerEntrySourceTypeZh('course_consumption'),
+  payroll: ledgerEntrySourceTypeZh('payroll'),
+  adjustment: ledgerEntrySourceTypeZh('adjustment'),
 };
 
 const headcountAttendedStatuses: Attendance['status'][] = ['consumed', 'attended', 'checked_in'];
@@ -1395,4 +1405,336 @@ export const buildFinanceLedgerPendingIntegrationRows = ({
     }));
 
   return [...fromLedger, ...gapCollections, ...gapRefunds];
+};
+
+const REFUND_ASSET_HANDLE_SUMMARY = (
+  t: Refund['assetHandleType'] | undefined
+): string => {
+  if (!t) return '未登记资产处理方式（待核对）';
+  const map: Record<NonNullable<Refund['assetHandleType']>, string> = {
+    void_asset: '计划作废资产（仅登记，待核对）',
+    reduce_balance: '计划冲减余额（仅登记，待核对）',
+    freeze_asset: '计划冻结资产（仅登记，待核对）',
+    keep_asset: '登记为保留资产（待核对）',
+    manual_review: '待人工复核处理方式（待核对）',
+  };
+  return map[t] ?? '未登记资产处理方式（待核对）';
+};
+
+const MEMBER_ASSET_STATUS_ZH: Record<MemberAsset['status'], string> = {
+  inactive: '未激活',
+  effective: '有效',
+  frozen: '冻结',
+  expired: '已过期',
+  used_up: '已用尽',
+  transferred: '已转卡',
+  upgraded: '已升级',
+  cancelled: '已取消',
+};
+
+const formatOrderAssetsForRefund = (
+  orderId: string,
+  memberAssets: MemberAsset[]
+): string => {
+  const assets = memberAssets.filter(a => a.sourceOrderId === orderId);
+  if (assets.length === 0) return '无关联会员资产登记（待核对）';
+  return assets
+    .map(a => `${a.name}（${MEMBER_ASSET_STATUS_ZH[a.status] ?? a.status}）`)
+    .join('；');
+};
+
+export interface FinanceRefundReconciliationRow {
+  id: string;
+  refundRecordSummary: string;
+  relatedOrderId: string;
+  relatedMemberName: string;
+  relatedAssetsSummary: string;
+  refundAmount: number;
+  refundStatusLabel: string;
+  assetHandleSummary: string;
+  assetBoundLabel: string;
+  ledgerPendingLabel: string;
+  riskHints: string[];
+}
+
+export const buildFinanceRefundReconciliationRows = ({
+  refunds,
+  orders,
+  members,
+  memberAssets,
+  ledgerEntries,
+}: {
+  refunds: Refund[];
+  orders: Order[];
+  members: Member[];
+  memberAssets: MemberAsset[];
+  ledgerEntries: FinanceLedgerEntry[];
+}): FinanceRefundReconciliationRow[] => {
+  const orderById = new Map(orders.map(o => [o.id, o]));
+
+  return refunds.map(refund => {
+    const order = orderById.get(refund.orderId);
+    const assetsOnOrder = memberAssets.filter(a => a.sourceOrderId === refund.orderId);
+    const activeAfterRefund = refundIsSettledLike(refund)
+      ? assetsOnOrder.filter(a => ASSET_STILL_SERVICEABLE.includes(a.status))
+      : [];
+
+    const hasLedger = Boolean(getLedgerEntryForSource(ledgerEntries, 'refund', refund.id));
+    const bound = Boolean(refund.memberAssetId ?? refund.assetId);
+    const itemExpectsAsset = order?.items.some(item => Boolean(item.memberAssetId)) ?? false;
+
+    const riskHints: string[] = [];
+    if (activeAfterRefund.length > 0) {
+      riskHints.push(`存在仍在有效/冻结态的会员资产：${activeAfterRefund.map(a => a.name).join('、')}（模块内估算；待核对）`);
+    }
+    if (itemExpectsAsset && !bound) {
+      riskHints.push('订单行已关联会员资产，但本笔退款登记未绑定具体资产（待核对）');
+    }
+    if (!hasLedger) {
+      riskHints.push('待生成正式分录；待接入真实财务分录（仅用于经营核对）');
+    }
+    if (order?.status === 'partially_refunded') {
+      riskHints.push('订单主状态为部分退款态：剩余权益与预收负债口径待核对');
+    }
+    if (riskHints.length === 0) {
+      riskHints.push('暂无明显异常；仍建议例行核对（仅用于经营核对）');
+    }
+
+    const primaryLabel = refund.refundNo?.trim()
+      ? `对客单号 ${refund.refundNo.trim()}`
+      : `登记键 ${refund.id}`;
+
+    return {
+      id: refund.id,
+      refundRecordSummary: primaryLabel,
+      relatedOrderId: refund.orderId,
+      relatedMemberName: getMemberName(refund.memberId, members),
+      relatedAssetsSummary: formatOrderAssetsForRefund(refund.orderId, memberAssets),
+      refundAmount: refund.amount,
+      refundStatusLabel: REFUND_STATUS_LABELS[refund.status],
+      assetHandleSummary: REFUND_ASSET_HANDLE_SUMMARY(refund.assetHandleType),
+      assetBoundLabel: bound ? '已绑定登记（待核对）' : '未绑定（待核对）',
+      ledgerPendingLabel: hasLedger
+        ? '演示占位已有，仍以正式分录为准（待核对）'
+        : '待生成正式分录（待接入真实财务分录）',
+      riskHints,
+    };
+  }).sort((a, b) => a.relatedOrderId.localeCompare(b.relatedOrderId) || a.id.localeCompare(b.id));
+};
+
+export interface FinanceRiskDetailRow {
+  id: string;
+  riskTypeLabel: string;
+  relatedObjectSummary: string;
+  impactAmount: number | null;
+  currentStatusText: string;
+  suggestedAction: string;
+}
+
+const RISK_TYPE_LABELS = {
+  refundAssetActive: '有退款记录但资产仍有效',
+  partialRefund: '部分退款需核对剩余权益',
+  fullRefund: '全额退款需核对资产是否作废',
+  refundUnbound: '退款未绑定资产',
+  consumedNoLedger: '已耗课但未生成正式分录',
+  teacherPayPending: '老师课时费待核对',
+  deferredRecognitionMismatch: '预收负债与确认收入口径可能不一致',
+} as const;
+
+export const buildFinanceRiskDetailRows = ({
+  orders,
+  refunds,
+  memberAssets,
+  ledgerEntries,
+  members,
+  attendances,
+  bookings,
+  courseSessions,
+  teacherPayRows,
+  deferredRows,
+}: {
+  orders: Order[];
+  refunds: Refund[];
+  memberAssets: MemberAsset[];
+  ledgerEntries: FinanceLedgerEntry[];
+  members: Member[];
+  attendances: Attendance[];
+  bookings: Booking[];
+  courseSessions: CourseSession[];
+  teacherPayRows: FinanceTeacherSessionPayCheckRow[];
+  deferredRows: FinanceDeferredLiabilityDetailRow[];
+}): FinanceRiskDetailRow[] => {
+  const rows: FinanceRiskDetailRow[] = [];
+  const orderById = new Map(orders.map(o => [o.id, o]));
+  const paidAmount = (order: Order): number => order.paidAmount ?? order.totalAmount;
+
+  const refundActiveOrdersDone = new Set<string>();
+  refunds.filter(refundIsSettledLike).forEach(refund => {
+    const assets = memberAssets.filter(a => a.sourceOrderId === refund.orderId);
+    const active = assets.filter(a => ASSET_STILL_SERVICEABLE.includes(a.status));
+    if (active.length === 0 || refundActiveOrdersDone.has(refund.orderId)) return;
+    refundActiveOrdersDone.add(refund.orderId);
+    const sumRef = sumRefunds(refunds.filter(
+      r => r.orderId === refund.orderId && refundIsSettledLike(r)
+    ));
+    rows.push({
+      id: `risk-detail-refund-active-${refund.orderId}`,
+      riskTypeLabel: RISK_TYPE_LABELS.refundAssetActive,
+      relatedObjectSummary: `订单 ${refund.orderId} · 会员 ${getMemberName(refund.memberId, members)}`,
+      impactAmount: sumRef,
+      currentStatusText: `存在仍在有效/冻结态的会员资产：${active.map(a => a.name).join('、')}（模块内估算；待核对）`,
+      suggestedAction: '核对退款后权益是否应冻结、冲减或作废；仅用于经营核对。待接入真实财务分录后以上线口径为准。',
+    });
+  });
+
+  const partialOrderDone = new Set<string>();
+  orders
+    .filter(o => o.status === 'partially_refunded')
+    .forEach(order => {
+      if (partialOrderDone.has(order.id)) return;
+      partialOrderDone.add(order.id);
+      const rsum = sumRefunds(refunds.filter(r => r.orderId === order.id && refundIsRegistered(r)));
+      rows.push({
+        id: `risk-detail-partial-${order.id}`,
+        riskTypeLabel: RISK_TYPE_LABELS.partialRefund,
+        relatedObjectSummary: `订单 ${order.id} · 会员 ${getMemberName(order.memberId, members)}`,
+        impactAmount: rsum,
+        currentStatusText: '订单主状态为部分退款态；已登记退款与实付口径待核对（模块内估算）',
+        suggestedAction: '逐项核对剩余课包/卡项与资产余额；待生成正式分录；仅用于经营核对。',
+      });
+    });
+
+  refunds.forEach(refund => {
+    if (!refundIsRegistered(refund)) return;
+    const order = orderById.get(refund.orderId);
+    if (!order || order.status === 'partially_refunded') return;
+    const rsum = sumRefunds(refunds.filter(r => r.orderId === order.id && refundIsRegistered(r)));
+    if (rsum > 0 && rsum < paidAmount(order) && refund.status === 'completed') {
+      if (partialOrderDone.has(order.id)) return;
+      partialOrderDone.add(order.id);
+      rows.push({
+        id: `risk-detail-partial-sum-${order.id}`,
+        riskTypeLabel: RISK_TYPE_LABELS.partialRefund,
+        relatedObjectSummary: `订单 ${order.id} · 会员 ${getMemberName(order.memberId, members)}`,
+        impactAmount: rsum,
+        currentStatusText: '已登记退款累计小于实付（模块内估算）；待核对',
+        suggestedAction: '核对剩余权益与预收负债；待接入真实财务分录；仅用于经营核对。',
+      });
+    }
+  });
+
+  const fullOrderDone = new Set<string>();
+  orders.filter(o => o.status === 'refunded').forEach(order => {
+    if (fullOrderDone.has(order.id)) return;
+    fullOrderDone.add(order.id);
+    rows.push({
+      id: `risk-detail-full-status-${order.id}`,
+      riskTypeLabel: RISK_TYPE_LABELS.fullRefund,
+      relatedObjectSummary: `订单 ${order.id} · 会员 ${getMemberName(order.memberId, members)}`,
+      impactAmount: paidAmount(order),
+      currentStatusText: '订单主状态为已全额退款态登记（待核对）',
+      suggestedAction: '核对关联会员资产是否应作废或冲减；待生成正式分录；仅用于经营核对。',
+    });
+  });
+
+  refunds.filter(r => r.status === 'completed').forEach(refund => {
+    const order = orderById.get(refund.orderId);
+    if (!order) return;
+    const rsum = sumRefunds(refunds.filter(r2 => r2.orderId === order.id && r2.status === 'completed'));
+    if (rsum >= paidAmount(order) && order.status !== 'refunded') {
+      if (fullOrderDone.has(order.id)) return;
+      fullOrderDone.add(order.id);
+      rows.push({
+        id: `risk-detail-full-sum-${order.id}`,
+        riskTypeLabel: RISK_TYPE_LABELS.fullRefund,
+        relatedObjectSummary: `订单 ${order.id} · 会员 ${getMemberName(order.memberId, members)}`,
+        impactAmount: rsum,
+        currentStatusText: '已登记退款累计达到或超过实付口径（模块内估算）；主状态未标记全额退款（待核对）',
+        suggestedAction: '核对资产终止与权益冲减是否与退款登记一致；仅用于经营核对。',
+      });
+    }
+  });
+
+  refunds.filter(refundIsRegistered).forEach(refund => {
+    const order = orderById.get(refund.orderId);
+    const itemHasAsset = order?.items.some(item => Boolean(item.memberAssetId));
+    if (itemHasAsset && !refund.memberAssetId && !refund.assetId) {
+      rows.push({
+        id: `risk-detail-unbound-${refund.id}`,
+        riskTypeLabel: RISK_TYPE_LABELS.refundUnbound,
+        relatedObjectSummary: `退款登记 ${refund.id} · 订单 ${refund.orderId}`,
+        impactAmount: refund.amount,
+        currentStatusText: '订单行已关联会员资产，本笔退款未绑定资产登记（待核对）',
+        suggestedAction: '补全资产处理链路登记；待接入真实财务分录；仅用于经营核对。',
+      });
+    }
+  });
+
+  const sessionById = new Map(courseSessions.map(s => [s.id, s]));
+  const sessionIds = new Set([
+    ...attendances.map(a => a.courseSessionId),
+    ...bookings.map(b => b.courseSessionId),
+  ]);
+  [...sessionIds].forEach(sessionId => {
+    const session = sessionById.get(sessionId);
+    if (!session) return;
+    const atts = attendances.filter(a => a.courseSessionId === sessionId);
+    const hasConsumed = atts.some(a => a.status === 'consumed');
+    const ledgerForSession = ledgerEntries.filter(entry => {
+      if (entry.sourceType !== 'course_consumption') return false;
+      return entry.courseSessionId === sessionId || atts.some(a => a.id === entry.sourceId);
+    });
+    if (hasConsumed && ledgerForSession.length === 0) {
+      const est = typeof session.price === 'number' ? session.price : null;
+      rows.push({
+        id: `risk-detail-consume-${sessionId}`,
+        riskTypeLabel: RISK_TYPE_LABELS.consumedNoLedger,
+        relatedObjectSummary: `场次 ${session.title ?? sessionId}`,
+        impactAmount: est,
+        currentStatusText: '已耗课登记但未见可对齐的分录占位（模块内估算；待核对）',
+        suggestedAction: '待生成正式分录；待接入真实财务分录服务；与课耗事实交叉核对（仅用于经营核对）。',
+      });
+    }
+  });
+
+  teacherPayRows.forEach(row => {
+    rows.push({
+      id: `risk-detail-teacher-${row.id}`,
+      riskTypeLabel: RISK_TYPE_LABELS.teacherPayPending,
+      relatedObjectSummary: `${row.teacherName} · ${row.sessionTitle} · 场次 ${row.sessionId}`,
+      impactAmount: row.amount,
+      currentStatusText: `${row.statusLabel}；${row.riskHints[0] ?? '待核对'}`,
+      suggestedAction: '接入老师课时规则与正式结算流程前，仅作模块内估算；不生成工资单；仅用于经营核对。',
+    });
+  });
+
+  deferredRows.forEach(row => {
+    const ledgerConsumed = sumLedgerConsumptionForOrder(row.orderId, ledgerEntries);
+    const diff = Math.abs(ledgerConsumed - row.consumedAmountEstimate);
+    if (diff > 1 && (ledgerConsumed > 0 || row.consumedAmountEstimate > 0)) {
+      rows.push({
+        id: `risk-detail-deferred-mismatch-${row.id}`,
+        riskTypeLabel: RISK_TYPE_LABELS.deferredRecognitionMismatch,
+        relatedObjectSummary: `会员 ${row.memberName} · 订单 ${row.orderId} · ${row.productSummary}`,
+        impactAmount: diff,
+        currentStatusText: `分录侧耗课累计 ¥${ledgerConsumed.toLocaleString('zh-CN')} 与权益消耗金额估算 ¥${row.consumedAmountEstimate.toLocaleString('zh-CN')} 不一致（模块内估算；待核对）`,
+        suggestedAction: '对齐预收负债、待确认收入与课耗事实口径；待生成正式分录；仅用于经营核对。',
+      });
+    }
+  });
+
+  const seenTypes = new Set(rows.map(r => r.riskTypeLabel));
+  (Object.values(RISK_TYPE_LABELS) as string[]).forEach(label => {
+    if (seenTypes.has(label)) return;
+    rows.push({
+      id: `risk-detail-placeholder-${label}`,
+      riskTypeLabel: label,
+      relatedObjectSummary: '当前 mock 未命中典型案例（模块内估算）',
+      impactAmount: null,
+      currentStatusText: '待核对',
+      suggestedAction: '在实单中按该类型规则例行核对；待接入真实财务分录；仅用于经营核对。',
+    });
+  });
+
+  return rows;
 };

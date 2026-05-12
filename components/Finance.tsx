@@ -37,6 +37,8 @@ import {
   buildFinancePendingItems,
   buildFinancePendingRecognitionDetailRows,
   buildFinanceReportSummary,
+  buildFinanceRefundReconciliationRows,
+  buildFinanceRiskDetailRows,
   buildFinanceTeacherSessionPayCheckRows,
   buildFinanceTransactionRows,
   filterFinanceTransactionRows,
@@ -267,6 +269,35 @@ const Finance: React.FC = () => {
       }),
     []
   );
+  const financeRiskDetailRows = useMemo(
+    () =>
+      buildFinanceRiskDetailRows({
+        orders: MOCK_ORDERS,
+        refunds: MOCK_REFUNDS,
+        memberAssets: MOCK_MEMBER_ASSETS,
+        ledgerEntries: MOCK_FINANCE_LEDGER_ENTRIES,
+        members: MOCK_MEMBERS,
+        attendances: MOCK_ATTENDANCES,
+        bookings: MOCK_BOOKINGS,
+        courseSessions: MOCK_COURSE_SESSIONS,
+        teacherPayRows: teacherSessionPayCheckRows,
+        deferredRows: deferredLiabilityDetailRows,
+      }),
+    [teacherSessionPayCheckRows, deferredLiabilityDetailRows]
+  );
+
+  const refundReconciliationRows = useMemo(
+    () =>
+      buildFinanceRefundReconciliationRows({
+        refunds: MOCK_REFUNDS,
+        orders: MOCK_ORDERS,
+        members: MOCK_MEMBERS,
+        memberAssets: MOCK_MEMBER_ASSETS,
+        ledgerEntries: MOCK_FINANCE_LEDGER_ENTRIES,
+      }),
+    []
+  );
+
   const incomeStructure = useMemo(
     () => buildFinanceIncomeStructure(periodOrders),
     [periodOrders]
@@ -376,6 +407,8 @@ const Finance: React.FC = () => {
                         refunds={MOCK_REFUNDS}
                         memberAssets={MOCK_MEMBER_ASSETS}
                         ledgerEntries={MOCK_FINANCE_LEDGER_ENTRIES}
+                        refundReconciliationRows={refundReconciliationRows}
+                        financeRiskDetailRows={financeRiskDetailRows}
                     />
                 )}
 
