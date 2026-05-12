@@ -14,6 +14,7 @@ import {
   MockCrossStoreSettlementRecord,
   MockFinanceExpenseEntryRecord,
   MockTeacherSessionPayRecord,
+  MockStaffTeachingSessionRecord,
   Order,
   Payment,
   PointProduct,
@@ -1097,4 +1098,15 @@ export const MOCK_STAFF_LIST: Staff[] = [
     conversionRate: 35, conversionTrend: 'up', loadFactor: 40, revenueModel: 'L1', occupancyRate: 60, newvsRenewal: { new: 85, renewal: 15 }, followUpRate: 50,
     members: [] 
   }
+];
+
+/** 师资模块演示：老师带课场次明细（只读 mock；不写入课程状态；不落库） */
+export const MOCK_STAFF_TEACHING_SESSIONS: MockStaffTeachingSessionRecord[] = [
+  { id: 'sts-001', teacherId: 1, sessionTitle: '流瑜伽进阶', courseType: '团课', startAt: '2026-05-05T19:00:00+08:00', headcount: 8 },
+  { id: 'sts-002', teacherId: 2, sessionTitle: '普拉提大器械 · 小班', courseType: '小班', startAt: '2026-05-05T10:00:00+08:00', headcount: 5 },
+  { id: 'sts-003', teacherId: 3, sessionTitle: '阿斯汤加 Led', courseType: '团课', startAt: '2026-05-06T07:30:00+08:00', headcount: 12 },
+  { id: 'sts-004', teacherId: 4, sessionTitle: '阴瑜伽 · 疗愈', courseType: '团课', startAt: '2026-05-07T20:15:00+08:00', headcount: 10 },
+  { id: 'sts-005', teacherId: 1, sessionTitle: '私教 · 体态调整', courseType: '私教', startAt: '2026-05-08T14:00:00+08:00', headcount: 1 },
+  { id: 'sts-006', teacherId: 11, sessionTitle: '流瑜伽基础', courseType: '团课', startAt: '2026-05-09T18:30:00+08:00', headcount: 9 },
+  { id: 'sts-007', teacherId: 6, sessionTitle: '哈他入门', courseType: '团课', startAt: '2026-05-10T09:00:00+08:00', headcount: 6 },
 ];

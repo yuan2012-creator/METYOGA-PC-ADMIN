@@ -4,11 +4,17 @@ import type {
   StaffGrowthReviewRow,
   StaffHourIncomeEstimateRow,
   StaffRulesPendingRow,
+  StaffSessionHourRevenueRow,
+  StaffTeacherArchiveDetailRow,
   StaffTeachingQualityRow,
 } from '../../utils/staffSelectors';
+import StaffSessionHourRevenueTable from './StaffSessionHourRevenueTable';
+import StaffTeacherArchiveDetailTable from './StaffTeacherArchiveDetailTable';
 
 interface StaffClosedLoopPanelProps {
   summary: StaffClosedLoopSummary;
+  teacherArchiveRows: StaffTeacherArchiveDetailRow[];
+  sessionHourRevenueRows: StaffSessionHourRevenueRow[];
   hourIncomeRows: StaffHourIncomeEstimateRow[];
   growthRows: StaffGrowthReviewRow[];
   qualityRows: StaffTeachingQualityRow[];
@@ -31,6 +37,8 @@ const FLOW_STEPS = [
 
 const StaffClosedLoopPanel: React.FC<StaffClosedLoopPanelProps> = ({
   summary,
+  teacherArchiveRows,
+  sessionHourRevenueRows,
   hourIncomeRows,
   growthRows,
   qualityRows,
@@ -80,6 +88,10 @@ const StaffClosedLoopPanel: React.FC<StaffClosedLoopPanelProps> = ({
         </div>
       ))}
     </div>
+
+    <StaffTeacherArchiveDetailTable rows={teacherArchiveRows} />
+
+    <StaffSessionHourRevenueTable rows={sessionHourRevenueRows} />
 
     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
       <div className="p-5 border-b border-gray-100 bg-indigo-50/60">

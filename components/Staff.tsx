@@ -1,12 +1,14 @@
 
 import React, { useState, useMemo } from 'react';
-import { MOCK_STAFF_LIST } from '../constants';
+import { MOCK_STAFF_LIST, MOCK_STAFF_TEACHING_SESSIONS } from '../constants';
 import { Staff } from '../types';
 import {
   buildStaffClosedLoopSummary,
   buildStaffGrowthReviewRows,
   buildStaffHourIncomeEstimateRows,
   buildStaffMatrixData,
+  buildStaffSessionHourRevenueRows,
+  buildStaffTeacherArchiveDetailRows,
   buildStaffRankings,
   buildStaffRulesPendingRows,
   buildStaffTeachingQualityRows,
@@ -101,6 +103,14 @@ const StaffPage: React.FC = () => {
   }, [mockExtendedMembers, memberListTab, filterLifecycle, filterGoal, activeFollowUpCategory]);
 
   const staffClosedLoopSummary = useMemo(() => buildStaffClosedLoopSummary(MOCK_STAFF_LIST), []);
+  const staffTeacherArchiveRows = useMemo(
+    () => buildStaffTeacherArchiveDetailRows(MOCK_STAFF_LIST, MOCK_STAFF_TEACHING_SESSIONS),
+    []
+  );
+  const staffSessionHourRevenueRows = useMemo(
+    () => buildStaffSessionHourRevenueRows(MOCK_STAFF_TEACHING_SESSIONS, MOCK_STAFF_LIST),
+    []
+  );
   const staffHourIncomeRows = useMemo(() => buildStaffHourIncomeEstimateRows(MOCK_STAFF_LIST), []);
   const staffGrowthRows = useMemo(() => buildStaffGrowthReviewRows(MOCK_STAFF_LIST), []);
   const staffQualityRows = useMemo(() => buildStaffTeachingQualityRows(MOCK_STAFF_LIST), []);
@@ -157,6 +167,8 @@ const StaffPage: React.FC = () => {
             {activeTab === 'closed_loop' && (
               <StaffClosedLoopPanel
                 summary={staffClosedLoopSummary}
+                teacherArchiveRows={staffTeacherArchiveRows}
+                sessionHourRevenueRows={staffSessionHourRevenueRows}
                 hourIncomeRows={staffHourIncomeRows}
                 growthRows={staffGrowthRows}
                 qualityRows={staffQualityRows}

@@ -1,4 +1,4 @@
-import type { Staff } from '../types';
+import type { MockStaffTeachingSessionRecord, Staff } from '../types';
 
 export type StaffTab = 'closed_loop' | 'decision' | 'archives' | 'schedule';
 export type StaffFilterType = 'all' | 'leads' | 'adjust' | 'new' | 'part_time';
@@ -332,6 +332,143 @@ export const buildStaffHourIncomeEstimateRows = (staffList: Staff[]): StaffHourI
       };
     })
 );
+
+const DEMO_STAFF_STORE_LABEL: Record<number, string> = {
+  1: 'MET YOGA 西湖馆',
+  2: 'MET YOGA 钱江馆（演示）',
+  3: 'MET YOGA 钱江馆（演示）',
+  4: 'MET YOGA 西湖馆',
+  6: 'MET YOGA 西湖馆',
+  11: 'MET YOGA 钱江馆（演示）',
+  12: 'MET YOGA 西湖馆',
+};
+
+const staffTypeRoleLabel = (staff: Staff): string => (
+  staff.type === 'teacher' ? `老师 · ${staff.title}` : `管家 · ${staff.title}`
+);
+
+const isIsoInMonth = (iso: string, year: number, monthIndex0: number): boolean => {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return false;
+  return d.getFullYear() === year && d.getMonth() === monthIndex0;
+};
+
+export const formatTeachingSessionStartDisplay = (iso: string): string => {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+};
+
+export interface StaffTeacherArchiveDetailRow {
+  id: number;
+  teacherName: string;
+  typeRoleLabel: string;
+  currentLevelLabel: string;
+  storeLabel: string;
+  teachableTypes: string;
+  monthCourseCount: number;
+  monthLessonHoursEstimate: number;
+  statusLabel: string;
+  riskHints: string[];
+}
+
+export const buildStaffTeacherArchiveDetailRows = (
+  staffList: Staff[],
+  sessions: MockStaffTeachingSessionRecord[],
+  referenceDate: Date = new Date()
+): StaffTeacherArchiveDetailRow[] => {
+  const y = referenceDate.getFullYear();
+  const m = referenceDate.getMonth();
+
+  return staffList
+    .filter(s => s.type === 'teacher')
+    .map(t => {
+      const monthSessions = sessions.filter(
+        s => s.teacherId === t.id && isIsoInMonth(s.startAt, y, m)
+      ).length;
+      const monthCourseCount = monthSessions;
+      const monthLessonHoursEstimate = monthCourseCount;
+      const storeLabel = DEMO_STAFF_STORE_LABEL[t.id] ?? '所属门店（演示）';
+      const teachableTypes = [...new Set([t.title, ...t.tags])].filter(Boolean).join('、') || '—';
+      const rate = parseHourlyYuanFromLabel(t.hourlyRate);
+      const riskHints: string[] = [
+        '当前为模块内估算；不生成工资单；不代表已结算；后续需接入正式课时费规则与财务结算；仅用于经营核对',
+      ];
+      if (rate <= 0) riskHints.push('课时单价登记不完整：待核对');
+      if (t.promotionStatus === 'pending') riskHints.push('存在晋升待办信号：仍以人工复核为准（待核对）');
+      if (t.loadFactor >= 90) riskHints.push('排课负载偏高：口径待核对（模块内估算）');
+
+      const statusLabel = t.promotionStatus === 'pending'
+        ? '待核对（模块内估算）'
+        : '待核对（模块内估算）';
+
+      return {
+        id: t.id,
+        teacherName: t.name,
+        typeRoleLabel: staffTypeRoleLabel(t),
+        currentLevelLabel: levelDisplay(t.level),
+        storeLabel,
+        teachableTypes,
+        monthCourseCount,
+        monthLessonHoursEstimate,
+        statusLabel,
+        riskHints,
+      };
+    });
+};
+
+export interface StaffSessionHourRevenueRow {
+  id: string;
+  teacherName: string;
+  sessionTitle: string;
+  courseType: string;
+  startDisplay: string;
+  headcount: number;
+  feeRuleNote: string;
+  feeEstimate: number;
+  statusLabel: string;
+  pendingCheckNote: string;
+}
+
+const DEFAULT_SESSION_FEE_RULE_NOTE = '占位：按到课人数与登记单价的模块内估算系数；待接入正式课时费规则。';
+
+const DEFAULT_SESSION_PENDING_NOTE = '正式课时费规则未接入；当前为模块内估算；不生成工资单；不代表已结算；后续需接入正式课时费规则与财务结算；仅用于经营核对。';
+
+export const buildStaffSessionHourRevenueRows = (
+  sessions: MockStaffTeachingSessionRecord[],
+  staffList: Staff[]
+): StaffSessionHourRevenueRow[] => {
+  const byId = new Map(staffList.map(s => [s.id, s] as const));
+
+  return [...sessions]
+    .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime())
+    .map(s => {
+      const teacher = byId.get(s.teacherId);
+      const teacherName = teacher?.name ?? '未知老师（演示）';
+      const rate = teacher ? parseHourlyYuanFromLabel(teacher.hourlyRate) : 0;
+      const headFactor = s.courseType === '私教' ? 1 : Math.min(s.headcount, 16);
+      const feeEstimate = Math.round(rate * headFactor * 0.12);
+      return {
+        id: s.id,
+        teacherName,
+        sessionTitle: s.sessionTitle,
+        courseType: s.courseType,
+        startDisplay: formatTeachingSessionStartDisplay(s.startAt),
+        headcount: s.headcount,
+        feeRuleNote: s.feeRuleNote ?? DEFAULT_SESSION_FEE_RULE_NOTE,
+        feeEstimate,
+        statusLabel: '待核对（模块内估算）',
+        pendingCheckNote: DEFAULT_SESSION_PENDING_NOTE,
+      };
+    });
+};
 
 export interface StaffGrowthReviewRow {
   id: number;
