@@ -6,8 +6,11 @@ import {
 } from '../constants';
 import {
   MHS_CIRCLE_LENGTH,
+  buildDashboardSuggestionRows,
   buildDashboardOperatingZoneCards,
+  buildDashboardStoreHealthRows,
   buildDashboardSummary,
+  buildDashboardTodayIssueRows,
   buildRadarData,
   buildSnapshotItems,
   formatDashboardMoney,
@@ -15,8 +18,11 @@ import {
 import { buildPartnerAuthorizationRows } from '../utils/partnerSelectors';
 import type { MHSData } from '../types';
 import AlertPanel from './dashboard/AlertPanel';
+import DashboardBusinessSuggestionsTable from './dashboard/DashboardBusinessSuggestionsTable';
 import DashboardOperatingBrief from './dashboard/DashboardOperatingBrief';
 import DashboardSnapshotCards from './dashboard/DashboardSnapshotCards';
+import DashboardStoreHealthTable from './dashboard/DashboardStoreHealthTable';
+import DashboardTodayIssuesTable from './dashboard/DashboardTodayIssuesTable';
 import MhsHealthPanel from './dashboard/MhsHealthPanel';
 import MhsRadarPanel from './dashboard/MhsRadarPanel';
 import PartnerAuthorizationBrief from './dashboard/PartnerAuthorizationBrief';
@@ -32,6 +38,9 @@ const Dashboard: React.FC = () => {
     [dashboardSummary]
   );
   const partnerAuthorizationRows = useMemo(() => buildPartnerAuthorizationRows(), []);
+  const todayIssueRows = useMemo(() => buildDashboardTodayIssueRows(dashboardSummary), [dashboardSummary]);
+  const storeHealthRows = useMemo(() => buildDashboardStoreHealthRows(dashboardSummary), [dashboardSummary]);
+  const suggestionRows = useMemo(() => buildDashboardSuggestionRows(dashboardSummary), [dashboardSummary]);
 
   const handleRadarDimensionSelect = (activeLabel: string) => {
     const match = radarData.find(d => d.subject === activeLabel);
@@ -41,6 +50,8 @@ const Dashboard: React.FC = () => {
   return (
     <div className="space-y-6 animate-fadeIn">
       <DashboardOperatingBrief zones={operatingZones} />
+
+      <DashboardTodayIssuesTable rows={todayIssueRows} />
 
       {/* 1. MHS Overview Section */}
       <div className="bg-white rounded-[18px] border border-gray-100 shadow-sm overflow-hidden flex flex-col lg:flex-row h-auto lg:h-[420px]">
@@ -65,11 +76,15 @@ const Dashboard: React.FC = () => {
 
       <DashboardSnapshotCards items={snapshotItems} />
 
+      <DashboardStoreHealthTable rows={storeHealthRows} />
+
       {/* 2. Alerts & Team Section */}
       <div className="grid grid-cols-12 gap-6">
           <AlertPanel alerts={MOCK_ALERTS} />
           <TeamTaskPanel tasks={MOCK_TEAM_TASKS} />
       </div>
+
+      <DashboardBusinessSuggestionsTable rows={suggestionRows} />
 
       <PartnerAuthorizationBrief rows={partnerAuthorizationRows} />
 

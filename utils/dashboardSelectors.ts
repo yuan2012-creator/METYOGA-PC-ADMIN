@@ -281,3 +281,195 @@ export const buildDashboardOperatingZoneCards = (summary: DashboardSummary): Das
     },
   ];
 };
+
+/** 今日待处理问题明细（模块内判断；不写真实任务） */
+export interface DashboardTodayIssueRow {
+  id: string;
+  problemType: string;
+  storeLabel: string;
+  relatedObject: string;
+  riskLevel: string;
+  suggestedAction: string;
+  owner: string;
+  statusLabel: string;
+  pendingIntegrationNote: string;
+}
+
+const riskMemberSample = MOCK_MEMBERS.find(m => m.riskTag) ?? MOCK_MEMBERS[0];
+const firstPendingContract = MOCK_CONTRACTS.find(c => c.status === 'draft' || c.status === 'pending_signature');
+
+export const buildDashboardTodayIssueRows = (summary: DashboardSummary): DashboardTodayIssueRow[] => {
+  const cancelledSessions = MOCK_COURSE_SESSIONS.filter(s => s.status === 'cancelled').length;
+  const pendingRefundN = countPendingRefunds(MOCK_REFUNDS);
+  const lowOccTeacher = MOCK_STAFF_LIST.find(s => s.type === 'teacher' && s.occupancyRate < 62);
+
+  return [
+    {
+      id: 'ti-member-risk',
+      problemType: '会员风险',
+      storeLabel: 'MET YOGA 西湖馆（演示）',
+      relatedObject: riskMemberSample ? `会员 ${riskMemberSample.name}（${riskMemberSample.riskTag ?? '风险待标注'}）` : '会员池（演示）',
+      riskLevel: summary.riskMemberCount >= 3 ? '高（模块内判断）' : '中（模块内判断）',
+      suggestedAction: '今日电话回访并登记跟进纪要（人工执行；不自动生成任务）',
+      owner: '会员顾问',
+      statusLabel: '待处理（模块内展示）',
+      pendingIntegrationNote: '待接入真实经营数据与任务系统；不自动通知责任人',
+    },
+    {
+      id: 'ti-course',
+      problemType: '课程异常',
+      storeLabel: 'MET YOGA 西湖馆（演示）',
+      relatedObject: `取消 / 异常场次信号约 ${cancelledSessions} 场（演示占位）`,
+      riskLevel: cancelledSessions > 0 ? '中（模块内判断）' : '低（模块内判断）',
+      suggestedAction: '核对教室占用与教练替补池，避免连环爽约',
+      owner: '教务',
+      statusLabel: '待处理（模块内展示）',
+      pendingIntegrationNote: '课程状态以教务系统为准；待接入真实经营数据',
+    },
+    {
+      id: 'ti-finance',
+      problemType: '财务风险',
+      storeLabel: 'MET YOGA 西湖馆（演示）',
+      relatedObject: `在途退款 / 待核对约 ${pendingRefundN} 笔（演示）`,
+      riskLevel: pendingRefundN > 2 ? '高（模块内判断）' : '中（模块内判断）',
+      suggestedAction: '按订单 → 资产 → 退款登记抽样对齐',
+      owner: '财务核对',
+      statusLabel: '待处理（模块内展示）',
+      pendingIntegrationNote: '待接入真实经营数据；不同步财务',
+    },
+    {
+      id: 'ti-staff',
+      problemType: '老师执行',
+      storeLabel: 'MET YOGA 钱江馆（演示）',
+      relatedObject: lowOccTeacher ? `老师 ${lowOccTeacher.name}（满课率约 ${lowOccTeacher.occupancyRate}%）` : '教学岗（演示）',
+      riskLevel: '中（模块内判断）',
+      suggestedAction: '安排旁听与模板化反馈（人工排期）',
+      owner: '教学督导',
+      statusLabel: '待处理（模块内展示）',
+      pendingIntegrationNote: '不改老师数据；待接入真实经营数据',
+    },
+    {
+      id: 'ti-booking',
+      problemType: '预约 / 到课异常',
+      storeLabel: 'MET YOGA 钱江馆（演示）',
+      relatedObject: `在册预约 ${summary.activeBookingCount} · 已消课 ${summary.consumedAttendanceCount}（模块内展示）`,
+      riskLevel: '中（模块内判断）',
+      suggestedAction: '对高峰缺席时段加提醒与替补预案',
+      owner: '排课主管',
+      statusLabel: '待处理（模块内展示）',
+      pendingIntegrationNote: '待接入真实经营数据与到课事实对齐',
+    },
+    {
+      id: 'ti-contract-asset',
+      problemType: '合同 / 资产待核对',
+      storeLabel: 'MET YOGA 西湖馆（演示）',
+      relatedObject: firstPendingContract
+        ? `合同 ${firstPendingContract.id}（${firstPendingContract.status}）`
+        : `待生效合同约 ${summary.pendingContractCount} 份（演示）`,
+      riskLevel: '中（模块内判断）',
+      suggestedAction: '核对签署与资产开通是否一致',
+      owner: '店长',
+      statusLabel: '待处理（模块内展示）',
+      pendingIntegrationNote: '待接入产品与合同模块事实；不自动生成任务',
+    },
+  ];
+};
+
+/** 门店健康明细（模块内判断） */
+export interface DashboardStoreHealthRow {
+  id: string;
+  storeName: string;
+  businessStatus: string;
+  bookingSummary: string;
+  attendanceSummary: string;
+  collectionSummary: string;
+  refundRiskSummary: string;
+  teacherExecSummary: string;
+  memberRiskSummary: string;
+  holisticHint: string;
+}
+
+export const buildDashboardStoreHealthRows = (summary: DashboardSummary): DashboardStoreHealthRow[] => {
+  const teachers = MOCK_STAFF_LIST.filter(s => s.type === 'teacher');
+  const avgOcc = teachers.length
+    ? Math.round(teachers.reduce((sum, t) => sum + t.occupancyRate, 0) / teachers.length)
+    : 0;
+  const pendingRefundN = countPendingRefunds(MOCK_REFUNDS);
+
+  return [
+    {
+      id: 'sh-xh',
+      storeName: 'MET YOGA 西湖馆（演示）',
+      businessStatus: `${summary.mhsStatusLabel} · MHS 约 ${summary.mhsScore}（模块内判断）`,
+      bookingSummary: `在册预约约 ${summary.activeBookingCount}（待核对）`,
+      attendanceSummary: `已消课约 ${summary.consumedAttendanceCount}（模块内展示）`,
+      collectionSummary: `收款侧演示口径约 ${formatDashboardMoney(summary.paidPaymentAmount)}（待核对）`,
+      refundRiskSummary: `在途退款信号 ${pendingRefundN} 笔（模块内判断）`,
+      teacherExecSummary: `满课率均值约 ${avgOcc}%（模块内测算）`,
+      memberRiskSummary: `风险会员约 ${summary.riskMemberCount} 人（待核对）`,
+      holisticHint: '优先收口退款核对与风险会员回访；仅用于经营判断',
+    },
+    {
+      id: 'sh-qj',
+      storeName: 'MET YOGA 钱江馆（演示）',
+      businessStatus: '待核对（模块内展示）',
+      bookingSummary: `预约约 ${Math.max(0, summary.activeBookingCount - 2)}（演示拆分）`,
+      attendanceSummary: `到课 / 消课约 ${Math.max(0, summary.consumedAttendanceCount - 4)}（演示拆分）`,
+      collectionSummary: `收款演示口径约 ${formatDashboardMoney(Math.round(summary.paidPaymentAmount * 0.42))}（待核对）`,
+      refundRiskSummary: `退款信号约 ${Math.max(0, pendingRefundN - 1)} 笔（演示）`,
+      teacherExecSummary: '尾部教练需帮扶（模块内判断）',
+      memberRiskSummary: `风险会员约 ${Math.max(0, summary.riskMemberCount - 1)} 人（演示）`,
+      holisticHint: '关注满课与缺席波动；待接入真实经营数据',
+    },
+  ];
+};
+
+/** 经营建议明细（模块内经营建议；不自动生成任务） */
+export interface DashboardSuggestionRow {
+  id: string;
+  suggestionType: string;
+  triggerReason: string;
+  suggestedAction: string;
+  impactScope: string;
+  ownerRole: string;
+  statusLabel: string;
+}
+
+export const buildDashboardSuggestionRows = (summary: DashboardSummary): DashboardSuggestionRow[] => [
+  {
+    id: 'sg-cash',
+    suggestionType: '现金流与退款',
+    triggerReason: `待支付 / 退款待核对与订单堆积（模块内判断）`,
+    suggestedAction: '晨会固定 15 分钟过一遍「待支付 + 在途退款」',
+    impactScope: '全店收款与会员体验',
+    ownerRole: '店长 + 财务核对',
+    statusLabel: '待处理（模块内展示）',
+  },
+  {
+    id: 'sg-occ',
+    suggestionType: '满课与人效',
+    triggerReason: `教务负荷与预约结构存在波动（模块内判断）`,
+    suggestedAction: '对低满课时段做排课模板微调（人工）',
+    impactScope: '排课与教室利用率',
+    ownerRole: '排课主管',
+    statusLabel: '待处理（模块内展示）',
+  },
+  {
+    id: 'sg-member',
+    suggestionType: '会员留存',
+    triggerReason: `风险标签会员约 ${summary.riskMemberCount} 人（模块内判断）`,
+    suggestedAction: '本周完成分层回访清单（人工登记）',
+    impactScope: '续费与沉默唤醒',
+    ownerRole: '会员顾问',
+    statusLabel: '待处理（模块内展示）',
+  },
+  {
+    id: 'sg-contract',
+    suggestionType: '合同 / 资产一致',
+    triggerReason: `待生效 / 待核对合同约 ${summary.pendingContractCount} 份（模块内判断）`,
+    suggestedAction: '抽样核对「签署 ↔ 资产开通」',
+    impactScope: '履约与合规风险',
+    ownerRole: '店长',
+    statusLabel: '待处理（模块内展示）',
+  },
+];
