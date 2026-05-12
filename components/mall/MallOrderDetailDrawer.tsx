@@ -26,6 +26,8 @@ import {
   labelMallPaymentMethodZh,
   labelMallPaymentStatusZh,
   labelMallRefundStatusZh,
+  labelMallRefundTypeZh,
+  labelMallRefundAssetHandleTypeZh,
   mallOrderAppearsSettledForPaymentCheck,
   mallStoreLabelFromId,
   summarizeMallHeaderAssetStateZh,
@@ -55,6 +57,13 @@ const resolveItemTypeLabel = (productType: OrderItem['productType']): string =>
 
 const MALL_MODULE_ASSET_SCOPE_COPY =
   '已在产品与合同模块生成资产记录。会员经营同步与财务证据链需后续接入统一服务。';
+
+const resolveRefundLinkedEquityLabel = (refund: Refund, assets: MemberAsset[]): string => {
+  const aid = refund.memberAssetId?.trim() || refund.assetId?.trim();
+  if (!aid) return '暂未记录';
+  const a = assets.find(x => x.id === aid);
+  return a?.name?.trim() || '暂未记录';
+};
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <section className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
@@ -325,10 +334,14 @@ const MallOrderDetailDrawer: React.FC<MallOrderDetailDrawerProps> = ({
           <div className="space-y-2">
             {ctx.orderRefunds.map(r => (
               <div key={r.id} className="rounded-lg border border-gray-100 px-3 bg-gray-50/50">
-                <Row label="退款状态" value={labelMallRefundStatusZh(r.status)} />
+                <Row label="退款类型" value={labelMallRefundTypeZh(r.refundType)} />
                 <Row label="退款金额" value={formatMallMoneyYuan(r.amount)} />
-                <Row label="退款时间" value={formatMallDateTimeDisplay(r.completedAt ?? r.approvedAt ?? r.requestedAt)} />
-                <Row label="退款原因" value={r.reason?.trim() || '暂未记录'} />
+                <Row label="资产处理方式" value={labelMallRefundAssetHandleTypeZh(r.assetHandleType)} />
+                <Row label="处理状态" value={labelMallRefundStatusZh(r.status)} />
+                <Row label="申请时间" value={formatMallDateTimeDisplay(r.requestedAt)} />
+                <Row label="完成时间" value={formatMallDateTimeDisplay(r.completedAt ?? r.refundedAt)} />
+                <Row label="原因说明" value={r.reason?.trim() || '暂未记录'} />
+                <Row label="关联权益" value={resolveRefundLinkedEquityLabel(r, memberAssets)} />
               </div>
             ))}
           </div>

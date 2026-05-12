@@ -15,6 +15,8 @@ import {
   labelMallPaymentMethodZh,
   labelMallPaymentStatusZh,
   labelMallRefundStatusZh,
+  labelMallRefundTypeZh,
+  labelMallRefundAssetHandleTypeZh,
   mallAssetExpiryWithinDaysAhead,
   mallAssetIsPastExpiryClock,
   summarizeMallHeaderPaymentStateZh,
@@ -94,9 +96,14 @@ const MallAssetDetailDrawer: React.FC<MallAssetDetailDrawerProps> = ({
       contracts.find(c => c.id === asset.contractId) ??
       (order ? contracts.find(c => c.id === order.contractId || c.orderId === order.id) : undefined);
     const orderPayments = order ? payments.filter(p => p.orderId === order.id) : [];
-    const assetRefunds = asset.sourceOrderId
+    const orderRefundsForAsset = asset.sourceOrderId
       ? refunds.filter(r => r.orderId === asset.sourceOrderId)
       : [];
+    const linkedToAssetRefunds = orderRefundsForAsset.filter(
+      r => r.memberAssetId === asset.id || r.assetId === asset.id
+    );
+    const showOrderRefundUnboundInline =
+      orderRefundsForAsset.some(r => r.status === 'completed') && linkedToAssetRefunds.length === 0;
     const primaryOrderName =
       order?.items.map(i => i.productName).filter(Boolean).join('、') ?? '暂未记录';
     const risks = buildMallAssetDetailRiskMessages({
@@ -117,7 +124,9 @@ const MallAssetDetailDrawer: React.FC<MallAssetDetailDrawerProps> = ({
       order,
       contract,
       orderPayments,
-      assetRefunds,
+      linkedToAssetRefunds,
+      orderRefundsForAsset,
+      showOrderRefundUnboundInline,
       primaryOrderName,
       risks,
       rem,
@@ -235,22 +244,28 @@ const MallAssetDetailDrawer: React.FC<MallAssetDetailDrawerProps> = ({
       <Section title="4. 退款 / 转卡 / 冻结记录">
         <div className="mb-3">
           <div className="text-[11px] font-bold text-gray-600 mb-2">退款记录</div>
-          {ctx.assetRefunds.length === 0 ? (
-            <p className="text-xs text-gray-500 bg-gray-50 rounded-lg p-3">暂无退款记录</p>
-          ) : (
+          {ctx.linkedToAssetRefunds.length > 0 ? (
             <div className="space-y-2">
-              {ctx.assetRefunds.map(r => (
+              {ctx.linkedToAssetRefunds.map(r => (
                 <div key={r.id} className="rounded-lg border border-gray-100 px-3 bg-gray-50/50">
+                  <Row label="退款类型" value={labelMallRefundTypeZh(r.refundType)} />
+                  <Row label="退款金额" value={formatMallMoneyYuan(r.amount)} />
+                  <Row label="资产处理方式" value={labelMallRefundAssetHandleTypeZh(r.assetHandleType)} />
                   <Row label="处理状态" value={labelMallRefundStatusZh(r.status)} />
-                  <Row label="金额" value={formatMallMoneyYuan(r.amount)} />
                   <Row
                     label="时间"
                     value={formatMallDateTimeDisplay(r.completedAt ?? r.approvedAt ?? r.requestedAt)}
                   />
-                  <Row label="原因" value={r.reason?.trim() || '暂未记录'} />
+                  <Row label="原因说明" value={r.reason?.trim() || '暂未记录'} />
                 </div>
               ))}
             </div>
+          ) : ctx.showOrderRefundUnboundInline ? (
+            <p className="text-xs text-gray-600 bg-gray-50 rounded-lg p-3 leading-relaxed">
+              存在订单退款记录，但暂未关联具体会员资产。
+            </p>
+          ) : (
+            <p className="text-xs text-gray-500 bg-gray-50 rounded-lg p-3">暂无退款记录</p>
           )}
         </div>
         <div className="mb-3">

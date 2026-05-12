@@ -152,6 +152,17 @@ export type RefundStatus =
   | 'rejected'
   | 'cancelled';
 
+/** 退款业务类型（可选，用于证据链与展示） */
+export type RefundType = 'full_refund' | 'partial_refund' | 'deposit_refund' | 'special_refund';
+
+/** 退款对会员资产的处理口径（可选，仅登记不驱动真实状态） */
+export type RefundAssetHandleType =
+  | 'void_asset'
+  | 'reduce_balance'
+  | 'freeze_asset'
+  | 'keep_asset'
+  | 'manual_review';
+
 // --- P0 Domain Objects ---
 
 export interface TimelineEvent {
@@ -639,6 +650,25 @@ export interface Refund {
   requestedAt: ISODateString;
   approvedAt?: ISODateString;
   completedAt?: ISODateString;
+  /** 退款业务单号（可选） */
+  refundNo?: string;
+  /** 关联会员资产业务编号（与 MemberAsset.id 对齐，可选） */
+  assetId?: string;
+  memberAssetId?: string;
+  contractId?: ContractId;
+  refundType?: RefundType;
+  requestedAmount?: MoneyAmount;
+  approvedAmount?: MoneyAmount;
+  assetHandleType?: RefundAssetHandleType;
+  requestedBy?: string;
+  reviewedBy?: string;
+  processedBy?: string;
+  reviewedAt?: ISODateString;
+  refundedAt?: ISODateString;
+  rejectReason?: string;
+  operationNote?: string;
+  /** 财务分录占位关联（可选，当前不接真实入账） */
+  financeLedgerId?: string;
 }
 
 /** 会员资产转卡记录（可选展示模型，当前不接真实数据） */

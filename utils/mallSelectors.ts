@@ -14,7 +14,9 @@ import type {
   PaymentStatus,
   PointProduct,
   Refund,
+  RefundAssetHandleType,
   RefundStatus,
+  RefundType,
 } from '../types';
 import type { MallTtcCourse } from '../components/mall/MallTtc';
 import type { MallContractData } from '../components/mall/MallContractCreate';
@@ -476,6 +478,29 @@ export const labelMallRefundStatusZh = (status: RefundStatus): string => {
   return map[status] ?? '暂未识别';
 };
 
+export const labelMallRefundTypeZh = (t?: RefundType | string): string => {
+  if (!t?.trim()) return '暂未记录';
+  const map: Record<RefundType, string> = {
+    full_refund: '全额退款',
+    partial_refund: '部分退款',
+    deposit_refund: '定金退款',
+    special_refund: '特批退款',
+  };
+  return map[t as RefundType] ?? '暂未识别';
+};
+
+export const labelMallRefundAssetHandleTypeZh = (t?: RefundAssetHandleType | string): string => {
+  if (!t?.trim()) return '暂未记录';
+  const map: Record<RefundAssetHandleType, string> = {
+    void_asset: '作废资产',
+    reduce_balance: '扣减权益',
+    freeze_asset: '冻结资产',
+    keep_asset: '保留资产',
+    manual_review: '人工复核',
+  };
+  return map[t as RefundAssetHandleType] ?? '暂未识别';
+};
+
 export const labelAssetTransferRecordStatusZh = (status: AssetTransferRecordStatus): string => {
   const map: Record<AssetTransferRecordStatus, string> = {
     requested: '已申请',
@@ -642,6 +667,10 @@ export const buildMallOrderDetailRiskMessages = ({
   assets: MemberAsset[];
 }): string[] => {
   const messages: string[] = [];
+  const pushUnique = (text: string) => {
+    if (!messages.includes(text)) messages.push(text);
+  };
+
   const orderPayments = payments.filter(p => p.orderId === order.id);
   const orderRefunds = refunds.filter(r => r.orderId === order.id);
   const orderAssets = assets.filter(a => a.sourceOrderId === order.id);
@@ -650,7 +679,7 @@ export const buildMallOrderDetailRiskMessages = ({
   );
 
   if (order.status === 'cancelled' || order.status === 'closed') {
-    messages.push('该订单已取消或关闭，请按门店规则核对后续处理与留痕。');
+    pushUnique('该订单已取消或关闭，请按门店规则核对后续处理与留痕。');
   }
 
   if (
@@ -659,12 +688,12 @@ export const buildMallOrderDetailRiskMessages = ({
     order.status !== 'closed' &&
     orderPayments.length === 0
   ) {
-    messages.push('订单显示已支付，但暂无支付记录。');
+    pushUnique('订单显示已支付，但暂无支付记录。');
   }
 
   const paidIn = order.paidAmount ?? 0;
   if (paidIn > 0 && contract && (contract.status === 'pending_signature' || contract.status === 'draft')) {
-    messages.push('订单已支付，合同仍待签署。');
+    pushUnique('订单已支付，合同仍待签署。');
   }
 
   if (
@@ -673,22 +702,52 @@ export const buildMallOrderDetailRiskMessages = ({
     (contract.status === 'signed' || contract.status === 'effective') &&
     orderAssets.length === 0
   ) {
-    messages.push('合同已签署，但暂无会员资产发放记录。');
+    pushUnique('合同已签署，但暂无会员资产发放记录。');
   }
 
   const hasRefundRecords = orderRefunds.length > 0;
+  const completedRefunds = orderRefunds.filter(r => r.status === 'completed');
   const assetStillUsable = orderAssets.some(
     a => a.status === 'effective' && (a.remainingAmount ?? 0) > 0
   );
 
-  if (order.status === 'partially_refunded') {
-    messages.push('订单存在部分退款，请核对剩余权益与资产状态。');
-  }
+  if (hasRefundRecords) {
+    const _refundRiskStart = messages.length;
+    const hasPartial =
+      order.status === 'partially_refunded' ||
+      orderRefunds.some(r => r.refundType === 'partial_refund');
+    const hasFull =
+      order.status === 'refunded' || orderRefunds.some(r => r.refundType === 'full_refund');
 
-  if (hasRefundRecords && assetStillUsable) {
-    messages.push('订单存在退款记录，请核对会员资产状态。');
-  } else if (hasRefundRecords && !assetStillUsable) {
-    messages.push('订单存在退款记录，请核对退款金额、资产处理与财务记录。');
+    if (hasPartial) {
+      pushUnique('订单存在部分退款，请核对退款金额、剩余权益与资产状态。');
+    }
+    if (hasFull) {
+      pushUnique('订单存在全额退款，请核对资产是否已作废或已退款。');
+    }
+
+    const someRefundMissingAssetLink = orderRefunds.some(
+      r => !r.assetId?.trim() && !r.memberAssetId?.trim()
+    );
+    if (someRefundMissingAssetLink) {
+      pushUnique('退款记录尚未关联会员资产，请核对资产处理结果。');
+    }
+
+    if (orderRefunds.some(r => r.assetHandleType === 'keep_asset')) {
+      pushUnique('退款后资产仍保留，请确认审批依据与合同约定。');
+    }
+
+    if (assetStillUsable && completedRefunds.length > 0) {
+      pushUnique('订单存在退款记录，请核对会员资产状态。');
+    }
+
+    if (completedRefunds.some(r => !r.financeLedgerId?.trim())) {
+      pushUnique('退款记录已完成，财务分录关联需后续接入统一服务。');
+    }
+
+    if (messages.length === _refundRiskStart) {
+      pushUnique('订单存在退款记录，请核对订单、资产与财务留痕。');
+    }
   }
 
   if (messages.length === 0) {
@@ -703,9 +762,9 @@ export const buildMallOrderDetailRiskMessages = ({
       orderAssets.length > 0;
 
     if (chainOk && orderAssets.some(a => a.mallGrantRecordNote?.trim())) {
-      messages.push('产品与合同模块内资产记录已生成；会员经营同步与财务证据链需后续接入统一服务。');
+      pushUnique('产品与合同模块内资产记录已生成；会员经营同步与财务证据链需后续接入统一服务。');
     } else {
-      messages.push('订单、合同、支付与资产链路暂无明显异常。');
+      pushUnique('订单、合同、支付与资产链路暂无明显异常。');
     }
   }
 
@@ -734,12 +793,37 @@ export const buildMallAssetDetailRiskMessages = ({
   const orderRefunds = asset.sourceOrderId
     ? refunds.filter(r => r.orderId === asset.sourceOrderId)
     : [];
+  const completedOrderRefunds = orderRefunds.filter(r => r.status === 'completed');
+  const linkedRefunds = orderRefunds.filter(
+    r => r.memberAssetId === asset.id || r.assetId === asset.id
+  );
   const missingSourceOrder = !asset.sourceOrderId || !order;
   const hasOrderRefundSignal =
     Boolean(order) &&
     (order!.status === 'refunded' ||
       order!.status === 'partially_refunded' ||
       orderRefunds.length > 0);
+
+  if (completedOrderRefunds.length > 0) {
+    pushUnique('该资产关联订单存在退款记录，请核对资产状态与剩余权益。');
+  }
+  if (linkedRefunds.length > 0) {
+    pushUnique('该资产存在关联退款记录，请核对退款金额与资产处理方式。');
+    const handleTypes = new Set(
+      linkedRefunds
+        .map(r => r.assetHandleType)
+        .filter((x): x is RefundAssetHandleType => Boolean(x))
+    );
+    handleTypes.forEach(ht => {
+      pushUnique(`关联退款的处理方式为「${labelMallRefundAssetHandleTypeZh(ht)}」，请核对与账面一致。`);
+    });
+  }
+  const hasUnboundRefundOnOrder = orderRefunds.some(
+    r => r.status === 'completed' && !r.assetId?.trim() && !r.memberAssetId?.trim()
+  );
+  if (hasUnboundRefundOnOrder) {
+    pushUnique('存在退款记录，但暂未关联具体会员资产。');
+  }
 
   if (usable && hasOrderRefundSignal) {
     pushUnique('订单存在退款记录，请核对会员资产状态。');
