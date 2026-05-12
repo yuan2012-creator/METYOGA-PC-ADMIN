@@ -424,6 +424,17 @@ export interface Staff {
   members: { name: string; card: string; balance: string; lastContact: string; avatar: string }[];
 }
 
+/** 师资模块 mock：老师单节带课场次（前端演示；不落库；不改课程状态） */
+export interface MockStaffTeachingSessionRecord {
+  id: string;
+  teacherId: number;
+  sessionTitle: string;
+  courseType: string;
+  startAt: string;
+  headcount: number;
+  feeRuleNote?: string;
+}
+
 export interface CardProduct {
   id: ProductId;
   type: 'stored_value' | 'term';
