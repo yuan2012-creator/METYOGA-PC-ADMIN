@@ -13,30 +13,48 @@ import {
   Filler
 } from 'chart.js';
 import {
+  MOCK_ATTENDANCES,
+  MOCK_BOOKINGS,
   MOCK_CONTRACTS,
+  MOCK_COURSES,
+  MOCK_COURSE_SESSIONS,
   MOCK_FINANCE_LEDGER_ENTRIES,
+  MOCK_FINANCE_TEACHER_SESSION_PAY_CHECKS,
+  MOCK_MEMBER_ASSETS,
   MOCK_MEMBERS,
   MOCK_ORDERS,
   MOCK_PAYMENTS,
   MOCK_REFUNDS,
+  MOCK_STAFF_LIST,
 } from '../constants';
 import {
-  buildFinanceOverviewSummary,
+  buildClosedLoopFivePillars,
+  buildClosedLoopRefundAssetRiskRows,
+  buildFinanceDeferredLiabilityDetailRows,
   buildFinanceIncomeStructure,
+  buildFinanceLedgerPendingIntegrationRows,
+  buildFinanceOverviewSummary,
   buildFinancePendingItems,
+  buildFinancePendingRecognitionDetailRows,
   buildFinanceReportSummary,
+  buildFinanceTeacherSessionPayCheckRows,
   buildFinanceTransactionRows,
-  filterLedgerEntriesByDateRange,
   filterFinanceTransactionRows,
+  filterLedgerEntriesByDateRange,
   filterOrdersByDateRange,
   filterPaymentsByDateRange,
   filterRefundsByDateRange,
   type FinanceOrderFilter,
 } from '../utils/financeSelectors';
 import DeferredRevenuePanel from './finance/DeferredRevenuePanel';
+import FinanceClosedLoopEntry from './finance/FinanceClosedLoopEntry';
+import FinanceDeferredLiabilityTable from './finance/FinanceDeferredLiabilityTable';
 import ExpensePayrollPanel from './finance/ExpensePayrollPanel';
+import FinanceLedgerPendingWireTable from './finance/FinanceLedgerPendingWireTable';
 import FinanceOverviewCards from './finance/FinanceOverviewCards';
+import FinancePendingRecognitionTable from './finance/FinancePendingRecognitionTable';
 import FinanceReportCharts from './finance/FinanceReportCharts';
+import FinanceTeacherSessionPayTable from './finance/FinanceTeacherSessionPayTable';
 import RevenueTable from './finance/RevenueTable';
 
 // Register ChartJS components
@@ -52,7 +70,7 @@ ChartJS.register(
   Filler
 );
 
-type FinanceSubTab = 'overview' | 'revenue' | 'expense' | 'target' | 'report';
+type FinanceSubTab = 'closed_loop' | 'overview' | 'revenue' | 'expense' | 'target' | 'report';
 
 type FinanceToastTone = 'info' | 'success';
 
@@ -63,6 +81,7 @@ interface FinanceToast {
 }
 
 const FINANCE_SUB_TABS: { id: FinanceSubTab; label: string }[] = [
+  { id: 'closed_loop', label: '财务闭环入口' },
   { id: 'overview', label: '营收总览' },
   { id: 'revenue', label: '收入与预收' },
   { id: 'expense', label: '支出与薪酬' },
@@ -84,7 +103,7 @@ const FINANCE_STAFF_TARGETS = [
 ];
 
 const Finance: React.FC = () => {
-  const [subTab, setSubTab] = useState<FinanceSubTab>('overview');
+  const [subTab, setSubTab] = useState<FinanceSubTab>('closed_loop');
   const [dateRange, setDateRange] = useState({ start: '2026-05-01', end: '2026-05-31' });
   const [orderFilter, setOrderFilter] = useState<FinanceOrderFilter>('all');
   const [toast, setToast] = useState<FinanceToast | null>(null);
@@ -177,6 +196,77 @@ const Finance: React.FC = () => {
     }),
     [periodOrders, periodRefunds]
   );
+
+  const closedLoopFivePillars = useMemo(
+    () =>
+      buildClosedLoopFivePillars({
+        payments: periodPayments,
+        refunds: periodRefunds,
+        ledgerEntries: periodLedgerEntries,
+        beginningDeferredRevenue: FINANCE_TARGET_FALLBACKS.beginningDeferredRevenue,
+      }),
+    [periodPayments, periodRefunds, periodLedgerEntries]
+  );
+
+  const closedLoopRefundRisks = useMemo(
+    () =>
+      buildClosedLoopRefundAssetRiskRows({
+        orders: MOCK_ORDERS,
+        payments: MOCK_PAYMENTS,
+        refunds: MOCK_REFUNDS,
+        memberAssets: MOCK_MEMBER_ASSETS,
+        ledgerEntries: MOCK_FINANCE_LEDGER_ENTRIES,
+      }),
+    []
+  );
+
+  const deferredLiabilityDetailRows = useMemo(
+    () =>
+      buildFinanceDeferredLiabilityDetailRows({
+        orders: MOCK_ORDERS,
+        contracts: MOCK_CONTRACTS,
+        members: MOCK_MEMBERS,
+        memberAssets: MOCK_MEMBER_ASSETS,
+        ledgerEntries: MOCK_FINANCE_LEDGER_ENTRIES,
+        refunds: MOCK_REFUNDS,
+      }),
+    []
+  );
+
+  const pendingRecognitionDetailRows = useMemo(
+    () =>
+      buildFinancePendingRecognitionDetailRows({
+        attendances: MOCK_ATTENDANCES,
+        bookings: MOCK_BOOKINGS,
+        courseSessions: MOCK_COURSE_SESSIONS,
+        members: MOCK_MEMBERS,
+        staffList: MOCK_STAFF_LIST,
+        ledgerEntries: MOCK_FINANCE_LEDGER_ENTRIES,
+      }),
+    []
+  );
+
+  const teacherSessionPayCheckRows = useMemo(
+    () =>
+      buildFinanceTeacherSessionPayCheckRows({
+        teacherChecks: MOCK_FINANCE_TEACHER_SESSION_PAY_CHECKS,
+        courseSessions: MOCK_COURSE_SESSIONS,
+        courses: MOCK_COURSES,
+        attendances: MOCK_ATTENDANCES,
+        bookings: MOCK_BOOKINGS,
+      }),
+    []
+  );
+
+  const ledgerPendingWireRows = useMemo(
+    () =>
+      buildFinanceLedgerPendingIntegrationRows({
+        ledgerEntries: MOCK_FINANCE_LEDGER_ENTRIES,
+        payments: MOCK_PAYMENTS,
+        refunds: MOCK_REFUNDS,
+      }),
+    []
+  );
   const incomeStructure = useMemo(
     () => buildFinanceIncomeStructure(periodOrders),
     [periodOrders]
@@ -246,6 +336,49 @@ const Finance: React.FC = () => {
         <div className="flex-1 overflow-y-auto p-8 custom-scroll">
             <div className="max-w-7xl mx-auto space-y-6">
 
+                {subTab === 'closed_loop' && (
+                    <FinanceClosedLoopEntry
+                        dateRangeLabel={`${dateRange.start} ~ ${dateRange.end}`}
+                        fivePillars={closedLoopFivePillars}
+                        pendingItems={pendingItems}
+                        refundAssetRisks={closedLoopRefundRisks}
+                        deferredLiabilityDetailCount={deferredLiabilityDetailRows.length}
+                        pendingRecognitionDetailCount={pendingRecognitionDetailRows.length}
+                        teacherSessionPayCheckCount={teacherSessionPayCheckRows.length}
+                        ledgerPendingWireRowCount={ledgerPendingWireRows.length}
+                        onNavigateToRevenueDeferred={() => {
+                          setSubTab('revenue');
+                          queueMicrotask(() => {
+                            document.getElementById('finance-detail-deferred')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                          });
+                        }}
+                        onNavigateToRevenuePending={() => {
+                          setSubTab('revenue');
+                          queueMicrotask(() => {
+                            document.getElementById('finance-detail-pending-recognition')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                          });
+                        }}
+                        onNavigateToRevenueTeacherPay={() => {
+                          setSubTab('revenue');
+                          queueMicrotask(() => {
+                            document.getElementById('finance-detail-teacher-session-pay')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                          });
+                        }}
+                        onNavigateToRevenueLedgerPending={() => {
+                          setSubTab('revenue');
+                          queueMicrotask(() => {
+                            document.getElementById('finance-detail-ledger-pending')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                          });
+                        }}
+                        orders={MOCK_ORDERS}
+                        contracts={MOCK_CONTRACTS}
+                        payments={MOCK_PAYMENTS}
+                        refunds={MOCK_REFUNDS}
+                        memberAssets={MOCK_MEMBER_ASSETS}
+                        ledgerEntries={MOCK_FINANCE_LEDGER_ENTRIES}
+                    />
+                )}
+
                 {/* --- TAB: OVERVIEW --- */}
                 {subTab === 'overview' && (
                     <div className="space-y-6 animate-fadeIn">
@@ -276,6 +409,14 @@ const Finance: React.FC = () => {
                             recognizedIncomeTotal={financeSummary.recognizedIncomeTotal}
                             endingDeferredRevenue={financeSummary.endingDeferredRevenue}
                         />
+
+                        <FinanceDeferredLiabilityTable rows={deferredLiabilityDetailRows} />
+
+                        <FinancePendingRecognitionTable rows={pendingRecognitionDetailRows} />
+
+                        <FinanceTeacherSessionPayTable rows={teacherSessionPayCheckRows} />
+
+                        <FinanceLedgerPendingWireTable rows={ledgerPendingWireRows} />
 
                         <RevenueTable
                             orderFilter={orderFilter}

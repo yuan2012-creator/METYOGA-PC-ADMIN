@@ -1,5 +1,6 @@
 
 import {
+  AlertItem,
   Attendance,
   Booking,
   CardProduct,
@@ -10,7 +11,7 @@ import {
   Member,
   MemberAsset,
   MHSData,
-  AlertItem,
+  MockTeacherSessionPayRecord,
   Order,
   Payment,
   PointProduct,
@@ -596,6 +597,7 @@ export const MOCK_FINANCE_LEDGER_ENTRIES: FinanceLedgerEntry[] = [
     direction: 'liability_decrease',
     occurredAt: '2026-05-05T10:55:00+08:00',
     description: '普拉提大器械消课确认',
+    courseSessionId: 'session-20260505-1000',
   },
   {
     id: 'ledger-003',
@@ -643,6 +645,31 @@ export const MOCK_FINANCE_LEDGER_ENTRIES: FinanceLedgerEntry[] = [
     direction: 'income',
     occurredAt: '2026-03-01T09:33:00+08:00',
     description: '瑜伽季卡收款',
+  },
+];
+
+/** 财务模块演示：老师场次课时费核对（只读 mock；不生成工资单；不写入正式结算数据） */
+export const MOCK_FINANCE_TEACHER_SESSION_PAY_CHECKS: MockTeacherSessionPayRecord[] = [
+  {
+    id: 'finance-tsp-001',
+    courseSessionId: 'session-20260505-1000',
+    teacherName: 'Mike',
+    amount: 280,
+    courseTypeLabel: '小班 · 普拉提大器械',
+  },
+  {
+    id: 'finance-tsp-002',
+    courseSessionId: 'session-20260505-1900',
+    teacherName: 'Anna',
+    amount: 220,
+    courseTypeLabel: '团课 · 流瑜伽',
+  },
+  {
+    id: 'finance-tsp-003',
+    courseSessionId: 'session-20260506-1100',
+    teacherName: 'Mike',
+    amount: 450,
+    courseTypeLabel: '私教 · 核心稳定',
   },
 ];
 
