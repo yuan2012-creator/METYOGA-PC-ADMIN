@@ -14,6 +14,7 @@ import {
 import MallCards from './mall/MallCards';
 import MallDataOverview from './mall/MallDataOverview';
 import MallContractCreate, { createInitialContractData, type MallContractData } from './mall/MallContractCreate';
+import MallAssetDetailDrawer from './mall/MallAssetDetailDrawer';
 import MallOrderDetailDrawer from './mall/MallOrderDetailDrawer';
 import MallOrders, { type MallOrderCategory, type MallOrderFilters } from './mall/MallOrders';
 import MallPoints from './mall/MallPoints';
@@ -108,6 +109,8 @@ const Mall: React.FC = () => {
   const [orderFilters, setOrderFilters] = useState<MallOrderFilters>({ date: 'all', type: 'all', status: 'all' });
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [isOrderDrawerOpen, setIsOrderDrawerOpen] = useState(false);
+  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
+  const [isAssetDrawerOpen, setIsAssetDrawerOpen] = useState(false);
 
   // Contract Creation State
   const [contractData, setContractData] = useState<MallContractData>(() => createInitialContractData());
@@ -204,6 +207,16 @@ const Mall: React.FC = () => {
   const closeOrderDetailDrawer = () => {
       setIsOrderDrawerOpen(false);
       setSelectedOrderId(null);
+  };
+
+  const openAssetDetail = (assetId: string) => {
+      setSelectedAssetId(assetId);
+      setIsAssetDrawerOpen(true);
+  };
+
+  const closeAssetDetail = () => {
+      setIsAssetDrawerOpen(false);
+      setSelectedAssetId(null);
   };
 
   const handleGrantMemberAssetForOrder = (orderId: string) => {
@@ -493,6 +506,7 @@ const Mall: React.FC = () => {
           setOrderFilters={setOrderFilters}
           onDemoAction={showToast}
           onOpenOrderDetail={openOrderDetailDrawer}
+          onOpenAssetDetail={openAssetDetail}
       />
   );
 
@@ -606,6 +620,21 @@ const Mall: React.FC = () => {
                 ttcCourses={ttcCourses}
                 pointProducts={products}
                 onGrantMemberAssetForOrder={handleGrantMemberAssetForOrder}
+                onOpenAssetDetail={openAssetDetail}
+            />
+        )}
+
+        {isAssetDrawerOpen && (
+            <MallAssetDetailDrawer
+                open={isAssetDrawerOpen}
+                assetId={selectedAssetId}
+                onClose={closeAssetDetail}
+                orders={orders}
+                contracts={contracts}
+                payments={payments}
+                refunds={refunds}
+                memberAssets={memberAssets}
+                members={MOCK_MEMBERS}
             />
         )}
 

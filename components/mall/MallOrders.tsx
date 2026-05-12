@@ -21,6 +21,7 @@ interface MallOrdersProps {
   setOrderFilters: React.Dispatch<React.SetStateAction<MallOrderFilters>>;
   onDemoAction: (message: string) => void;
   onOpenOrderDetail: (orderId: string) => void;
+  onOpenAssetDetail?: (assetId: string) => void;
 }
 
 const MallOrders: React.FC<MallOrdersProps> = ({
@@ -34,6 +35,7 @@ const MallOrders: React.FC<MallOrdersProps> = ({
   setOrderFilters,
   onDemoAction,
   onOpenOrderDetail,
+  onOpenAssetDetail,
 }) => {
   const renderOrders = () => {
       const detailedOrders = buildMallOrderRows({ orders, contracts, members, assetSourceLinks });
@@ -186,6 +188,18 @@ const MallOrders: React.FC<MallOrdersProps> = ({
                                   </td>
                                   <td className="p-4 text-xs text-gray-400 font-mono">{order.time}</td>
                                   <td className="p-4 text-right pr-6">
+                                      {order.linkedAssetId && onOpenAssetDetail ? (
+                                          <button
+                                              type="button"
+                                              onClick={e => {
+                                                  e.stopPropagation();
+                                                  onOpenAssetDetail(order.linkedAssetId);
+                                              }}
+                                              className="text-gray-600 hover:underline text-xs font-bold mr-3"
+                                          >
+                                              查看资产
+                                          </button>
+                                      ) : null}
                                       <button
                                           type="button"
                                           onClick={(e) => {

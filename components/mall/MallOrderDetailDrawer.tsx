@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import type {
   CardProduct,
+  Contract,
   Member,
   MemberAsset,
   Order,
@@ -19,6 +20,7 @@ import {
   formatMallMoneyYuan,
   getMallProductBusinessTypeLabel,
   labelMallContractStatusZh,
+  labelMallContractTemplateZh,
   labelMallMemberAssetStatusZh,
   labelMallOrderStatusZh,
   labelMallPaymentMethodZh,
@@ -45,14 +47,8 @@ export interface MallOrderDetailDrawerProps {
   ttcCourses: MallTtcCourse[];
   pointProducts: PointProduct[];
   onGrantMemberAssetForOrder?: (orderId: string) => void;
+  onOpenAssetDetail?: (assetId: string) => void;
 }
-
-const contractTemplateLabel = (templateId?: string): string => {
-  if (!templateId?.trim()) return '暂未记录';
-  if (templateId === 'template-card-standard') return '标准卡项合同模板';
-  if (templateId === 'template-ttc-standard') return '标准教培合同模板';
-  return '暂未记录';
-};
 
 const resolveItemTypeLabel = (productType: OrderItem['productType']): string =>
   getMallProductBusinessTypeLabel(productType);
@@ -88,6 +84,7 @@ const MallOrderDetailDrawer: React.FC<MallOrderDetailDrawerProps> = ({
   ttcCourses,
   pointProducts,
   onGrantMemberAssetForOrder,
+  onOpenAssetDetail,
 }) => {
   const productCatalog = useMemo(() => {
     const map = new Map<string, string>();
@@ -206,7 +203,7 @@ const MallOrderDetailDrawer: React.FC<MallOrderDetailDrawerProps> = ({
               <Row label="合同名称" value={ctx.contract.title?.trim() || '暂未记录'} />
               <Row label="合同状态" value={labelMallContractStatusZh(ctx.contract.status)} />
               <Row label="签署时间" value={formatMallDateTimeDisplay(ctx.contract.signedAt)} />
-              <Row label="合同模板" value={contractTemplateLabel(ctx.contract.templateId)} />
+              <Row label="合同模板" value={labelMallContractTemplateZh(ctx.contract.templateId)} />
               <Row label="关联订单" value="与本订单一致" />
             </div>
           )}
@@ -268,13 +265,31 @@ const MallOrderDetailDrawer: React.FC<MallOrderDetailDrawerProps> = ({
         ) : (
           <div className="space-y-3">
             {ctx.orderAssets.map(asset => (
-              <div key={asset.id} className="rounded-lg border border-gray-100 p-3 bg-gray-50/50 space-y-0">
+              <div
+                key={asset.id}
+                role={onOpenAssetDetail ? 'button' : undefined}
+                tabIndex={onOpenAssetDetail ? 0 : undefined}
+                onClick={() => onOpenAssetDetail?.(asset.id)}
+                onKeyDown={e => {
+                  if (!onOpenAssetDetail) return;
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onOpenAssetDetail(asset.id);
+                  }
+                }}
+                className={`rounded-lg border border-gray-100 p-3 bg-gray-50/50 space-y-0 ${
+                  onOpenAssetDetail ? 'cursor-pointer hover:border-gray-300 hover:bg-white/70' : ''
+                }`}
+              >
                 <Row label="是否已发放" value={asset.status === 'effective' ? '是' : '已登记（未生效）'} />
                 <Row label="资产名称" value={asset.name} />
                 <Row label="资产状态" value={labelMallMemberAssetStatusZh(asset.status)} />
                 <Row label="初始权益" value={formatMallAssetInitialSummary(asset)} />
                 <Row label="剩余权益" value={formatMallAssetEquitySummary(asset)} />
-                <Row label="有效期" value={`${formatMallDateTimeDisplay(asset.effectiveDate)} ～ ${formatMallDateTimeDisplay(asset.expiryDate)}`} />
+                <Row
+                  label="有效期"
+                  value={`${formatMallDateTimeDisplay(asset.effectiveDate)} ～ ${formatMallDateTimeDisplay(asset.expiryDate)}`}
+                />
                 <Row
                   label="来源订单"
                   value={asset.sourceOrderId === ctx.order.id ? '与本订单一致' : '暂未记录'}
@@ -287,6 +302,11 @@ const MallOrderDetailDrawer: React.FC<MallOrderDetailDrawerProps> = ({
                       : '暂未记录'
                   }
                 />
+                {onOpenAssetDetail && (
+                  <div className="flex justify-end pt-2 mt-2 border-t border-gray-100">
+                    <span className="text-[10px] font-bold text-gray-700">查看资产</span>
+                  </div>
+                )}
                 {asset.mallGrantRecordNote?.trim() && (
                   <p className="text-[10px] text-slate-600 mt-2 pt-2 border-t border-sky-100 bg-sky-50/60 rounded-lg px-2 py-2 leading-relaxed">
                     {MALL_MODULE_ASSET_SCOPE_COPY}

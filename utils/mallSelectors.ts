@@ -64,6 +64,8 @@ export interface MallOrderRow {
   sourceSummary: string;
   assetSourceLabel: string;
   hasAssetSource: boolean;
+  /** 与本订单关联的会员资产编号（用于打开资产详情） */
+  linkedAssetId?: string;
 }
 
 export interface MallContractSourceSummary {
@@ -219,7 +221,8 @@ export const buildMallOrderRows = ({
   orders.map(order => {
     const item = getOrderPrimaryItem(order);
     const member = members.find(user => user.id === order.memberId);
-    const assetLink = assetSourceLinks.find(link => link.sourceOrderId === order.id);
+    const orderLinks = assetSourceLinks.filter(link => link.sourceOrderId === order.id);
+    const assetLink = orderLinks[0];
     const contract = contracts.find(contractItem => contractItem.id === order.contractId || contractItem.orderId === order.id);
     const contractDisplay = getContractDisplay(contract);
     const productType = (item?.productType ?? 'custom') as MallProductSourceType;
@@ -252,6 +255,7 @@ export const buildMallOrderRows = ({
           : assetLine,
       assetSourceLabel: assetLink?.sourceLabel ?? '未生成会员资产',
       hasAssetSource: Boolean(assetLink),
+      linkedAssetId: orderLinks.length === 1 ? orderLinks[0]?.assetId : undefined,
     };
   });
 
@@ -547,6 +551,58 @@ export const formatMallAssetInitialSummary = (asset: MemberAsset): string => {
   return '暂未记录';
 };
 
+export const formatMallAssetUsedSummary = (asset: MemberAsset): string => {
+  const { balanceType, totalAmount, remainingAmount } = asset;
+  const t = totalAmount;
+  const r = remainingAmount;
+  if (balanceType === 'time' || balanceType === 'count' || balanceType === 'course') {
+    if (t == null || r == null) return '暂未记录';
+    const used = Math.max(0, t - r);
+    const unit = balanceType === 'time' ? '天' : '次';
+    return `已用 ${used} ${unit}`;
+  }
+  if (balanceType === 'value') {
+    if (t == null || r == null) return '暂未记录';
+    const used = Math.max(0, t - r);
+    return `已用额度 ${formatMallMoneyYuan(used)}`;
+  }
+  if (balanceType === 'points') {
+    if (t == null || r == null) return '暂未记录';
+    const used = Math.max(0, t - r);
+    return `已用 ${used} 积分`;
+  }
+  return '暂未记录';
+};
+
+/** 合同模板展示名（门店经营口径） */
+export const labelMallContractTemplateZh = (templateId?: string): string => {
+  if (!templateId?.trim()) return '暂未记录';
+  if (templateId === 'template-card-standard') return '标准卡项合同模板';
+  if (templateId === 'template-ttc-standard') return '标准教培合同模板';
+  return '暂未记录';
+};
+
+export const mallAssetIsPastExpiryClock = (expiryIso: string | undefined, now: Date): boolean => {
+  if (!expiryIso?.trim()) return false;
+  const t = new Date(expiryIso).getTime();
+  if (Number.isNaN(t)) return false;
+  return t < now.getTime();
+};
+
+/** 未过期且剩余有效期在指定天数内 */
+export const mallAssetExpiryWithinDaysAhead = (
+  expiryIso: string | undefined,
+  now: Date,
+  days: number
+): boolean => {
+  if (!expiryIso?.trim()) return false;
+  const exp = new Date(expiryIso).getTime();
+  if (Number.isNaN(exp)) return false;
+  const msLeft = exp - now.getTime();
+  if (msLeft < 0) return false;
+  return msLeft <= days * 86400000;
+};
+
 export const formatMallAssetEquitySummary = (asset: MemberAsset): string => {
   const { balanceType, totalAmount, remainingAmount } = asset;
   if (balanceType === 'time') {
@@ -653,6 +709,63 @@ export const buildMallOrderDetailRiskMessages = ({
     }
   }
 
+  return messages;
+};
+
+export const buildMallAssetDetailRiskMessages = ({
+  asset,
+  order,
+  contract,
+  refunds,
+  now = new Date(),
+}: {
+  asset: MemberAsset;
+  order?: Order;
+  contract?: Contract;
+  refunds: Refund[];
+  now?: Date;
+}): string[] => {
+  const messages: string[] = [];
+  const pushUnique = (text: string) => {
+    if (!messages.includes(text)) messages.push(text);
+  };
+
+  const usable = asset.status === 'effective' && (asset.remainingAmount ?? 0) > 0;
+  const orderRefunds = asset.sourceOrderId
+    ? refunds.filter(r => r.orderId === asset.sourceOrderId)
+    : [];
+  const missingSourceOrder = !asset.sourceOrderId || !order;
+  const hasOrderRefundSignal =
+    Boolean(order) &&
+    (order!.status === 'refunded' ||
+      order!.status === 'partially_refunded' ||
+      orderRefunds.length > 0);
+
+  if (usable && hasOrderRefundSignal) {
+    pushUnique('订单存在退款记录，请核对会员资产状态。');
+  }
+  if (usable && missingSourceOrder) {
+    pushUnique('当前资产缺少来源订单记录。');
+  }
+  if (usable && !contract) {
+    pushUnique('当前资产缺少关联合同记录。');
+  }
+  if (asset.status === 'expired' && (asset.remainingAmount ?? 0) > 0) {
+    pushUnique('资产已过期但仍有剩余权益，请核对处理规则。');
+  }
+  if (mallAssetExpiryWithinDaysAhead(asset.expiryDate, now, 30)) {
+    pushUnique('资产即将到期，请关注续费或使用提醒。');
+  }
+  const rem = asset.remainingAmount ?? 0;
+  if (rem > 0 && rem <= 3) {
+    pushUnique('剩余权益较低，请关注续费跟进。');
+  }
+  if (asset.mallGrantRecordNote?.trim()) {
+    pushUnique('该资产记录已在产品与合同模块生成，会员经营同步与财务证据链需后续接入统一服务。');
+  }
+  if (messages.length === 0) {
+    pushUnique('资产来源、合同与权益状态暂无明显异常。');
+  }
   return messages;
 };
 
