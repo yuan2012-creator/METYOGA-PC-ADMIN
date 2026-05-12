@@ -680,6 +680,22 @@ export interface MallRefundRequestPreviewDto {
   suggestedAssetHandleType: RefundAssetHandleType;
 }
 
+/**
+ * 产品与合同模块内「退款申请草稿」（仅存页面 state，非业务 Refund、不驱动入账）。
+ */
+export interface MallRefundRequestDraft {
+  id: string;
+  orderId: OrderId;
+  assetId?: string;
+  refundType: RefundType;
+  requestedAmount: number;
+  refundReason: string;
+  assetHandleType: RefundAssetHandleType;
+  operationNote: string;
+  attachmentNote: string;
+  updatedAt: ISODateString;
+}
+
 /** 会员资产转卡记录（可选展示模型，当前不接真实数据） */
 export type AssetTransferRecordStatus =
   | 'requested'

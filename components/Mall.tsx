@@ -36,7 +36,17 @@ import type {
   MallTtcEditorItem,
   PointProductTab,
 } from './mall/mallTypes';
-import type { CardProduct, Contract, Member, MemberAsset, Order, Payment, PointProduct, Refund } from '../types';
+import type {
+  CardProduct,
+  Contract,
+  MallRefundRequestDraft,
+  Member,
+  MemberAsset,
+  Order,
+  Payment,
+  PointProduct,
+  Refund,
+} from '../types';
 import {
   buildMallAssetSourceLinks,
   buildMallClosureSummary,
@@ -58,6 +68,7 @@ import {
   resolveMallGrantProduct,
   selectGrantPaymentForOrder,
 } from '../utils/mallAssetGrant';
+import { getRefundRequestDraftKey } from '../utils/mallRefundRequest';
 
 // --- Constants ---
 const AVAILABLE_VENUES = ['万象城馆', '西湖旗舰馆', '滨江宝龙馆', '城西银泰馆'];
@@ -116,6 +127,7 @@ const Mall: React.FC = () => {
     orderId: string;
     assetId?: string | null;
   } | null>(null);
+  const [refundRequestDrafts, setRefundRequestDrafts] = useState<Record<string, MallRefundRequestDraft>>({});
 
   // Contract Creation State
   const [contractData, setContractData] = useState<MallContractData>(() => createInitialContractData());
@@ -231,6 +243,41 @@ const Mall: React.FC = () => {
   const closeRefundRequestDrawer = () => {
       setRefundRequestDrawer(null);
   };
+
+  const handleSaveRefundRequestDraft = (draft: MallRefundRequestDraft) => {
+      const key = getRefundRequestDraftKey(draft.orderId, draft.assetId);
+      setRefundRequestDrafts(prev => ({ ...prev, [key]: draft }));
+      showToast(
+          '退款申请草稿已保存。本记录仅保存在产品与合同模块内，正式提交需接入审批、资产处理、财务记录与操作日志。',
+          'success'
+      );
+  };
+
+  const refundDrawerDraftKey = refundRequestDrawer
+      ? getRefundRequestDraftKey(refundRequestDrawer.orderId, refundRequestDrawer.assetId)
+      : null;
+  const refundDrawerExistingDraft =
+      refundDrawerDraftKey && refundRequestDrafts[refundDrawerDraftKey]
+          ? refundRequestDrafts[refundDrawerDraftKey]
+          : null;
+
+  const orderRefundDraftKey =
+      selectedOrderId !== null ? getRefundRequestDraftKey(selectedOrderId, null) : null;
+  const orderRefundDraftSavedAt =
+      orderRefundDraftKey && refundRequestDrafts[orderRefundDraftKey]
+          ? refundRequestDrafts[orderRefundDraftKey].updatedAt
+          : null;
+
+  const assetDraftHintAsset =
+      selectedAssetId !== null ? memberAssets.find(a => a.id === selectedAssetId) : undefined;
+  const assetRefundDraftKey =
+      assetDraftHintAsset?.sourceOrderId
+          ? getRefundRequestDraftKey(assetDraftHintAsset.sourceOrderId, assetDraftHintAsset.id)
+          : null;
+  const assetRefundDraftSavedAt =
+      assetRefundDraftKey && refundRequestDrafts[assetRefundDraftKey]
+          ? refundRequestDrafts[assetRefundDraftKey].updatedAt
+          : null;
 
   const handleGrantMemberAssetForOrder = (orderId: string) => {
       const order = orders.find(o => o.id === orderId);
@@ -635,6 +682,7 @@ const Mall: React.FC = () => {
                 onGrantMemberAssetForOrder={handleGrantMemberAssetForOrder}
                 onOpenAssetDetail={openAssetDetail}
                 onOpenRefundRequest={openRefundRequestDrawer}
+                refundRequestDraftSavedAt={orderRefundDraftSavedAt}
             />
         )}
 
@@ -650,6 +698,7 @@ const Mall: React.FC = () => {
                 memberAssets={memberAssets}
                 members={MOCK_MEMBERS}
                 onOpenRefundRequest={openRefundRequestDrawer}
+                refundRequestDraftSavedAt={assetRefundDraftSavedAt}
             />
         )}
 
@@ -659,6 +708,8 @@ const Mall: React.FC = () => {
                 orderId={refundRequestDrawer.orderId}
                 assetId={refundRequestDrawer.assetId}
                 onClose={closeRefundRequestDrawer}
+                onSaveDraft={handleSaveRefundRequestDraft}
+                existingDraft={refundDrawerExistingDraft}
                 orders={orders}
                 contracts={contracts}
                 payments={payments}

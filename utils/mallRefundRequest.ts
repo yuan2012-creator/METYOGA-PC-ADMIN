@@ -3,6 +3,7 @@ import type {
   MallRefundRequestPreviewDto,
   MemberAsset,
   Order,
+  OrderId,
   Payment,
   Refund,
   RefundAssetHandleType,
@@ -10,6 +11,12 @@ import type {
 
 const isEffectivePayment = (p: Payment): boolean =>
   p.status === 'paid' || p.status === 'reconciled';
+
+/** 草稿在页面 state 中的键：有资产时 orderId::assetId，仅订单视角时 orderId::order */
+export function getRefundRequestDraftKey(orderId: OrderId, assetId?: string | null): string {
+  const suffix = assetId?.trim() ? assetId.trim() : 'order';
+  return `${orderId}::${suffix}`;
+}
 
 export function canOpenRefundRequest({
   order,

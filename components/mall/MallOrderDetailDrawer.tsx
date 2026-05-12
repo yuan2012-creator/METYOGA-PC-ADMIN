@@ -52,6 +52,8 @@ export interface MallOrderDetailDrawerProps {
   onGrantMemberAssetForOrder?: (orderId: string) => void;
   onOpenAssetDetail?: (assetId: string) => void;
   onOpenRefundRequest?: (payload: { orderId: string; assetId?: string | null }) => void;
+  /** 本模块退款申请草稿最近保存时间（仅订单视角 key） */
+  refundRequestDraftSavedAt?: string | null;
 }
 
 const resolveItemTypeLabel = (productType: OrderItem['productType']): string =>
@@ -97,6 +99,7 @@ const MallOrderDetailDrawer: React.FC<MallOrderDetailDrawerProps> = ({
   onGrantMemberAssetForOrder,
   onOpenAssetDetail,
   onOpenRefundRequest,
+  refundRequestDraftSavedAt,
 }) => {
   const productCatalog = useMemo(() => {
     const map = new Map<string, string>();
@@ -392,6 +395,11 @@ const MallOrderDetailDrawer: React.FC<MallOrderDetailDrawerProps> = ({
         <p className="text-[10px] text-slate-600 mb-3 leading-relaxed rounded-lg border border-slate-200/80 bg-slate-50/90 px-3 py-2.5">
           退款申请功能当前仅为流程设计入口，正式版本需接入审批、资产处理、财务记录与操作日志。
         </p>
+        {refundRequestDraftSavedAt && (
+          <p className="text-[10px] text-amber-900 mb-3 leading-relaxed rounded-lg border border-amber-200 bg-amber-50/90 px-3 py-2.5">
+            本模块已有退款申请草稿，尚未正式提交。最近保存：{formatMallDateTimeDisplay(refundRequestDraftSavedAt)}
+          </p>
+        )}
         {refundRequestGate?.allowed && onOpenRefundRequest ? (
           <button
             type="button"
