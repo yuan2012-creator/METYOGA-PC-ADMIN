@@ -9,7 +9,11 @@ import type {
   RefundAssetHandleType,
   RefundType,
 } from '../../types';
-import { buildRefundRequestPreview, canOpenRefundRequest } from '../../utils/mallRefundRequest';
+import {
+  buildRefundRequestPreview,
+  canOpenRefundRequest,
+  validateRefundRequestDraftForSubmit,
+} from '../../utils/mallRefundRequest';
 import {
   formatMallAssetEquitySummary,
   formatMallAssetUsedSummary,
@@ -186,6 +190,50 @@ const MallRefundRequestDrawer: React.FC<MallRefundRequestDrawerProps> = ({
     if (n > cap) msgs.push('申请金额超过当前可申请退款上限，请核对。');
     return msgs;
   }, [ctx, requestedAmountStr]);
+
+  const draftForSubmitValidation = useMemo((): MallRefundRequestDraft | null => {
+    if (!ctx) return null;
+    const raw = requestedAmountStr.trim();
+    const requestedAmount =
+      raw === '' || Number.isNaN(Number(raw)) ? Number.NaN : Number(raw);
+    return {
+      id: draftId,
+      orderId: ctx.order.id,
+      assetId: assetId?.trim() || undefined,
+      refundType,
+      requestedAmount,
+      refundReason,
+      assetHandleType,
+      operationNote,
+      attachmentNote,
+      updatedAt: existingDraft?.updatedAt ?? new Date().toISOString(),
+    };
+  }, [
+    ctx,
+    draftId,
+    assetId,
+    refundType,
+    requestedAmountStr,
+    refundReason,
+    assetHandleType,
+    operationNote,
+    attachmentNote,
+    existingDraft?.updatedAt,
+  ]);
+
+  const submitValidation = useMemo(() => {
+    if (!ctx || !draftForSubmitValidation) return null;
+    return validateRefundRequestDraftForSubmit({
+      draft: draftForSubmitValidation,
+      order: ctx.order,
+      asset: ctx.asset ?? null,
+      contract: ctx.contract ?? null,
+      payments,
+      refunds,
+      preview: ctx.preview,
+      gate: ctx.gate,
+    });
+  }, [ctx, draftForSubmitValidation, payments, refunds]);
 
   if (!open) return null;
 
@@ -384,8 +432,48 @@ const MallRefundRequestDrawer: React.FC<MallRefundRequestDrawerProps> = ({
         </ul>
       </Section>
 
+      {submitValidation && (
+        <Section title="4. 提交前校验">
+          <p className="text-[10px] text-gray-500 mb-3 leading-relaxed">
+            以下为基于当前表单与订单信息的提交前核对结果，不写入登记流水、不改变订单与资产状态。
+          </p>
+          {submitValidation.blockingMessages.length > 0 ? (
+            <div className="mb-3 rounded-lg border border-red-100 bg-red-50/90 px-3 py-2.5">
+              <div className="text-[10px] font-black text-red-900 mb-1.5">阻断项</div>
+              <ul className="text-[11px] text-red-900 space-y-1 list-disc pl-4">
+                {submitValidation.blockingMessages.map((t, i) => (
+                  <li key={i}>暂不可提交：{t}</li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <p className="text-[11px] text-emerald-900 mb-3 rounded-lg border border-emerald-100 bg-emerald-50/90 px-3 py-2.5 leading-relaxed">
+              当前草稿已通过基础校验，但提交功能仍待接入。
+            </p>
+          )}
+          {submitValidation.warningMessages.length > 0 && (
+            <div className="mb-3 rounded-lg border border-amber-100 bg-amber-50/80 px-3 py-2.5">
+              <div className="text-[10px] font-black text-amber-900 mb-1.5">风险提醒</div>
+              <ul className="text-[11px] text-amber-900 space-y-1 list-disc pl-4">
+                {submitValidation.warningMessages.map((t, i) => (
+                  <li key={i}>请核对：{t}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          <div className="rounded-lg border border-slate-200 bg-slate-50/90 px-3 py-2.5">
+            <div className="text-[10px] font-black text-slate-700 mb-1.5">提交前确认</div>
+            <ul className="text-[11px] text-slate-700 space-y-1 list-disc pl-4">
+              {submitValidation.confirmationMessages.map((t, i) => (
+                <li key={i}>需确认：{t}</li>
+              ))}
+            </ul>
+          </div>
+        </Section>
+      )}
+
       <section className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
-        <h3 className="text-xs font-black text-gray-600 mb-2">4. 提交说明</h3>
+        <h3 className="text-xs font-black text-gray-600 mb-2">5. 提交说明</h3>
         <p className="text-[11px] text-gray-600 leading-relaxed">
           提交申请功能待接入，正式版本需审批、资产处理、财务记录与操作日志。
         </p>
@@ -463,7 +551,7 @@ const MallRefundRequestDrawer: React.FC<MallRefundRequestDrawerProps> = ({
           </button>
         </div>
         <p className="text-[10px] text-center text-gray-500 px-4 pb-3 bg-white leading-relaxed">
-          「提交申请」已禁用；正式提交流程待接入。
+          提交申请功能待接入。当前仅完成提交前校验，不会生成退款记录。
         </p>
       </aside>
     </div>

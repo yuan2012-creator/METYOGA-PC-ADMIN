@@ -696,6 +696,14 @@ export interface MallRefundRequestDraft {
   updatedAt: ISODateString;
 }
 
+/** 退款申请「提交前校验」结果（仅展示，不驱动真实提交） */
+export interface MallRefundRequestSubmitValidation {
+  canSubmit: boolean;
+  blockingMessages: string[];
+  warningMessages: string[];
+  confirmationMessages: string[];
+}
+
 /** 会员资产转卡记录（可选展示模型，当前不接真实数据） */
 export type AssetTransferRecordStatus =
   | 'requested'
