@@ -21,6 +21,7 @@ import {
   mallAssetIsPastExpiryClock,
   summarizeMallHeaderPaymentStateZh,
 } from '../../utils/mallSelectors';
+import { canOpenRefundRequest } from '../../utils/mallRefundRequest';
 
 export interface MallAssetDetailDrawerProps {
   open: boolean;
@@ -32,6 +33,7 @@ export interface MallAssetDetailDrawerProps {
   refunds: Refund[];
   memberAssets: MemberAsset[];
   members: Member[];
+  onOpenRefundRequest?: (payload: { orderId: string; assetId?: string | null }) => void;
 }
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
@@ -83,6 +85,7 @@ const MallAssetDetailDrawer: React.FC<MallAssetDetailDrawerProps> = ({
   refunds,
   memberAssets,
   members,
+  onOpenRefundRequest,
 }) => {
   const now = useMemo(() => new Date(), []);
 
@@ -135,6 +138,26 @@ const MallAssetDetailDrawer: React.FC<MallAssetDetailDrawerProps> = ({
       canReserve,
     };
   }, [assetId, memberAssets, members, orders, contracts, payments, refunds, now]);
+
+  const refundEntry = useMemo(() => {
+    if (!ctx) return null;
+    const effectiveOrderPayments = ctx.orderPayments.filter(
+      p => p.status === 'paid' || p.status === 'reconciled'
+    );
+    const refundSourceComplete = Boolean(ctx.order && ctx.contract && effectiveOrderPayments.length > 0);
+    if (!refundSourceComplete) {
+      return { incomplete: true as const };
+    }
+    const gate = canOpenRefundRequest({
+      order: ctx.order!,
+      asset: ctx.asset,
+      contract: ctx.contract,
+      payments,
+      refunds,
+      memberAssets,
+    });
+    return { incomplete: false as const, gate };
+  }, [ctx, payments, refunds, memberAssets]);
 
   if (!open) return null;
 
@@ -281,7 +304,31 @@ const MallAssetDetailDrawer: React.FC<MallAssetDetailDrawerProps> = ({
         </p>
       </Section>
 
-      <Section title="5. 风险与待处理">
+      <Section title="5. 退款申请入口">
+        <p className="text-[10px] text-slate-600 mb-3 leading-relaxed rounded-lg border border-slate-200/80 bg-slate-50/90 px-3 py-2.5">
+          退款申请功能当前仅为流程设计入口，正式版本需接入审批、资产处理、财务记录与操作日志。
+        </p>
+        {!refundEntry.incomplete && refundEntry.gate.allowed && onOpenRefundRequest ? (
+          <button
+            type="button"
+            onClick={() =>
+              onOpenRefundRequest({ orderId: ctx.order.id, assetId: ctx.asset.id })
+            }
+            className="w-full py-2.5 rounded-xl text-xs font-bold bg-orange-600 text-white hover:bg-orange-700 transition shadow-sm shadow-orange-600/20"
+          >
+            申请退款
+          </button>
+        ) : (
+          <p className="text-xs text-gray-500 bg-gray-100 border border-gray-200 rounded-lg p-3 leading-relaxed">
+            暂不可申请退款：
+            {refundEntry?.incomplete
+              ? '资产来源信息不完整。'
+              : refundEntry?.gate.reason ?? '当前条件不满足。'}
+          </p>
+        )}
+      </Section>
+
+      <Section title="6. 风险与待处理">
         <ul className="text-xs text-gray-800 space-y-2 list-disc pl-4">
           {ctx.risks.map((t, i) => (
             <li key={i}>{t}</li>
@@ -292,7 +339,7 @@ const MallAssetDetailDrawer: React.FC<MallAssetDetailDrawerProps> = ({
         </p>
       </Section>
 
-      <Section title="6. 操作记录">
+      <Section title="7. 操作记录">
         <p className="text-xs text-gray-600 leading-relaxed">
           当前仅展示资产关键节点。正式版本需接入操作日志，记录资产生成、退款处理、转卡、冻结、解冻与人工修改记录。
         </p>

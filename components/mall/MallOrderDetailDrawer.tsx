@@ -12,6 +12,7 @@ import type {
 } from '../../types';
 import type { MallTtcCourse } from './MallTtc';
 import { canGrantMemberAssetForOrder } from '../../utils/mallAssetGrant';
+import { canOpenRefundRequest } from '../../utils/mallRefundRequest';
 import {
   buildMallOrderDetailRiskMessages,
   formatMallAssetEquitySummary,
@@ -50,6 +51,7 @@ export interface MallOrderDetailDrawerProps {
   pointProducts: PointProduct[];
   onGrantMemberAssetForOrder?: (orderId: string) => void;
   onOpenAssetDetail?: (assetId: string) => void;
+  onOpenRefundRequest?: (payload: { orderId: string; assetId?: string | null }) => void;
 }
 
 const resolveItemTypeLabel = (productType: OrderItem['productType']): string =>
@@ -94,6 +96,7 @@ const MallOrderDetailDrawer: React.FC<MallOrderDetailDrawerProps> = ({
   pointProducts,
   onGrantMemberAssetForOrder,
   onOpenAssetDetail,
+  onOpenRefundRequest,
 }) => {
   const productCatalog = useMemo(() => {
     const map = new Map<string, string>();
@@ -133,6 +136,22 @@ const MallOrderDetailDrawer: React.FC<MallOrderDetailDrawerProps> = ({
       risks,
     };
   }, [orderId, orders, contracts, payments, refunds, memberAssets, members, productCatalog]);
+
+  const refundRequestGate = useMemo(() => {
+    if (!orderId) return null;
+    const order = orders.find(o => o.id === orderId);
+    if (!order) return null;
+    const contract =
+      contracts.find(c => c.id === order.contractId) ?? contracts.find(c => c.orderId === order.id);
+    return canOpenRefundRequest({
+      order,
+      asset: null,
+      contract,
+      payments,
+      refunds,
+      memberAssets,
+    });
+  }, [orderId, orders, contracts, payments, refunds, memberAssets]);
 
   const grantCheck = useMemo(() => {
     if (!orderId) return { allowed: false as const, reason: '' };
@@ -334,8 +353,29 @@ const MallOrderDetailDrawer: React.FC<MallOrderDetailDrawerProps> = ({
           <div className="space-y-2">
             {ctx.orderRefunds.map(r => (
               <div key={r.id} className="rounded-lg border border-gray-100 px-3 bg-gray-50/50">
+                <Row label="退款编号" value={r.refundNo?.trim() || '暂未记录'} />
                 <Row label="退款类型" value={labelMallRefundTypeZh(r.refundType)} />
                 <Row label="退款金额" value={formatMallMoneyYuan(r.amount)} />
+                <Row
+                  label="申请金额"
+                  value={
+                    r.requestedAmount !== undefined &&
+                    r.requestedAmount !== null &&
+                    !Number.isNaN(Number(r.requestedAmount))
+                      ? formatMallMoneyYuan(r.requestedAmount)
+                      : '暂未记录'
+                  }
+                />
+                <Row
+                  label="核准金额"
+                  value={
+                    r.approvedAmount !== undefined &&
+                    r.approvedAmount !== null &&
+                    !Number.isNaN(Number(r.approvedAmount))
+                      ? formatMallMoneyYuan(r.approvedAmount)
+                      : '暂未记录'
+                  }
+                />
                 <Row label="资产处理方式" value={labelMallRefundAssetHandleTypeZh(r.assetHandleType)} />
                 <Row label="处理状态" value={labelMallRefundStatusZh(r.status)} />
                 <Row label="申请时间" value={formatMallDateTimeDisplay(r.requestedAt)} />
@@ -348,7 +388,26 @@ const MallOrderDetailDrawer: React.FC<MallOrderDetailDrawerProps> = ({
         )}
       </Section>
 
-      <Section title="5. 风险与待处理">
+      <Section title="5. 退款申请入口">
+        <p className="text-[10px] text-slate-600 mb-3 leading-relaxed rounded-lg border border-slate-200/80 bg-slate-50/90 px-3 py-2.5">
+          退款申请功能当前仅为流程设计入口，正式版本需接入审批、资产处理、财务记录与操作日志。
+        </p>
+        {refundRequestGate?.allowed && onOpenRefundRequest ? (
+          <button
+            type="button"
+            onClick={() => onOpenRefundRequest({ orderId: ctx.order.id })}
+            className="w-full py-2.5 rounded-xl text-xs font-bold bg-orange-600 text-white hover:bg-orange-700 transition shadow-sm shadow-orange-600/20"
+          >
+            申请退款
+          </button>
+        ) : (
+          <p className="text-xs text-gray-500 bg-gray-100 border border-gray-200 rounded-lg p-3 leading-relaxed">
+            暂不可申请退款：{refundRequestGate?.reason ?? '当前条件不满足。'}
+          </p>
+        )}
+      </Section>
+
+      <Section title="6. 风险与待处理">
         <ul className="text-xs text-gray-800 space-y-2 list-disc pl-4">
           {ctx.risks.map((t, i) => (
             <li key={i}>{t}</li>
@@ -359,7 +418,7 @@ const MallOrderDetailDrawer: React.FC<MallOrderDetailDrawerProps> = ({
         </p>
       </Section>
 
-      <Section title="6. 操作记录">
+      <Section title="7. 操作记录">
         <p className="text-xs text-gray-600 leading-relaxed">
           当前仅展示订单关键节点。正式版本需接入操作日志，记录创建订单、生成合同、支付确认、资产发放、退款与修改记录。
         </p>

@@ -671,6 +671,15 @@ export interface Refund {
   financeLedgerId?: string;
 }
 
+/** 退款申请抽屉只读预览数值（前端草稿，不落库、不提交） */
+export interface MallRefundRequestPreviewDto {
+  paidAmount?: number;
+  refundedAmount: number;
+  refundableAmount: number;
+  historyRefundCount: number;
+  suggestedAssetHandleType: RefundAssetHandleType;
+}
+
 /** 会员资产转卡记录（可选展示模型，当前不接真实数据） */
 export type AssetTransferRecordStatus =
   | 'requested'

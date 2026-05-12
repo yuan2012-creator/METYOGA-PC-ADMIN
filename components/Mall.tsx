@@ -16,6 +16,7 @@ import MallDataOverview from './mall/MallDataOverview';
 import MallContractCreate, { createInitialContractData, type MallContractData } from './mall/MallContractCreate';
 import MallAssetDetailDrawer from './mall/MallAssetDetailDrawer';
 import MallOrderDetailDrawer from './mall/MallOrderDetailDrawer';
+import MallRefundRequestDrawer from './mall/MallRefundRequestDrawer';
 import MallOrders, { type MallOrderCategory, type MallOrderFilters } from './mall/MallOrders';
 import MallPoints from './mall/MallPoints';
 import MallTtc, { type MallTtcCourse, type Student, type TTCTutor, toMallTtcCourse } from './mall/MallTtc';
@@ -111,6 +112,10 @@ const Mall: React.FC = () => {
   const [isOrderDrawerOpen, setIsOrderDrawerOpen] = useState(false);
   const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const [isAssetDrawerOpen, setIsAssetDrawerOpen] = useState(false);
+  const [refundRequestDrawer, setRefundRequestDrawer] = useState<{
+    orderId: string;
+    assetId?: string | null;
+  } | null>(null);
 
   // Contract Creation State
   const [contractData, setContractData] = useState<MallContractData>(() => createInitialContractData());
@@ -217,6 +222,14 @@ const Mall: React.FC = () => {
   const closeAssetDetail = () => {
       setIsAssetDrawerOpen(false);
       setSelectedAssetId(null);
+  };
+
+  const openRefundRequestDrawer = (payload: { orderId: string; assetId?: string | null }) => {
+      setRefundRequestDrawer(payload);
+  };
+
+  const closeRefundRequestDrawer = () => {
+      setRefundRequestDrawer(null);
   };
 
   const handleGrantMemberAssetForOrder = (orderId: string) => {
@@ -621,6 +634,7 @@ const Mall: React.FC = () => {
                 pointProducts={products}
                 onGrantMemberAssetForOrder={handleGrantMemberAssetForOrder}
                 onOpenAssetDetail={openAssetDetail}
+                onOpenRefundRequest={openRefundRequestDrawer}
             />
         )}
 
@@ -629,6 +643,22 @@ const Mall: React.FC = () => {
                 open={isAssetDrawerOpen}
                 assetId={selectedAssetId}
                 onClose={closeAssetDetail}
+                orders={orders}
+                contracts={contracts}
+                payments={payments}
+                refunds={refunds}
+                memberAssets={memberAssets}
+                members={MOCK_MEMBERS}
+                onOpenRefundRequest={openRefundRequestDrawer}
+            />
+        )}
+
+        {refundRequestDrawer && (
+            <MallRefundRequestDrawer
+                open
+                orderId={refundRequestDrawer.orderId}
+                assetId={refundRequestDrawer.assetId}
+                onClose={closeRefundRequestDrawer}
                 orders={orders}
                 contracts={contracts}
                 payments={payments}
