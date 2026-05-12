@@ -1,10 +1,11 @@
 import type { Staff } from '../types';
 
-export type StaffTab = 'decision' | 'archives' | 'schedule';
+export type StaffTab = 'closed_loop' | 'decision' | 'archives' | 'schedule';
 export type StaffFilterType = 'all' | 'leads' | 'adjust' | 'new' | 'part_time';
 export type StaffMemberListTab = 'all' | 'private' | 'followup';
 
 export const STAFF_TABS: Array<{ id: StaffTab; label: string }> = [
+  { id: 'closed_loop', label: '师资与规则闭环入口' },
   { id: 'decision', label: '智能决策' },
   { id: 'archives', label: '员工档案' },
   { id: 'schedule', label: '出勤与排班' },
@@ -251,3 +252,222 @@ export const getNextStaffLevel = (level: string): string => {
   if (normalizedLevel === 'mentor') return 'MAX';
   return 'T2';
 };
+
+const parseHourlyYuanFromLabel = (hourlyRate: string): number => {
+  const cleaned = hourlyRate.replace(/,/g, '');
+  const match = cleaned.match(/(\d+)/);
+  return match ? Number(match[1]) : 0;
+};
+
+const levelDisplay = (level: Staff['level']): string => (
+  level === 'butler' ? '管家' : level.toUpperCase()
+);
+
+/** 师资闭环顶部摘要（模块内估算） */
+export interface StaffClosedLoopSummary {
+  teacherCount: number;
+  monthCompletedLessons: number;
+  pendingFeeReviewCount: number;
+  growthPendingReviewCount: number;
+  qualityAttentionCount: number;
+  rulesPermissionTodoCount: number;
+}
+
+export const buildStaffClosedLoopSummary = (staffList: Staff[]): StaffClosedLoopSummary => {
+  const teachers = staffList.filter(s => s.type === 'teacher');
+  const monthCompletedLessons = teachers.reduce(
+    (sum, t) => sum + Math.min(96, Math.max(0, Math.floor(t.classHours * 0.035))),
+    0
+  );
+  const pendingFeeReviewCount = teachers.filter(
+    t => t.promotionStatus === 'pending' || t.loadFactor >= 88 || parseHourlyYuanFromLabel(t.hourlyRate) === 0
+  ).length;
+  const growthPendingReviewCount = teachers.filter(t => t.promotionStatus === 'pending').length;
+  const qualityAttentionCount = teachers.filter(
+    t => t.rating < 4.5 || t.occupancyRate < 62 || (t.followUpRate ?? 100) < 70
+  ).length;
+
+  return {
+    teacherCount: teachers.length,
+    monthCompletedLessons,
+    pendingFeeReviewCount,
+    growthPendingReviewCount,
+    qualityAttentionCount,
+    rulesPermissionTodoCount: 6,
+  };
+};
+
+export interface StaffHourIncomeEstimateRow {
+  id: number;
+  teacherName: string;
+  completedCourses: number;
+  lessonHours: number;
+  feeEstimate: number;
+  statusLabel: string;
+  riskHints: string[];
+}
+
+export const buildStaffHourIncomeEstimateRows = (staffList: Staff[]): StaffHourIncomeEstimateRow[] => (
+  staffList
+    .filter(s => s.type === 'teacher')
+    .map(t => {
+      const completedCourses = Math.max(1, Math.floor(t.classHours / 14));
+      const lessonHours = Math.min(88, Math.max(4, Math.floor(t.classHours * 0.032)));
+      const rate = parseHourlyYuanFromLabel(t.hourlyRate);
+      const feeEstimate = Math.round(lessonHours * rate * 0.85);
+      const riskHints = [
+        '当前为模块内估算；不生成工资单；不代表已结算；后续需接入正式课时费规则；仅用于经营核对',
+      ];
+      if (rate <= 0) riskHints.push('课时单价登记不完整：待核对');
+      if (t.loadFactor >= 90) riskHints.push('排课负载偏高：课时费口径待核对（模块内估算）');
+
+      return {
+        id: t.id,
+        teacherName: t.name,
+        completedCourses,
+        lessonHours,
+        feeEstimate,
+        statusLabel: t.promotionStatus === 'pending' ? '待核对（模块内估算）' : '待核对（模块内估算）',
+        riskHints,
+      };
+    })
+);
+
+export interface StaffGrowthReviewRow {
+  id: number;
+  teacherName: string;
+  currentLevelLabel: string;
+  targetLevelLabel: string;
+  recentPerformanceSummary: string;
+  reviewStatusLabel: string;
+  riskHints: string[];
+}
+
+export const buildStaffGrowthReviewRows = (staffList: Staff[]): StaffGrowthReviewRow[] => (
+  staffList
+    .filter(s => s.type === 'teacher')
+    .map(t => {
+      const target = getNextStaffLevel(t.level);
+      const reviewStatusLabel = t.promotionStatus === 'pending'
+        ? '待复核（仅展示）'
+        : '待核对（模块内估算）';
+      const targetLevelLabel = t.promotionStatus === 'pending'
+        ? `待复核等级倾向：${target}（仅展示）`
+        : `目标等级参考：${target}（模块内估算）`;
+      const riskHints = [
+        '当前为展示入口；不自动升降级；不生成正式考核结果；后续需接入成长规则；仅用于经营核对',
+      ];
+      if (t.promotionStatus === 'pending') {
+        riskHints.push('存在晋升待办信号：仍以人工复核为准（待复核）');
+      }
+
+      return {
+        id: t.id,
+        teacherName: t.name,
+        currentLevelLabel: levelDisplay(t.level),
+        targetLevelLabel,
+        recentPerformanceSummary: `评分 ${t.rating.toFixed(1)} · 满课率约 ${t.occupancyRate}% · 跟进率约 ${t.followUpRate ?? 0}%（模块内估算）`,
+        reviewStatusLabel,
+        riskHints,
+      };
+    })
+);
+
+export interface StaffTeachingQualityRow {
+  id: number;
+  teacherName: string;
+  courseExecutionSummary: string;
+  attendanceSummary: string;
+  feedbackOrWatchSummary: string;
+  riskHints: string[];
+}
+
+export const buildStaffTeachingQualityRows = (staffList: Staff[]): StaffTeachingQualityRow[] => (
+  staffList
+    .filter(s => s.type === 'teacher')
+    .map(t => {
+      const absentRisk = t.occupancyRate < 60 ? '满课压力偏低，缺席/临缺风险需结合课表核对（模块内估算）' : '满课与到课整体平稳（模块内估算）';
+      const feedbackOrWatchSummary = t.rating < 4.5
+        ? '会员评价存在波动：建议关注课堂反馈收集（待接入）'
+        : '暂无结构化会员反馈登记：待接入评价汇总（仅用于经营核对）';
+
+      return {
+        id: t.id,
+        teacherName: t.name,
+        courseExecutionSummary: `团课 / 小班 / 私教执行：负荷系数约 ${t.loadFactor}%（模块内估算）`,
+        attendanceSummary: `满课 / 到课侧：满课率约 ${t.occupancyRate}% · ${absentRisk}`,
+        feedbackOrWatchSummary,
+        riskHints: [
+          '教学质量为经营侧摘要；不生成正式考核结果；仅用于经营核对',
+          t.rating < 4.5 ? '评分偏低：待关注（待核对）' : '建议持续例行巡检（待核对）',
+        ],
+      };
+    })
+);
+
+export interface StaffRulesPendingRow {
+  id: string;
+  ruleName: string;
+  roleOrScope: string;
+  operationLogHint: string;
+  approvalFlowHint: string;
+  pendingIntegrationText: string;
+  riskHints: string[];
+}
+
+export const buildStaffRulesPendingRows = (): StaffRulesPendingRow[] => [
+  {
+    id: 'rule-pay',
+    ruleName: '课时费规则',
+    roleOrScope: '教学 / 排课 / 财务核对角色',
+    operationLogHint: '操作日志：待接入统一审计视图（仅展示）',
+    approvalFlowHint: '审批流：未接入正式审批链（待接入）',
+    pendingIntegrationText: '当前为入口展示；尚未接入真实规则引擎；尚未写入权限变更；尚未生成正式审批记录。',
+    riskHints: ['待接入规则；仅用于经营核对'],
+  },
+  {
+    id: 'rule-growth',
+    ruleName: '成长等级规则',
+    roleOrScope: '教研 / 店长复核角色',
+    operationLogHint: '操作日志：待接入（仅展示）',
+    approvalFlowHint: '审批流：待接入（仅展示）',
+    pendingIntegrationText: '当前为入口展示；尚未接入真实规则引擎；尚未写入权限变更；尚未生成正式审批记录。',
+    riskHints: ['不自动升降级；待接入规则'],
+  },
+  {
+    id: 'rule-leave',
+    ruleName: '请假 / 代课规则',
+    roleOrScope: '排课 / 替补教练池',
+    operationLogHint: '操作日志：待接入（仅展示）',
+    approvalFlowHint: '审批流：待接入（仅展示）',
+    pendingIntegrationText: '当前为入口展示；尚未接入真实规则引擎；尚未写入权限变更；尚未生成正式审批记录。',
+    riskHints: ['待核对排班冲突；仅用于经营核对'],
+  },
+  {
+    id: 'rule-perm',
+    ruleName: '权限角色',
+    roleOrScope: '门店管理员 / 教练 / 管家',
+    operationLogHint: '操作日志：待接入（仅展示）',
+    approvalFlowHint: '审批流：待接入（仅展示）',
+    pendingIntegrationText: '当前为入口展示；尚未接入真实规则引擎；尚未写入权限变更；尚未生成正式审批记录。',
+    riskHints: ['尚未写入权限变更；待接入规则'],
+  },
+  {
+    id: 'rule-log',
+    ruleName: '操作日志',
+    roleOrScope: '全角色',
+    operationLogHint: '仅入口占位：待接入集中日志服务',
+    approvalFlowHint: '审批流：与日志联动待接入',
+    pendingIntegrationText: '当前为入口展示；尚未接入真实规则引擎；尚未写入权限变更；尚未生成正式审批记录。',
+    riskHints: ['待接入规则；仅用于经营核对'],
+  },
+  {
+    id: 'rule-approval',
+    ruleName: '审批流',
+    roleOrScope: '晋升 / 请假 / 课时争议',
+    operationLogHint: '操作日志：待接入（仅展示）',
+    approvalFlowHint: '正式审批记录：待接入（不生成正式审批记录）',
+    pendingIntegrationText: '当前为入口展示；尚未接入真实规则引擎；尚未写入权限变更；尚未生成正式审批记录。',
+    riskHints: ['待接入规则；待核对'],
+  },
+];

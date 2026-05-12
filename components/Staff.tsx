@@ -3,9 +3,14 @@ import React, { useState, useMemo } from 'react';
 import { MOCK_STAFF_LIST } from '../constants';
 import { Staff } from '../types';
 import {
-  buildStaffDemoMembers,
+  buildStaffClosedLoopSummary,
+  buildStaffGrowthReviewRows,
+  buildStaffHourIncomeEstimateRows,
   buildStaffMatrixData,
   buildStaffRankings,
+  buildStaffRulesPendingRows,
+  buildStaffTeachingQualityRows,
+  buildStaffDemoMembers,
   filterStaffDemoMembers,
   filterStaffList,
   STAFF_TABS,
@@ -13,12 +18,13 @@ import {
   type StaffTab,
 } from '../utils/staffSelectors';
 import StaffArchiveList from './staff/StaffArchiveList';
+import StaffClosedLoopPanel from './staff/StaffClosedLoopPanel';
 import StaffDecisionPanel from './staff/StaffDecisionPanel';
 import StaffDetailModal from './staff/StaffDetailModal';
 import StaffSchedulePanel from './staff/StaffSchedulePanel';
 
 const StaffPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<StaffTab>('decision');
+  const [activeTab, setActiveTab] = useState<StaffTab>('closed_loop');
   const [filterType, setFilterType] = useState<StaffFilterType>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showStaffModal, setShowStaffModal] = useState(false);
@@ -94,6 +100,12 @@ const StaffPage: React.FC = () => {
     });
   }, [mockExtendedMembers, memberListTab, filterLifecycle, filterGoal, activeFollowUpCategory]);
 
+  const staffClosedLoopSummary = useMemo(() => buildStaffClosedLoopSummary(MOCK_STAFF_LIST), []);
+  const staffHourIncomeRows = useMemo(() => buildStaffHourIncomeEstimateRows(MOCK_STAFF_LIST), []);
+  const staffGrowthRows = useMemo(() => buildStaffGrowthReviewRows(MOCK_STAFF_LIST), []);
+  const staffQualityRows = useMemo(() => buildStaffTeachingQualityRows(MOCK_STAFF_LIST), []);
+  const staffRulesRows = useMemo(() => buildStaffRulesPendingRows(), []);
+
   return (
     <div className="h-full flex flex-col bg-[#F5F5F7] animate-fadeIn text-[#1D1D1F] font-sans relative">
       
@@ -141,6 +153,16 @@ const StaffPage: React.FC = () => {
       {/* --- CONTENT AREA (Scrollable) --- */}
       <div className="flex-1 overflow-y-auto p-8 custom-scroll">
           <div className="max-w-[1440px] mx-auto space-y-8">
+
+            {activeTab === 'closed_loop' && (
+              <StaffClosedLoopPanel
+                summary={staffClosedLoopSummary}
+                hourIncomeRows={staffHourIncomeRows}
+                growthRows={staffGrowthRows}
+                qualityRows={staffQualityRows}
+                rulesRows={staffRulesRows}
+              />
+            )}
 
             <StaffDecisionPanel
               activeTab={activeTab}
