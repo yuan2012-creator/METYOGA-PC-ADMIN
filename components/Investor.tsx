@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import InvestmentEntryPanel from './investment/InvestmentEntryPanel';
-import { buildInvestmentBreakevenModel } from '../utils/investmentSelectors';
+import { buildInvestmentFullModel } from '../utils/investmentSelectors';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
   BarChart, Bar, AreaChart, Area, ComposedChart, Cell, PieChart, Pie
@@ -9,7 +9,7 @@ import {
 
 const Investor: React.FC = () => {
   const [toast, setToast] = useState<string | null>(null);
-  const investmentModel = useMemo(() => buildInvestmentBreakevenModel(), []);
+  const investmentModel = useMemo(() => buildInvestmentFullModel(), []);
 
   const showToast = (message: string) => {
     setToast(message);
