@@ -2,11 +2,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   MOCK_CARD_PRODUCTS,
-  MOCK_CONTRACTS,
   MOCK_MEMBERS,
-  MOCK_MEMBER_ASSETS,
-  MOCK_ORDERS,
-  MOCK_PAYMENTS,
   MOCK_POINT_PRODUCTS,
   MOCK_REFUNDS,
   MOCK_TTC_PRODUCTS,
@@ -73,6 +69,7 @@ import {
 } from '../utils/mallAssetGrant';
 import { getRefundRequestDraftKey } from '../utils/mallRefundRequest';
 import { getTransferRequestDraftKey } from '../utils/mallTransferRequest';
+import { fetchMallReadonlySnapshot } from '../services/mallService';
 
 // --- Constants ---
 const AVAILABLE_VENUES = ['万象城馆', '西湖旗舰馆', '滨江宝龙馆', '城西银泰馆'];
@@ -188,17 +185,39 @@ const Mall: React.FC = () => {
       { id: 'st2', name: 'Mike Chen', phone: '139****1234', paymentStatus: 'deposit', amount: 5000, confirmed: false, batch: '2024 春季周末班', signupDate: '2023-11-22' },
   ]);
 
-  const mergedOrders = useMemo(() => [...MOCK_ORDERS, ...MALL_ORDER_SCENARIO_ORDERS], []);
-  const mergedContracts = useMemo(() => [...MOCK_CONTRACTS, ...MALL_ORDER_SCENARIO_CONTRACTS], []);
-  const mergedPayments = useMemo(() => [...MOCK_PAYMENTS, ...MALL_ORDER_SCENARIO_PAYMENTS], []);
+  const [isMallLoading, setIsMallLoading] = useState(true);
+  const [mallError, setMallError] = useState<string | null>(null);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [contracts, setContracts] = useState<Contract[]>([]);
+  const [memberAssets, setMemberAssets] = useState<MemberAsset[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
   const mergedRefunds = useMemo(() => [...MOCK_REFUNDS, ...MALL_ORDER_SCENARIO_REFUNDS], []);
-  const mergedMemberAssets = useMemo(() => [...MOCK_MEMBER_ASSETS, ...MALL_ORDER_SCENARIO_ASSETS], []);
-
-  const [orders, setOrders] = useState<Order[]>(mergedOrders);
-  const [contracts, setContracts] = useState<Contract[]>(mergedContracts);
-  const [memberAssets, setMemberAssets] = useState<MemberAsset[]>(mergedMemberAssets);
-  const [payments] = useState<Payment[]>(mergedPayments);
   const [refunds] = useState<Refund[]>(mergedRefunds);
+
+  useEffect(() => {
+    let cancelled = false;
+    setIsMallLoading(true);
+    setMallError(null);
+    const res = fetchMallReadonlySnapshot({ dataSource: 'mock', page: 1, pageSize: 500 });
+    if (cancelled) return;
+    if (res.error || !res.data) {
+      setMallError('产品与合同数据加载失败，请稍后重试');
+      setOrders([]);
+      setContracts([]);
+      setPayments([]);
+      setMemberAssets([]);
+    } else {
+      setMallError(null);
+      setOrders([...res.data.orders, ...MALL_ORDER_SCENARIO_ORDERS]);
+      setContracts([...res.data.contracts, ...MALL_ORDER_SCENARIO_CONTRACTS]);
+      setPayments([...res.data.payments, ...MALL_ORDER_SCENARIO_PAYMENTS]);
+      setMemberAssets([...res.data.memberAssets, ...MALL_ORDER_SCENARIO_ASSETS]);
+    }
+    setIsMallLoading(false);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const [writeClosureDraft, setWriteClosureDraft] = useState<MallWriteClosureDraft | null>(null);
   const mallProductOptions = useMemo(
       () => buildMallProductOptions({ cards, ttcCourses, pointProducts: products }),
@@ -610,21 +629,38 @@ const Mall: React.FC = () => {
       />
   );
 
-  const renderMallOrders = () => (
-      <MallOrders
-          orders={orders}
-          contracts={contracts}
-          members={MOCK_MEMBERS}
-          assetSourceLinks={assetSourceLinks}
-          orderTab={orderTab}
-          setOrderTab={setOrderTab}
-          orderFilters={orderFilters}
-          setOrderFilters={setOrderFilters}
-          onDemoAction={showToast}
-          onOpenOrderDetail={openOrderDetailDrawer}
-          onOpenAssetDetail={openAssetDetail}
-      />
-  );
+  const renderMallOrders = () => {
+      if (isMallLoading) {
+          return (
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-10 text-center text-sm text-gray-500 animate-fadeIn">
+                  <i className="fa-solid fa-spinner fa-spin mr-2 text-gray-400" aria-hidden />
+                  正在加载订单与关联数据…
+              </div>
+          );
+      }
+      if (mallError) {
+          return (
+              <div className="bg-white rounded-2xl shadow-sm border border-red-100 p-10 text-center text-sm text-red-700 font-medium animate-fadeIn">
+                  产品与合同数据加载失败，请稍后重试
+              </div>
+          );
+      }
+      return (
+          <MallOrders
+              orders={orders}
+              contracts={contracts}
+              members={MOCK_MEMBERS}
+              assetSourceLinks={assetSourceLinks}
+              orderTab={orderTab}
+              setOrderTab={setOrderTab}
+              orderFilters={orderFilters}
+              setOrderFilters={setOrderFilters}
+              onDemoAction={showToast}
+              onOpenOrderDetail={openOrderDetailDrawer}
+              onOpenAssetDetail={openAssetDetail}
+          />
+      );
+  };
 
   const renderMallContractCreate = () => (
       <MallContractCreate
@@ -705,6 +741,28 @@ const Mall: React.FC = () => {
         {/* Content */}
         <div className={`flex-1 p-8 custom-scroll ${subView === 'contract_create' ? 'overflow-hidden flex flex-col' : 'overflow-y-auto'}`}>
             <div className={`max-w-[1440px] mx-auto w-full ${subView === 'contract_create' ? 'flex-1 flex flex-col min-h-0' : 'min-h-[500px]'}`}>
+                {(isMallLoading || mallError) && (
+                    <div
+                        className={`mb-4 rounded-xl border px-4 py-2.5 text-xs font-medium flex items-center gap-2 ${
+                            mallError && !isMallLoading
+                                ? 'bg-red-50 border-red-200 text-red-800'
+                                : 'bg-gray-50 border-gray-200 text-gray-600'
+                        }`}
+                        role="status"
+                    >
+                        {isMallLoading ? (
+                            <>
+                                <i className="fa-solid fa-spinner fa-spin text-gray-400" aria-hidden />
+                                <span>正在加载产品与合同数据（订单、合同、支付、资产）…</span>
+                            </>
+                        ) : (
+                            <>
+                                <i className="fa-solid fa-triangle-exclamation text-red-500" aria-hidden />
+                                <span>产品与合同数据加载失败，请稍后重试</span>
+                            </>
+                        )}
+                    </div>
+                )}
                 {subView === 'list' && (
                     <>
                         {activeModule === 'cards' && renderMallCards('list')}

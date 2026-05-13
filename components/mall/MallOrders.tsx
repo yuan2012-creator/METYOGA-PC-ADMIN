@@ -216,7 +216,7 @@ const MallOrders: React.FC<MallOrdersProps> = ({
                       </tbody>
                   </table>
                   {filteredOrders.length === 0 && (
-                      <div className="text-center text-gray-400 text-xs py-12">暂无订单数据</div>
+                      <div className="text-center text-gray-400 text-xs py-12">暂无符合条件的订单</div>
                   )}
               </div>
           </div>

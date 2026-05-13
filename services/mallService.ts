@@ -138,6 +138,58 @@ function paginate<T>(list: T[], page: number, pageSize: number): { slice: T[]; t
   return { slice: list.slice(start, start + safeSize), total };
 }
 
+/** 产品与合同页初始化用只读快照（constants mock 经 adapter；不含 Mall 场景合并数据） */
+export interface MallReadonlySnapshot {
+  orders: Order[];
+  contracts: Contract[];
+  payments: Payment[];
+  memberAssets: MemberAsset[];
+}
+
+export interface FetchMallReadonlySnapshotParams {
+  requestId?: string;
+  page?: number;
+  pageSize?: number;
+  storeId?: string;
+  from?: string;
+  to?: string;
+  role?: string;
+  dataSource?: ReadonlyQueryParams['dataSource'];
+}
+
+/**
+ * 一次性拉取订单 / 合同 / 支付 / 会员资产（只读 mock，全量至 pageSize 上限）
+ */
+export function fetchMallReadonlySnapshot(
+  params: FetchMallReadonlySnapshotParams = {}
+): ReadonlyApiResult<MallReadonlySnapshot> {
+  const qp = baseQueryParams({ ...params, page: params.page ?? 1, pageSize: params.pageSize ?? 500 });
+
+  if (qp.dataSource === 'live') {
+    return { data: null, meta: null, error: readonlyLiveNotConnectedError() };
+  }
+
+  try {
+    const filteredOrders = filterOrdersByIds(MOCK_ORDERS, { storeId: params.storeId });
+    const orders = adaptOrders(filteredOrders);
+    const contracts = adaptContracts([...MOCK_CONTRACTS]);
+    const payments = adaptPayments([...MOCK_PAYMENTS]);
+    const memberAssets = adaptMemberAssets([...MOCK_MEMBER_ASSETS]);
+    const total = orders.length;
+    return {
+      data: { orders, contracts, payments, memberAssets },
+      meta: buildReadonlyMeta(qp, total),
+      error: null,
+    };
+  } catch {
+    return {
+      data: null,
+      meta: buildReadonlyMeta(qp, 0),
+      error: { code: 'MALL_SNAPSHOT_FAILED', message: '产品与合同快照读取失败（只读 mock）。' },
+    };
+  }
+}
+
 /**
  * 订单列表（只读 mock；storeId 仅在订单含 storeId 时参与过滤）
  */
