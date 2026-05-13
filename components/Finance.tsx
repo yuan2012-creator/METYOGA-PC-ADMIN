@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -24,8 +24,6 @@ import {
   MOCK_FINANCE_TEACHER_SESSION_PAY_CHECKS,
   MOCK_MEMBER_ASSETS,
   MOCK_MEMBERS,
-  MOCK_ORDERS,
-  MOCK_PAYMENTS,
   MOCK_REFUNDS,
   MOCK_STAFF_LIST,
 } from '../constants';
@@ -64,6 +62,9 @@ import FinancePendingRecognitionTable from './finance/FinancePendingRecognitionT
 import FinanceReportCharts from './finance/FinanceReportCharts';
 import FinanceTeacherSessionPayTable from './finance/FinanceTeacherSessionPayTable';
 import RevenueTable from './finance/RevenueTable';
+import type { FinanceReadonlySummary } from '../adapters/financeAdapter';
+import type { MockCourseConsumptionRecord, Order, Payment } from '../types';
+import { fetchFinanceReadonlySnapshot } from '../services/financeService';
 
 // Register ChartJS components
 ChartJS.register(
@@ -115,6 +116,12 @@ const Finance: React.FC = () => {
   const [dateRange, setDateRange] = useState({ start: '2026-05-01', end: '2026-05-31' });
   const [orderFilter, setOrderFilter] = useState<FinanceOrderFilter>('all');
   const [toast, setToast] = useState<FinanceToast | null>(null);
+  const [isFinanceLoading, setIsFinanceLoading] = useState(true);
+  const [financeError, setFinanceError] = useState<string | null>(null);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [consumptions, setConsumptions] = useState<MockCourseConsumptionRecord[]>([]);
+  const [financeReadonlySummary, setFinanceReadonlySummary] = useState<FinanceReadonlySummary | null>(null);
 
   const showToast = (message: string, tone: FinanceToastTone = 'info') => {
     setToast({ id: Date.now(), message, tone });
@@ -123,14 +130,40 @@ const Finance: React.FC = () => {
     }, 2400);
   };
 
+  useEffect(() => {
+    let cancelled = false;
+    setIsFinanceLoading(true);
+    setFinanceError(null);
+    const res = fetchFinanceReadonlySnapshot({ dataSource: 'mock', page: 1, pageSize: 500 });
+    if (!cancelled) {
+      if (res.error || !res.data) {
+        setFinanceError('财务数据加载失败，请稍后重试');
+        setOrders([]);
+        setPayments([]);
+        setConsumptions([]);
+        setFinanceReadonlySummary(null);
+      } else {
+        setFinanceError(null);
+        setOrders(res.data.orders);
+        setPayments(res.data.payments);
+        setConsumptions(res.data.consumptions);
+        setFinanceReadonlySummary(res.data.financeReadonlySummary);
+      }
+      setIsFinanceLoading(false);
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const periodOrders = useMemo(
-    () => filterOrdersByDateRange(MOCK_ORDERS, dateRange),
-    [dateRange]
+    () => filterOrdersByDateRange(orders, dateRange),
+    [orders, dateRange]
   );
 
   const periodPayments = useMemo(
-    () => filterPaymentsByDateRange(MOCK_PAYMENTS, dateRange),
-    [dateRange]
+    () => filterPaymentsByDateRange(payments, dateRange),
+    [payments, dateRange]
   );
 
   const periodRefunds = useMemo(
@@ -144,8 +177,8 @@ const Finance: React.FC = () => {
   );
 
   const annualPayments = useMemo(
-    () => filterPaymentsByDateRange(MOCK_PAYMENTS, { start: '2026-01-01', end: '2026-12-31' }),
-    []
+    () => filterPaymentsByDateRange(payments, { start: '2026-01-01', end: '2026-12-31' }),
+    [payments]
   );
 
   const annualRefunds = useMemo(
@@ -219,26 +252,26 @@ const Finance: React.FC = () => {
   const closedLoopRefundRisks = useMemo(
     () =>
       buildClosedLoopRefundAssetRiskRows({
-        orders: MOCK_ORDERS,
-        payments: MOCK_PAYMENTS,
+        orders,
+        payments,
         refunds: MOCK_REFUNDS,
         memberAssets: MOCK_MEMBER_ASSETS,
         ledgerEntries: MOCK_FINANCE_LEDGER_ENTRIES,
       }),
-    []
+    [orders, payments]
   );
 
   const deferredLiabilityDetailRows = useMemo(
     () =>
       buildFinanceDeferredLiabilityDetailRows({
-        orders: MOCK_ORDERS,
+        orders,
         contracts: MOCK_CONTRACTS,
         members: MOCK_MEMBERS,
         memberAssets: MOCK_MEMBER_ASSETS,
         ledgerEntries: MOCK_FINANCE_LEDGER_ENTRIES,
         refunds: MOCK_REFUNDS,
       }),
-    []
+    [orders]
   );
 
   const pendingRecognitionDetailRows = useMemo(
@@ -270,15 +303,15 @@ const Finance: React.FC = () => {
     () =>
       buildFinanceLedgerPendingIntegrationRows({
         ledgerEntries: MOCK_FINANCE_LEDGER_ENTRIES,
-        payments: MOCK_PAYMENTS,
+        payments,
         refunds: MOCK_REFUNDS,
       }),
-    []
+    [payments]
   );
   const financeRiskDetailRows = useMemo(
     () =>
       buildFinanceRiskDetailRows({
-        orders: MOCK_ORDERS,
+        orders,
         refunds: MOCK_REFUNDS,
         memberAssets: MOCK_MEMBER_ASSETS,
         ledgerEntries: MOCK_FINANCE_LEDGER_ENTRIES,
@@ -289,19 +322,19 @@ const Finance: React.FC = () => {
         teacherPayRows: teacherSessionPayCheckRows,
         deferredRows: deferredLiabilityDetailRows,
       }),
-    [teacherSessionPayCheckRows, deferredLiabilityDetailRows]
+    [orders, teacherSessionPayCheckRows, deferredLiabilityDetailRows]
   );
 
   const refundReconciliationRows = useMemo(
     () =>
       buildFinanceRefundReconciliationRows({
         refunds: MOCK_REFUNDS,
-        orders: MOCK_ORDERS,
+        orders,
         members: MOCK_MEMBERS,
         memberAssets: MOCK_MEMBER_ASSETS,
         ledgerEntries: MOCK_FINANCE_LEDGER_ENTRIES,
       }),
-    []
+    [orders]
   );
 
   const crossStoreSettlementRows = useMemo(
@@ -324,7 +357,10 @@ const Finance: React.FC = () => {
   );
 
   return (
-    <div className="h-full flex flex-col animate-fadeIn relative">
+    <div
+      className="h-full flex flex-col animate-fadeIn relative"
+      title={!isFinanceLoading && !financeError && financeReadonlySummary ? financeReadonlySummary.scopeNote : undefined}
+    >
         
         {/* Header */}
         <div className="h-16 border-b border-gray-200 flex items-center justify-between px-8 bg-white/80 backdrop-blur-md sticky top-0 z-20">
@@ -386,6 +422,37 @@ const Finance: React.FC = () => {
         {/* Content Area */}
         <div className="flex-1 overflow-y-auto p-8 custom-scroll">
             <div className="max-w-7xl mx-auto space-y-6">
+                {(isFinanceLoading || financeError) && (
+                    <div
+                        className={`rounded-xl border px-4 py-2.5 text-xs font-medium flex items-center gap-2 ${
+                            financeError && !isFinanceLoading
+                                ? 'bg-red-50 border-red-200 text-red-800'
+                                : 'bg-gray-50 border-gray-200 text-gray-600'
+                        }`}
+                        role="status"
+                    >
+                        {isFinanceLoading ? (
+                            <>
+                                <i className="fa-solid fa-spinner fa-spin text-gray-400" aria-hidden />
+                                <span>正在加载财务数据（订单、支付、耗课占位、只读摘要）…</span>
+                            </>
+                        ) : (
+                            <>
+                                <i className="fa-solid fa-triangle-exclamation text-red-500" aria-hidden />
+                                <span>财务数据加载失败，请稍后重试</span>
+                            </>
+                        )}
+                    </div>
+                )}
+                {!isFinanceLoading &&
+                    !financeError &&
+                    orders.length === 0 &&
+                    payments.length === 0 &&
+                    consumptions.length === 0 && (
+                        <div className="rounded-xl border border-dashed border-gray-200 bg-white/80 px-4 py-3 text-center text-xs text-gray-500">
+                            暂无可核对财务记录
+                        </div>
+                    )}
 
                 {subTab === 'closed_loop' && (
                     <FinanceClosedLoopEntry
@@ -421,9 +488,9 @@ const Finance: React.FC = () => {
                             document.getElementById('finance-detail-ledger-pending')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                           });
                         }}
-                        orders={MOCK_ORDERS}
+                        orders={orders}
                         contracts={MOCK_CONTRACTS}
-                        payments={MOCK_PAYMENTS}
+                        payments={payments}
                         refunds={MOCK_REFUNDS}
                         memberAssets={MOCK_MEMBER_ASSETS}
                         ledgerEntries={MOCK_FINANCE_LEDGER_ENTRIES}

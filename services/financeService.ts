@@ -283,3 +283,62 @@ export function fetchFinanceReadonlySummary(
     };
   }
 }
+
+/** 财务页初始化用只读快照（订单 / 支付 / 耗课占位 / 摘要；经 adapter） */
+export interface FinanceReadonlySnapshot {
+  orders: Order[];
+  payments: Payment[];
+  consumptions: MockCourseConsumptionRecord[];
+  financeReadonlySummary: FinanceReadonlySummary;
+}
+
+export interface FetchFinanceReadonlySnapshotParams {
+  requestId?: string;
+  page?: number;
+  pageSize?: number;
+  storeId?: string;
+  from?: string;
+  to?: string;
+  role?: string;
+  dataSource?: ReadonlyQueryParams['dataSource'];
+  orderId?: string;
+  memberId?: string;
+}
+
+export function fetchFinanceReadonlySnapshot(
+  params: FetchFinanceReadonlySnapshotParams = {}
+): ReadonlyApiResult<FinanceReadonlySnapshot> {
+  const qp = baseQueryParams({ ...params, page: 1, pageSize: 500 });
+
+  if (qp.dataSource === 'live') {
+    return { data: null, meta: null, error: readonlyLiveNotConnectedError() };
+  }
+
+  try {
+    const listParams: FetchFinanceDomainParams = { ...params, page: 1, pageSize: 500 };
+    const fo = filterFinanceOrders(MOCK_ORDERS, listParams);
+    const fp = filterFinancePayments(MOCK_PAYMENTS, listParams);
+    const fc = filterFinanceConsumptions(READONLY_FINANCE_CONSUMPTIONS, listParams);
+    const orders = adaptFinanceOrders(fo);
+    const payments = adaptFinancePayments(fp);
+    const consumptions = adaptFinanceConsumptions(fc);
+    const estimatedPaymentAmountTotal = fp.reduce((sum, p) => sum + (Number.isFinite(p.amount) ? p.amount : 0), 0);
+    const financeReadonlySummary = adaptFinanceReadonlySummary({
+      paymentCount: fp.length,
+      orderCount: fo.length,
+      estimatedPaymentAmountTotal,
+      estimatedConsumptionRecordCount: fc.length,
+    });
+    return {
+      data: { orders, payments, consumptions, financeReadonlySummary },
+      meta: buildReadonlyMeta(qp, fo.length),
+      error: null,
+    };
+  } catch {
+    return {
+      data: null,
+      meta: buildReadonlyMeta(qp, 0),
+      error: { code: 'FINANCE_SNAPSHOT_FAILED', message: '财务只读快照读取失败（只读 mock）。' },
+    };
+  }
+}
