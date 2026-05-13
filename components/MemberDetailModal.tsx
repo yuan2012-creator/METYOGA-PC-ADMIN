@@ -55,6 +55,10 @@ interface MemberDetailModalProps {
   ledgerEntries: FinanceLedgerEntry[];
   courseSessions: CourseSession[];
   courses: Course[];
+  /** 详情只读拉取中（可选，不改变原有布局，仅多一行提示） */
+  isMemberDetailLoading?: boolean;
+  /** 详情只读拉取失败（可选） */
+  memberDetailError?: string | null;
 }
 
 type MemberDetailToast = {
@@ -77,6 +81,8 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({
   ledgerEntries,
   courseSessions,
   courses,
+  isMemberDetailLoading,
+  memberDetailError,
 }) => {
   const [activeTab, setActiveTab] = useState<DetailMainTab>('overview');
   const [toast, setToast] = useState<MemberDetailToast | null>(null);
@@ -178,6 +184,12 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({
               className="h-11 w-11 shrink-0 rounded-full border border-gray-200 object-cover shadow-sm"
             />
             <div className="min-w-0">
+              {isMemberDetailLoading ? (
+                <p className="mb-1 text-[11px] font-medium text-gray-500">会员详情加载中…</p>
+              ) : null}
+              {memberDetailError ? (
+                <p className="mb-1 text-[11px] font-medium text-rose-700">{memberDetailError}</p>
+              ) : null}
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="truncate text-lg font-bold text-gray-900">{overview.name}</h2>
                 <span className="flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-gray-600">

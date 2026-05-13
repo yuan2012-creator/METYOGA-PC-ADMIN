@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import {
   MOCK_ATTENDANCES,
@@ -9,12 +9,16 @@ import {
   MOCK_COURSE_SESSIONS,
   MOCK_FINANCE_LEDGER_ENTRIES,
   MOCK_MEMBER_ASSETS,
-  MOCK_MEMBERS,
   MOCK_ORDERS,
   MOCK_PAYMENTS,
   MOCK_REFUNDS,
 } from '../constants';
-import { Member } from '../types';
+import { Member, MemberAsset } from '../types';
+import {
+  fetchMemberAssetsByMemberId,
+  fetchMemberDetail,
+  fetchMembers,
+} from '../services/memberService';
 import {
   MEMBER_LIFECYCLE_GROUPS,
   getMemberLifecycleStatus,
@@ -60,12 +64,57 @@ const lifecycleToneBadgeClass = (tone: MemberListLifecycleTone): string => {
 };
 
 const Members: React.FC = () => {
+  const [members, setMembers] = useState<Member[]>([]);
+  const [isMembersLoading, setIsMembersLoading] = useState(true);
+  const [membersError, setMembersError] = useState<string | null>(null);
+
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+  const [detailMember, setDetailMember] = useState<Member | null>(null);
+  const [detailAssets, setDetailAssets] = useState<MemberAsset[] | null>(null);
+  const [isDetailLoading, setIsDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState<string | null>(null);
+
   const [mainTab, setMainTab] = useState<MemberMainTab>('all');
   const [alertFilter, setAlertFilter] = useState<MemberRiskFilter | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [funnelRange, setFunnelRange] = useState<'week' | 'month'>('month');
   const [toast, setToast] = useState<{ id: number; message: string } | null>(null);
+
+  useEffect(() => {
+    setIsMembersLoading(true);
+    setMembersError(null);
+    const res = fetchMembers({ page: 1, pageSize: 500, dataSource: 'mock' });
+    if (res.error) {
+      setMembersError(res.error.message);
+      setMembers([]);
+    } else {
+      setMembers(res.data ?? []);
+    }
+    setIsMembersLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (!selectedMember) {
+      setDetailMember(null);
+      setDetailAssets(null);
+      setDetailError(null);
+      setIsDetailLoading(false);
+      return;
+    }
+    setIsDetailLoading(true);
+    setDetailError(null);
+    const d = fetchMemberDetail(selectedMember.id, { dataSource: 'mock' });
+    const a = fetchMemberAssetsByMemberId(selectedMember.id, {
+      page: 1,
+      pageSize: 200,
+      dataSource: 'mock',
+    });
+    const errMsg = d.error?.message ?? a.error?.message ?? null;
+    setDetailError(errMsg);
+    setDetailMember(d.data ?? selectedMember);
+    setDetailAssets(a.data ?? []);
+    setIsDetailLoading(false);
+  }, [selectedMember]);
 
   const showToast = (message: string, _tone?: 'info' | 'success') => {
     setToast({ id: Date.now(), message });
@@ -133,7 +182,7 @@ const Members: React.FC = () => {
 
   const memberListRows = useMemo(
     () => buildMemberListRows({
-      members: MOCK_MEMBERS,
+      members,
       memberAssets: mergedMemberAssets,
       bookings: mergedBookings,
       attendances: mergedAttendances,
@@ -143,7 +192,7 @@ const Members: React.FC = () => {
       courseSessions: MOCK_COURSE_SESSIONS,
       courses: MOCK_COURSES,
     }),
-    [mergedMemberAssets, mergedBookings, mergedAttendances, mergedConsumptions, mergedOrders, mergedContracts],
+    [members, mergedMemberAssets, mergedBookings, mergedAttendances, mergedConsumptions, mergedOrders, mergedContracts],
   );
 
   const rowByMemberId = useMemo(
@@ -153,7 +202,7 @@ const Members: React.FC = () => {
 
   // --- Filter Logic ---
   const visibleMembers = useMemo(() => {
-    let filtered = MOCK_MEMBERS;
+    let filtered = members;
 
     if (mainTab === 'leads') filtered = filtered.filter(m => MEMBER_LIFECYCLE_GROUPS.leads.includes(getMemberLifecycleStatus(m)));
     else if (mainTab === 'active') filtered = filtered.filter(m => MEMBER_LIFECYCLE_GROUPS.active.includes(getMemberLifecycleStatus(m)));
@@ -175,18 +224,29 @@ const Members: React.FC = () => {
     }
 
     return filtered;
-  }, [mainTab, alertFilter, searchQuery, rowByMemberId]);
+  }, [members, mainTab, alertFilter, searchQuery, rowByMemberId]);
 
-  const stats = {
-    expiry: MOCK_MEMBERS.filter(m => m.riskTag === 'expiry').length,
-    balance: MOCK_MEMBERS.filter(m => m.riskTag === 'balance').length,
-    sleep: MOCK_MEMBERS.filter(m => m.riskTag === 'sleep').length,
-  };
+  const stats = useMemo(
+    () => ({
+      expiry: members.filter(m => m.riskTag === 'expiry').length,
+      balance: members.filter(m => m.riskTag === 'balance').length,
+      sleep: members.filter(m => m.riskTag === 'sleep').length,
+    }),
+    [members],
+  );
 
   const newLeads = useMemo(
-    () => MOCK_MEMBERS.filter(m => MEMBER_LIFECYCLE_GROUPS.leads.includes(getMemberLifecycleStatus(m)) && m.leadStatus === 'new'),
-    []
+    () => members.filter(m => MEMBER_LIFECYCLE_GROUPS.leads.includes(getMemberLifecycleStatus(m)) && m.leadStatus === 'new'),
+    [members],
   );
+
+  const memberAssetsForModal = useMemo(() => {
+    if (!selectedMember) return mergedMemberAssets;
+    const fromMerged = mergedMemberAssets.filter(a => a.memberId === selectedMember.id);
+    if (!detailAssets || detailAssets.length === 0) return fromMerged;
+    const idSet = new Set(detailAssets.map(a => a.id));
+    return [...detailAssets, ...fromMerged.filter(a => !idSet.has(a.id))];
+  }, [selectedMember, detailAssets, mergedMemberAssets]);
 
   const FilterIcon = () => (
     <i className="fa-solid fa-filter text-[9px] opacity-20 group-hover/header:opacity-100 transition-opacity ml-1.5 cursor-pointer"></i>
@@ -251,7 +311,18 @@ const Members: React.FC = () => {
       {/* 3. SCROLLABLE CONTENT */}
       <div className="flex-1 overflow-y-auto p-8 custom-scroll">
           <div className="max-w-[1440px] mx-auto space-y-8">
-              
+              {isMembersLoading ? (
+                <div className="rounded-2xl border border-gray-200 bg-white px-5 py-3 text-xs font-medium text-gray-600 shadow-sm">
+                  会员数据加载中…
+                </div>
+              ) : null}
+              {membersError && !isMembersLoading ? (
+                <div className="rounded-2xl border border-rose-200 bg-rose-50 px-5 py-3 text-xs font-semibold text-rose-800 shadow-sm">
+                  会员数据加载失败，请稍后重试
+                  <span className="mt-1 block font-mono text-[10px] font-normal text-rose-700/90">{membersError}</span>
+                </div>
+              ) : null}
+
               {/* DASHBOARD SECTION */}
               {mainTab !== 'leads' ? (
                 <div className="grid grid-cols-12 gap-6 animate-fadeIn">
@@ -403,7 +474,22 @@ const Members: React.FC = () => {
                               </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-50">
-                              {visibleMembers.length === 0 ? (
+                              {membersError && !isMembersLoading ? (
+                                <tr>
+                                  <td colSpan={8} className="px-8 py-16">
+                                    <div className="mx-auto max-w-md rounded-2xl border border-rose-200 bg-rose-50/90 px-8 py-10 text-center shadow-sm">
+                                      <div className="text-sm font-bold text-rose-900">会员数据加载失败，请稍后重试</div>
+                                      <p className="mt-2 text-xs leading-relaxed text-rose-800/90">{membersError}</p>
+                                    </div>
+                                  </td>
+                                </tr>
+                              ) : isMembersLoading ? (
+                                <tr>
+                                  <td colSpan={8} className="px-8 py-16 text-center text-sm font-medium text-gray-500">
+                                    会员列表加载中…
+                                  </td>
+                                </tr>
+                              ) : visibleMembers.length === 0 ? (
                                 <tr>
                                   <td colSpan={8} className="px-8 py-16">
                                     <div className="mx-auto max-w-md rounded-2xl border border-gray-200 bg-white px-8 py-10 text-center shadow-sm">
@@ -499,10 +585,10 @@ const Members: React.FC = () => {
 
       {selectedMember && (
           <MemberDetailModal
-            member={selectedMember}
+            member={detailMember ?? selectedMember}
             onClose={() => setSelectedMember(null)}
             consumptions={mergedConsumptions}
-            memberAssets={mergedMemberAssets}
+            memberAssets={memberAssetsForModal}
             bookings={mergedBookings}
             attendances={mergedAttendances}
             orders={mergedOrders}
@@ -512,6 +598,8 @@ const Members: React.FC = () => {
             ledgerEntries={MOCK_FINANCE_LEDGER_ENTRIES}
             courseSessions={MOCK_COURSE_SESSIONS}
             courses={MOCK_COURSES}
+            isMemberDetailLoading={isDetailLoading}
+            memberDetailError={detailError}
           />
       )}
 
