@@ -1,11 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import {
-  MOCK_ATTENDANCES,
-  MOCK_BOOKINGS,
-  MOCK_COURSE_SESSIONS,
-  MOCK_COURSES,
-  MOCK_MEMBERS,
-} from '../constants';
+import React, { useEffect, useMemo, useState } from 'react';
+import { MOCK_MEMBERS } from '../constants';
 import {
   buildOpsSchedule,
   COURSE_ROOMS,
@@ -50,7 +44,13 @@ import {
   isScheduleEventPublishDraft,
   publishScheduleEvents,
 } from '../utils/courseSchedulePublish';
-import type { CourseSession, FinanceLedgerEntry, MockCourseConsumptionRecord, MockTeacherSessionPayRecord } from '../types';
+import type {
+  Attendance,
+  Booking,
+  FinanceLedgerEntry,
+  MockCourseConsumptionRecord,
+  MockTeacherSessionPayRecord,
+} from '../types';
 import {
   canCompleteCourseSession,
   completeCourseSessionMock,
@@ -60,19 +60,7 @@ import {
   COURSE_OPS_SCENARIO_BOOKINGS,
   COURSE_OPS_SCENARIO_EVENTS,
 } from '../utils/courseOpsScenarioFixtures';
-
-const INITIAL_LIBRARY_LIST = MOCK_COURSES.map(toCourseLibraryItem);
-
-const COURSE_OPS_MERGED_SESSIONS: CourseSession[] = [
-  ...MOCK_COURSE_SESSIONS,
-  ...COURSE_OPS_SCENARIO_EVENTS,
-];
-const COURSE_OPS_MERGED_BOOKINGS = [...MOCK_BOOKINGS, ...COURSE_OPS_SCENARIO_BOOKINGS];
-const COURSE_OPS_MERGED_ATTENDANCES = [...MOCK_ATTENDANCES, ...COURSE_OPS_SCENARIO_ATTENDANCES];
-
-const INITIAL_SCHEDULE_EVENTS = COURSE_OPS_MERGED_SESSIONS.map(session => (
-  toScheduleEvent(session, INITIAL_LIBRARY_LIST, COURSE_OPS_MERGED_BOOKINGS)
-));
+import { fetchCourseReadonlySnapshot } from '../services/courseService';
 
 type CourseToastTone = 'info' | 'success' | 'warning';
 
@@ -98,8 +86,11 @@ const Courses: React.FC = () => {
   const [activeOpsSessionId, setActiveOpsSessionId] = useState<string | null>(null);
   const [activeOpsDrawerTab, setActiveOpsDrawerTab] = useState<CourseSessionOpsTab>('overview');
   
+  const [isCoursesLoading, setIsCoursesLoading] = useState(true);
+  const [coursesError, setCoursesError] = useState<string | null>(null);
+
   // --- Library State (Courses) ---
-  const [libraryList, setLibraryList] = useState<CourseLibraryItem[]>(INITIAL_LIBRARY_LIST);
+  const [libraryList, setLibraryList] = useState<CourseLibraryItem[]>([]);
 
   const [selectedCourse, setSelectedCourse] = useState<CourseLibraryItem | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -110,16 +101,14 @@ const Courses: React.FC = () => {
   const [activeRoomId, setActiveRoomId] = useState(rooms[0].id);
   
   // DRAG & DROP STATE
-  const [scheduleEvents, setScheduleEvents] = useState<ScheduleEvent[]>(INITIAL_SCHEDULE_EVENTS);
-  const [bookings, setBookings] = useState(COURSE_OPS_MERGED_BOOKINGS);
-  const [attendances, setAttendances] = useState(COURSE_OPS_MERGED_ATTENDANCES);
+  const [scheduleEvents, setScheduleEvents] = useState<ScheduleEvent[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [attendances, setAttendances] = useState<Attendance[]>([]);
   const [draggedCourse, setDraggedCourse] = useState<CourseLibraryItem | null>(null);
   const [draggedEventId, setDraggedEventId] = useState<string | null>(null);
   const [mockConsumptions, setMockConsumptions] = useState<MockCourseConsumptionRecord[]>([]);
   const [mockTeacherSessionPays, setMockTeacherSessionPays] = useState<MockTeacherSessionPayRecord[]>([]);
   const [mockFinanceLedgerEntries, setMockFinanceLedgerEntries] = useState<FinanceLedgerEntry[]>([]);
-  const todayOperationScheduleEvents = getTodayOperationScheduleEvents(scheduleEvents);
-  const draftScheduleCount = scheduleEvents.filter(isScheduleEventPublishDraft).length;
 
   // Schedule Modal State
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
@@ -134,6 +123,43 @@ const Courses: React.FC = () => {
       duration: 60,
       capacity: 0,
   });
+
+  useEffect(() => {
+    let cancelled = false;
+    setIsCoursesLoading(true);
+    setCoursesError(null);
+    const res = fetchCourseReadonlySnapshot({ dataSource: 'mock', page: 1, pageSize: 500 });
+    if (!cancelled) {
+      if (res.error || !res.data) {
+        setCoursesError('课程数据加载失败，请稍后重试');
+        setLibraryList([]);
+        setScheduleEvents([]);
+        setBookings([]);
+        setAttendances([]);
+        setMockConsumptions([]);
+      } else {
+        setCoursesError(null);
+        const { courses, courseSessions, bookings: snapBookings, attendances: snapAttendances, consumptions } =
+          res.data;
+        const lib = courses.map(toCourseLibraryItem);
+        const mergedSessions = [...courseSessions, ...COURSE_OPS_SCENARIO_EVENTS];
+        const mergedBookings = [...snapBookings, ...COURSE_OPS_SCENARIO_BOOKINGS];
+        const mergedAttendances = [...snapAttendances, ...COURSE_OPS_SCENARIO_ATTENDANCES];
+        setLibraryList(lib);
+        setBookings(mergedBookings);
+        setAttendances(mergedAttendances);
+        setMockConsumptions([...consumptions]);
+        setScheduleEvents(mergedSessions.map(session => toScheduleEvent(session, lib, mergedBookings)));
+      }
+      setIsCoursesLoading(false);
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const todayOperationScheduleEvents = getTodayOperationScheduleEvents(scheduleEvents);
+  const draftScheduleCount = scheduleEvents.filter(isScheduleEventPublishDraft).length;
 
   const weekDays = ['Mon 05/04', 'Tue 05/05', 'Wed 05/06', 'Thu 05/07', 'Fri 05/08', 'Sat 05/09', 'Sun 05/10'];
   const startHour = 8;
@@ -524,6 +550,33 @@ const Courses: React.FC = () => {
       {/* Content Area */}
       <div className="custom-scroll min-h-0 w-full max-w-full min-w-0 flex-1 overflow-x-hidden overflow-y-auto p-8">
           <div className="mx-auto w-full min-w-0 max-w-[1440px] space-y-6">
+              {(isCoursesLoading || coursesError) && (
+                  <div
+                      className={`rounded-xl border px-4 py-2.5 text-xs font-medium flex items-center gap-2 ${
+                          coursesError && !isCoursesLoading
+                              ? 'bg-red-50 border-red-200 text-red-800'
+                              : 'bg-gray-50 border-gray-200 text-gray-600'
+                      }`}
+                      role="status"
+                  >
+                      {isCoursesLoading ? (
+                          <>
+                              <i className="fa-solid fa-spinner fa-spin text-gray-400" aria-hidden />
+                              <span>正在加载课程数据（课程库、场次、预约、签到）…</span>
+                          </>
+                      ) : (
+                          <>
+                              <i className="fa-solid fa-triangle-exclamation text-red-500" aria-hidden />
+                              <span>课程数据加载失败，请稍后重试</span>
+                          </>
+                      )}
+                  </div>
+              )}
+              {!isCoursesLoading && !coursesError && libraryList.length === 0 && (
+                  <div className="rounded-xl border border-dashed border-gray-200 bg-white/80 px-4 py-3 text-center text-xs text-gray-500">
+                      暂无符合条件的课程
+                  </div>
+              )}
               <TodayOpsPanel
                   opsFilter={opsFilter}
                   setOpsFilter={setOpsFilter}

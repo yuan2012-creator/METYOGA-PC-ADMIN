@@ -423,3 +423,55 @@ export function fetchConsumptionsBySessionId(
 ): ReadonlyApiResult<MockCourseConsumptionRecord[]> {
   return fetchConsumptions({ ...params, courseSessionId });
 }
+
+/** 课程运营页初始化用只读快照（constants mock 经 adapter；不含 courseOps 场景合并） */
+export interface CourseReadonlySnapshot {
+  courses: Course[];
+  courseSessions: CourseSession[];
+  bookings: Booking[];
+  attendances: Attendance[];
+  consumptions: MockCourseConsumptionRecord[];
+}
+
+export interface FetchCourseReadonlySnapshotParams {
+  requestId?: string;
+  page?: number;
+  pageSize?: number;
+  storeId?: string;
+  from?: string;
+  to?: string;
+  role?: string;
+  dataSource?: ReadonlyQueryParams['dataSource'];
+}
+
+/**
+ * 一次性拉取课程 / 场次 / 预约 / 签到 / 耗课占位列表（只读 mock，全量至 pageSize 上限）
+ */
+export function fetchCourseReadonlySnapshot(
+  params: FetchCourseReadonlySnapshotParams = {}
+): ReadonlyApiResult<CourseReadonlySnapshot> {
+  const qp = baseQueryParams({ ...params, page: params.page ?? 1, pageSize: params.pageSize ?? 500 });
+
+  if (qp.dataSource === 'live') {
+    return { data: null, meta: null, error: readonlyLiveNotConnectedError() };
+  }
+
+  try {
+    const courses = adaptCourses([...MOCK_COURSES]);
+    const courseSessions = adaptCourseSessions([...MOCK_COURSE_SESSIONS]);
+    const bookings = adaptBookings([...MOCK_BOOKINGS]);
+    const attendances = adaptAttendances([...MOCK_ATTENDANCES]);
+    const consumptions = adaptConsumptions([...READONLY_COURSE_CONSUMPTIONS]);
+    return {
+      data: { courses, courseSessions, bookings, attendances, consumptions },
+      meta: buildReadonlyMeta(qp, courses.length),
+      error: null,
+    };
+  } catch {
+    return {
+      data: null,
+      meta: buildReadonlyMeta(qp, 0),
+      error: { code: 'COURSE_SNAPSHOT_FAILED', message: '课程域快照读取失败（只读 mock）。' },
+    };
+  }
+}
