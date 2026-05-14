@@ -679,7 +679,7 @@ const Mall: React.FC = () => {
   );
   
   return (
-    <div className="h-full flex flex-col animate-fadeIn relative bg-[#F5F5F7]">
+    <div className="h-full flex flex-col animate-fadeIn relative bg-[var(--met-bg-page)]">
         {/* Header */}
         <div className="h-16 border-b border-gray-200 flex items-center justify-between px-8 bg-white/80 backdrop-blur-md sticky top-0 z-20">
             <div className="flex items-center gap-4"><h2 className="text-xl font-bold text-gray-900">产品与合同</h2></div>
@@ -693,7 +693,7 @@ const Mall: React.FC = () => {
                                 <i className="fa-solid fa-file-signature text-orange-500"></i> 合同管理
                                 <i className="fa-solid fa-chevron-down text-gray-400 ml-1 text-[10px]"></i>
                             </button>
-                            <div className="absolute right-0 mt-1 w-36 bg-white border border-gray-100 rounded-xl shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden">
+                            <div className="absolute right-0 mt-1 w-36 bg-white border border-[var(--met-border)] rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.04)] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 overflow-hidden">
                                 <button 
                                     onClick={openContractCreate}
                                     className="w-full text-left px-4 py-3 text-xs text-gray-700 hover:bg-gray-50 hover:text-orange-600 transition flex items-center gap-2"
@@ -729,7 +729,7 @@ const Mall: React.FC = () => {
 
         {/* Sub Nav */}
         {subView === 'list' && (
-            <div className="px-8 py-4 bg-[#F5F5F7]/95 backdrop-blur border-b border-gray-200/50 sticky top-16 z-10 flex justify-start">
+            <div className="px-8 py-4 bg-[var(--met-bg-page)] backdrop-blur border-b border-[var(--met-border)]/50 sticky top-16 z-10 flex justify-start">
                 <div className="bg-gray-100 p-1 rounded-xl inline-flex relative">
                     {MALL_MODULE_TABS.map(tab => (
                         <button key={tab.id} onClick={() => setActiveModule(tab.id)} className={`relative z-10 px-4 py-2 text-[13px] font-medium text-center rounded-lg transition-all duration-200 ${activeModule === tab.id ? 'bg-white text-black shadow-sm font-bold' : 'text-gray-500 hover:text-black'}`}>{tab.label}</button>
@@ -869,7 +869,7 @@ const Mall: React.FC = () => {
         {toast && (
             <div className="fixed top-20 right-8 z-[70] animate-fadeIn">
                 <div
-                    className={`px-4 py-3 rounded-xl shadow-xl border text-sm font-bold flex items-center gap-3 ${
+                    className={`px-4 py-3 rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.04)] border text-sm font-bold flex items-center gap-3 ${
                         toast.variant === 'warning'
                             ? 'bg-amber-50 text-amber-900 border-amber-200'
                             : 'bg-green-50 text-green-700 border-green-100'

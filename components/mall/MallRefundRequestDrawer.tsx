@@ -482,7 +482,7 @@ const MallRefundRequestDrawer: React.FC<MallRefundRequestDrawerProps> = ({
   );
 
   const header = ctx ? (
-    <div className="border-b border-gray-100 bg-white px-5 py-4 shrink-0">
+    <div className="border-b border-[var(--met-border-light)] bg-[var(--met-surface)] px-5 py-4 shrink-0">
       <div className="flex justify-between items-start gap-3">
         <div className="min-w-0">
           <h2 className="text-base font-black text-gray-900">退款申请</h2>
@@ -494,7 +494,7 @@ const MallRefundRequestDrawer: React.FC<MallRefundRequestDrawerProps> = ({
         <button
           type="button"
           onClick={onClose}
-          className="shrink-0 w-9 h-9 rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 text-sm font-bold"
+          className="shrink-0 w-9 h-9 rounded-full border border-[var(--met-border)] text-gray-500 hover:bg-[var(--met-bg-page)] text-sm font-bold"
           aria-label="关闭"
         >
           ×
@@ -502,12 +502,12 @@ const MallRefundRequestDrawer: React.FC<MallRefundRequestDrawerProps> = ({
       </div>
     </div>
   ) : (
-    <div className="border-b border-gray-100 bg-white px-5 py-4 flex justify-between items-center shrink-0">
+    <div className="border-b border-[var(--met-border-light)] bg-[var(--met-surface)] px-5 py-4 flex justify-between items-center shrink-0">
       <span className="text-sm font-bold text-gray-700">退款申请</span>
       <button
         type="button"
         onClick={onClose}
-        className="w-9 h-9 rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 font-bold"
+        className="w-9 h-9 rounded-full border border-[var(--met-border)] text-gray-500 hover:bg-[var(--met-bg-page)] font-bold"
         aria-label="关闭"
       >
         ×
@@ -519,17 +519,17 @@ const MallRefundRequestDrawer: React.FC<MallRefundRequestDrawerProps> = ({
     <div className="fixed inset-0 z-[95] flex justify-end">
       <button type="button" className="absolute inset-0 bg-black/40" onClick={onClose} aria-label="关闭遮罩" />
       <aside
-        className="relative h-full w-full max-w-lg bg-[#F5F5F7] shadow-2xl flex flex-col animate-fadeIn"
+        className="relative h-full w-full max-w-lg bg-[var(--met-bg-page)] shadow-[0_1px_2px_rgba(0,0,0,0.04)] flex flex-col animate-fadeIn"
         role="dialog"
         aria-modal="true"
       >
         {header}
         <div className="flex-1 min-h-0 overflow-hidden flex flex-col">{body}</div>
-        <div className="border-t border-gray-100 bg-white px-4 py-3 shrink-0 flex flex-wrap gap-2">
+        <div className="border-t border-[var(--met-border-light)] bg-[var(--met-surface)] px-4 py-3 shrink-0 flex flex-wrap gap-2">
           <button
             type="button"
             onClick={onClose}
-            className="min-w-[88px] flex-1 py-2.5 rounded-xl text-xs font-bold border border-gray-200 text-gray-800 hover:bg-gray-50"
+            className="min-w-[88px] flex-1 py-2.5 rounded-xl text-xs font-bold border border-[var(--met-border)] text-gray-800 hover:bg-[var(--met-bg-page)]"
           >
             取消
           </button>
@@ -545,7 +545,7 @@ const MallRefundRequestDrawer: React.FC<MallRefundRequestDrawerProps> = ({
             type="button"
             disabled
             aria-disabled
-            className="min-w-[88px] flex-1 py-2.5 rounded-xl text-xs font-bold bg-gray-200 text-gray-500 cursor-not-allowed border border-gray-200"
+            className="min-w-[88px] flex-1 py-2.5 rounded-xl text-xs font-bold bg-gray-200 text-gray-500 cursor-not-allowed border border-[var(--met-border)]"
           >
             提交申请
           </button>

@@ -401,7 +401,7 @@ const Finance: React.FC = () => {
         </div>
 
         {/* Sub Navigation (Unified Segmented Control) */}
-        <div className="px-8 py-4 bg-[#F5F5F7]/95 backdrop-blur border-b border-gray-200/50 sticky top-16 z-10 flex justify-start">
+        <div className="px-8 py-4 bg-[var(--met-bg-page)] backdrop-blur border-b border-[var(--met-border)]/50 sticky top-16 z-10 flex justify-start">
              <div className="bg-gray-100 p-1 rounded-xl inline-flex relative">
                 {FINANCE_SUB_TABS.map(tab => (
                     <button 

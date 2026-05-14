@@ -253,7 +253,7 @@ const Members: React.FC = () => {
   );
 
   return (
-    <div className="h-full flex flex-col bg-[#F5F5F7] animate-fadeIn">
+    <div className="h-full flex flex-col bg-[var(--met-bg-page)] animate-fadeIn">
       
       {/* 1. TOP HEADER (Row 1 - White) */}
       <header className="h-16 border-b border-gray-200 flex items-center justify-between px-8 bg-white/80 backdrop-blur-md sticky top-0 z-30">
@@ -289,7 +289,7 @@ const Members: React.FC = () => {
       </header>
 
       {/* 2. SUB NAVIGATION (Row 2 - Gray Background) */}
-      <nav className="px-8 py-4 bg-[#F5F5F7] border-b border-gray-200/50 sticky top-16 z-20 flex justify-start">
+      <nav className="px-8 py-4 bg-[var(--met-bg-page)] backdrop-blur border-b border-[var(--met-border)]/50 sticky top-16 z-20 flex justify-start">
           <div className="bg-gray-100 p-1 rounded-xl inline-flex relative">
               {MEMBER_MAIN_TABS.map(tab => (
                   <button 

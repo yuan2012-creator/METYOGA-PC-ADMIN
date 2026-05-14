@@ -435,7 +435,7 @@ const MallOrderDetailDrawer: React.FC<MallOrderDetailDrawerProps> = ({
   );
 
   const header = ctx ? (
-    <div className="border-b border-gray-100 bg-white px-5 py-4 shrink-0">
+    <div className="border-b border-[var(--met-border-light)] bg-[var(--met-surface)] px-5 py-4 shrink-0">
       <div className="flex justify-between items-start gap-3">
         <div className="min-w-0">
           <div className="text-[10px] font-mono text-gray-400 truncate">{ctx.order.id}</div>
@@ -458,7 +458,7 @@ const MallOrderDetailDrawer: React.FC<MallOrderDetailDrawerProps> = ({
         <button
           type="button"
           onClick={onClose}
-          className="shrink-0 w-9 h-9 rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 text-sm font-bold"
+          className="shrink-0 w-9 h-9 rounded-full border border-[var(--met-border)] text-gray-500 hover:bg-[var(--met-bg-page)] text-sm font-bold"
           aria-label="关闭"
         >
           ×
@@ -466,9 +466,9 @@ const MallOrderDetailDrawer: React.FC<MallOrderDetailDrawerProps> = ({
       </div>
     </div>
   ) : (
-    <div className="border-b border-gray-100 bg-white px-5 py-4 flex justify-between items-center shrink-0">
+    <div className="border-b border-[var(--met-border-light)] bg-[var(--met-surface)] px-5 py-4 flex justify-between items-center shrink-0">
       <span className="text-sm font-bold text-gray-700">订单详情</span>
-      <button type="button" onClick={onClose} className="w-9 h-9 rounded-full border border-gray-200 text-gray-500 hover:bg-gray-50 font-bold" aria-label="关闭">
+      <button type="button" onClick={onClose} className="w-9 h-9 rounded-full border border-[var(--met-border)] text-gray-500 hover:bg-[var(--met-bg-page)] font-bold" aria-label="关闭">
         ×
       </button>
     </div>
@@ -478,7 +478,7 @@ const MallOrderDetailDrawer: React.FC<MallOrderDetailDrawerProps> = ({
     <div className="fixed inset-0 z-[80] flex justify-end">
       <button type="button" className="absolute inset-0 bg-black/40" onClick={onClose} aria-label="关闭遮罩" />
       <aside
-        className="relative h-full w-full max-w-lg bg-[#F5F5F7] shadow-2xl flex flex-col animate-fadeIn"
+        className="relative h-full w-full max-w-lg bg-[var(--met-bg-page)] shadow-[0_1px_2px_rgba(0,0,0,0.04)] flex flex-col animate-fadeIn"
         role="dialog"
         aria-modal="true"
       >
