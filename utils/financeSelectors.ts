@@ -214,7 +214,7 @@ const ledgerEntrySourceTypeZh = (t: FinanceLedgerEntry['sourceType']): string =>
   ({
     payment: '订单收款',
     refund: '退款',
-    course_consumption: '耗课确认收入',
+    course_consumption: '耗课 · 待确认收入（模块内测算）',
     payroll: '老师课时费',
     adjustment: '调整项',
   } as const)[t] ?? '来源待核对'

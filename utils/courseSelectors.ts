@@ -633,7 +633,7 @@ export const completeDemoAttendanceForSession = (
     },
     bookings,
     attendances: updatedAttendances,
-    message: `${event.name} 已完成签到并生成消课记录`,
+    message: `${event.name} 演示：已完成签到并生成消课记录（未写入后端，正式以服务端为准）`,
   };
 };
 

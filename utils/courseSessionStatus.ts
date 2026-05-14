@@ -207,7 +207,7 @@ const SETTLEMENT_LABEL: Record<CourseSessionSettlementStatus, string> = {
   pending: '待结算',
   consumed: '已耗课',
   teacher_pay_generated: '已生成老师课时',
-  revenue_confirmed: '已确认收入',
+  revenue_confirmed: '收入测算已锁定',
   exception_hold: '异常挂起',
 };
 
@@ -292,7 +292,7 @@ export const getCourseSessionDisplayStatus = (input: CourseSessionStatusInput): 
   }
   if (r.lifecycle === 'completed') {
     if (r.settlement === 'revenue_confirmed') {
-      return pick('completed_revenue', '已完课 · 已确认收入', 'success', 5);
+      return pick('completed_revenue', '已完课 · 收入测算已锁定', 'success', 5);
     }
     return pick('completed', '已完课', 'success', 5);
   }

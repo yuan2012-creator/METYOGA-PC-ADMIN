@@ -444,8 +444,8 @@ export const labelMallContractStatusZh = (status: ContractStatus): string => {
     draft: '草稿',
     pending_signature: '待签署',
     signed: '已签署',
-    effective: '已生效',
-    voided: '已作废',
+    effective: '已生效（合同）',
+    voided: '已作废（合同）',
     expired: '已到期',
     terminated: '已终止',
   };
@@ -455,12 +455,12 @@ export const labelMallContractStatusZh = (status: ContractStatus): string => {
 export const labelMallPaymentStatusZh = (status: PaymentStatus): string => {
   const map: Record<PaymentStatus, string> = {
     initiated: '发起中',
-    paid: '已到账',
-    reconciled: '已对账',
+    paid: '支付成功（待财务核对）',
+    reconciled: '流水已核对',
     failed: '失败',
     cancelled: '已取消',
     refunding: '退款处理中',
-    refunded: '已原路退回',
+    refunded: '退款处理完成（以支付渠道为准）',
   };
   return map[status] ?? '暂未识别';
 };
@@ -471,7 +471,7 @@ export const labelMallRefundStatusZh = (status: RefundStatus): string => {
     reviewing: '审核中',
     approved: '已通过',
     processing: '处理中',
-    completed: '已完成',
+    completed: '退款登记已完成',
     rejected: '已驳回',
     cancelled: '已撤销',
   };
@@ -507,7 +507,7 @@ export const labelAssetTransferRecordStatusZh = (status: AssetTransferRecordStat
     reviewing: '审核中',
     approved: '已通过',
     rejected: '已拒绝',
-    completed: '已完成',
+    completed: '登记已完成',
     cancelled: '已取消',
   };
   return map[status] ?? '暂未识别';
@@ -713,7 +713,7 @@ export const buildMallOrderDetailRiskMessages = ({
     (contract.status === 'signed' || contract.status === 'effective') &&
     orderAssets.length === 0
   ) {
-    pushUnique('合同已签署，但暂无会员资产发放记录。');
+    pushUnique('合同已签署，但暂无会员资产生效记录。');
   }
 
   const hasRefundRecords = orderRefunds.length > 0;
@@ -753,7 +753,7 @@ export const buildMallOrderDetailRiskMessages = ({
     }
 
     if (completedRefunds.some(r => !r.financeLedgerId?.trim())) {
-      pushUnique('退款记录已完成，财务分录关联需后续接入统一服务。');
+      pushUnique('退款登记流程已结束，财务分录关联需后续接入统一服务。');
     }
 
     if (messages.length === _refundRiskStart) {
@@ -888,6 +888,6 @@ export const summarizeMallHeaderAssetStateZh = (order: Order, assets: MemberAsse
   if (list.some(a => a.mallGrantRecordNote?.trim())) return '本模块已记录';
   const allEffective = list.every(a => a.status === 'effective');
   if (list.some(a => a.status === 'frozen')) return '含冻结资产';
-  if (allEffective) return '已发放';
+  if (allEffective) return '权益已全部生效';
   return '已登记资产';
 };

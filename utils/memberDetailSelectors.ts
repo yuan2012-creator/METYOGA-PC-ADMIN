@@ -296,7 +296,7 @@ export const buildMemberDetailBusinessRecordSlots = (
       toneClass: 'bg-white text-gray-900 border border-gray-200',
       metrics: [
         { label: summary.hasConsumptionDomainData ? '实收金额' : '累计消费', value: `¥${(summary.hasConsumptionDomainData ? summary.paidTotal : member.totalLTV).toLocaleString()}` },
-        { label: summary.refundTotal > 0 ? '退款/确认收入' : '订单/确认收入', value: summary.refundTotal > 0 ? `¥${summary.refundTotal.toLocaleString()} / ¥${summary.recognizedCourseIncome.toLocaleString()}` : `${summary.orderCount} 单 / ¥${summary.recognizedCourseIncome.toLocaleString()}` },
+        { label: summary.refundTotal > 0 ? '退款/待确认收入（测算）' : '订单/待确认收入（测算）', value: summary.refundTotal > 0 ? `¥${summary.refundTotal.toLocaleString()} / ¥${summary.recognizedCourseIncome.toLocaleString()}` : `${summary.orderCount} 单 / ¥${summary.recognizedCourseIncome.toLocaleString()}` },
       ],
     },
   ];

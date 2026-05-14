@@ -312,7 +312,7 @@ const MallOrderDetailDrawer: React.FC<MallOrderDetailDrawerProps> = ({
                   onOpenAssetDetail ? 'cursor-pointer hover:border-gray-300 hover:bg-white/70' : ''
                 }`}
               >
-                <Row label="是否已发放" value={asset.status === 'effective' ? '是' : '已登记（未生效）'} />
+                <Row label="权益是否已生效" value={asset.status === 'effective' ? '是' : '已登记（未生效）'} />
                 <Row label="资产名称" value={asset.name} />
                 <Row label="资产状态" value={labelMallMemberAssetStatusZh(asset.status)} />
                 <Row label="初始权益" value={formatMallAssetInitialSummary(asset)} />

@@ -84,7 +84,7 @@ export const canCompleteCourseSession = (
   if (event.status === 'completed') {
     return {
       allowed: false,
-      reason: event.settlementStatus === 'revenue_confirmed' ? '该场次已完成归档。' : '该场次已标记完课。',
+      reason: event.settlementStatus === 'revenue_confirmed' ? '该场次已在模块内完成归档（非财务关闭）。' : '该场次已标记完课。',
     };
   }
   if (!lifecycleAllowsArchive(event, nowMs)) {

@@ -467,7 +467,7 @@ export const buildMemberDetailViewModel = (input: BuildMemberDetailViewModelInpu
         consumedAtDisplay: formatDateTime(c.consumedAt),
         deductDisplay: amt,
         sourceDisplay: '课程场次',
-        statusDisplay: '已确认',
+        statusDisplay: '耗课已登记',
       };
     });
 

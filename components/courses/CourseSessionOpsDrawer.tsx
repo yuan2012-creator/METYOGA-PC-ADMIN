@@ -536,7 +536,7 @@ const CourseSessionOpsDrawer: React.FC<CourseSessionOpsDrawerProps> = ({
   const settlementPreviewPrimaryLabel = useMemo(() => {
     if (!statusInput) return '暂未记录';
     const metaLabel = statusMeta?.settlementStatusLabel ?? '暂未记录';
-    if (statusInput.settlementStatus === 'revenue_confirmed') return '已确认收入';
+    if (statusInput.settlementStatus === 'revenue_confirmed') return '收入测算已锁定';
     const timeEnded = Date.now() >= new Date(statusInput.endAt).getTime();
     if (!timeEnded || isScheduleCanceled) return metaLabel;
     if (isSessionCompleted) return metaLabel;
@@ -554,7 +554,7 @@ const CourseSessionOpsDrawer: React.FC<CourseSessionOpsDrawerProps> = ({
     if (!statusInput) return null;
     if (statusInput.settlementStatus === 'revenue_confirmed') {
       return {
-        text: '本场次已完成课程归档，以下为已生成的耗课、老师课时与确认收入估算记录。',
+        text: '本场次已完成课程归档，以下为已生成的耗课、老师课时与待确认收入（模块内测算）估算记录。',
         className: 'text-emerald-900/90',
       };
     }
@@ -562,7 +562,7 @@ const CourseSessionOpsDrawer: React.FC<CourseSessionOpsDrawerProps> = ({
     if (!timeEnded || isScheduleCanceled || isSessionCompleted) return null;
     if (settlementGate.allowed) {
       return {
-        text: '课程具备归档条件，归档后将生成耗课、老师课时与确认收入估算记录。',
+        text: '课程具备归档条件，归档后将生成耗课、老师课时与待确认收入（模块内测算）估算记录。',
         className: 'text-gray-600',
       };
     }
@@ -813,7 +813,7 @@ const CourseSessionOpsDrawer: React.FC<CourseSessionOpsDrawerProps> = ({
                         <dd className="font-medium text-gray-800 tabular-nums">{scopedTeacherPays.length}</dd>
                       </div>
                       <div className="flex justify-between gap-2 sm:block">
-                        <dt className="text-gray-500">已生成确认收入记录数</dt>
+                        <dt className="text-gray-500">已生成收入测算记录数</dt>
                         <dd className="font-medium text-gray-800 tabular-nums">{scopedFinanceEntries.length}</dd>
                       </div>
                       <div className="flex justify-between gap-2 sm:block">
@@ -829,7 +829,7 @@ const CourseSessionOpsDrawer: React.FC<CourseSessionOpsDrawerProps> = ({
                         </dd>
                       </div>
                       <div className="flex justify-between gap-2 sm:col-span-2 sm:block">
-                        <dt className="text-gray-500">预计确认收入</dt>
+                        <dt className="text-gray-500">预计待确认收入（测算）</dt>
                         <dd className="font-medium text-gray-800 tabular-nums">
                           {estIncomeTotal > 0 ? `¥${estIncomeTotal}` : '—'}
                         </dd>
