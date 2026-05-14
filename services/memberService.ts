@@ -74,8 +74,15 @@ function filterMembersById(list: typeof MOCK_MEMBERS, memberId?: string): typeof
   return list.filter(m => m.id === memberId);
 }
 
+/** 与 mock 门店数值字符串 `1`–`5` 对齐，按 `primaryStoreId` 过滤（缺省视为万象馆 `1`） */
+function filterMembersByStoreId(list: typeof MOCK_MEMBERS, storeId?: string): typeof MOCK_MEMBERS {
+  if (!storeId?.trim()) return [...list];
+  const sid = storeId.trim();
+  return list.filter(m => (m.primaryStoreId ?? '1') === sid);
+}
+
 /**
- * 分页会员列表（只读 mock；storeId 仅透传 meta，mock 无门店字段时不强滤）
+ * 分页会员列表（只读 mock；`storeId` 按 `primaryStoreId` 过滤，空则全部门店）
  */
 export function fetchMembers(params: FetchMembersParams = {}): ReadonlyApiResult<Member[]> {
   const qp = baseQueryParams(params);
@@ -87,6 +94,7 @@ export function fetchMembers(params: FetchMembersParams = {}): ReadonlyApiResult
   try {
     let list = filterMembersByQ(MOCK_MEMBERS, params.q);
     list = filterMembersById(list, params.memberId);
+    list = filterMembersByStoreId(list, params.storeId);
     const total = list.length;
     const start = (qp.page - 1) * qp.pageSize;
     const slice = list.slice(start, start + qp.pageSize);

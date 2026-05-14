@@ -11,6 +11,25 @@ import Marketing from './components/Marketing';
 import Data from './components/Data';
 import Investor from './components/Investor';
 import Settings from './components/Settings';
+import MockAdminStoreScopeBar from './components/MockAdminStoreScopeBar';
+import { MockAdminScopeProvider, useMockAdminScope } from './context/MockAdminScopeContext';
+import { MOCK_ADMIN_UI_DEFAULT } from './constants/mockAdminScope';
+
+const MockSidebarAccountFootnote: React.FC = () => {
+  const { config, effectiveStoreId, storeLabelById } = useMockAdminScope();
+  const line2 =
+    config.mode === 'hq'
+      ? effectiveStoreId
+        ? `数据范围：${storeLabelById(effectiveStoreId)}（mock）`
+        : '数据范围：全部门店（mock）'
+      : `单店：${storeLabelById(config.lockedStoreId)}（mock）`;
+  return (
+    <>
+      <div className="truncate text-sm font-bold text-[#202020]">{config.role}</div>
+      <div className="met-muted mt-0.5 text-xs leading-snug">{line2}</div>
+    </>
+  );
+};
 
 const App: React.FC = () => {
   const [activeNav, setActiveNav] = useState('dashboard');
@@ -88,7 +107,9 @@ const App: React.FC = () => {
     }
   };
 
+  // 单店无门店筛选演示：将 initialConfig 换为 MOCK_ADMIN_UI_SINGLE_STORE_DEMO（constants/mockAdminScope）。
   return (
+    <MockAdminScopeProvider initialConfig={MOCK_ADMIN_UI_DEFAULT}>
     <div className="met-page-bg flex h-screen overflow-hidden font-sans">
       {/* Sidebar */}
       <aside
@@ -150,8 +171,7 @@ const App: React.FC = () => {
               运
             </div>
             <div className="min-w-0 flex-1">
-              <div className="truncate text-sm font-bold text-[#202020]">运营管理员</div>
-              <div className="met-muted mt-0.5 text-xs leading-snug">总部运营 · 万象城店</div>
+              <MockSidebarAccountFootnote />
             </div>
           </div>
         </div>
@@ -197,6 +217,8 @@ const App: React.FC = () => {
             </header>
         ) : null}
 
+        <MockAdminStoreScopeBar />
+
         {/* Dynamic Page Content */}
         <div className={contentShellClassName}>
              {renderContent()}
@@ -209,6 +231,7 @@ const App: React.FC = () => {
         .custom-scroll::-webkit-scrollbar-track { background: transparent; }
       `}</style>
     </div>
+    </MockAdminScopeProvider>
   );
 };
 

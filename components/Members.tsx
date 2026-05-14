@@ -36,6 +36,7 @@ import {
 } from '../utils/memberOpsScenarioFixtures';
 import { buildMemberListRows, type MemberListLifecycleTone } from '../utils/memberListSelectors';
 import MemberDetailModal from './MemberDetailModal';
+import { useMockAdminScope } from '../context/MockAdminScopeContext';
 
 type MemberMainTab = 'all' | 'leads' | 'active' | 'churned' | 'risk';
 type MemberRiskFilter = Exclude<NonNullable<Member['riskTag']>, 'churn'>;
@@ -64,6 +65,7 @@ const lifecycleToneBadgeClass = (tone: MemberListLifecycleTone): string => {
 };
 
 const Members: React.FC = () => {
+  const { effectiveStoreId } = useMockAdminScope();
   const [members, setMembers] = useState<Member[]>([]);
   const [isMembersLoading, setIsMembersLoading] = useState(true);
   const [membersError, setMembersError] = useState<string | null>(null);
@@ -83,7 +85,12 @@ const Members: React.FC = () => {
   useEffect(() => {
     setIsMembersLoading(true);
     setMembersError(null);
-    const res = fetchMembers({ page: 1, pageSize: 500, dataSource: 'mock' });
+    const res = fetchMembers({
+      page: 1,
+      pageSize: 500,
+      dataSource: 'mock',
+      storeId: effectiveStoreId ?? undefined,
+    });
     if (res.error) {
       setMembersError(res.error.message);
       setMembers([]);
@@ -91,7 +98,7 @@ const Members: React.FC = () => {
       setMembers(res.data ?? []);
     }
     setIsMembersLoading(false);
-  }, []);
+  }, [effectiveStoreId]);
 
   useEffect(() => {
     if (!selectedMember) {
