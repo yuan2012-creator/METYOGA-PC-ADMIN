@@ -29,6 +29,21 @@ const App: React.FC = () => {
     { id: 'settings', label: '规则配置', icon: 'fa-gear' },
   ];
 
+  const isDashboard = activeNav === 'dashboard';
+  /** 仅经营总览使用 App 级顶栏（搜索 / 通知）；其它一级页使用各自页内顶栏，避免重复。 */
+  const shouldShowGlobalHeader = isDashboard;
+
+  /** 主列：与侧栏并排的主内容区，统一 flex 与页面背景。 */
+  const mainShellClassName =
+    'relative flex min-h-0 min-w-0 flex-1 flex-col bg-[var(--met-bg-page)]';
+
+  /**
+   * 主内容包裹层：Dashboard 由 App 负责纵向滚动与内边距；其它页外层不滚动，避免与页内 sticky/滚动冲突。
+   */
+  const contentShellClassName = isDashboard
+    ? 'custom-scroll min-h-0 flex-1 overflow-y-auto p-8'
+    : 'min-h-0 min-w-0 flex-1 overflow-hidden';
+
   const renderContent = () => {
     switch (activeNav) {
       case 'dashboard':
@@ -143,12 +158,10 @@ const App: React.FC = () => {
       </aside>
 
       {/* Main Content Area */}
-      <main className="relative flex min-w-0 flex-1 flex-col bg-[var(--met-bg-page)]">
-        
-        {/* Header (Dynamic based on Page) */}
-        {activeNav !== 'member' && activeNav !== 'shop' && activeNav !== 'staff' && activeNav !== 'course' && activeNav !== 'mall' && activeNav !== 'finance' && activeNav !== 'marketing' && activeNav !== 'data' && activeNav !== 'investor' && activeNav !== 'settings' && (
+      <main className={mainShellClassName}>
+        {shouldShowGlobalHeader ? (
             <header
-              className="sticky top-0 z-10 flex h-16 items-center justify-between border-b px-8"
+              className="sticky top-0 z-10 flex h-16 shrink-0 items-center justify-between border-b px-8"
               style={{
                 backgroundColor: 'var(--met-surface)',
                 borderColor: 'var(--met-border)',
@@ -156,12 +169,12 @@ const App: React.FC = () => {
             >
                 <div className="flex items-center gap-4">
                     <h2 className="text-xl font-bold text-[#202020]">{navItems.find(n => n.id === activeNav)?.label}</h2>
-                    {activeNav === 'dashboard' && (
+                    {isDashboard ? (
                         <span className="met-status-tag">
                             <span className="met-status-tag__dot" aria-hidden />
                             营业中
                         </span>
-                    )}
+                    ) : null}
                 </div>
                 <div className="flex items-center gap-5">
                     <div className="relative">
@@ -182,10 +195,10 @@ const App: React.FC = () => {
                     </button>
                 </div>
             </header>
-        )}
+        ) : null}
 
         {/* Dynamic Page Content */}
-        <div className={`flex-1 overflow-hidden ${activeNav === 'dashboard' ? 'custom-scroll overflow-y-auto p-8' : ''}`}>
+        <div className={contentShellClassName}>
              {renderContent()}
         </div>
 
