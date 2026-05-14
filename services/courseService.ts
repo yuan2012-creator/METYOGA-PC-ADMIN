@@ -17,7 +17,7 @@ import {
   MOCK_BOOKINGS,
   MOCK_COURSES,
   MOCK_COURSE_SESSIONS,
-} from '../constants';
+} from '../constants.ts';
 import type {
   Attendance,
   Booking,

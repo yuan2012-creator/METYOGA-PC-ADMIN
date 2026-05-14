@@ -2,8 +2,8 @@
  * P0 会员域只读 service：从 MOCK_MEMBERS / MOCK_MEMBER_ASSETS 经 adapter 返回；不接云函数。
  */
 
-import { MOCK_MEMBER_ASSETS, MOCK_MEMBERS } from '../constants';
-import { adaptMember, adaptMemberAsset, adaptMemberAssets } from '../adapters/memberAdapter';
+import * as MockConstants from '../constants.ts';
+import { adaptMember, adaptMemberAsset, adaptMemberAssets, adaptMembers } from '../adapters/memberAdapter';
 import type { Member, MemberAsset } from '../types';
 import {
   buildReadonlyMeta,
@@ -63,19 +63,19 @@ function baseQueryParams(overrides: Partial<ReadonlyQueryParams>): ReadonlyQuery
   };
 }
 
-function filterMembersByQ(list: typeof MOCK_MEMBERS, q?: string): typeof MOCK_MEMBERS {
+function filterMembersByQ(list: Member[], q?: string): Member[] {
   if (!q?.trim()) return [...list];
   const s = q.trim().toLowerCase();
   return list.filter(m => m.name.toLowerCase().includes(s) || m.phone.toLowerCase().includes(s));
 }
 
-function filterMembersById(list: typeof MOCK_MEMBERS, memberId?: string): typeof MOCK_MEMBERS {
+function filterMembersById(list: Member[], memberId?: string): Member[] {
   if (!memberId?.trim()) return [...list];
   return list.filter(m => m.id === memberId);
 }
 
 /** 与 mock 门店数值字符串 `1`–`5` 对齐，按 `primaryStoreId` 过滤（缺省视为万象馆 `1`） */
-function filterMembersByStoreId(list: typeof MOCK_MEMBERS, storeId?: string): typeof MOCK_MEMBERS {
+function filterMembersByStoreId(list: Member[], storeId?: string): Member[] {
   if (!storeId?.trim()) return [...list];
   const sid = storeId.trim();
   return list.filter(m => (m.primaryStoreId ?? '1') === sid);
@@ -92,7 +92,7 @@ export function fetchMembers(params: FetchMembersParams = {}): ReadonlyApiResult
   }
 
   try {
-    let list = filterMembersByQ(MOCK_MEMBERS, params.q);
+    let list = filterMembersByQ(MockConstants.MOCK_MEMBERS, params.q);
     list = filterMembersById(list, params.memberId);
     list = filterMembersByStoreId(list, params.storeId);
     const total = list.length;
@@ -135,7 +135,7 @@ export function fetchMemberDetail(
   }
 
   try {
-    const found = MOCK_MEMBERS.find(m => m.id === memberId);
+    const found = MockConstants.MOCK_MEMBERS.find(m => m.id === memberId);
     if (!found) {
       return {
         data: null,
@@ -168,7 +168,7 @@ export function fetchMemberAssets(params: FetchMemberAssetsParams = {}): Readonl
   }
 
   try {
-    let list = [...MOCK_MEMBER_ASSETS];
+    let list = [...MockConstants.MOCK_MEMBER_ASSETS];
     if (params.memberId?.trim()) {
       list = list.filter(a => a.memberId === params.memberId);
     }

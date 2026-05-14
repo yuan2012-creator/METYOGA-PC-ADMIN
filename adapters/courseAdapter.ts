@@ -174,6 +174,7 @@ export function adaptCourseSession(raw: unknown): CourseSession {
       capacity: 0,
     };
   }
+  const n = raw;
   return {
     id: pickStr(n.id, ''),
     courseId: pickStr(n.courseId, ''),

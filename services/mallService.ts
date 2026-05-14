@@ -12,7 +12,7 @@ import {
   adaptPayment,
   adaptPayments,
 } from '../adapters/mallAdapter';
-import { MOCK_CONTRACTS, MOCK_MEMBER_ASSETS, MOCK_ORDERS, MOCK_PAYMENTS } from '../constants';
+import { MOCK_CONTRACTS, MOCK_MEMBER_ASSETS, MOCK_ORDERS, MOCK_PAYMENTS } from '../constants.ts';
 import type { Contract, MemberAsset, Order, Payment } from '../types';
 import {
   buildReadonlyMeta,

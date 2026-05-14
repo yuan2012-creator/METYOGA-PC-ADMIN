@@ -11,7 +11,7 @@ import {
   adaptFinanceReadonlySummary,
 } from '../adapters/financeAdapter';
 import type { FinanceReadonlySummary } from '../adapters/financeAdapter';
-import { MOCK_ORDERS, MOCK_PAYMENTS } from '../constants';
+import { MOCK_ORDERS, MOCK_PAYMENTS } from '../constants.ts';
 import type { MockCourseConsumptionRecord, Order, Payment } from '../types';
 import {
   buildReadonlyMeta,
