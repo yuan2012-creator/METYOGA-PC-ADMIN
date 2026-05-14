@@ -144,7 +144,7 @@ const CourseLibrary: React.FC<CourseLibraryProps> = ({
       {isDetailModalOpen && selectedCourse && (
           <div className="fixed inset-0 z-50 flex items-center justify-center">
               <div className="absolute inset-0 bg-black/30 backdrop-blur-sm transition-opacity" onClick={() => setIsDetailModalOpen(false)}></div>
-              <div className="bg-white w-[900px] h-[85vh] rounded-2xl shadow-2xl z-10 flex flex-col overflow-hidden animate-fadeInUp">
+              <div className="bg-white w-[900px] h-[85vh] rounded-2xl shadow-[0_1px_2px_rgba(0,0,0,0.04)] z-10 flex flex-col overflow-hidden animate-fadeInUp">
                   
                   {/* Modal Header */}
                   <div className="px-8 py-5 border-b border-gray-200 flex justify-between items-center bg-white sticky top-0 z-20">
@@ -172,7 +172,7 @@ const CourseLibrary: React.FC<CourseLibraryProps> = ({
                                   <i className="fa-regular fa-pen-to-square mr-1"></i> 编辑
                               </button>
                           ) : (
-                              <button onClick={() => handleSaveCourse(selectedCourse)} className="bg-black text-white text-xs px-4 py-2 rounded-lg font-bold hover:opacity-80 transition shadow-lg">
+                              <button onClick={() => handleSaveCourse(selectedCourse)} className="bg-[var(--met-accent)] border border-[var(--met-accent)] text-white text-xs px-4 py-2 rounded-lg font-bold hover:opacity-90 transition shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
                                   保存修改
                               </button>
                           )}

@@ -335,7 +335,7 @@ const Members: React.FC = () => {
                             <div 
                               key={item.id} 
                               onClick={() => setAlertFilter(alertFilter === item.id ? null : item.id)}
-                              className={`p-6 bg-white rounded-[28px] border transition-all duration-300 cursor-pointer group relative overflow-hidden flex flex-col justify-between h-40 ${alertFilter === item.id ? 'border-[#1f5e3b] ring-4 ring-[#1f5e3b]/10 shadow-xl' : 'border-transparent shadow-sm hover:shadow-md'}`}
+                              className={`p-6 bg-white rounded-[28px] border transition-all duration-300 cursor-pointer group relative overflow-hidden flex flex-col justify-between h-40 ${alertFilter === item.id ? 'border-[#1f5e3b] ring-4 ring-[#1f5e3b]/10 shadow-[0_1px_2px_rgba(0,0,0,0.04)]' : 'border-transparent shadow-sm hover:shadow-md'}`}
                             >
                                 <div className="flex justify-between items-start">
                                     <div className={`w-10 h-10 rounded-full flex items-center justify-center ${alertFilter === item.id ? 'bg-[#1f5e3b] text-white' : 'bg-gray-50 text-gray-400'}`}>
@@ -605,7 +605,7 @@ const Members: React.FC = () => {
 
       {toast && (
           <div className="fixed top-20 right-8 z-[70] animate-fadeIn">
-              <div className="px-4 py-3 rounded-xl shadow-xl border text-sm font-bold flex items-center gap-3 bg-white text-gray-800 border-gray-100">
+              <div className="px-4 py-3 rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.04)] border text-sm font-bold flex items-center gap-3 bg-white text-gray-800 border-gray-100">
                   <i className="fa-solid fa-circle-info text-blue-500"></i>
                   {toast.message}
               </div>

@@ -156,16 +156,16 @@ const MallContractCreate: React.FC<MallContractCreateProps> = ({
                     </button>
                     <button
                         onClick={onGenerateOrderPreview}
-                        className="px-6 py-2 bg-orange-500 text-white rounded-xl text-sm font-bold hover:opacity-90 transition shadow-lg shadow-orange-500/10"
+                        className="px-6 py-2 bg-orange-500 text-white rounded-xl text-sm font-bold hover:opacity-90 transition shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
                     >
                         生成订单预览
                     </button>
                     <button
                         onClick={onConfirmOrderPreview}
                         disabled={!writeClosureDraft}
-                        className={`px-6 py-2 rounded-xl text-sm font-bold transition shadow-lg ${
+                        className={`px-6 py-2 rounded-xl text-sm font-bold transition ${
                             writeClosureDraft
-                                ? 'bg-black text-white hover:opacity-80 shadow-black/10'
+                                ? 'shadow-[0_1px_2px_rgba(0,0,0,0.04)] bg-[var(--met-accent)] border border-[var(--met-accent)] text-white hover:opacity-90'
                                 : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                         }`}
                     >
@@ -173,7 +173,7 @@ const MallContractCreate: React.FC<MallContractCreateProps> = ({
                     </button>
                     <button
                         onClick={() => onDemoAction('合同线上签署发送待接入，正式版本需绑定电子签服务、会员与订单，并写入操作日志。')}
-                        className="px-6 py-2 bg-black text-white rounded-xl text-sm font-bold hover:opacity-80 transition shadow-lg shadow-black/10"
+                        className="px-6 py-2 bg-[var(--met-accent)] border border-[var(--met-accent)] text-white rounded-xl text-sm font-bold hover:opacity-90 transition shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
                     >
                         发送给会员签署
                     </button>
@@ -217,7 +217,7 @@ const MallContractCreate: React.FC<MallContractCreateProps> = ({
                         {/* Section 1: Party A */}
                         <section onFocus={() => handleFocus('partyA')}>
                             <h4 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                <span className="w-6 h-6 rounded-full bg-black text-white flex items-center justify-center text-[10px]">1</span>
+                                <span className="w-6 h-6 rounded-full bg-[var(--met-accent)] text-white flex items-center justify-center text-[10px]">1</span>
                                 甲方（提供方）信息
                             </h4>
                             <div className="grid grid-cols-2 gap-4">
@@ -304,7 +304,7 @@ const MallContractCreate: React.FC<MallContractCreateProps> = ({
                         {/* Section 2: Member Selection */}
                         <section onFocus={() => handleFocus('partyB')}>
                             <h4 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                <span className="w-6 h-6 rounded-full bg-black text-white flex items-center justify-center text-[10px]">2</span>
+                                <span className="w-6 h-6 rounded-full bg-[var(--met-accent)] text-white flex items-center justify-center text-[10px]">2</span>
                                 乙方（会员方）信息
                             </h4>
                             <div className="grid grid-cols-2 gap-4">
@@ -334,7 +334,7 @@ const MallContractCreate: React.FC<MallContractCreateProps> = ({
                         {/* Section 3: Product & Contract Details */}
                         <section onFocus={() => handleFocus('courseDetails')}>
                             <h4 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                <span className="w-6 h-6 rounded-full bg-black text-white flex items-center justify-center text-[10px]">3</span>
+                                <span className="w-6 h-6 rounded-full bg-[var(--met-accent)] text-white flex items-center justify-center text-[10px]">3</span>
                                 {contractData.productType === 'card' ? '会员购买及账户信息' : '教培服务内容'}
                             </h4>
                             <div className="grid grid-cols-2 gap-4">
@@ -549,7 +549,7 @@ const MallContractCreate: React.FC<MallContractCreateProps> = ({
 
                 {/* Right: Preview */}
                 <div ref={previewContainerRef} className="w-1/2 bg-gray-200 rounded-2xl p-8 overflow-y-auto custom-scroll flex flex-col items-center">
-                    <div className="bg-white shadow-2xl p-12 flex flex-col relative text-sm leading-relaxed text-gray-800 shrink-0" style={{ width: '100%', maxWidth: '794px', minHeight: '1123px' }}>
+                    <div className="bg-white shadow-[0_1px_2px_rgba(0,0,0,0.04)] p-12 flex flex-col relative text-sm leading-relaxed text-gray-800 shrink-0" style={{ width: '100%', maxWidth: '794px', minHeight: '1123px' }}>
                         <h2 className="text-2xl font-bold text-center mb-8 tracking-widest">{contractData.productType === 'card' ? '会员服务合同' : '教培服务合同'}</h2>
                         
                         <div className="text-right mb-8">

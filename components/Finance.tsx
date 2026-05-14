@@ -710,7 +710,7 @@ const Finance: React.FC = () => {
 
         {toast && (
             <div className="fixed top-20 right-8 z-[70] animate-fadeIn">
-                <div className={`px-4 py-3 rounded-xl shadow-xl border text-sm font-bold flex items-center gap-3 ${
+                <div className={`px-4 py-3 rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.04)] border text-sm font-bold flex items-center gap-3 ${
                     toast.tone === 'success'
                     ? 'bg-green-50 text-green-700 border-green-100'
                     : 'bg-white text-gray-800 border-gray-100'
