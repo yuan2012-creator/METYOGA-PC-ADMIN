@@ -5,16 +5,28 @@
 @tailwind utilities;
 
 :root {
-  --met-bg-page: #f6f4ef;
-  --met-text: #202020;
-  --met-text-muted: #7b7b76;
-  --met-border: #e3e3de;
-  --met-accent: #1f5e3b;
+  /* Page shell — neutral warm gray, tool-like (not pure white / not heavy cream) */
+  --met-bg-page: #f5f5f4;
   --met-surface: #ffffff;
-  --met-sidebar: #fafaf8;
-  --met-nav-active-bg: #f1f4f1;
-  --met-nav-hover-bg: #eef1ed;
-  --met-scrollbar: #d0d0cc;
+  --met-sidebar: #f8f8f7;
+
+  /* Typography */
+  --met-text: #171717;
+  --met-text-secondary: #52525b;
+  --met-text-muted: #71717a;
+  --met-text-faint: #a1a1aa;
+
+  /* Borders — low-contrast hairlines */
+  --met-border: #e7e5e4;
+  --met-border-light: #eeeeee;
+
+  /* Brand — single accent; only micro-shifted from legacy #1f5e3b */
+  --met-accent: #1d5636;
+
+  --met-nav-active-bg: #ecefec;
+  --met-nav-hover-bg: #f0f0ef;
+  --met-scrollbar: rgba(0, 0, 0, 0.12);
+
   --bg-app: var(--met-bg-page);
   --surface: var(--met-surface);
   --text-main: var(--met-text);
@@ -36,9 +48,14 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+::selection {
+  background: rgba(29, 86, 54, 0.14);
+  color: inherit;
+}
+
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -47,11 +64,11 @@ body {
 
 ::-webkit-scrollbar-thumb {
   background: var(--met-scrollbar);
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #b8b8b3;
+  background: rgba(0, 0, 0, 0.2);
 }
 
 /* Shell & editorial baseline — optional utilities for layout chrome */
@@ -67,7 +84,7 @@ body {
 }
 
 .met-card {
-  background: #fcfcfa;
+  background: var(--met-surface);
   border: 1px solid var(--met-border);
   border-radius: 14px;
   box-shadow: none;
@@ -78,7 +95,7 @@ body {
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--met-text-muted);
+  color: var(--met-text-secondary);
 }
 
 .met-muted {
@@ -87,7 +104,7 @@ body {
 
 .met-divider {
   height: 1px;
-  background: var(--met-border);
+  background: var(--met-border-light);
   border: 0;
   margin: 0;
 }
@@ -100,15 +117,25 @@ body {
   font-size: 0.875rem;
   font-weight: 600;
   color: #fff;
-  background-color: #1f5e3b;
-  border: 1px solid #1f5e3b;
+  background-color: var(--met-accent);
+  border: 1px solid var(--met-accent);
   border-radius: 13px;
   box-shadow: none;
   cursor: pointer;
 }
 
-.met-primary-button:hover {
+.met-primary-button:hover:not(:disabled) {
   filter: brightness(0.97);
+}
+
+.met-primary-button:focus-visible {
+  outline: 2px solid rgba(29, 86, 54, 0.45);
+  outline-offset: 2px;
+}
+
+.met-primary-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .met-secondary-button {
@@ -118,16 +145,26 @@ body {
   padding: 0.5rem 1rem;
   font-size: 0.875rem;
   font-weight: 600;
-  color: #202020;
-  background-color: #fff;
-  border: 1px solid #e3e3de;
+  color: var(--met-text);
+  background-color: var(--met-surface);
+  border: 1px solid var(--met-border);
   border-radius: 13px;
   box-shadow: none;
   cursor: pointer;
 }
 
-.met-secondary-button:hover {
-  background-color: #fafaf8;
+.met-secondary-button:hover:not(:disabled) {
+  background-color: #fafafa;
+}
+
+.met-secondary-button:focus-visible {
+  outline: 2px solid rgba(29, 86, 54, 0.35);
+  outline-offset: 2px;
+}
+
+.met-secondary-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .met-status-tag {
@@ -138,9 +175,9 @@ body {
   font-size: 0.625rem;
   font-weight: 600;
   letter-spacing: 0.02em;
-  color: #6f6f6a;
-  background: #ebeae6;
-  border: 1px solid #e0e0da;
+  color: var(--met-text-secondary);
+  background: #f4f4f5;
+  border: 1px solid var(--met-border);
   border-radius: 6px;
   box-shadow: none;
 }
@@ -150,5 +187,5 @@ body {
   width: 6px;
   height: 6px;
   border-radius: 9999px;
-  background: #8a9a8e;
+  background: #7d8f84;
 }
