@@ -26,13 +26,20 @@ import {
   TtcProduct,
 } from './types';
 import { MEMBER_STAGE_CONFIG, getMemberLifecycleStatus } from './utils/memberLifecycle';
+import {
+  MOCK_MEMBER_ROWS_EXTRA,
+  MOCK_MEMBER_ASSETS_EXTRA,
+  MOCK_STAFF_LIST_EXTRA,
+  MOCK_STAFF_TEACHING_SESSIONS_EXTRA,
+} from './constants/mockDataExtension';
+import { MOCK_STORE_INFO_PRIMARY, MOCK_STORE_SELECT_OPTIONS } from './constants/mockStoresCatalog';
 
 // P0 canonical card product mock.
 // Legacy compatibility: MOCK_CARDS is kept below for pages still importing the old name.
 // Legacy compatibility: card rows still keep noShowDeductCurrent for current card editors.
 export const MOCK_CARD_PRODUCTS: CardProduct[] = [
   {
-    id: 'c1', type: 'stored_value', name: '初遇卡', slogan: '初遇相逢皆有意', guide: '100天的约定\n开启新可能',
+    id: 'c1', type: 'stored_value', name: '初遇卡 Spark', slogan: '初遇相逢皆有意', guide: '100天的约定\n开启新可能',
     price: 4990, points: 40, openingPoints: 87, exchangeRatio: 0.7,
     validity: 12, validityUnit: 'month', unitPrice: 125, bookingRange: 4,
     cancelFreeLimit: 999, cancelDeductPoints: 0, 
@@ -43,7 +50,7 @@ export const MOCK_CARD_PRODUCTS: CardProduct[] = [
     sales30d: 12, totalSales: 450, renewalRate: 45, avgConsumptionCycle: 8.5, status: 'active', listingVenues: ['万象城馆', '西湖旗舰馆', '滨江宝龙馆', '城西银泰馆']
   },
   {
-    id: 'c2', type: 'stored_value', name: '锦鲤卡', slogan: '锦鲤跃动皆有运', guide: '逐渐规律',
+    id: 'c2', type: 'stored_value', name: '锦鲤卡 Flow', slogan: '锦鲤跃动皆有运', guide: '逐渐规律',
     price: 11990, points: 96, openingPoints: 300, exchangeRatio: 1,
     validity: 18, validityUnit: 'month', unitPrice: 125, bookingRange: 5,
     cancelFreeLimit: 2, cancelDeductPoints: 0,
@@ -54,7 +61,7 @@ export const MOCK_CARD_PRODUCTS: CardProduct[] = [
     sales30d: 8, totalSales: 320, renewalRate: 55, avgConsumptionCycle: 7.2, status: 'active', listingVenues: ['万象城馆', '西湖旗舰馆']
   },
   {
-    id: 'c3', type: 'stored_value', name: '天选卡', slogan: '天选偶遇皆有喜', guide: '让练习成为习惯',
+    id: 'c3', type: 'stored_value', name: '天选卡 Prime', slogan: '天选偶遇皆有喜', guide: '让练习成为习惯',
     price: 19990, points: 160, openingPoints: 600, exchangeRatio: 1.2,
     validity: 24, validityUnit: 'month', unitPrice: 125, bookingRange: 6,
     cancelFreeLimit: 3, cancelDeductPoints: 0,
@@ -65,7 +72,7 @@ export const MOCK_CARD_PRODUCTS: CardProduct[] = [
     sales30d: 5, totalSales: 150, renewalRate: 65, avgConsumptionCycle: 6.0, status: 'active', listingVenues: ['万象城馆']
   },
   {
-    id: 'c4', type: 'stored_value', name: '硬核卡', slogan: '硬核之缘皆有得', guide: '持续投入',
+    id: 'c4', type: 'stored_value', name: '硬核卡 Core', slogan: '硬核之缘皆有得', guide: '持续投入',
     price: 39990, points: 320, openingPoints: 1500, exchangeRatio: 1.5,
     validity: 30, validityUnit: 'month', unitPrice: 125, bookingRange: 7,
     cancelFreeLimit: 4, cancelDeductPoints: 0,
@@ -76,7 +83,7 @@ export const MOCK_CARD_PRODUCTS: CardProduct[] = [
     sales30d: 2, totalSales: 80, renewalRate: 75, avgConsumptionCycle: 5.5, status: 'active', listingVenues: ['西湖旗舰馆']
   },
   {
-    id: 'c5', type: 'stored_value', name: '自由点卡', slogan: '点动随心皆自在', guide: '好状态就是礼物',
+    id: 'c5', type: 'stored_value', name: '自由卡 Flex', slogan: '点动随心皆自在', guide: '好状态就是礼物',
     price: 1390, points: 10, openingPoints: 17, exchangeRatio: 0.5,
     validity: 2, validityUnit: 'month', unitPrice: 139, bookingRange: 3,
     cancelFreeLimit: 5, cancelDeductPoints: 0,
@@ -129,6 +136,17 @@ export const MOCK_CARD_PRODUCTS: CardProduct[] = [
     scope: 'single', functionScope: ['团课'],
     leaveMinDays: 7, leaveMaxDays: 60, canExtend: true,
     sales30d: 10, totalSales: 150, renewalRate: 70, avgConsumptionCycle: 12.0, status: 'active', listingVenues: ['万象城馆', '西湖旗舰馆', '滨江宝龙馆', '城西银泰馆']
+  },
+  {
+    id: 'c10', type: 'term', name: '普拉提季卡', slogan: '三个月的系统塑形', guide: '小班普拉提季度练习\n节奏稳定推进',
+    price: 8800, openingPoints: 220, exchangeRatio: 1,
+    validity: 90, validityUnit: 'day', unitPrice: 98, bookingRange: 3,
+    cancelFreeLimit: 0, termCancelPenaltyType: 'freeze_days', cancelFreezeDays: 1,
+    noShowDeductCurrent: false, termNoShowPenaltyType: 'freeze_days', noShowFreezeDays: 1,
+    minOpenPeople: 3, checkInPoints: 5, checkInPointsPercent: 0, checkInDailyLimit: 10,
+    scope: 'single', functionScope: ['小班'],
+    leaveMinDays: 7, leaveMaxDays: 60, canExtend: true,
+    sales30d: 6, totalSales: 90, renewalRate: 58, avgConsumptionCycle: 3.0, status: 'active', listingVenues: ['滨江宝龙馆', '万象城馆']
   }
 ];
 
@@ -307,6 +325,7 @@ export const MOCK_MEMBER_ASSETS: MemberAsset[] = [
     effectiveDate: '2022-01-01T00:00:00+08:00',
     expiryDate: '2023-12-31T23:59:59+08:00',
   },
+  ...MOCK_MEMBER_ASSETS_EXTRA,
 ];
 
 // P0 canonical course and schedule mocks. Courses.tsx still has local demo rows for now.
@@ -358,6 +377,58 @@ export const MOCK_COURSE_SESSIONS: CourseSession[] = [
     endAt: '2026-05-06T12:00:00+08:00',
     capacity: 1,
     bookedCount: 1,
+  },
+  {
+    id: 'session-20260507-0930',
+    courseId: 'course-flow-yoga',
+    title: '流瑜伽 · 城西',
+    status: 'published',
+    storeId: '2',
+    roomId: '2-101',
+    teacherId: '30',
+    startAt: '2026-05-07T09:30:00+08:00',
+    endAt: '2026-05-07T10:30:00+08:00',
+    capacity: 12,
+    bookedCount: 7,
+  },
+  {
+    id: 'session-20260507-1830',
+    courseId: 'course-pilates-reformer',
+    title: '普拉提大器械 · 滨江',
+    status: 'published',
+    storeId: '3',
+    roomId: '3-102',
+    teacherId: '25',
+    startAt: '2026-05-07T18:30:00+08:00',
+    endAt: '2026-05-07T19:20:00+08:00',
+    capacity: 6,
+    bookedCount: 6,
+  },
+  {
+    id: 'session-20260508-1200',
+    courseId: 'course-private-core',
+    title: '私教 · 西湖',
+    status: 'scheduled',
+    storeId: '4',
+    roomId: '4-201',
+    teacherId: '26',
+    startAt: '2026-05-08T12:00:00+08:00',
+    endAt: '2026-05-08T13:00:00+08:00',
+    capacity: 1,
+    bookedCount: 1,
+  },
+  {
+    id: 'session-20260509-1015',
+    courseId: 'course-flow-yoga',
+    title: '流瑜伽 · 云谷',
+    status: 'published',
+    storeId: '5',
+    roomId: '5-101',
+    teacherId: '27',
+    startAt: '2026-05-09T10:15:00+08:00',
+    endAt: '2026-05-09T11:15:00+08:00',
+    capacity: 12,
+    bookedCount: 11,
   },
 ];
 
@@ -806,8 +877,17 @@ export const MOCK_FINANCE_EXPENSE_ENTRIES: MockFinanceExpenseEntryRecord[] = [
 // Legacy compatibility: existing pages still import STAGE_CONFIG from constants.
 export const STAGE_CONFIG: Record<string, StageConfig> = { ...MEMBER_STAGE_CONFIG };
 
+const defaultPrimaryStoreForMemberId = (memberId: string): string => {
+  let h = 0;
+  for (let i = 0; i < memberId.length; i += 1) {
+    h = (h * 31 + memberId.charCodeAt(i)) >>> 0;
+  }
+  return String((h % 5) + 1);
+};
+
 const withP0MemberFields = (member: Member): Member => ({
   ...member,
+  primaryStoreId: member.primaryStoreId ?? defaultPrimaryStoreForMemberId(member.id),
   // New P0 field: canonical lifecycle status for future member workflows.
   lifecycleStatus: getMemberLifecycleStatus(member),
   // New P0 field: canonical member asset list.
@@ -988,6 +1068,7 @@ const MOCK_MEMBER_ROWS: Member[] = [
       { id: 't2', type: 'purchase', title: '退款申请', date: '90天前', content: '因搬家申请退掉剩余私教课，已处理。', amount: -2400 }
     ]
   },
+  ...MOCK_MEMBER_ROWS_EXTRA,
 ];
 
 export const MOCK_MEMBERS: Member[] = MOCK_MEMBER_ROWS.map(withP0MemberFields);
@@ -1045,17 +1126,7 @@ export const MOCK_TEAM_TASKS: TeamTask[] = [
 
 // --- Mock Data for Shop & Staff ---
 
-export const MOCK_STORE_INFO: StoreInfo = {
-  id: 1, name: 'MET YOGA 西湖馆', address: '杭州市西湖区北山路', phone: '0571-88886666', hours: '10:00 - 22:00', isOpen: true,
-  gallery: ['https://images.unsplash.com/photo-1545205597-3d9d02c29597?auto=format&fit=crop&q=80&w=400', 'https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?auto=format&fit=crop&q=80&w=400', 'https://images.unsplash.com/photo-1549419137-023a17df302e?auto=format&fit=crop&q=80&w=400'],
-  holidays: [ {name: '春节假期', date: '2026-01-20 至 2026-01-28'}, {name: '场馆维护', date: '2025-12-25'} ],
-  rooms: [
-      { id: '101', name: '瑜伽小班教室', capacity: 12, type: '团课', equipment: ['地暖','空中吊床','瑜伽砖'] },
-      { id: '102', name: '普拉提小班教室', capacity: 6, type: '团课', equipment: ['普拉提床','魔力圈'] },
-      { id: '201', name: '瑜伽私教室', capacity: 2, type: '私教', equipment: ['壁绳','辅助椅'] },
-      { id: '202', name: '普拉提核心床私教室', capacity: 1, type: '私教', equipment: ['凯迪拉克','稳踏椅','梯桶'] }
-  ]
-};
+export const MOCK_STORE_INFO: StoreInfo = MOCK_STORE_INFO_PRIMARY;
 
 export const MOCK_STAFF_LIST: Staff[] = [
   { 
@@ -1097,7 +1168,8 @@ export const MOCK_STAFF_LIST: Staff[] = [
     id: 12, name: '陈E', type: 'teacher', level: 't1', title: '基础瑜伽', intro: '潜力新人。', rating: 4.5, hourlyRate: '¥90', promotionStatus: 'none', joinDate: '2023-08-01', expYears: '0.5年', classHours: 200, retention: 70, memberCount: 15, totalRevenue: '50,000', tags: ['哈他'], certs: [], avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ChenE',
     conversionRate: 35, conversionTrend: 'up', loadFactor: 40, revenueModel: 'L1', occupancyRate: 60, newvsRenewal: { new: 85, renewal: 15 }, followUpRate: 50,
     members: [] 
-  }
+  },
+  ...MOCK_STAFF_LIST_EXTRA,
 ];
 
 /** 师资模块演示：老师带课场次明细（只读 mock；不写入课程状态；不落库） */
@@ -1109,4 +1181,5 @@ export const MOCK_STAFF_TEACHING_SESSIONS: MockStaffTeachingSessionRecord[] = [
   { id: 'sts-005', teacherId: 1, sessionTitle: '私教 · 体态调整', courseType: '私教', startAt: '2026-05-08T14:00:00+08:00', headcount: 1 },
   { id: 'sts-006', teacherId: 11, sessionTitle: '流瑜伽基础', courseType: '团课', startAt: '2026-05-09T18:30:00+08:00', headcount: 9 },
   { id: 'sts-007', teacherId: 6, sessionTitle: '哈他入门', courseType: '团课', startAt: '2026-05-10T09:00:00+08:00', headcount: 6 },
+  ...MOCK_STAFF_TEACHING_SESSIONS_EXTRA,
 ];

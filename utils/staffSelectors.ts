@@ -248,7 +248,11 @@ export const getNextStaffLevel = (level: string): string => {
   if (normalizedLevel === 't2') return 'T3';
   if (normalizedLevel === 't3') return 'T4';
   if (normalizedLevel === 't4') return 'T5';
-  if (normalizedLevel === 't5') return 'MENTOR';
+  if (normalizedLevel === 't5') return 'P1';
+  if (normalizedLevel === 'p1') return 'P2';
+  if (normalizedLevel === 'p2') return 'MENTOR';
+  if (normalizedLevel === 'g1') return 'G2';
+  if (normalizedLevel === 'g2') return 'MENTOR';
   if (normalizedLevel === 'mentor') return 'MAX';
   return 'T2';
 };
@@ -259,9 +263,11 @@ const parseHourlyYuanFromLabel = (hourlyRate: string): number => {
   return match ? Number(match[1]) : 0;
 };
 
-const levelDisplay = (level: Staff['level']): string => (
-  level === 'butler' ? '管家' : level.toUpperCase()
-);
+export const levelDisplay = (level: Staff['level']): string => {
+  if (level === 'butler') return '管家';
+  if (level === 'mentor') return 'MASTER';
+  return level.toUpperCase();
+};
 
 /** 师资闭环顶部摘要（模块内估算） */
 export interface StaffClosedLoopSummary {

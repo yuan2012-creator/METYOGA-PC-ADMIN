@@ -194,6 +194,8 @@ export interface Member {
   avatar: string;
   gender: 'female' | 'male';
   phone: string;
+  /** 主服务门店（mock 与总部筛选对齐，数值字符串 `1`–`5`） */
+  primaryStoreId?: string;
   lifecycleStatus?: MemberLifecycleStatus;
   // Legacy compatibility: current pages and mock data still filter by S0-S6.
   stage: Stage;
@@ -222,6 +224,14 @@ export interface Member {
   timeline: TimelineEvent[];
   // Risk
   riskTag?: 'balance' | 'expiry' | 'sleep' | 'churn';
+  /** 经营视角风险标签（展示用，多条） */
+  riskTags?: string[];
+  /** 待跟进摘要（mock 演示） */
+  followUp?: string;
+  /** ISO 入会时间（可选，演示字段） */
+  joinedAt?: ISODateString;
+  /** ISO 最近到店（可选，演示字段） */
+  lastVisitedAt?: ISODateString;
 }
 
 export interface MemberAsset {
@@ -373,7 +383,18 @@ export interface Staff {
   id: number;
   name: string;
   type: 'teacher' | 'butler';
-  level: 't1' | 't2' | 't3' | 't4' | 'mentor' | 'butler';
+  level:
+    | 't1'
+    | 't2'
+    | 't3'
+    | 't4'
+    | 't5'
+    | 'mentor'
+    | 'butler'
+    | 'p1'
+    | 'p2'
+    | 'g1'
+    | 'g2';
   title: string;
   intro: string; 
   rating: number;
@@ -388,6 +409,10 @@ export interface Staff {
   tags: string[];
   certs: string[];
   avatar: string;
+  /** 主排课 / 归属门店（mock，数值字符串 `1`–`5`） */
+  primaryStoreId?: string;
+  /** 可跨店上课的额外门店 */
+  secondaryStoreIds?: string[];
   followUpRate?: number;
   
   // New fields for detailed modal

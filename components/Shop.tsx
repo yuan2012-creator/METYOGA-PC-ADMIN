@@ -1,6 +1,5 @@
 
 import React, { useState, useMemo } from 'react';
-import { MOCK_STORE_INFO } from '../constants';
 import {
   addStoreGalleryImage,
   addStoreHoliday,
@@ -42,7 +41,7 @@ interface HolidayForm {
 const Shop: React.FC = () => {
   const [subTab, setSubTab] = useState<ShopSubTab>('setup');
   const [searchQuery, setSearchQuery] = useState('');
-  const [shopConfig, setShopConfig] = useState<ShopConfigDraft>(() => buildInitialShopConfig(MOCK_STORE_INFO));
+  const [shopConfig, setShopConfig] = useState<ShopConfigDraft>(() => buildInitialShopConfig());
   const [toast, setToast] = useState<ShopToast | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<ShopConfirmDialog | null>(null);
   const [holidayForm, setHolidayForm] = useState<HolidayForm | null>(null);

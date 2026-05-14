@@ -23,7 +23,11 @@ const MEMBER_KEY_MAP: Record<string, string> = {
   total_classes: 'totalClasses',
   body_tags: 'bodyTags',
   body_notes: 'bodyNotes',
-  risk_tag: 'riskTag',
+  primary_store_id: 'primaryStoreId',
+  risk_tags: 'riskTags',
+  follow_up: 'followUp',
+  joined_at: 'joinedAt',
+  last_visited_at: 'lastVisitedAt',
   top_courses: 'topCourses',
   private_teachers: 'privateTeachers',
 };
@@ -136,6 +140,11 @@ export function adaptMember(raw: unknown): Member {
     bodyNotes: pickStr(n.bodyNotes, ''),
     timeline: Array.isArray(n.timeline) ? n.timeline : EMPTY_TIMELINE,
     riskTag: n.riskTag,
+    primaryStoreId: typeof n.primaryStoreId === 'string' ? n.primaryStoreId : undefined,
+    riskTags: Array.isArray(n.riskTags) ? n.riskTags : undefined,
+    followUp: typeof n.followUp === 'string' ? n.followUp : undefined,
+    joinedAt: typeof n.joinedAt === 'string' ? n.joinedAt : undefined,
+    lastVisitedAt: typeof n.lastVisitedAt === 'string' ? n.lastVisitedAt : undefined,
   };
 }
 
