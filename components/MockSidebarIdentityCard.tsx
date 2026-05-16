@@ -30,20 +30,20 @@ const MockSidebarIdentityCard: React.FC = () => {
 
   return (
     <div ref={rootRef} className="relative w-full">
-      <div className="rounded-[14px] border border-stone-200/80 bg-[#faf9f7] px-3.5 py-3">
-        <div className="flex items-start justify-between gap-2">
+      <div className="met-sidebar-identity-card flex min-h-[56px] items-center px-3 py-2.5">
+        <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
           <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-semibold text-[#292524]">{config.role}</div>
-            <div className="mt-0.5 truncate text-xs leading-snug text-stone-400">
+            <div className="truncate text-[13px] font-medium leading-tight text-[var(--met-text)]">{config.role}</div>
+            <div className="mt-0.5 truncate text-xs leading-snug text-[var(--met-text-faint)]">
               {scopeLabel}
-              <span className="text-stone-300"> · mock 数据</span>
+              <span className="text-[#b5bab4]"> · mock 数据</span>
             </div>
           </div>
           {isHq ? (
             <button
               type="button"
               onClick={() => setOpen(v => !v)}
-              className="mt-0.5 shrink-0 rounded-md px-1.5 py-0.5 text-[11px] font-medium text-stone-400 transition-colors hover:bg-stone-100/80 hover:text-stone-600"
+              className="shrink-0 px-1 text-[11px] font-normal leading-none text-[var(--met-text-faint)] transition-colors hover:text-[var(--met-text-secondary)]"
               aria-expanded={open}
               aria-haspopup="dialog"
             >

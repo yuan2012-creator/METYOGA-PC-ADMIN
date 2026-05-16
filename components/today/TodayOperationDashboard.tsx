@@ -6,8 +6,7 @@ import TodayCourseExecutionList from './TodayCourseExecutionList';
 import TodayTodoPanel from './TodayTodoPanel';
 import TodayCourseDetailDrawer from './TodayCourseDetailDrawer';
 
-const headerGhostBtn =
-  'inline-flex h-9 items-center justify-center gap-1.5 rounded-[12px] border border-stone-200/90 bg-white px-3.5 text-xs font-semibold text-stone-600 shadow-[0_1px_1px_rgba(24,24,27,0.03)] transition-colors hover:border-stone-300 hover:bg-stone-50';
+const headerGhostBtn = 'met-today-header-btn';
 
 const TodayOperationDashboard: React.FC = () => {
   const snapshot = useMemo(() => buildTodayOperationDemoSnapshot(), []);
@@ -39,19 +38,14 @@ const TodayOperationDashboard: React.FC = () => {
       className="flex h-full min-h-0 w-full flex-col overflow-hidden animate-fadeIn"
       style={{ backgroundColor: 'var(--met-bg-page)' }}
     >
-      <header
-        className="shrink-0 border-b bg-white/95 px-8 py-5 backdrop-blur-sm shadow-[0_1px_0_rgba(24,24,27,0.04)]"
-        style={{ borderColor: 'var(--met-border)' }}
-      >
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-          <div className="min-w-0">
-            <h1 className="text-xl font-bold tracking-tight text-[#202020]">今日运营</h1>
-            <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-[#71717a]">
-              查看今日课程执行、预约签到、异常处理与待跟进事项
-            </p>
+      <header className="met-today-header shrink-0">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="met-today-header__title-area min-w-0">
+            <h1>今日运营</h1>
+            <p>查看今日课程执行、预约签到、异常处理与待跟进事项</p>
           </div>
-          <div className="flex shrink-0 flex-wrap items-center justify-end gap-3">
-            <span className="text-sm font-medium text-[#71717a]">{snapshot.dateHeaderLabel}</span>
+          <div className="flex shrink-0 flex-nowrap items-center justify-end gap-3">
+            <span>{snapshot.dateHeaderLabel}</span>
             <button type="button" onClick={handleRefresh} className={headerGhostBtn}>
               <i className="fa-solid fa-arrows-rotate text-[11px] opacity-70" aria-hidden />
               刷新
@@ -64,15 +58,15 @@ const TodayOperationDashboard: React.FC = () => {
         </div>
       </header>
 
-      <div className="custom-scroll min-h-0 flex-1 overflow-y-auto px-8 py-6">
-        <div className="mx-auto w-full max-w-[1440px] space-y-5">
-          <section className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
+      <div className="met-today-page__body custom-scroll min-h-0 flex-1 overflow-y-auto">
+        <div className="mx-auto w-full max-w-[1440px]">
+          <section className="met-today-page__metrics grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
             {snapshot.metrics.map(metric => (
               <TodayMetricCard key={metric.id} item={metric} />
             ))}
           </section>
 
-          <div className="flex min-h-0 flex-col gap-5 lg:flex-row lg:items-stretch">
+          <div className="met-today-page__columns flex min-h-0 flex-col lg:flex-row lg:items-stretch">
             <div className="min-w-0 flex-[1_1_68%] lg:max-w-[70%]">
               <TodayCourseExecutionList
                 courses={snapshot.courses}
