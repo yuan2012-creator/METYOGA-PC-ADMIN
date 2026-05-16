@@ -77,7 +77,15 @@ interface CourseConfirmDialog {
   onConfirm: () => void;
 }
 
-const Courses: React.FC = () => {
+export type CoursesPageScope = 'course-operations' | 'today-operations';
+
+interface CoursesProps {
+  /** 路由壳：今日运营一级入口仅展示今日执行面板，不改动面板与业务逻辑。 */
+  pageScope?: CoursesPageScope;
+}
+
+const Courses: React.FC<CoursesProps> = ({ pageScope = 'course-operations' }) => {
+  const isTodayOperationsPage = pageScope === 'today-operations';
   const [opsFilter, setOpsFilter] = useState<OpsFilter>('all');
   const [isLibraryManagementOpen, setIsLibraryManagementOpen] = useState(false);
   const [toast, setToast] = useState<CourseToast | null>(null);
@@ -532,19 +540,55 @@ const Courses: React.FC = () => {
     <div className="relative flex h-full min-h-0 w-full max-w-full min-w-0 flex-col overflow-x-hidden bg-[#F5F5F7] animate-fadeIn">
       
       {/* Header */}
-      <div className="h-16 border-b border-gray-200 flex items-center justify-between px-8 bg-white/80 backdrop-blur-md sticky top-0 z-20">
-          <div className="flex items-center gap-4">
-              <h2 className="text-xl font-bold text-gray-900">课程运营</h2>
-          </div>
-          <div className="flex items-center gap-4">
-              <button
+      <div
+        className={`border-b border-gray-200 flex items-center justify-between gap-6 px-8 bg-white/80 backdrop-blur-md sticky top-0 z-20 ${
+          isTodayOperationsPage ? 'min-h-[88px] py-4' : 'h-16'
+        }`}
+      >
+          {isTodayOperationsPage ? (
+            <>
+              <div className="min-w-0">
+                <h2 className="text-xl font-bold text-gray-900">今日运营</h2>
+                <p className="mt-1 text-sm text-gray-500 leading-snug">
+                  查看今日课程执行、预约签到、异常处理与待跟进事项
+                </p>
+              </div>
+              <div className="flex shrink-0 flex-wrap items-center justify-end gap-3">
+                <span className="text-sm text-gray-500 whitespace-nowrap">今日 · 2026.05.05 周一</span>
+                <button
+                  type="button"
+                  onClick={() => showToast('正在刷新今日运营数据…', 'info')}
+                  className="met-secondary-button !text-xs"
+                >
+                  <i className="fa-solid fa-arrows-rotate mr-1.5 text-[11px]" aria-hidden />
+                  刷新
+                </button>
+                <button
+                  type="button"
+                  onClick={() => showToast('导出今日执行表功能待接入', 'info')}
+                  className="met-secondary-button !text-xs"
+                >
+                  <i className="fa-solid fa-file-export mr-1.5 text-[11px]" aria-hidden />
+                  导出今日执行表
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center gap-4">
+                <h2 className="text-xl font-bold text-gray-900">课程运营</h2>
+              </div>
+              <div className="flex items-center gap-4">
+                <button
                   type="button"
                   onClick={handleGlobalCreate}
                   className="met-primary-button flex items-center gap-2 text-xs"
-              >
+                >
                   <i className="fa-solid fa-plus" aria-hidden /> 排课
-              </button>
-          </div>
+                </button>
+              </div>
+            </>
+          )}
       </div>
 
       {/* Content Area */}
@@ -592,6 +636,7 @@ const Courses: React.FC = () => {
                   onOpenExceptionCenter={handleOpenExceptionCenter}
               />
 
+              {!isTodayOperationsPage ? (
               <section className="space-y-4">
                   <h3 className="px-0.5 text-base font-bold text-gray-900">排课工作台</h3>
                   <ScheduleCalendar
@@ -649,6 +694,7 @@ const Courses: React.FC = () => {
                       </div>
                   ) : null}
               </section>
+              ) : null}
           </div>
       </div>
 

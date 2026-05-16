@@ -5,47 +5,35 @@ import Dashboard from './components/Dashboard';
 import Shop from './components/Shop';
 import StaffPage from './components/Staff'; // Renamed to avoid conflict with type 'Staff'
 import Courses from './components/Courses';
+import TodayOperation from './components/TodayOperation';
 import Mall from './components/Mall'; // New Component
 import Finance from './components/Finance';
 import Marketing from './components/Marketing';
 import Data from './components/Data';
 import Investor from './components/Investor';
 import Settings from './components/Settings';
-import MockAdminStoreScopeBar from './components/MockAdminStoreScopeBar';
-import { MockAdminScopeProvider, useMockAdminScope } from './context/MockAdminScopeContext';
+import MockSidebarIdentityCard from './components/MockSidebarIdentityCard';
+import { MockAdminScopeProvider } from './context/MockAdminScopeContext';
 import { MOCK_ADMIN_UI_DEFAULT } from './constants/mockAdminScope';
-
-const MockSidebarAccountFootnote: React.FC = () => {
-  const { config, effectiveStoreId, storeLabelById } = useMockAdminScope();
-  const line2 =
-    config.mode === 'hq'
-      ? effectiveStoreId
-        ? `数据范围：${storeLabelById(effectiveStoreId)}（mock）`
-        : '数据范围：全部门店（mock）'
-      : `单店：${storeLabelById(config.lockedStoreId)}（mock）`;
-  return (
-    <>
-      <div className="truncate text-sm font-bold text-[#202020]">{config.role}</div>
-      <div className="met-muted mt-0.5 text-xs leading-snug">{line2}</div>
-    </>
-  );
-};
 
 const App: React.FC = () => {
   const [activeNav, setActiveNav] = useState('dashboard');
 
   const navItems = [
     { id: 'dashboard', label: '经营总览', icon: 'fa-chart-pie' },
-    { id: 'shop', label: '门店管理', icon: 'fa-store' },
-    { id: 'staff', label: '师资与团队', icon: 'fa-id-card-clip' },
-    { id: 'course', label: '课程运营', icon: 'fa-calendar-check' },
-    { id: 'mall', label: '产品与合同', icon: 'fa-bag-shopping' },
+    { id: 'today', label: '今日运营', icon: 'fa-calendar-day' },
     { id: 'member', label: '会员经营', icon: 'fa-users' },
+    { id: 'course', label: '课程运营', icon: 'fa-calendar-check' },
+    { id: 'staff', label: '师资与团队', icon: 'fa-id-card-clip' },
+    { id: 'mall', label: '产品与合同', icon: 'fa-bag-shopping' },
     { id: 'finance', label: '财务管理', icon: 'fa-wallet' },
+    { id: 'shop', label: '门店管理', icon: 'fa-store' },
     { id: 'marketing', label: '活动运营', icon: 'fa-bullhorn' },
+    { id: 'settings', label: '规则配置', icon: 'fa-gear' },
     { id: 'data', label: '数据中心', icon: 'fa-chart-line' },
     { id: 'investor', label: '投资测算', icon: 'fa-briefcase' },
-    { id: 'settings', label: '规则配置', icon: 'fa-gear' },
+    { id: 'partner', label: '合作与授权', icon: 'fa-handshake' },
+    { id: 'permission-audit', label: '权限审计', icon: 'fa-shield-halved' },
   ];
 
   const isDashboard = activeNav === 'dashboard';
@@ -67,6 +55,8 @@ const App: React.FC = () => {
     switch (activeNav) {
       case 'dashboard':
         return <Dashboard />;
+      case 'today':
+        return <TodayOperation />;
       case 'shop':
         return <Shop />;
       case 'staff':
@@ -112,19 +102,15 @@ const App: React.FC = () => {
     <MockAdminScopeProvider initialConfig={MOCK_ADMIN_UI_DEFAULT}>
     <div className="met-page-bg flex h-screen overflow-hidden font-sans">
       {/* Sidebar */}
-      <aside
-        className="z-20 flex w-64 flex-shrink-0 flex-col border-r bg-[var(--met-sidebar)]"
-        style={{ borderColor: 'var(--met-border)' }}
-      >
-        <div
-          className="flex h-16 items-center px-6"
-          style={{ borderBottom: '1px solid var(--met-border)' }}
-        >
-          <i className="fa-solid fa-om mr-3 text-2xl" style={{ color: 'var(--met-accent)' }} aria-hidden />
-          <span className="met-brand-wordmark text-lg font-bold text-[#202020]">MET YOGA</span>
+      <aside className="z-20 flex w-[236px] flex-shrink-0 flex-col border-r border-stone-200/70 bg-[var(--met-sidebar)]">
+        <div className="flex h-16 shrink-0 items-center border-b border-stone-200/60 px-[18px]">
+          <i className="fa-solid fa-om mr-2.5 text-[17px] text-stone-500" aria-hidden />
+          <span className="met-brand-wordmark text-[15px] font-semibold tracking-wide text-[#292524]">
+            MET YOGA
+          </span>
         </div>
 
-        <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 py-5">
+        <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-2 py-4">
           {navItems.map((item) => {
             const isActive = activeNav === item.id;
             return (
@@ -132,20 +118,17 @@ const App: React.FC = () => {
                 key={item.id}
                 type="button"
                 onClick={() => setActiveNav(item.id)}
-                className={`mb-0.5 flex min-h-[44px] max-h-[48px] w-full items-center rounded-[15px] border border-transparent px-3.5 text-left text-sm transition-colors ${
+                className={`flex h-11 w-full items-center rounded-[11px] border border-transparent px-4 text-left text-sm transition-colors ${
                   isActive
-                    ? 'font-semibold text-[#1F5E3B]'
-                    : 'text-[#7B7B76] hover:bg-[var(--met-nav-hover-bg)]'
+                    ? 'font-medium text-[var(--met-nav-active-text)]'
+                    : 'font-normal text-stone-500 hover:bg-[var(--met-nav-hover-bg)]'
                 }`}
                 style={
                   isActive ? { backgroundColor: 'var(--met-nav-active-bg)' } : undefined
                 }
               >
                 <span
-                  className={`mr-3 flex w-6 shrink-0 justify-center text-[1.05rem] leading-none ${
-                    isActive ? 'text-[#1F5E3B]' : ''
-                  }`}
-                  style={!isActive ? { color: '#7E827C' } : undefined}
+                  className="mr-3 flex w-[18px] shrink-0 items-center justify-center text-[15px] leading-none text-stone-400"
                   aria-hidden
                 >
                   <i className={`fa-solid ${item.icon}`} />
@@ -156,24 +139,8 @@ const App: React.FC = () => {
           })}
         </nav>
 
-        <div
-          className="p-4"
-          style={{
-            borderTop: '1px solid var(--met-border)',
-            backgroundColor: 'var(--met-surface)',
-          }}
-        >
-          <div className="flex items-start gap-3">
-            <div
-              className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-              style={{ backgroundColor: 'var(--met-accent)' }}
-            >
-              运
-            </div>
-            <div className="min-w-0 flex-1">
-              <MockSidebarAccountFootnote />
-            </div>
-          </div>
+        <div className="shrink-0 border-t border-stone-200/60 p-3">
+          <MockSidebarIdentityCard />
         </div>
       </aside>
 
@@ -216,8 +183,6 @@ const App: React.FC = () => {
                 </div>
             </header>
         ) : null}
-
-        <MockAdminStoreScopeBar />
 
         {/* Dynamic Page Content */}
         <div className={contentShellClassName}>

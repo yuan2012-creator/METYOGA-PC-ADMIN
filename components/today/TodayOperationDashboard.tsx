@@ -1,0 +1,122 @@
+import React, { useMemo, useState } from 'react';
+import { buildTodayOperationDemoSnapshot } from './todayOperationViewModel';
+import type { TodayCourseDetail, TodayTodoItem } from './todayOperationViewModel';
+import TodayMetricCard from './TodayMetricCard';
+import TodayCourseExecutionList from './TodayCourseExecutionList';
+import TodayTodoPanel from './TodayTodoPanel';
+import TodayCourseDetailDrawer from './TodayCourseDetailDrawer';
+
+const headerGhostBtn =
+  'inline-flex h-9 items-center justify-center gap-1.5 rounded-[12px] border border-stone-200/90 bg-white px-3.5 text-xs font-semibold text-stone-600 shadow-[0_1px_1px_rgba(24,24,27,0.03)] transition-colors hover:border-stone-300 hover:bg-stone-50';
+
+const TodayOperationDashboard: React.FC = () => {
+  const snapshot = useMemo(() => buildTodayOperationDemoSnapshot(), []);
+  const [activeCourseId, setActiveCourseId] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+
+  const activeDetail: TodayCourseDetail | null = activeCourseId
+    ? snapshot.courseDetailsById[activeCourseId] ?? null
+    : null;
+
+  const showToast = (message: string) => {
+    setToast(message);
+    window.setTimeout(() => setToast(current => (current === message ? null : current)), 2400);
+  };
+
+  const handleRefresh = () => showToast('正在刷新今日运营数据…');
+  const handleExport = () => showToast('导出今日执行表功能待接入');
+
+  const handleTodoAction = (item: TodayTodoItem, action: string) => {
+    showToast(`${item.category}：${action}（演示占位）`);
+  };
+
+  const handleDrawerAction = (action: string) => {
+    showToast(`${action}（演示占位）`);
+  };
+
+  return (
+    <div
+      className="flex h-full min-h-0 w-full flex-col overflow-hidden animate-fadeIn"
+      style={{ backgroundColor: 'var(--met-bg-page)' }}
+    >
+      <header
+        className="shrink-0 border-b bg-white/95 px-8 py-5 backdrop-blur-sm shadow-[0_1px_0_rgba(24,24,27,0.04)]"
+        style={{ borderColor: 'var(--met-border)' }}
+      >
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-xl font-bold tracking-tight text-[#202020]">今日运营</h1>
+            <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-[#71717a]">
+              查看今日课程执行、预约签到、异常处理与待跟进事项
+            </p>
+          </div>
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-3">
+            <span className="text-sm font-medium text-[#71717a]">{snapshot.dateHeaderLabel}</span>
+            <button type="button" onClick={handleRefresh} className={headerGhostBtn}>
+              <i className="fa-solid fa-arrows-rotate text-[11px] opacity-70" aria-hidden />
+              刷新
+            </button>
+            <button type="button" onClick={handleExport} className={headerGhostBtn}>
+              <i className="fa-solid fa-file-export text-[11px] opacity-70" aria-hidden />
+              导出今日执行表
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div className="custom-scroll min-h-0 flex-1 overflow-y-auto px-8 py-6">
+        <div className="mx-auto w-full max-w-[1440px] space-y-5">
+          <section className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
+            {snapshot.metrics.map(metric => (
+              <TodayMetricCard key={metric.id} item={metric} />
+            ))}
+          </section>
+
+          <div className="flex min-h-0 flex-col gap-5 lg:flex-row lg:items-stretch">
+            <div className="min-w-0 flex-[1_1_68%] lg:max-w-[70%]">
+              <TodayCourseExecutionList
+                courses={snapshot.courses}
+                onViewDetail={setActiveCourseId}
+              />
+            </div>
+            <div className="min-w-0 flex-[1_1_32%] lg:min-w-[300px] lg:max-w-[32%]">
+              <TodayTodoPanel
+                items={snapshot.todos}
+                summary={snapshot.todoSummary}
+                onAction={handleTodoAction}
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <TodayCourseDetailDrawer
+        open={activeCourseId != null && activeDetail != null}
+        detail={activeDetail}
+        onClose={() => setActiveCourseId(null)}
+        onAction={handleDrawerAction}
+      />
+
+      {toast ? (
+        <div className="pointer-events-none fixed top-20 right-8 z-[70]">
+          <div className="rounded-xl border border-stone-200/90 bg-white px-4 py-3 text-sm font-medium text-[#202020] shadow-[0_4px_12px_rgba(24,24,27,0.08)]">
+            {toast}
+          </div>
+        </div>
+      ) : null}
+
+      <style>{`
+        .custom-scroll::-webkit-scrollbar { width: 5px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #D1D1D6; border-radius: 10px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(6px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn { animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1); }
+      `}</style>
+    </div>
+  );
+};
+
+export default TodayOperationDashboard;
