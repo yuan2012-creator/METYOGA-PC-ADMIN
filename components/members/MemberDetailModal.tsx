@@ -42,8 +42,8 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
-      if (courseListOpen) setCourseListOpen(false);
-      else if (assetDetailId) setAssetDetailId(null);
+      if (assetDetailId) setAssetDetailId(null);
+      else if (courseListOpen) setCourseListOpen(false);
       else onClose();
     };
     window.addEventListener('keydown', onKey);
@@ -132,7 +132,11 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({
           {tab === 'assets' && assetDetail ? (
             <MemberAssetDetailSubview asset={assetDetail} member={m} onBack={() => setAssetDetailId(null)} />
           ) : tab === 'course' && courseListOpen ? (
-            <MemberCourseRecordsSubview member={m} onBack={() => setCourseListOpen(false)} />
+            <MemberCourseRecordsSubview
+              key={`${m.id}-course-list`}
+              member={m}
+              onBack={() => setCourseListOpen(false)}
+            />
           ) : (
             <>
               {tab === 'overview' && <MemberOverviewTab member={m} />}

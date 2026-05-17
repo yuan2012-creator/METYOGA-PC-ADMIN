@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import type { CourseRecord, MemberRecord } from './memberOperationViewModel';
 import {
   MemberModalBlock,
@@ -7,7 +7,8 @@ import {
   MemberModalPanel,
 } from './memberModalShared';
 
-const PAGE_SIZE = 20;
+/** 全量课程子视图每页条数（固定 20） */
+export const COURSE_RECORD_PAGE_SIZE = 20;
 const DEMO_LIST_TARGET = 30;
 
 /** 在 Tab 内扩展 demo 列表，不改全局 mock */
@@ -30,15 +31,16 @@ export const expandDemoCourseRecords = (records: CourseRecord[], memberId: strin
   return out;
 };
 
-const CourseRow: React.FC<{ record: CourseRecord }> = ({ record: r }) => (
-  <li className="met-member-course-row">
+const CourseRow: React.FC<{ record: CourseRecord; dense?: boolean }> = ({ record: r, dense }) => (
+  <li className={`met-member-course-row${dense ? ' met-member-course-row--dense' : ''}`}>
     <p className="met-member-course-row__line1">
-      <span className="met-member-course-row__date">{r.courseDate}</span>
-      <span className="met-member-course-row__name">{r.courseName}</span>
+      <span className="met-member-course-row__main">
+        {r.courseDate} · {r.courseName}
+      </span>
       <span className="met-member-course-row__status">{r.attendanceStatus}</span>
     </p>
     <p className="met-member-course-row__line2">
-      {r.courseType} / {r.teacherName} / {r.storeName} / 扣 {r.consumedPointsOrTimes}
+      {r.courseType} · {r.teacherName} · {r.storeName} · 扣 {r.consumedPointsOrTimes}
     </p>
   </li>
 );
@@ -79,9 +81,15 @@ export const MemberCourseRecordsSubview: React.FC<MemberCourseRecordsSubviewProp
     });
   }, [allRecords, courseType, attendance, teacher, range]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const safePage = Math.min(page, totalPages);
-  const pageItems = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
+  const totalCount = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(totalCount / COURSE_RECORD_PAGE_SIZE));
+  const currentPage = Math.min(Math.max(1, page), totalPages);
+  const pageStart = (currentPage - 1) * COURSE_RECORD_PAGE_SIZE;
+  const pageItems = filtered.slice(pageStart, pageStart + COURSE_RECORD_PAGE_SIZE);
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
 
   const applyFilter = (next: Partial<{ range: typeof range; courseType: string; attendance: string; teacher: string }>) => {
     setPage(1);
@@ -137,23 +145,24 @@ export const MemberCourseRecordsSubview: React.FC<MemberCourseRecordsSubviewProp
         </label>
       </div>
       <p className="met-member-course-subview__summary">
-        共 {filtered.length} 条 · 第 {safePage} / {totalPages} 页
+        共 {totalCount} 条 · 第 {currentPage} / {totalPages} 页
       </p>
-      {pageItems.length === 0 ? (
-        <p className="met-member-empty">暂无符合条件的课程记录</p>
-      ) : (
-        <ul className="met-member-course-list met-member-course-list--stacked">
-          {pageItems.map(r => (
-            <CourseRow key={r.id} record={r} />
-          ))}
-        </ul>
-      )}
-      {totalPages > 1 ? (
-        <div className="met-member-course-subview__pager">
+      <div className="met-member-course-subview__list-wrap">
+        {pageItems.length === 0 ? (
+          <p className="met-member-empty">暂无符合条件的课程记录</p>
+        ) : (
+          <ul className="met-member-course-list met-member-course-list--stacked met-member-course-list--subview">
+            {pageItems.map(r => (
+              <CourseRow key={r.id} record={r} dense />
+            ))}
+          </ul>
+        )}
+      </div>
+      <div className="met-member-course-subview__pager">
           <button
             type="button"
             className="met-member-btn-sm"
-            disabled={safePage <= 1}
+            disabled={currentPage <= 1}
             onClick={() => setPage(p => Math.max(1, p - 1))}
           >
             上一页
@@ -161,13 +170,12 @@ export const MemberCourseRecordsSubview: React.FC<MemberCourseRecordsSubviewProp
           <button
             type="button"
             className="met-member-btn-sm"
-            disabled={safePage >= totalPages}
+            disabled={currentPage >= totalPages}
             onClick={() => setPage(p => Math.min(totalPages, p + 1))}
           >
             下一页
           </button>
-        </div>
-      ) : null}
+      </div>
     </div>
   );
 };

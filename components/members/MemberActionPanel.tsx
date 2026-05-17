@@ -41,7 +41,7 @@ const QueueBlock: React.FC<{
               跟进
             </button>
             <button type="button" className="met-member-btn-sm" onClick={() => onDone(item.id)}>
-              已处理
+              标记处理
             </button>
           </div>
         </article>
