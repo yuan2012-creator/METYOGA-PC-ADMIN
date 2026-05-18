@@ -76,7 +76,7 @@ const BASE_GOVERNANCE_RISK = '模块内展示；待核对；待接入真实合�
 export const buildPartnerAuthorizationRows = (): PartnerAuthorizationRow[] => [
   {
     id: 'pa-hz',
-    partnerStore: 'MET YOGA 西湖馆（加盟演示）',
+    partnerStore: 'MET YOGA 西湖馆（合作授权演示）',
     authorizationStatus: '待核对（模块内展示）',
     brandUsage: '门头 / 课件模板：按品牌手册 V1 占位（待接入授权服务）',
     dataBackhaul: '经营日报：回传占位；未接统一数据中台（待接入授权服务）',
@@ -118,8 +118,8 @@ export const buildPartnerAuthorizationRows = (): PartnerAuthorizationRow[] => [
 export const buildPartnerStoreDetailRows = (): PartnerStoreDetailRow[] => [
   {
     id: 'ps-hz',
-    partnerStore: 'MET YOGA 西湖馆（加盟演示）',
-    cooperationType: '加盟（演示）',
+    partnerStore: 'MET YOGA 西湖馆（合作授权演示）',
+    cooperationType: '合作授权（演示）',
     authorizationStatus: '待核对（模块内展示）',
     serviceLevel: '标准档（演示）',
     cityRegion: '浙江 · 杭州 · 西湖区（演示）',
@@ -151,7 +151,7 @@ export const buildPartnerStoreDetailRows = (): PartnerStoreDetailRow[] => [
 export const buildPartnerBrandCourseAuthRows = (): PartnerBrandCourseAuthRow[] => [
   {
     id: 'bc-hz',
-    partnerStore: 'MET YOGA 西湖馆（加盟演示）',
+    partnerStore: 'MET YOGA 西湖馆（合作授权演示）',
     brandScope: '门头、店内标识、统一课件模板（演示范围）',
     courseAuthScope: '哈他 / 流瑜伽团课；小班授权清单待同步（待核对）',
     validityPeriod: '2025-01-01 至 2027-12-31（演示）',
@@ -184,7 +184,7 @@ export const buildPartnerBrandCourseAuthRows = (): PartnerBrandCourseAuthRow[] =
 export const buildPartnerDataQualityRows = (): PartnerDataQualityRow[] => [
   {
     id: 'dq-hz',
-    partnerStore: 'MET YOGA 西湖馆（加盟演示）',
+    partnerStore: 'MET YOGA 西湖馆（合作授权演示）',
     backhaulStatus: '部分回传（模块内展示）',
     lastBackhaulAt: '2026-05-08 06:30（演示）',
     dataCompleteness: '约 72%（模块内测算）',
@@ -217,7 +217,7 @@ export const buildPartnerDataQualityRows = (): PartnerDataQualityRow[] => [
 export const buildPartnerRectificationRenewalRows = (): PartnerRectificationRenewalRow[] => [
   {
     id: 'rr-hz',
-    partnerStore: 'MET YOGA 西湖馆（加盟演示）',
+    partnerStore: 'MET YOGA 西湖馆（合作授权演示）',
     problemType: '品牌露出边界（演示）',
     rectificationRequirement: '补齐门头与课件版本登记表（人工；不生成整改通知）',
     owner: '区域督导（演示）',

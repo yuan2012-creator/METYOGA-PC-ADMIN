@@ -29,7 +29,7 @@ const AlertPanel: React.FC<AlertPanelProps> = ({ alerts }) => {
           onClick={() => showToast('正在分析门店数据并生成预警…')}
           className="text-[10px] text-purple-600 font-bold flex items-center gap-1 hover:underline ml-2 bg-purple-50 px-2 py-1 rounded-full border border-purple-100"
         >
-          <i className="fa-solid fa-wand-magic-sparkles"></i> AI 预警分析
+          <i className="fa-solid fa-bell"></i> 经营预警（演示）
         </button>
       </h3>
       <span className="text-xs text-gray-400">系统自动生成</span>

@@ -1,259 +1,422 @@
-import React, { Dispatch, SetStateAction } from 'react';
-import { Chart as ChartJS, ArcElement, Tooltip, Legend as ChartLegend, CategoryScale, LinearScale, PointElement, LineElement, Title, BarElement, RadialLinearScale, Filler } from 'chart.js';
-import type { Staff } from '../../types';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
-  buildStaffDetails,
-  calculateTeachingYears,
-  getNextStaffLevel,
-  type StaffDemoMember,
-} from '../../utils/staffSelectors';
-import StaffCoursePerformancePanel from './detail/StaffCoursePerformancePanel';
-import type { IncomeTimeRange, MemberListTab, PricingConfig, StaffModalTab, TimeRange } from './detail/StaffDetailTypes';
-import StaffGrowthPromotionPanel from './detail/StaffGrowthPromotionPanel';
-import StaffIncomePayrollPanel from './detail/StaffIncomePayrollPanel';
-import StaffMemberFollowupPanel from './detail/StaffMemberFollowupPanel';
-import StaffProfileArchivePanel from './detail/StaffProfileArchivePanel';
-
-ChartJS.register(ArcElement, Tooltip, ChartLegend, CategoryScale, LinearScale, PointElement, LineElement, Title, BarElement, RadialLinearScale, Filler);
-
-const staffModalTabs: Array<{
-  id: StaffModalTab;
-  title: string;
-  unit: string;
-  icon: string;
-  prefix?: string;
-}> = [
-  { id: 'course', title: '课程教学', unit: 'h', icon: 'fa-regular fa-clock' },
-  { id: 'member', title: '会员运营', unit: '人', icon: 'fa-solid fa-user-group' },
-  { id: 'income', title: '收入与耗课', unit: '', prefix: '¥', icon: 'fa-solid fa-wallet' },
-  { id: 'promotion', title: '成长体系', unit: '', icon: 'fa-solid fa-medal' },
-];
+  findStaffTeacher,
+  type StaffCourseRecord,
+  type StaffOperationSnapshot,
+} from './staffOperationViewModel';
+import { formatStaffCny, formatStaffPercent, formatStaffScore } from './staffFormatters';
+import { staffDemoToast } from './staffDemoToast';
+import StaffDetailTabs, { type StaffDetailTabId } from './StaffDetailTabs';
+import {
+  StaffEvidenceChain,
+  StaffMeteachBoundary,
+  StaffModalBlock,
+  StaffModalDl,
+  StaffModalPanel,
+} from './staffModalShared';
 
 interface StaffDetailModalProps {
-  showStaffModal: boolean;
-  activeStaff: Staff | null;
-  activeModalTab: StaffModalTab;
-  setActiveModalTab: (tab: StaffModalTab) => void;
-  setShowStaffModal: (show: boolean) => void;
-  setActiveStaff: Dispatch<SetStateAction<Staff | null>>;
-  courseTimeRange: TimeRange;
-  setCourseTimeRange: (range: TimeRange) => void;
-  incomeTimeRange: IncomeTimeRange;
-  setIncomeTimeRange: (range: IncomeTimeRange) => void;
-  isEditingProfile: boolean;
-  setIsEditingProfile: (isEditing: boolean) => void;
-  isEditingPricing: boolean;
-  setIsEditingPricing: (isEditing: boolean) => void;
-  pricingConfig: PricingConfig;
-  setPricingConfig: Dispatch<SetStateAction<PricingConfig>>;
-  mockExtendedMembers: StaffDemoMember[];
-  filteredMembers: StaffDemoMember[];
-  memberListTab: MemberListTab;
-  setMemberListTab: (tab: MemberListTab) => void;
-  showAdvancedFilter: boolean;
-  setShowAdvancedFilter: (show: boolean) => void;
-  filterLifecycle: string;
-  setFilterLifecycle: (lifecycle: string) => void;
-  filterGoal: string;
-  setFilterGoal: (goal: string) => void;
-  activeFollowUpCategory: string | null;
-  setActiveFollowUpCategory: (category: string | null) => void;
-  onDemoAction: (message: string) => void;
+  open: boolean;
+  teacherId: string | null;
+  snapshot: StaffOperationSnapshot;
+  onClose: () => void;
+  onToast: (message: string) => void;
+  initialTab?: StaffDetailTabId;
 }
 
-const StaffDetailModal: React.FC<StaffDetailModalProps> = (props) => {
-  const {
-    showStaffModal,
-    activeStaff,
-    activeModalTab,
-    setActiveModalTab,
-    setShowStaffModal,
-    setActiveStaff,
-    courseTimeRange,
-    setCourseTimeRange,
-    incomeTimeRange,
-    setIncomeTimeRange,
-    isEditingProfile,
-    setIsEditingProfile,
-    isEditingPricing,
-    setIsEditingPricing,
-    pricingConfig,
-    setPricingConfig,
-    mockExtendedMembers,
-    filteredMembers,
-    memberListTab,
-    setMemberListTab,
-    showAdvancedFilter,
-    setShowAdvancedFilter,
-    filterLifecycle,
-    setFilterLifecycle,
-    filterGoal,
-    setFilterGoal,
-    activeFollowUpCategory,
-    setActiveFollowUpCategory,
-    onDemoAction,
-  } = props;
+type CourseSubviewFilters = {
+  time: string;
+  courseType: string;
+  store: string;
+  status: string;
+};
+
+const PAGE_SIZE = 20;
+
+const StaffDetailModal: React.FC<StaffDetailModalProps> = ({
+  open,
+  teacherId,
+  snapshot,
+  onClose,
+  onToast,
+  initialTab,
+}) => {
+  const [activeTab, setActiveTab] = useState<StaffDetailTabId>('overview');
+  const [courseSubview, setCourseSubview] = useState(false);
+  const [coursePage, setCoursePage] = useState(1);
+  const [courseFilters, setCourseFilters] = useState<CourseSubviewFilters>({
+    time: '全部',
+    courseType: '全部',
+    store: '全部',
+    status: '全部',
+  });
+
+  const teacher = useMemo(
+    () => (teacherId ? findStaffTeacher(snapshot, teacherId) : undefined),
+    [teacherId, snapshot],
+  );
+
+  useEffect(() => {
+    if (!open) {
+      setActiveTab('overview');
+      setCourseSubview(false);
+      setCoursePage(1);
+    } else if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [open, initialTab]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      if (courseSubview) {
+        setCourseSubview(false);
+        return;
+      }
+      onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, courseSubview, onClose]);
+
+  const filteredCourses = useMemo(() => {
+    if (!teacher) return [];
+    return teacher.courseRecords.filter(c => {
+      if (courseFilters.courseType !== '全部' && c.courseType !== courseFilters.courseType) return false;
+      if (courseFilters.store !== '全部' && c.storeName !== courseFilters.store) return false;
+      if (courseFilters.status !== '全部' && c.status !== courseFilters.status) return false;
+      if (courseFilters.time === '今日' && c.date !== '2026-05-14') return false;
+      if (courseFilters.time === '近7天' && !['2026-05-08', '2026-05-09', '2026-05-10', '2026-05-11', '2026-05-12', '2026-05-13', '2026-05-14'].includes(c.date))
+        return false;
+      return true;
+    });
+  }, [teacher, courseFilters]);
+
+  const coursePageRows = useMemo(() => {
+    const start = (coursePage - 1) * PAGE_SIZE;
+    return filteredCourses.slice(start, start + PAGE_SIZE);
+  }, [filteredCourses, coursePage]);
+
+  const courseTotalPages = Math.max(1, Math.ceil(filteredCourses.length / PAGE_SIZE));
+
+  if (!open || !teacher) return null;
+
+  const t = teacher;
+  const todayCourses = t.courseRecords.filter(c => c.date === '2026-05-14');
+  const weekCourses = t.courseRecords.slice(0, 7);
+  const chain = ['课程', '完课', '课时费', '成长', '权限'];
+
+  const renderCourseList = (rows: StaffCourseRecord[], limit?: number) => {
+    const list = limit ? rows.slice(0, limit) : rows;
+    if (list.length === 0) return <p className="met-staff-empty">暂无课程记录</p>;
+    return (
+      <ul className="met-staff-course-list">
+        {list.map(c => (
+          <li key={c.id}>
+            <span className="met-staff-col-nowrap">
+              {c.date} {c.time}
+            </span>
+            <span>
+              {c.courseName} · {c.courseType}
+            </span>
+            <span>{c.storeName}</span>
+            <ChipInline text={c.status} />
+          </li>
+        ))}
+      </ul>
+    );
+  };
+
+  const renderCoursesTab = () => {
+    if (courseSubview) {
+      return (
+        <StaffModalBlock title="全部课程记录">
+          <button type="button" className="met-staff-subview-back" onClick={() => setCourseSubview(false)}>
+            ← 返回课程执行
+          </button>
+          <div className="met-staff-subview-filters">
+            <select
+              value={courseFilters.time}
+              onChange={e => {
+                setCourseFilters(f => ({ ...f, time: e.target.value }));
+                setCoursePage(1);
+              }}
+            >
+              {['全部', '今日', '近7天'].map(o => (
+                <option key={o} value={o}>
+                  时间：{o}
+                </option>
+              ))}
+            </select>
+            <select
+              value={courseFilters.courseType}
+              onChange={e => {
+                setCourseFilters(f => ({ ...f, courseType: e.target.value }));
+                setCoursePage(1);
+              }}
+            >
+              {['全部', '团课', '小班', '私教', '教培'].map(o => (
+                <option key={o} value={o}>
+                  类型：{o}
+                </option>
+              ))}
+            </select>
+            <select
+              value={courseFilters.store}
+              onChange={e => {
+                setCourseFilters(f => ({ ...f, store: e.target.value }));
+                setCoursePage(1);
+              }}
+            >
+              {['全部', t.storeName].map(o => (
+                <option key={o} value={o}>
+                  门店：{o}
+                </option>
+              ))}
+            </select>
+            <select
+              value={courseFilters.status}
+              onChange={e => {
+                setCourseFilters(f => ({ ...f, status: e.target.value }));
+                setCoursePage(1);
+              }}
+            >
+              {['全部', '待上课', '已完课', '异常'].map(o => (
+                <option key={o} value={o}>
+                  状态：{o}
+                </option>
+              ))}
+            </select>
+          </div>
+          {renderCourseList(coursePageRows)}
+          <div className="met-staff-pagination">
+            <button
+              type="button"
+              className="met-member-btn-sm"
+              disabled={coursePage <= 1}
+              onClick={() => setCoursePage(p => p - 1)}
+            >
+              上一页
+            </button>
+            <span>
+              第 {coursePage} / {courseTotalPages} 页 · 共 {filteredCourses.length} 条
+            </span>
+            <button
+              type="button"
+              className="met-member-btn-sm"
+              disabled={coursePage >= courseTotalPages}
+              onClick={() => setCoursePage(p => p + 1)}
+            >
+              下一页
+            </button>
+          </div>
+        </StaffModalBlock>
+      );
+    }
+
+    return (
+      <>
+        <StaffModalBlock title="今日课程">
+          {renderCourseList(todayCourses, 5)}
+        </StaffModalBlock>
+        <StaffModalBlock title="近 7 天课程">
+          {renderCourseList(weekCourses, 5)}
+        </StaffModalBlock>
+        <StaffModalPanel>
+          <StaffModalDl
+            rows={[
+              { label: '近 30 天上课', value: `${t.monthlySessions} 节` },
+              { label: '到课率', value: formatStaffPercent(t.attendanceRate) },
+              { label: '满课率', value: formatStaffPercent(t.fillRate) },
+              { label: '代课 / 取消 / 异常', value: `${t.leaveRecords.length} 项需关注` },
+            ]}
+          />
+          <p className="met-staff-modal-note">后台不代签到、不补签；签到异常仅展示「需核对」。</p>
+          <button type="button" className="met-member-btn-sm" onClick={() => setCourseSubview(true)}>
+            查看全部课程记录
+          </button>
+        </StaffModalPanel>
+      </>
+    );
+  };
+
+  const renderTab = () => {
+    switch (activeTab) {
+      case 'overview':
+        return (
+          <>
+            <StaffModalPanel>
+              <StaffModalDl
+                rows={[
+                  { label: '身份与角色', value: `${t.employmentType} · ${t.roleType}` },
+                  { label: '当前等级', value: `${t.teacherLevel}（收入线 ${t.incomeLevel}）` },
+                  { label: '所属门店', value: t.storeName },
+                  { label: '主要课程', value: t.mainCourses },
+                  { label: '本月课时', value: `${t.monthlySessions} 节` },
+                  { label: '当前风险', value: t.riskTags.join('、') || '—' },
+                  { label: '系统建议', value: t.nextAction },
+                  { label: '所属店长', value: t.managerName },
+                  { label: '教务对接', value: t.academicOwner },
+                  { label: '财务对接', value: t.financeOwner },
+                ]}
+              />
+            </StaffModalPanel>
+            <p className="met-staff-modal-note">{t.todaySuggestion} · 仅前端演示</p>
+          </>
+        );
+      case 'courses':
+        return renderCoursesTab();
+      case 'pay':
+        return (
+          <>
+            <StaffModalPanel>
+              <StaffModalDl
+                rows={[
+                  { label: '本月课时费预估', value: formatStaffCny(t.monthlyEstimatedPay) },
+                  { label: '团课', value: formatStaffCny(t.groupClassPay) },
+                  { label: '小班', value: formatStaffCny(t.smallClassPay) },
+                  { label: '私教', value: formatStaffCny(t.privateTrainingRevenue) },
+                  { label: '待核金额', value: formatStaffCny(t.pendingPayAmount) },
+                ]}
+              />
+            </StaffModalPanel>
+            <StaffModalBlock title="待核 / 异常记录">
+              <ul className="met-staff-pay-list">
+                {t.payRecords.map(p => (
+                  <li key={p.id}>
+                    <span>{p.label}</span>
+                    <span className="met-staff-col-amount">{formatStaffCny(p.amount)}</span>
+                    <ChipInline text={p.status} />
+                    <span className="met-staff-table__muted">{p.note}</span>
+                  </li>
+                ))}
+              </ul>
+            </StaffModalBlock>
+            <p className="met-staff-modal-note">
+              课时费以完课、签到、耗课、规则配置为准；本页仅展示预估，待财务复核。
+            </p>
+          </>
+        );
+      case 'growth':
+        return (
+          <>
+            <StaffModalPanel>
+              <StaffModalDl
+                rows={[
+                  { label: '当前等级', value: t.teacherLevel },
+                  { label: '收入线', value: t.incomeLevel },
+                  { label: '当前判断', value: t.growthJudgment },
+                  { label: '下一步', value: t.growthNextStep },
+                  { label: '满课率', value: formatStaffPercent(t.fillRate) },
+                  { label: '私教转化', value: formatStaffPercent(t.privateConversionRate) },
+                  { label: '教学质量', value: formatStaffScore(t.memberFeedbackScore) },
+                ]}
+              />
+            </StaffModalPanel>
+            <StaffModalBlock title="近 3 个月指标">
+              {t.growthRecords.map(g => (
+                <p key={g.period} className="met-staff-growth-line">
+                  {g.period}：满课 {formatStaffPercent(g.fillRate)} · 转化{' '}
+                  {formatStaffPercent(g.privateConversion)} · {g.judgment}（系统建议，需店长复核）
+                </p>
+              ))}
+            </StaffModalBlock>
+            <p className="met-staff-modal-note">不做自动定级强结论，晋级 / 保级 / 降级需店长复核。</p>
+          </>
+        );
+      case 'leave':
+        return (
+          <StaffModalBlock title="请假 / 代课 / 调课">
+            {t.leaveRecords.length === 0 ? (
+              <p className="met-staff-empty">暂无请假代课记录</p>
+            ) : (
+              <ul className="met-staff-leave-list">
+                {t.leaveRecords.map(l => (
+                  <li key={l.id}>
+                    <strong>{l.type}</strong> · {l.date} · {l.courseName} · 代课 {l.substituteName} · 影响{' '}
+                    {l.affectedMembers} 人 · <ChipInline text={l.status} />
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p className="met-staff-modal-note">审批与标记处理均为前端演示，未写入真实数据。</p>
+          </StaffModalBlock>
+        );
+      case 'permission':
+        return (
+          <>
+            <StaffModalPanel>
+              <StaffModalDl
+                rows={[
+                  { label: '后台角色', value: t.permissionProfile.backendRole },
+                  { label: '后台权限', value: t.permissionProfile.backendScopes.join('、') },
+                  { label: '数据范围', value: t.permissionProfile.dataScope },
+                  {
+                    label: '敏感权限',
+                    value: t.permissionProfile.sensitiveFlags.join('、') || '—',
+                  },
+                  { label: 'METeach', value: t.meteachLabel },
+                ]}
+              />
+            </StaffModalPanel>
+            <StaffMeteachBoundary
+              visible={t.permissionProfile.teachVisible}
+              hidden={t.permissionProfile.teachHidden}
+            />
+            <StaffModalBlock title="最近权限变更">
+              <ul className="met-staff-log-list">
+                <li>2026-05-10 · 总部 · 调整后台权限范围（前端演示）</li>
+                <li>2026-05-01 · 系统 · 开通 METeach 老师端视图</li>
+              </ul>
+            </StaffModalBlock>
+          </>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <>
-      {/* --- STAFF DETAIL MODAL --- */}
-      {showStaffModal && activeStaff && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-8 sm:p-12">
-              <div className="absolute inset-0 bg-black/20 backdrop-blur-[2px] transition-opacity" onClick={() => { setShowStaffModal(false); setIsEditingProfile(false); }}></div>
-              <div className="bg-white w-full max-w-[1200px] h-[85vh] rounded-[32px] shadow-2xl z-10 flex overflow-hidden animate-fadeInUp">
-                  
-                  {(() => {
-                      const staffDetails = buildStaffDetails(activeStaff);
-                      const teachingYears = calculateTeachingYears(staffDetails.teachingStartDate);
-
-                      return (
-                          <>
-                              <StaffProfileArchivePanel
-                                  activeStaff={activeStaff}
-                                  setActiveStaff={setActiveStaff}
-                                  staffDetails={staffDetails}
-                                  teachingYears={teachingYears}
-                                  isEditingProfile={isEditingProfile}
-                                  setIsEditingProfile={setIsEditingProfile}
-                                  isEditingPricing={isEditingPricing}
-                                  setIsEditingPricing={setIsEditingPricing}
-                                  pricingConfig={pricingConfig}
-                                  setPricingConfig={setPricingConfig}
-                              />
-
-                              {/* Right: Data Panorama */}
-                              <div className="flex-1 bg-white flex flex-col overflow-hidden">
-                                  <div className="h-16 border-b border-gray-100 flex items-center justify-between px-6 bg-white shrink-0">
-                                      <h3 className="font-bold text-gray-900 text-lg">员工全景看板</h3>
-                                      <button onClick={() => { setShowStaffModal(false); setIsEditingProfile(false); }} className="w-8 h-8 rounded-full bg-gray-50 hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-black transition">
-                                          <i className="fa-solid fa-xmark"></i>
-                                      </button>
-                                  </div>
-
-                                  {/* 4 Large Buttons (Tabs) - Fixed */}
-                                  <div className="px-6 py-3 bg-white border-b border-gray-100 shrink-0 z-10">
-                                      <div className="grid grid-cols-4 gap-3">
-                                          {staffModalTabs.map(tab => {
-                                              const tabValue = tab.id === 'course'
-                                                  ? staffDetails.classHours
-                                                  : tab.id === 'member'
-                                                      ? staffDetails.memberCount
-                                                      : tab.id === 'income'
-                                                          ? parseInt(staffDetails.totalRevenue.replace(/,/g, '')) >= 10000
-                                                              ? (parseInt(staffDetails.totalRevenue.replace(/,/g, '')) / 1000).toFixed(1) + 'k'
-                                                              : staffDetails.totalRevenue
-                                                          : staffDetails.level.toUpperCase();
-
-                                              return (
-                                              <button 
-                                                  key={tab.id}
-                                                  onClick={() => setActiveModalTab(tab.id)}
-                                                  className={`relative p-3 rounded-xl border transition-all duration-300 flex flex-col items-start justify-between h-20 overflow-hidden ${
-                                                      activeModalTab === tab.id 
-                                                      ? 'bg-black text-white border-black shadow-md scale-[1.02]' 
-                                                      : 'bg-white text-gray-900 border-gray-100 hover:border-gray-300 hover:shadow-sm'
-                                                  }`}
-                                              >
-                                                  {tab.id === 'promotion' && staffDetails.promotionStatus === 'pending' && (
-                                                      <span className="absolute top-2 right-2 flex h-2.5 w-2.5">
-                                                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                                          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500"></span>
-                                                      </span>
-                                                  )}
-                                                  <div className="flex items-center gap-1.5 mb-1 shrink-0">
-                                                      <i className={`${tab.icon} ${activeModalTab === tab.id ? 'text-gray-300' : 'text-gray-400'} text-sm`}></i>
-                                                      <span className={`text-xs font-bold ${activeModalTab === tab.id ? 'text-gray-300' : 'text-gray-500'}`}>{tab.title}</span>
-                                                  </div>
-                                                  <div className="text-left w-full overflow-hidden">
-                                                      <div className="flex items-baseline gap-1 w-full overflow-hidden">
-                                                          {tab.prefix && <span className={`text-sm font-bold shrink-0 ${activeModalTab === tab.id ? 'text-white' : 'text-gray-900'}`}>{tab.prefix}</span>}
-                                                          <span className={`text-lg xl:text-xl font-bold font-mono truncate ${activeModalTab === tab.id ? 'text-white' : 'text-gray-900'}`}>{tabValue}</span>
-                                                          {tab.unit && <span className={`text-[10px] font-bold shrink-0 ${activeModalTab === tab.id ? 'text-gray-400' : 'text-gray-500'}`}>{tab.unit}</span>}
-                                                      </div>
-                                                  </div>
-                                              </button>
-                                          );
-                                          })}
-                                      </div>
-                                      
-                                      {/* 晋升操作 - Moved here */}
-                                      {staffDetails.promotionStatus === 'pending' && (
-                                          <div className="mt-4 p-4 bg-gradient-to-r from-gray-900 to-black rounded-xl shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border border-gray-800">
-                                              <div>
-                                                  <div className="flex items-center gap-3">
-                                                      <span className="relative flex h-3 w-3">
-                                                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                                                          <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-                                                      </span>
-                                                      <div className="text-sm font-bold text-white">待审批的晋升申请</div>
-                                                  </div>
-                                                  <div className="text-xs text-gray-400 mt-1">该员工各项指标均已达标，已提交晋升申请，请尽快处理。</div>
-                                              </div>
-                                              <div className="flex gap-3 w-full md:w-auto">
-                                                  <button className="flex-1 md:flex-none px-4 py-2 rounded-lg text-xs font-bold bg-gray-800 text-gray-300 hover:bg-gray-700 transition-all border border-gray-700">
-                                                      驳回
-                                                  </button>
-                                                  <button className="flex-1 md:flex-none px-6 py-2 rounded-lg text-xs font-bold bg-white text-black hover:bg-gray-100 shadow-md transition-all">
-                                                      同意晋升至 {getNextStaffLevel(staffDetails.level)}
-                                                  </button>
-                                              </div>
-                                          </div>
-                                      )}
-                                  </div>
-
-                                  <div className="flex-1 overflow-y-auto p-6 custom-scroll bg-[#FAFAFA] flex flex-col gap-6">
-                                      
-                                      {activeModalTab === 'course' && (
-                                          <StaffCoursePerformancePanel
-                                              staffDetails={staffDetails}
-                                              courseTimeRange={courseTimeRange}
-                                              setCourseTimeRange={setCourseTimeRange}
-                                              onDemoAction={onDemoAction}
-                                          />
-                                      )}
-
-                                      {activeModalTab === 'member' && (
-                                          <StaffMemberFollowupPanel
-                                              staffDetails={staffDetails}
-                                              mockExtendedMembers={mockExtendedMembers}
-                                              filteredMembers={filteredMembers}
-                                              memberListTab={memberListTab}
-                                              setMemberListTab={setMemberListTab}
-                                              showAdvancedFilter={showAdvancedFilter}
-                                              setShowAdvancedFilter={setShowAdvancedFilter}
-                                              filterLifecycle={filterLifecycle}
-                                              setFilterLifecycle={setFilterLifecycle}
-                                              filterGoal={filterGoal}
-                                              setFilterGoal={setFilterGoal}
-                                              activeFollowUpCategory={activeFollowUpCategory}
-                                              setActiveFollowUpCategory={setActiveFollowUpCategory}
-                                          />
-                                      )}
-
-                                      {activeModalTab === 'income' && (
-                                          <StaffIncomePayrollPanel
-                                              staffDetails={staffDetails}
-                                              incomeTimeRange={incomeTimeRange}
-                                              setIncomeTimeRange={setIncomeTimeRange}
-                                          />
-                                      )}
-
-                                      {activeModalTab === 'promotion' && (
-                                          <StaffGrowthPromotionPanel staffDetails={staffDetails} />
-                                      )}
-
-                                  </div>
-                              </div>
-                          </>
-                      );
-                  })()}
+      <button type="button" aria-label="关闭" className="met-staff-modal-overlay" onClick={onClose} />
+      <aside className="met-staff-detail-modal" role="dialog" aria-modal aria-labelledby="staff-modal-title">
+        <header className="met-staff-detail-header">
+          <div className="met-staff-detail-header__row1">
+            <span className="met-staff-avatar">{t.avatarText}</span>
+            <div className="met-staff-detail-header__identity">
+              <h2 id="staff-modal-title">{t.name}</h2>
+              <p className="met-staff-detail-header__sub">
+                {t.phoneMasked} · {t.teacherId} · {t.storeName}
+              </p>
+              <div className="met-staff-detail-header__tags">
+                <span className="met-staff-chip met-staff-chip--neutral">{t.teacherLevel}</span>
+                <span className="met-staff-chip met-staff-chip--neutral">{t.employmentType}</span>
+                <span className="met-staff-chip met-staff-chip--neutral">{t.status}</span>
+                <span className="met-staff-chip met-staff-chip--ok">{t.meteachLabel}</span>
               </div>
+            </div>
+            <button type="button" className="met-member-drawer__close" onClick={onClose} aria-label="关闭">
+              ×
+            </button>
           </div>
-      )}
-
-
+          <div className="met-staff-detail-header__suggestion">
+            <span className="met-staff-detail-header__dot" aria-hidden />
+            <span>{t.todaySuggestion}</span>
+          </div>
+          <StaffEvidenceChain steps={chain} />
+        </header>
+        <StaffDetailTabs active={activeTab} onChange={tab => { setActiveTab(tab); setCourseSubview(false); }} />
+        <div className="met-staff-detail-body custom-scroll">{renderTab()}</div>
+      </aside>
     </>
   );
 };
+
+const ChipInline: React.FC<{ text: string }> = ({ text }) => (
+  <span className={`met-staff-chip met-staff-chip--${text.includes('待') || text.includes('异常') ? 'pending' : 'ok'}`}>
+    {text}
+  </span>
+);
 
 export default StaffDetailModal;

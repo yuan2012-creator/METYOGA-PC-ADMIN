@@ -11,7 +11,9 @@ import Finance from './components/Finance';
 import Marketing from './components/Marketing';
 import Data from './components/Data';
 import Investor from './components/Investor';
+import Partner from './components/Partner';
 import Settings from './components/Settings';
+import Audit from './components/Audit';
 import MockSidebarIdentityCard from './components/MockSidebarIdentityCard';
 import { SidebarBrandMark, SidebarNavIcon, type SidebarNavIconName } from './components/ui/SidebarNavIcon';
 import { MockAdminScopeProvider } from './context/MockAdminScopeContext';
@@ -83,8 +85,12 @@ const App: React.FC = () => {
         return <Data />;
       case 'investor':
         return <Investor />;
+      case 'partner':
+        return <Partner />;
       case 'settings':
         return <Settings />;
+      case 'permission-audit':
+        return <Audit />;
       default:
         return (
           <div className="flex h-full flex-col items-center justify-center met-muted animate-fadeIn">

@@ -1,0 +1,26 @@
+import React from 'react';
+import type { DashboardInsight } from './dashboardOperationViewModel';
+
+const DashboardInsightPanel: React.FC<{
+  tips: DashboardInsight[];
+  onAction: (key: string) => void;
+}> = ({ tips, onAction }) => (
+  <section className="met-dashboard-insights">
+    <h2 className="met-dashboard-insights__title">经营判断建议</h2>
+    <div className="met-dashboard-insights__row">
+      {tips.map(tip => (
+        <article key={tip.id} className="met-dashboard-insight-card met-today-surface">
+          <div className="met-dashboard-insight-card__main">
+            <span className="met-dashboard-insight-card__tag">{tip.tag}</span>
+            <p className="met-dashboard-insight-card__line">{tip.line}</p>
+          </div>
+          <button type="button" className="met-member-btn-sm" onClick={() => onAction(tip.actionKey)}>
+            {tip.actionLabel}
+          </button>
+        </article>
+      ))}
+    </div>
+  </section>
+);
+
+export default DashboardInsightPanel;
