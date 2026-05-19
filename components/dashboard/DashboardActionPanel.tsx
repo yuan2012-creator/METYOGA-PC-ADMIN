@@ -3,6 +3,7 @@ import {
   ACTION_GROUP_TITLES,
   type DashboardActionGroup,
   type DashboardActionItem,
+  type DashboardActionSuggestion,
 } from './dashboardOperationViewModel';
 import { DashboardEvidenceChain } from './dashboardModalShared';
 
@@ -56,12 +57,68 @@ const QueueBlock: React.FC<{
   );
 };
 
-const DashboardActionPanel: React.FC<{
+const SuggestionCards: React.FC<{
+  suggestions: DashboardActionSuggestion[];
+  onSuggestionAction: (item: DashboardActionSuggestion) => void;
+}> = ({ suggestions, onSuggestionAction }) => (
+  <aside className="met-dashboard-suggestions met-today-surface">
+    <header className="met-dashboard-suggestions__head">
+      <h2>待办与行动建议</h2>
+    </header>
+    <div className="met-dashboard-suggestions__list custom-scroll">
+      {suggestions.map((item, index) => (
+        <article
+          key={item.id}
+          className={`met-dashboard-suggestion-card is-${item.tone}${index === 0 ? ' is-featured' : ''}`}
+        >
+          <span className={`met-dashboard-suggestion-card__stripe is-${item.tone}`} aria-hidden />
+          <div className="met-dashboard-suggestion-card__body">
+            <div className="met-dashboard-suggestion-card__top">
+              <div>
+                <p className="met-dashboard-suggestion-card__meta">
+                  <span className={`met-dashboard-suggestion-card__cat is-${item.tone}`}>
+                    {item.category}
+                  </span>
+                  <span className="met-dashboard-suggestion-card__owner">· 负责人：{item.owner}</span>
+                </p>
+                <h3 className="met-dashboard-suggestion-card__title">{item.title}</h3>
+              </div>
+              <button
+                type="button"
+                className={`met-dashboard-suggestion-card__btn${item.tone === 'primary' ? ' is-solid' : ''}`}
+                onClick={() => onSuggestionAction(item)}
+              >
+                {item.buttonLabel}
+              </button>
+            </div>
+            <p className="met-dashboard-suggestion-card__desc">{item.description}</p>
+          </div>
+        </article>
+      ))}
+    </div>
+  </aside>
+);
+
+type WorkbenchPanelProps = {
+  variant?: 'workbench';
   items: DashboardActionItem[];
   onViewDetail: (item: DashboardActionItem) => void;
   onViewChain: (item: DashboardActionItem) => void;
   onMarkDone: (id: string) => void;
-}> = ({ items, onViewDetail, onViewChain, onMarkDone }) => {
+};
+
+type SuggestionsPanelProps = {
+  variant: 'suggestions';
+  suggestions: DashboardActionSuggestion[];
+  onSuggestionAction: (item: DashboardActionSuggestion) => void;
+};
+
+const WorkbenchPanel: React.FC<WorkbenchPanelProps> = ({
+  items,
+  onViewDetail,
+  onViewChain,
+  onMarkDone,
+}) => {
   const grouped = useMemo(() => {
     const map = new Map<DashboardActionGroup, DashboardActionItem[]>();
     ACTION_GROUPS.forEach(g => map.set(g, []));
@@ -95,6 +152,25 @@ const DashboardActionPanel: React.FC<{
         )}
       </div>
     </aside>
+  );
+};
+
+const DashboardActionPanel: React.FC<WorkbenchPanelProps | SuggestionsPanelProps> = props => {
+  if (props.variant === 'suggestions') {
+    return (
+      <SuggestionCards
+        suggestions={props.suggestions}
+        onSuggestionAction={props.onSuggestionAction}
+      />
+    );
+  }
+  return (
+    <WorkbenchPanel
+      items={props.items}
+      onViewDetail={props.onViewDetail}
+      onViewChain={props.onViewChain}
+      onMarkDone={props.onMarkDone}
+    />
   );
 };
 

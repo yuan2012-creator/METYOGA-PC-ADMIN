@@ -9,6 +9,8 @@ export const dashboardDemoToast = {
   markDone: '前端演示：标记处理仅本地移除，未修改真实经营状态。',
   insightFilter: (label: string) => `已切换到：${label}（经营判断预览）`,
   adjustPreview: '前端演示：调整预览待接入真实数据服务，未写入系统。',
+  storeFilter: (store: string) => `前端演示：后续将按「${store}」筛选明细（经营判断预览）`,
+  actionSuggestion: (label: string) => `前端演示：${label}（经营判断预览，未写入系统）`,
 } as const;
 
 export const DASHBOARD_PREVIEW_TOAST =

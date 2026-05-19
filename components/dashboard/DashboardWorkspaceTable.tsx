@@ -1,9 +1,10 @@
 import React, { useMemo } from 'react';
 import {
-  computeDashboardSegmentMiniSummary,
+  DEFAULT_DASHBOARD_FILTERS,
   DASHBOARD_FILTER_OPTIONS,
   DASHBOARD_SEGMENT_HINTS,
   DASHBOARD_WORKBENCH_SEGMENTS,
+  computeDashboardSegmentMiniSummary,
   filterDashboardRows,
   getDashboardRows,
   type DashboardChainRecord,
@@ -17,18 +18,34 @@ import {
   type DashboardTeacherRecord,
   type DashboardTodoRecord,
 } from './dashboardOperationViewModel';
+import { dashboardStatusClass } from './dashboardFormatters';
 import { DashboardTag } from './dashboardModalShared';
 
-interface DashboardWorkspaceTableProps {
+type WorkbenchProps = {
+  variant?: 'workbench';
   segment: DashboardSegment;
   onSegmentChange: (s: DashboardSegment) => void;
-  snapshot: DashboardOperationSnapshot;
   filters: DashboardListFilters;
   onFiltersChange: (f: DashboardListFilters) => void;
+  onSecondary: (id: string) => void;
+};
+
+type MonitorProps = {
+  variant: 'storeMonitor';
+  segment?: never;
+  onSegmentChange?: never;
+  filters?: never;
+  onFiltersChange?: never;
+  onSecondary?: never;
+};
+
+type CommonProps = {
+  snapshot: DashboardOperationSnapshot;
   highlightId?: string | null;
   onOpenDetail: (id: string) => void;
-  onSecondary: (id: string) => void;
-}
+};
+
+type DashboardWorkspaceTableProps = CommonProps & (WorkbenchProps | MonitorProps);
 
 const PRIMARY: Record<DashboardSegment, string> = {
   todayTodo: '查看详情',
@@ -66,26 +83,87 @@ const RowActions: React.FC<{
   onSecondary: () => void;
 }> = ({ segment, onPrimary, onSecondary }) => (
   <td className="met-dashboard-col-actions" onClick={e => e.stopPropagation()}>
-    <button type="button" className="met-dashboard-table-btn" onClick={onPrimary}>{PRIMARY[segment]}</button>
-    <button type="button" className="met-dashboard-table-btn" onClick={onSecondary}>{SECONDARY[segment]}</button>
+    <button type="button" className="met-dashboard-table-btn" onClick={onPrimary}>
+      {PRIMARY[segment]}
+    </button>
+    <button type="button" className="met-dashboard-table-btn" onClick={onSecondary}>
+      {SECONDARY[segment]}
+    </button>
   </td>
 );
 
-const DashboardWorkspaceTable: React.FC<DashboardWorkspaceTableProps> = ({
-  segment,
-  onSegmentChange,
-  snapshot,
-  filters,
-  onFiltersChange,
-  highlightId,
-  onOpenDetail,
-  onSecondary,
-}) => {
+const StoreMonitorTable: React.FC<{
+  snapshot: DashboardOperationSnapshot;
+  highlightId?: string | null;
+  onOpenDetail: (id: string) => void;
+}> = ({ snapshot, highlightId, onOpenDetail }) => (
+  <section className="met-dashboard-monitor-card met-today-surface">
+    <header className="met-dashboard-monitor-card__head">
+      <h2>门店健康监测表</h2>
+    </header>
+    <div className="met-dashboard-table-wrap">
+      <table className="met-dashboard-table met-dashboard-table--monitor">
+        <thead>
+          <tr>
+            <th>门店</th>
+            <th>状态</th>
+            <th>主要问题</th>
+            <th className="met-dashboard-col-score">健康分</th>
+          </tr>
+        </thead>
+        <tbody>
+          {snapshot.stitch.storeMonitor.map(row => {
+            const tone = dashboardStatusClass(row.status);
+            return (
+              <tr
+                key={row.id}
+                className={`met-dashboard-table__row--${tone}${highlightId === row.id ? ' is-highlight' : ''}`}
+                onClick={() => onOpenDetail(row.id)}
+              >
+                <td className="met-dashboard-col-name">{row.storeName}</td>
+                <td>
+                  <span className={`met-dashboard-status-pill is-${tone}`}>{row.status}</span>
+                </td>
+                <td>{row.problem}</td>
+                <td className="met-dashboard-col-score">{row.healthScore}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  </section>
+);
+
+const DashboardWorkspaceTable: React.FC<DashboardWorkspaceTableProps> = props => {
+  const isMonitor = props.variant === 'storeMonitor';
+  const segment = isMonitor ? 'todayTodo' : props.segment;
+  const filters = isMonitor ? DEFAULT_DASHBOARD_FILTERS : props.filters;
+
   const rows = useMemo(
-    () => filterDashboardRows(getDashboardRows(snapshot, segment), filters),
-    [snapshot, segment, filters],
+    () =>
+      isMonitor
+        ? []
+        : filterDashboardRows(getDashboardRows(props.snapshot, segment), filters),
+    [isMonitor, props.snapshot, segment, filters],
   );
-  const stats = useMemo(() => computeDashboardSegmentMiniSummary(snapshot, segment), [snapshot, segment]);
+  const stats = useMemo(
+    () => (isMonitor ? [] : computeDashboardSegmentMiniSummary(props.snapshot, segment)),
+    [isMonitor, props.snapshot, segment],
+  );
+
+  if (isMonitor) {
+    return (
+      <StoreMonitorTable
+        snapshot={props.snapshot}
+        highlightId={props.highlightId}
+        onOpenDetail={props.onOpenDetail}
+      />
+    );
+  }
+
+  const { onSegmentChange, snapshot, onFiltersChange, highlightId, onOpenDetail, onSecondary } =
+    props;
   const rowClass = (id: string) => (highlightId === id ? ' is-highlight' : '');
 
   const renderRow = (row: ReturnType<typeof getDashboardRows>[number]) => {

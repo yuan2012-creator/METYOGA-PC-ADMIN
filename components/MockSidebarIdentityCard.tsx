@@ -13,9 +13,9 @@ const MockSidebarIdentityCard: React.FC = () => {
   const isHq = config.mode === 'hq';
   const scopeLabel = isHq
     ? effectiveStoreId
-      ? storeLabelById(effectiveStoreId)
-      : '全部门店'
-    : storeLabelById(config.lockedStoreId);
+      ? `${storeLabelById(effectiveStoreId)} · 经营视角`
+      : '全部门店 · 经营视角'
+    : `${storeLabelById(config.lockedStoreId)} · 经营视角`;
 
   useEffect(() => {
     if (!open) return;
@@ -36,7 +36,6 @@ const MockSidebarIdentityCard: React.FC = () => {
             <div className="truncate text-[13px] font-medium leading-tight text-[var(--met-text)]">{config.role}</div>
             <div className="mt-0.5 truncate text-xs leading-snug text-[var(--met-text-faint)]">
               {scopeLabel}
-              <span className="text-[#b5bab4]"> · mock 数据</span>
             </div>
           </div>
           {isHq ? (

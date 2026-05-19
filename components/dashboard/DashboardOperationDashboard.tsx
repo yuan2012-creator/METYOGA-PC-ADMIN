@@ -1,26 +1,21 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import {
   buildDashboardOperationSnapshot,
-  DEFAULT_DASHBOARD_FILTERS,
-  getSegmentActionItems,
-  DASHBOARD_WORKBENCH_SEGMENTS,
-  type DashboardActionItem,
-  type DashboardListFilters,
-  type DashboardSegment,
+  type DashboardActionSuggestion,
 } from './dashboardOperationViewModel';
 import type { DashboardDetailTabId } from './DashboardDetailTabs';
 import { dashboardDemoToast } from './dashboardDemoToast';
 import DashboardMetricCard from './DashboardMetricCard';
-import DashboardInsightPanel from './DashboardInsightPanel';
+import DashboardVisualPanel from './DashboardVisualPanel';
+import DashboardStoreHealthStrip from './DashboardStoreHealthStrip';
+import DashboardRiskFlow from './DashboardRiskFlow';
 import DashboardWorkspaceTable from './DashboardWorkspaceTable';
 import DashboardActionPanel from './DashboardActionPanel';
 import DashboardDetailModal from './DashboardDetailModal';
 
 const DashboardOperationDashboard: React.FC = () => {
   const snapshot = useMemo(() => buildDashboardOperationSnapshot(), []);
-  const [queue, setQueue] = useState(() => [...snapshot.actionQueue]);
-  const [segment, setSegment] = useState<DashboardSegment>('todayTodo');
-  const [filters, setFilters] = useState<DashboardListFilters>(DEFAULT_DASHBOARD_FILTERS);
+  const { stitch } = snapshot;
   const [modalOpen, setModalOpen] = useState(false);
   const [modalEntityId, setModalEntityId] = useState<string | null>(null);
   const [modalTab, setModalTab] = useState<DashboardDetailTabId | undefined>();
@@ -43,93 +38,78 @@ const DashboardOperationDashboard: React.FC = () => {
     setModalTab(undefined);
   };
 
-  const segmentActionItems = useMemo(
-    () => getSegmentActionItems(queue, segment),
-    [queue, segment],
-  );
-
-  const handleInsight = (key: string) => {
-    setSegment(key as DashboardSegment);
-    setFilters({ ...DEFAULT_DASHBOARD_FILTERS });
-    showToast(
-      dashboardDemoToast.insightFilter(
-        DASHBOARD_WORKBENCH_SEGMENTS.find(s => s.id === key)?.label ?? key,
-      ),
-    );
-  };
-
-  const handleMarkDone = (id: string) => {
-    setQueue(prev => prev.filter(i => i.id !== id));
-    showToast(dashboardDemoToast.markDone);
-  };
-
-  const openFromAction = (item: DashboardActionItem, chain?: boolean) => {
-    openDetail(item.entityId, chain ? 'evidence' : (item.openTab ?? 'judgment'));
-  };
-
-  const handleSecondary = (id: string) => {
-    if (segment === 'todayTodo') openDetail(id, 'evidence');
-    else if (segment === 'storeHealth') openDetail(id, 'store');
-    else if (segment === 'memberRisk') showToast(dashboardDemoToast.adjustPreview);
-    else if (segment === 'courseAnomaly') openDetail(id, 'evidence');
-    else if (segment === 'financeRisk') openDetail(id, 'finance');
-    else if (segment === 'teacherExec') openDetail(id, 'memberCourse');
-    else if (segment === 'crossModule') showToast(dashboardDemoToast.markDone);
-    else showToast(dashboardDemoToast.adjustPreview);
+  const handleSuggestion = (item: DashboardActionSuggestion) => {
+    if (item.entityId) openDetail(item.entityId, item.openTab);
+    else showToast(dashboardDemoToast.actionSuggestion(item.buttonLabel));
   };
 
   return (
-    <div className="met-today-page met-dashboard-page">
-      <header className="met-dashboard-header">
-        <div className="met-dashboard-header__left">
-          <h1>经营总览</h1>
-          <p>问题优先、动作优先、责任人优先</p>
+    <div className="met-today-page met-dashboard-page met-dashboard-page--stitch">
+      <header className="met-dashboard-status-hero">
+        <div className="met-dashboard-status-hero__copy">
+          <h1>{stitch.statusHero.title}</h1>
+          <p className="met-dashboard-status-hero__summary">
+            {stitch.statusHero.line1}
+            <br />
+            {stitch.statusHero.line2}
+          </p>
         </div>
-        <div className="met-dashboard-header__actions">
-          <button type="button" className="met-today-header-btn" onClick={() => showToast(dashboardDemoToast.exportSummary)}>
-            导出经营摘要
-          </button>
-          <button type="button" className="met-today-header-btn" onClick={() => showToast(dashboardDemoToast.storeCompare)}>
-            门店对比
-          </button>
-          <button type="button" className="met-today-header-btn" onClick={() => showToast(dashboardDemoToast.dailyReport)}>
-            生成经营日报
-          </button>
-          <button type="button" className="met-today-header-btn" onClick={() => showToast(dashboardDemoToast.riskReview)}>
-            风险复盘
-          </button>
-          <button type="button" className="met-ink-button" onClick={() => showToast(dashboardDemoToast.actionList)}>
-            今日行动清单
-          </button>
+        <div className="met-dashboard-status-hero__kpis">
+          <div className="met-dashboard-status-hero__kpi">
+            <span className="met-dashboard-status-hero__kpi-label">待处理</span>
+            <span className="met-dashboard-status-hero__kpi-value">{stitch.statusHero.totalPending}</span>
+          </div>
+          <div className="met-dashboard-status-hero__kpi">
+            <span className="met-dashboard-status-hero__kpi-label">高优先级</span>
+            <span className="met-dashboard-status-hero__kpi-value is-warn">
+              {stitch.statusHero.highPriorityCount}
+            </span>
+          </div>
+          <div className="met-dashboard-status-hero__kpi">
+            <span className="met-dashboard-status-hero__kpi-label">临近超时</span>
+            <span className="met-dashboard-status-hero__kpi-value is-overdue">
+              {stitch.statusHero.nearOverdueCount}
+            </span>
+          </div>
         </div>
       </header>
 
-      <section className="met-dashboard-metrics">
-        {snapshot.metrics.map(item => (
-          <DashboardMetricCard key={item.id} item={item} />
-        ))}
+      <section className="met-dashboard-hero-grid">
+        <DashboardVisualPanel judgment={stitch.judgment} />
+        <DashboardStoreHealthStrip
+          items={snapshot.cockpit.storeHealthItems}
+          onStoreClick={store => showToast(dashboardDemoToast.storeFilter(store))}
+        />
       </section>
 
-      <DashboardInsightPanel tips={snapshot.insights} onAction={handleInsight} />
+      <section className="met-dashboard-kpis-section">
+        <h2 className="met-dashboard-section-title">核心经营指标（实时）</h2>
+        <div className="met-dashboard-kpis">
+          {snapshot.metrics.map(item => (
+            <DashboardMetricCard key={item.id} item={item} compact stitch />
+          ))}
+        </div>
+      </section>
 
-      <div className="met-dashboard-main-grid">
+      <DashboardRiskFlow
+        title="跨模块证据链"
+        nodes={stitch.evidenceNodes}
+        insight={stitch.evidenceInsight}
+      />
+
+      <section className="met-dashboard-bottom-grid">
         <DashboardWorkspaceTable
-          segment={segment}
-          onSegmentChange={setSegment}
+          variant="storeMonitor"
           snapshot={snapshot}
-          filters={filters}
-          onFiltersChange={setFilters}
           highlightId={modalOpen ? modalEntityId : null}
           onOpenDetail={id => openDetail(id)}
-          onSecondary={handleSecondary}
         />
         <DashboardActionPanel
-          items={segmentActionItems}
-          onViewDetail={item => openFromAction(item)}
-          onViewChain={item => openFromAction(item, true)}
-          onMarkDone={handleMarkDone}
+          variant="suggestions"
+          suggestions={stitch.actionSuggestions}
+          onSuggestionAction={handleSuggestion}
         />
-      </div>
+      </section>
 
       <DashboardDetailModal
         open={modalOpen}

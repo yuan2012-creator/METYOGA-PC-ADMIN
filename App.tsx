@@ -168,7 +168,7 @@ const App: React.FC = () => {
                   />
                   <input
                     type="search"
-                    placeholder="全局搜索…"
+                    placeholder="全局搜索"
                     className="w-64 rounded-lg border border-[var(--met-border)] bg-[var(--met-bg-page)] py-2 pl-9 pr-4 text-sm text-[#202020] outline-none transition-colors"
                   />
                 </div>

@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { findDashboardDetail, type DashboardOperationSnapshot } from './dashboardOperationViewModel';
 import { DASHBOARD_PREVIEW_TOAST } from './dashboardDemoToast';
 import DashboardDetailTabs, { type DashboardDetailTabId } from './DashboardDetailTabs';
+import DashboardRiskFlow from './DashboardRiskFlow';
 import {
   DashboardEvidenceChain,
   DashboardJudgmentBox,
@@ -71,7 +72,12 @@ const DashboardDetailModal: React.FC<DashboardDetailModalProps> = ({
   );
 
   const renderEvidence = () => (
+  <>
     <DashboardModalPanel title="证据链">
+      <DashboardRiskFlow
+        steps={detail.evidenceChain.length >= 3 ? detail.evidenceChain : ['会员', '课程', '签到', '耗课', '财务']}
+        title="跨模块链路（预览）"
+      />
       <DashboardModalDl
         rows={[
           { label: '关联模块', value: detail.relatedModules.join(' / ') },
@@ -84,6 +90,7 @@ const DashboardDetailModal: React.FC<DashboardDetailModalProps> = ({
         ]}
       />
     </DashboardModalPanel>
+  </>
   );
 
   const renderStore = () => (

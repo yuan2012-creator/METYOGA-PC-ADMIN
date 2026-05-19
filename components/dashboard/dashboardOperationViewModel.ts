@@ -1,5 +1,6 @@
 /** 经营总览模块局部 demo 数据 */
 
+import { formatDashboardCompactMoney, formatDashboardCurrency } from './dashboardFormatters';
 import type { DashboardDetailTabId } from './DashboardDetailTabs';
 
 export type DashboardSegment =
@@ -79,9 +80,136 @@ export interface DashboardInsight {
   id: string;
   tag: string;
   line: string;
+  impact: string;
+  suggestion: string;
   actionLabel: string;
   actionKey: DashboardSegment;
 }
+
+export type DashboardHealthStatus = 'stable' | 'attention' | 'risk';
+
+export interface DashboardTrendDay {
+  dateLabel: string;
+  count: number;
+  highCount: number;
+}
+
+export interface DashboardRiskDistItem {
+  module: 'member' | 'course' | 'finance' | 'teacher' | 'store';
+  label: string;
+  count: number;
+  tone: 'member' | 'course' | 'finance' | 'teacher' | 'store';
+}
+
+export interface DashboardStoreHealthItem {
+  storeName: string;
+  status: 'stable' | 'attention' | 'risk';
+  issueCount: number;
+  highCount: number;
+  suggestion: string;
+}
+
+export interface DashboardCockpitSummary {
+  healthStatus: DashboardHealthStatus;
+  healthLabel: string;
+  headline: string;
+  totalPending: number;
+  highPriorityCount: number;
+  overdueCount: number;
+  last7DaysIssueTrend: DashboardTrendDay[];
+  riskDistribution: DashboardRiskDistItem[];
+  storeHealthItems: DashboardStoreHealthItem[];
+  defaultChainSteps: string[];
+}
+
+export interface DashboardStatusHero {
+  title: string;
+  line1: string;
+  line2: string;
+  totalPending: number;
+  highPriorityCount: number;
+  nearOverdueCount: number;
+}
+
+export interface DashboardJudgmentPanel {
+  priorityCount: number;
+  categories: { label: string; count: number }[];
+  trend: DashboardTrendDay[];
+  footnote: string;
+}
+
+export interface DashboardEvidenceNode {
+  key: string;
+  label: string;
+  value: string;
+  iconClass: string;
+  isAnomaly?: boolean;
+}
+
+export interface DashboardStoreMonitorRow {
+  id: string;
+  storeName: string;
+  status: string;
+  problem: string;
+  healthScore: number;
+  riskLevel: '正常' | '稳定' | '关注' | '风险';
+}
+
+export interface DashboardActionSuggestion {
+  id: string;
+  category: string;
+  owner: string;
+  title: string;
+  description: string;
+  buttonLabel: string;
+  tone: 'primary' | 'risk' | 'attention' | 'neutral';
+  entityId?: string;
+  openTab?: DashboardDetailTabId;
+}
+
+export interface DashboardStitchView {
+  statusHero: DashboardStatusHero;
+  judgment: DashboardJudgmentPanel;
+  evidenceNodes: DashboardEvidenceNode[];
+  evidenceInsight: string;
+  storeMonitor: DashboardStoreMonitorRow[];
+  actionSuggestions: DashboardActionSuggestion[];
+}
+
+export const deriveDashboardHealthStatus = (params: {
+  highPriorityCount: number;
+  overdueCount: number;
+  totalPending: number;
+}): DashboardHealthStatus => {
+  if (params.highPriorityCount >= 3 || params.overdueCount >= 2) return 'risk';
+  if (params.highPriorityCount >= 1 || params.totalPending >= 5) return 'attention';
+  return 'stable';
+};
+
+const HEALTH_LABELS: Record<DashboardHealthStatus, string> = {
+  stable: '稳定',
+  attention: '关注',
+  risk: '风险',
+};
+
+const MODULE_TO_DIST: Record<string, DashboardRiskDistItem['module']> = {
+  会员: 'member',
+  课程: 'course',
+  财务: 'finance',
+  老师: 'teacher',
+  门店: 'store',
+  产品合同: 'store',
+  活动: 'store',
+  合作: 'store',
+};
+
+const DIST_LABELS: Record<DashboardRiskDistItem['module'], string> = {
+  member: '会员',
+  course: '课程',
+  finance: '财务',
+  teacher: '老师',
+  store: '门店',
+};
 
 export interface DashboardTodoRecord {
   id: string;
@@ -264,6 +392,8 @@ export interface DashboardDetailRecord {
 }
 
 export interface DashboardOperationSnapshot {
+  cockpit: DashboardCockpitSummary;
+  stitch: DashboardStitchView;
   metrics: DashboardMetric[];
   insights: DashboardInsight[];
   todayTodo: DashboardTodoRecord[];
@@ -542,19 +672,51 @@ export const buildDashboardOperationSnapshot = (): DashboardOperationSnapshot =>
     financeRisk.filter(f => f.riskLevel === '高').length;
 
   const metrics: DashboardMetric[] = [
-    { id: 'dm1', label: '今日待处理', value: `${pendingCount} 项`, hint: '高优先级优先', tone: pendingCount > 5 ? 'amber' : 'default' },
-    { id: 'dm2', label: '门店健康', value: `${healthyStores} / ${STORES.length}`, hint: '健康门店占比（演示）' },
-    { id: 'dm3', label: '今日净收款', value: '¥ 6.8万', hint: '五馆合计（演示）' },
-    { id: 'dm4', label: '耗课确认收入', value: '¥ 4.2万', hint: '以签到耗课为准（演示）' },
-    { id: 'dm5', label: '预约 / 到课', value: '186 / 142', hint: '预约人次 / 到课人次' },
-    { id: 'dm6', label: '经营风险', value: `${riskCount} 项`, hint: '跨模块高优先级', tone: 'rose' },
+    { id: 'dm1', label: '今日实收', value: formatDashboardCurrency(62609), hint: '' },
+    { id: 'dm2', label: '本月确认收入', value: formatDashboardCurrency(186420), hint: '' },
+    { id: 'dm3', label: '预收负债', value: formatDashboardCurrency(1286000), hint: '' },
+    { id: 'dm4', label: '预约 / 到课', value: '186 / 142', hint: '', tone: 'rose' },
+    { id: 'dm5', label: '老师课时费待核', value: formatDashboardCurrency(38600), hint: '' },
+    { id: 'dm6', label: '经营风险项', value: `${riskCount}`, hint: '' },
   ];
 
   const insights: DashboardInsight[] = [
-    { id: 'di1', tag: '现金与负债', line: '实收看起来不错，但城西馆预收负债口径仍需关注', actionLabel: '查看', actionKey: 'financeRisk' },
-    { id: 'di2', tag: '会员风险', line: '部分会员进入续费 / 流失窗口，滨江与城西需跟进', actionLabel: '分析', actionKey: 'memberRisk' },
-    { id: 'di3', tag: '课程异常', line: '城西馆晚课低预约、西湖馆取消课需处理', actionLabel: '查看', actionKey: 'courseAnomaly' },
-    { id: 'di4', tag: '老师与成本', line: '西湖馆课时费待核、云谷馆满课率偏低影响利润', actionLabel: '分析', actionKey: 'teacherExec' },
+    {
+      id: 'di1',
+      tag: '现金与负债',
+      line: '城西负债口径与万象退款待核',
+      impact: '影响现金流与负债确认',
+      suggestion: '先核城西合同收款，再复核退款',
+      actionLabel: '查看财务',
+      actionKey: 'financeRisk',
+    },
+    {
+      id: 'di2',
+      tag: '会员续费',
+      line: '滨江、城西续费窗口与流失观察',
+      impact: '影响续费与资产消耗',
+      suggestion: '管家今日触达，总部盯高流失馆',
+      actionLabel: '查看会员',
+      actionKey: 'memberRisk',
+    },
+    {
+      id: 'di3',
+      tag: '课程与老师',
+      line: '城西低预约、西湖取消课待处理',
+      impact: '影响耗课与老师成本',
+      suggestion: '调排低预约班次，跟进课时费待核',
+      actionLabel: '查看课程',
+      actionKey: 'courseAnomaly',
+    },
+    {
+      id: 'di4',
+      tag: '跨模块链路',
+      line: '签到未耗课、退款审批有卡点',
+      impact: '影响确认收入与资产一致',
+      suggestion: '按链路补证据，人工复核（预览）',
+      actionLabel: '查看链路',
+      actionKey: 'crossModule',
+    },
   ];
 
   const actionQueue: DashboardActionItem[] = [
@@ -577,7 +739,225 @@ export const buildDashboardOperationSnapshot = (): DashboardOperationSnapshot =>
     { id: 'da17', segment: 'todayTodo', group: 'courseSchedule', entityType: 'todo', entityId: 'db-todo-10', title: '西湖馆取消课通知', statusLabel: '待处理', impactLine: '会员触达', ownerRole: '管家', evidenceChain: ['课程', '会员', '通知'] },
   ];
 
+  const totalPending = todayTodo.filter(t => t.status === '待处理').length;
+  const highPriorityCount = actionQueue.filter(a => a.group === 'highPriority').length;
+  const overdueCount = todayTodo.filter(
+    t => t.status === '待处理' && t.deadline.includes('今日'),
+  ).length;
+
+  const healthStatus = deriveDashboardHealthStatus({
+    highPriorityCount,
+    overdueCount,
+    totalPending,
+  });
+
+  const last7DaysIssueTrend: DashboardTrendDay[] = [
+    { dateLabel: '05-10', count: 4, highCount: 1 },
+    { dateLabel: '05-11', count: 5, highCount: 1 },
+    { dateLabel: '05-12', count: 6, highCount: 2 },
+    { dateLabel: '05-13', count: 5, highCount: 1 },
+    { dateLabel: '05-14', count: 7, highCount: 2 },
+    { dateLabel: '05-15', count: 6, highCount: 2 },
+    { dateLabel: '05-16', count: totalPending + 2, highCount: highPriorityCount },
+  ];
+
+  const distCounts: Record<DashboardRiskDistItem['module'], number> = {
+    member: 0,
+    course: 0,
+    finance: 0,
+    teacher: 0,
+    store: 0,
+  };
+  todayTodo.forEach(t => {
+    const key = MODULE_TO_DIST[t.module] ?? 'store';
+    distCounts[key] += 1;
+  });
+
+  const riskDistribution: DashboardRiskDistItem[] = (
+    Object.keys(distCounts) as DashboardRiskDistItem['module'][]
+  ).map(module => ({
+    module,
+    label: DIST_LABELS[module],
+    count: distCounts[module],
+    tone: module,
+  }));
+
+  const storeHealthItems: DashboardStoreHealthItem[] = [
+    {
+      storeName: '万象馆',
+      status: 'attention',
+      issueCount: 2,
+      highCount: 1,
+      suggestion: '退款复核待处理',
+    },
+    {
+      storeName: '西湖馆',
+      status: 'risk',
+      issueCount: 5,
+      highCount: 2,
+      suggestion: '晚课预约偏低',
+    },
+    {
+      storeName: '滨江馆',
+      status: 'attention',
+      issueCount: 3,
+      highCount: 0,
+      suggestion: '新客回访不足',
+    },
+    {
+      storeName: '城西馆',
+      status: 'stable',
+      issueCount: 0,
+      highCount: 0,
+      suggestion: '运行平稳',
+    },
+    {
+      storeName: '云谷馆',
+      status: 'stable',
+      issueCount: 2,
+      highCount: 0,
+      suggestion: '非课确认待办',
+    },
+  ];
+
+  const stitchTrend: DashboardTrendDay[] = [
+    { dateLabel: '周一', count: 6, highCount: 1 },
+    { dateLabel: '周二', count: 7, highCount: 1 },
+    { dateLabel: '周三', count: 8, highCount: 2 },
+    { dateLabel: '周四', count: 6, highCount: 1 },
+    { dateLabel: '周五', count: 7, highCount: 1 },
+    { dateLabel: '周六', count: 9, highCount: 2 },
+    { dateLabel: '今日', count: 12, highCount: 3 },
+  ];
+
+  const stitch: DashboardStitchView = {
+    statusHero: {
+      title: '今日经营状态',
+      line1: '今日共 12 项待处理，其中 3 项高优先级，2 项临近超时。',
+      line2: '需优先关注课程预约偏低、会员续费窗口、退款与耗课证据链。',
+      totalPending: 12,
+      highPriorityCount: 3,
+      nearOverdueCount: 2,
+    },
+    judgment: {
+      priorityCount: 3,
+      categories: [
+        { label: '会员相关', count: 5 },
+        { label: '课程相关', count: 3 },
+        { label: '财务相关', count: 4 },
+      ],
+      trend: stitchTrend,
+      footnote:
+        '今日待处理事项升至 12 项，优先核对课程预约、会员续费与财务证据链。',
+    },
+    evidenceNodes: [
+      { key: 'member', label: '会员', value: '1,204', iconClass: 'fa-solid fa-user' },
+      { key: 'order', label: '订单', value: '450', iconClass: 'fa-solid fa-receipt' },
+      { key: 'contract', label: '合同', value: formatDashboardCompactMoney(2100000), iconClass: 'fa-solid fa-file-lines' },
+      { key: 'booking', label: '预约', value: '68%', iconClass: 'fa-solid fa-calendar-check', isAnomaly: true },
+      { key: 'checkin', label: '签到', value: '92%', iconClass: 'fa-solid fa-clipboard-check' },
+      { key: 'consume', label: '耗课', value: '850课时', iconClass: 'fa-solid fa-hourglass-half' },
+      { key: 'finance', label: '财务', value: '¥145K', iconClass: 'fa-solid fa-coins' },
+    ],
+    evidenceInsight:
+      '发现异常：西湖馆低预约课程正在影响耗课效率与老师成本，建议核对排课、会员偏好与课时费结算。',
+    storeMonitor: [
+      {
+        id: 'db-store-1',
+        storeName: '万象馆',
+        status: '正常',
+        problem: '退款复核积压，合同需归档',
+        healthScore: 94,
+        riskLevel: '正常',
+      },
+      {
+        id: 'db-store-4',
+        storeName: '西湖馆',
+        status: '风险',
+        problem: '晚课预约偏低，耗课率预警',
+        healthScore: 72,
+        riskLevel: '风险',
+      },
+      {
+        id: 'db-store-3',
+        storeName: '滨江馆',
+        status: '关注',
+        problem: '新客跟进不足，转化率低',
+        healthScore: 58,
+        riskLevel: '关注',
+      },
+      {
+        id: 'db-store-2',
+        storeName: '城西馆',
+        status: '稳定',
+        problem: '无异常',
+        healthScore: 88,
+        riskLevel: '稳定',
+      },
+      {
+        id: 'db-store-5',
+        storeName: '云谷馆',
+        status: '稳定',
+        problem: '个别排课待确认',
+        healthScore: 85,
+        riskLevel: '稳定',
+      },
+    ],
+    actionSuggestions: [
+      {
+        id: 'sug-1',
+        category: '课程运营',
+        owner: '店长',
+        title: '西湖馆晚课排课调整',
+        description:
+          '系统检测到连续 3 天 19:00 档预约率低于 30%，建议减少该时段课程或更换热门流派，以减少固定课时费空耗。',
+        buttonLabel: '查看排课建议',
+        tone: 'primary',
+        entityId: 'db-course-4',
+        openTab: 'judgment',
+      },
+      {
+        id: 'sug-2',
+        category: '会员经营',
+        owner: '销售主管',
+        title: '滨江馆新客回访升级',
+        description:
+          '本周体验课新客转化率跌破底线，需督导销售团队在 24 小时内完成全部回访，目前有 12 条线索超时待跟进。',
+        buttonLabel: '分配跟进',
+        tone: 'attention',
+        entityId: 'db-mem-2',
+      },
+      {
+        id: 'sug-3',
+        category: '财务管理',
+        owner: '财务',
+        title: '万象馆退款单复核',
+        description:
+          '2 笔退款申请已超过内部流转时效，需财务确认耗课扣费明细并释放相应预收负债，以保证账实相符。',
+        buttonLabel: '进入审批',
+        tone: 'neutral',
+        entityId: 'db-fin-1',
+        openTab: 'finance',
+      },
+    ],
+  };
+
+  const cockpit: DashboardCockpitSummary = {
+    healthStatus,
+    healthLabel: HEALTH_LABELS[healthStatus],
+    headline: `今日 ${totalPending} 项待处理，其中 ${highPriorityCount} 项高优先级，优先处理课程、财务与会员续费。`,
+    totalPending,
+    highPriorityCount,
+    overdueCount,
+    last7DaysIssueTrend,
+    riskDistribution,
+    storeHealthItems,
+    defaultChainSteps: ['会员', '课程', '签到', '耗课', '财务'],
+  };
+
   return {
+    cockpit,
+    stitch,
     metrics,
     insights,
     todayTodo,
