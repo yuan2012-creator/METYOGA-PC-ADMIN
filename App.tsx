@@ -14,53 +14,46 @@ import Investor from './components/Investor';
 import Partner from './components/Partner';
 import Settings from './components/Settings';
 import Audit from './components/Audit';
-import MockSidebarIdentityCard from './components/MockSidebarIdentityCard';
-import { SidebarBrandMark, SidebarNavIcon, type SidebarNavIconName } from './components/ui/SidebarNavIcon';
+import { DashboardV2Page } from './components/v2/dashboard';
+import {
+  ModulePlaceholder,
+  SIDEBAR_V2_DEFAULT_NAV,
+  SidebarV2,
+  findSidebarV2NavItem,
+  type SidebarV2NavId,
+} from './components/v2/layout';
 import { MockAdminScopeProvider } from './context/MockAdminScopeContext';
 import { MOCK_ADMIN_UI_DEFAULT } from './constants/mockAdminScope';
 
-type NavItem = {
-  id: string;
-  label: string;
-  iconName: SidebarNavIconName;
-};
+const SCROLLABLE_NAV_IDS = new Set(['dashboard', 'dashboard-v2']);
 
 const App: React.FC = () => {
-  const [activeNav, setActiveNav] = useState('dashboard');
+  const [activeNav, setActiveNav] = useState<string>(SIDEBAR_V2_DEFAULT_NAV);
 
-  const navItems: NavItem[] = [
-    { id: 'dashboard', label: '经营总览', iconName: 'dashboard' },
-    { id: 'today', label: '今日运营', iconName: 'today' },
-    { id: 'member', label: '会员经营', iconName: 'members' },
-    { id: 'course', label: '课程运营', iconName: 'courses' },
-    { id: 'staff', label: '师资与团队', iconName: 'staff' },
-    { id: 'mall', label: '产品与合同', iconName: 'products' },
-    { id: 'finance', label: '财务管理', iconName: 'finance' },
-    { id: 'shop', label: '门店管理', iconName: 'stores' },
-    { id: 'marketing', label: '活动运营', iconName: 'marketing' },
-    { id: 'settings', label: '规则配置', iconName: 'rules' },
-    { id: 'data', label: '数据中心', iconName: 'data' },
-    { id: 'investor', label: '投资测算', iconName: 'investment' },
-    { id: 'partner', label: '合作与授权', iconName: 'partner' },
-    { id: 'permission-audit', label: '权限审计', iconName: 'audit' },
-  ];
+  const activeNavItem = findSidebarV2NavItem(activeNav);
+  const isOldDashboard = activeNav === 'dashboard';
+  const shouldShowGlobalHeader = isOldDashboard;
 
-  const activeNavItem = navItems.find(n => n.id === activeNav);
-  const isDashboard = activeNav === 'dashboard';
-  /** 仅经营总览使用 App 级顶栏（搜索 / 通知）；今日运营使用页内顶栏并与品牌区对齐。 */
-  const shouldShowGlobalHeader = isDashboard;
+  const contentShellClassName = [
+    'met-app-shell-v2__content',
+    SCROLLABLE_NAV_IDS.has(activeNav)
+      ? 'met-app-shell-v2__content--scroll met-app-shell-v2__custom-scroll'
+      : 'met-app-shell-v2__content--fill',
+    isOldDashboard ? 'p-8' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
 
-  const mainShellClassName =
-    'relative flex min-h-0 min-w-0 flex-1 flex-col bg-[var(--met-bg-page)]';
-
-  const contentShellClassName = isDashboard
-    ? 'custom-scroll min-h-0 flex-1 overflow-y-auto p-8'
-    : 'min-h-0 min-w-0 flex-1 overflow-hidden';
+  const handleNavigate = (id: SidebarV2NavId) => {
+    setActiveNav(id);
+  };
 
   const renderContent = () => {
     switch (activeNav) {
       case 'dashboard':
         return <Dashboard />;
+      case 'dashboard-v2':
+        return <DashboardV2Page />;
       case 'today':
         return (
           <div className="met-today-page h-full min-h-0 min-w-0">
@@ -93,72 +86,28 @@ const App: React.FC = () => {
         return <Audit />;
       default:
         return (
-          <div className="flex h-full flex-col items-center justify-center met-muted animate-fadeIn">
-            <div className="met-card mb-4 flex h-20 w-20 items-center justify-center rounded-full">
-              {activeNavItem ? (
-                <SidebarNavIcon name={activeNavItem.iconName} className="h-8 w-8 text-[#292524]" />
-              ) : null}
-            </div>
-            <h3 className="text-xl font-bold text-[#202020]">{activeNavItem?.label}</h3>
-            <p className="mt-2 text-sm">该模块已规划，即将上线</p>
-            <button
-              type="button"
-              className="met-secondary-button mt-6"
-              onClick={() => setActiveNav('dashboard')}
-            >
-              返回经营总览
-            </button>
-          </div>
+          <ModulePlaceholder
+            title={activeNavItem?.label ?? '模块'}
+            onBack={() => setActiveNav(SIDEBAR_V2_DEFAULT_NAV)}
+          />
         );
     }
   };
 
   return (
     <MockAdminScopeProvider initialConfig={MOCK_ADMIN_UI_DEFAULT}>
-      <div className="met-app-shell flex h-screen overflow-hidden font-sans">
-        <aside className="met-sidebar z-20 flex w-[236px] flex-shrink-0 flex-col border-r border-[var(--met-border-shell)]">
-          <div className="met-sidebar-brand">
-            <span className="met-sidebar-brand-icon" aria-hidden>
-              <SidebarBrandMark />
-            </span>
-            <span className="met-sidebar-brand-wordmark met-brand-wordmark">MET YOGA</span>
-          </div>
+      <div className="met-app-shell-v2">
+        <SidebarV2 activeNav={activeNav} onNavigate={handleNavigate} />
 
-          <nav className="met-sidebar-nav">
-            {navItems.map(item => {
-              const isActive = activeNav === item.id;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => setActiveNav(item.id)}
-                  className={`met-sidebar-nav-item${isActive ? ' met-sidebar-nav-item--active' : ''}`}
-                >
-                  <span className="met-sidebar-nav-icon" aria-hidden>
-                    <SidebarNavIcon name={item.iconName} />
-                  </span>
-                  <span className="min-w-0 truncate">{item.label}</span>
-                </button>
-              );
-            })}
-          </nav>
-
-          <div className="met-sidebar-footer">
-            <MockSidebarIdentityCard />
-          </div>
-        </aside>
-
-        <main className={mainShellClassName}>
+        <main className="met-app-shell-v2__main">
           {shouldShowGlobalHeader ? (
             <header className="met-appshell-header">
               <div className="flex min-w-0 flex-1 items-center gap-4">
-                <h2 className="met-appshell-header__title">{activeNavItem?.label}</h2>
-                {isDashboard ? (
-                  <span className="met-status-tag">
-                    <span className="met-status-tag__dot" aria-hidden />
-                    营业中
-                  </span>
-                ) : null}
+                <h2 className="met-appshell-header__title">经营总览</h2>
+                <span className="met-status-tag">
+                  <span className="met-status-tag__dot" aria-hidden />
+                  营业中
+                </span>
               </div>
               <div className="flex items-center gap-5">
                 <div className="relative">
@@ -182,12 +131,6 @@ const App: React.FC = () => {
 
           <div className={contentShellClassName}>{renderContent()}</div>
         </main>
-
-        <style>{`
-        .custom-scroll::-webkit-scrollbar { width: 5px; }
-        .custom-scroll::-webkit-scrollbar-thumb { background: #D1D1D6; border-radius: 10px; }
-        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-      `}</style>
       </div>
     </MockAdminScopeProvider>
   );
