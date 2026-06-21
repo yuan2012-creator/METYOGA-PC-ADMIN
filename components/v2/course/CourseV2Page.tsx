@@ -113,35 +113,42 @@ function SupplyFocusCard({
           {item.priority}
         </span>
         <span className="met-course-v2-supply-focus__title">{item.title}</span>
-      </div>
-      <div className="met-course-v2-supply-focus__metrics">
-        {item.currentBooking ? (
-          <span>当前预约 {item.currentBooking}</span>
-        ) : null}
-        {item.consumptionText ? (
-          <span className="met-course-v2-supply-focus__consumption">预计耗课 {item.consumptionText}</span>
-        ) : null}
-        <span className="met-course-v2-supply-focus__opportunity">{item.opportunityText}</span>
-      </div>
-      <p className="met-course-v2-supply-focus__judgement">{item.judgement}</p>
-      <div className="met-course-v2-supply-focus__foot">
-        <span className={['met-course-v2-source-tag', SOURCE_TAG_CLASS[item.suggestionSource]].join(' ')}>
+        <span className={['met-course-v2-source-tag met-course-v2-source-tag--mini', SOURCE_TAG_CLASS[item.suggestionSource]].join(' ')}>
           {item.suggestionSourceLabel}
         </span>
-        <span
-          role="button"
-          tabIndex={0}
-          className="met-course-v2-btn met-course-v2-btn--sm"
-          onClick={e => onAction(item, e)}
-          onKeyDown={e => {
-            if (e.key === 'Enter') onAction(item);
-          }}
-        >
-          {item.actionLabel}
-        </span>
       </div>
+      <p className="met-course-v2-supply-focus__numbers">{item.coreNumbers}</p>
+      <p className="met-course-v2-supply-focus__judgement">{item.judgement}</p>
+      <span
+        role="button"
+        tabIndex={0}
+        className="met-course-v2-btn met-course-v2-btn--sm met-course-v2-supply-focus__action"
+        onClick={e => onAction(item, e)}
+        onKeyDown={e => {
+          if (e.key === 'Enter') onAction(item);
+        }}
+      >
+        {item.actionLabel}
+      </span>
     </button>
   );
+}
+
+function renderForecastConclusion(text: string, highlight: string) {
+  const parts = text.split(highlight);
+  if (parts.length === 1) return text;
+  return parts.flatMap((part, index) => {
+    const nodes: React.ReactNode[] = [];
+    if (part) nodes.push(part);
+    if (index < parts.length - 1) {
+      nodes.push(
+        <strong key={`hl-${index}`} className="met-course-v2-forecast-conclusion__highlight">
+          {highlight}
+        </strong>,
+      );
+    }
+    return nodes;
+  });
 }
 
 const CourseV2Page: React.FC = () => {
@@ -223,11 +230,13 @@ const CourseV2Page: React.FC = () => {
     meta,
     filters,
     viewTabs,
+    warroomSection,
     supplyFocus,
     weeklyForecast,
     scheduleDiagnosis,
     courseHeatmap,
     weekSchedule,
+    adjustmentBasis,
     courseIssueQueue,
     teacherSupply,
     resourceHints,
@@ -304,80 +313,92 @@ const CourseV2Page: React.FC = () => {
           </div>
         </header>
 
-        <section className="met-course-v2__row-warroom">
-          <article className="met-course-v2-card met-course-v2-card--focus">
-            <h2 className="met-course-v2-card__title">{supplyFocus.title}</h2>
-            <p className="met-course-v2-card__subtitle met-course-v2-card__subtitle--compact">
-              {supplyFocus.subtitle}
-            </p>
-            <div className="met-course-v2-supply-focus-list">
-              {supplyFocus.items.map(item => (
-                <SupplyFocusCard
-                  key={item.id}
-                  item={item}
-                  onOpen={openDrawer}
-                  onAction={handleSupplyFocusAction}
-                />
-              ))}
+        <section className="met-course-v2-zone met-course-v2-zone--judgment">
+          <header className="met-course-v2-zone__head">
+            <h2 className="met-course-v2-zone__title">{warroomSection.title}</h2>
+            <p className="met-course-v2-zone__subtitle">{warroomSection.subtitle}</p>
+          </header>
+          <div className="met-course-v2-zone__body met-course-v2__row-warroom">
+            <div className="met-course-v2-panel met-course-v2-panel--focus">
+              <h3 className="met-course-v2-panel__title">{supplyFocus.title}</h3>
+              <div className="met-course-v2-supply-focus-list">
+                {supplyFocus.items.map(item => (
+                  <SupplyFocusCard
+                    key={item.id}
+                    item={item}
+                    onOpen={openDrawer}
+                    onAction={handleSupplyFocusAction}
+                  />
+                ))}
+              </div>
             </div>
-          </article>
 
-          <aside className="met-course-v2__warroom-aside">
-            <article className="met-course-v2-card met-course-v2-card--forecast">
-              <h2 className="met-course-v2-card__title">{weeklyForecast.title}</h2>
-              <p className="met-course-v2-card__subtitle">{weeklyForecast.subtitle}</p>
-              <div className="met-course-v2-forecast-grid">
-                {weeklyForecast.metrics.map(metric => (
-                  <div
-                    key={metric.label}
-                    className={[
-                      'met-course-v2-forecast-item',
-                      metric.isOpportunity ? 'is-opportunity' : '',
-                    ]
-                      .filter(Boolean)
-                      .join(' ')}
-                  >
-                    <span className="met-course-v2-forecast-item__value">{metric.value}</span>
-                    <span className="met-course-v2-forecast-item__label">{metric.label}</span>
-                  </div>
-                ))}
-              </div>
-              <p className="met-course-v2-forecast-conclusion">{weeklyForecast.conclusion}</p>
-              <p className="met-course-v2-forecast-note">{weeklyForecast.forecastNote}</p>
-            </article>
-
-            <article className="met-course-v2-card met-course-v2-card--diagnosis met-course-v2-card--diagnosis-compact">
-              <h2 className="met-course-v2-card__title">{scheduleDiagnosis.title}</h2>
-              <div className="met-course-v2-diagnosis-list met-course-v2-diagnosis-list--compact">
-                {scheduleDiagnosis.items.map(item => (
-                  <div key={item.id} className="met-course-v2-diagnosis-item met-course-v2-diagnosis-item--compact">
-                    <p className="met-course-v2-diagnosis-item__title">
-                      <span className={['met-course-v2-priority', PRIORITY_CLASS[item.priority]].join(' ')}>
-                        {item.priority}
-                      </span>
-                      {item.title}
-                    </p>
-                    <p className="met-course-v2-diagnosis-item__fact">{item.fact}</p>
-                    <div className="met-course-v2-diagnosis-item__foot">
-                      <span className={['met-course-v2-source-tag', SOURCE_TAG_CLASS[item.suggestionSource]].join(' ')}>
-                        {item.suggestionSourceLabel}
-                      </span>
-                      <button type="button" className="met-course-v2-btn met-course-v2-btn--sm" onClick={() => handleDiagnosisAction(item)}>
-                        {item.actionLabel}
-                      </button>
+            <aside className="met-course-v2-panel-group">
+              <div className="met-course-v2-panel met-course-v2-panel--forecast">
+                <h3 className="met-course-v2-panel__title">{weeklyForecast.title}</h3>
+                <div className="met-course-v2-forecast-conclusion met-course-v2-forecast-conclusion--hero">
+                  {renderForecastConclusion(weeklyForecast.conclusion, weeklyForecast.conclusionHighlight)}
+                </div>
+                <div className="met-course-v2-forecast-grid">
+                  {weeklyForecast.metrics.map(metric => (
+                    <div
+                      key={metric.label}
+                      className={[
+                        'met-course-v2-forecast-item',
+                        metric.isOpportunity ? 'is-opportunity' : '',
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
+                    >
+                      <span className="met-course-v2-forecast-item__value">{metric.value}</span>
+                      <span className="met-course-v2-forecast-item__label">{metric.label}</span>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+                <p className="met-course-v2-forecast-note">{weeklyForecast.forecastNote}</p>
               </div>
-            </article>
-          </aside>
+
+              <div className="met-course-v2-panel met-course-v2-panel--diagnosis">
+                <h3 className="met-course-v2-panel__title">{scheduleDiagnosis.title}</h3>
+                <div className="met-course-v2-diagnosis-list met-course-v2-diagnosis-list--compact">
+                  {scheduleDiagnosis.items.map(item => (
+                    <div key={item.id} className="met-course-v2-diagnosis-item met-course-v2-diagnosis-item--compact">
+                      <p className="met-course-v2-diagnosis-item__title">
+                        <span className={['met-course-v2-priority', PRIORITY_CLASS[item.priority]].join(' ')}>
+                          {item.priority}
+                        </span>
+                        {item.title}
+                      </p>
+                      <p className="met-course-v2-diagnosis-item__fact">{item.fact}</p>
+                      <div className="met-course-v2-diagnosis-item__foot">
+                        <span className={['met-course-v2-source-tag met-course-v2-source-tag--mini', SOURCE_TAG_CLASS[item.suggestionSource]].join(' ')}>
+                          {item.suggestionSourceLabel}
+                        </span>
+                        <button type="button" className="met-course-v2-btn met-course-v2-btn--sm" onClick={() => handleDiagnosisAction(item)}>
+                          {item.actionLabel}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </aside>
+          </div>
         </section>
 
-        <article className="met-course-v2-card met-course-v2-card--heatmap">
-          <h2 className="met-course-v2-card__title">{courseHeatmap.title}</h2>
-          <p className="met-course-v2-card__subtitle met-course-v2-card__subtitle--compact">
-            {courseHeatmap.subtitle}
-          </p>
+        <article className="met-course-v2-zone met-course-v2-zone--heatmap">
+          <header className="met-course-v2-zone__head">
+            <h2 className="met-course-v2-zone__title">{courseHeatmap.title}</h2>
+            <p className="met-course-v2-zone__subtitle">{courseHeatmap.subtitle}</p>
+          </header>
+          <div className="met-course-v2-heatmap-conclusions">
+            {courseHeatmap.insights.map(insight => (
+              <div key={insight.id} className="met-course-v2-heatmap-conclusion">
+                <p className="met-course-v2-heatmap-conclusion__title">{insight.title}</p>
+                <p className="met-course-v2-heatmap-conclusion__summary">{insight.summary}</p>
+              </div>
+            ))}
+          </div>
           <div className="met-course-v2-heatmap-legend">
             {courseHeatmap.legend.map(item => (
               <span key={item.label} className="met-course-v2-heatmap-legend__item">
@@ -386,7 +407,7 @@ const CourseV2Page: React.FC = () => {
               </span>
             ))}
           </div>
-          <div className="met-course-v2-heatmap-layout">
+          <div className="met-course-v2-heatmap-body">
             <div className="met-course-v2-heatmap-grid-wrap">
               <p className="met-course-v2-heatmap-section-label">时段耗课热力图</p>
               <div className="met-course-v2-heatmap-grid">
@@ -420,7 +441,7 @@ const CourseV2Page: React.FC = () => {
               </div>
             </div>
 
-            <div className="met-course-v2-heatmap-side">
+            <div className="met-course-v2-heatmap-types">
               <p className="met-course-v2-heatmap-section-label">课程结构判断</p>
               <div className="met-course-v2-insight-cards">
                 {courseHeatmap.typeInsightCards.map(card => (
@@ -429,11 +450,9 @@ const CourseV2Page: React.FC = () => {
                       <span className="met-course-v2-insight-card__type">{card.courseType}</span>
                       <span className="met-course-v2-insight-card__tag">{card.judgementTag}</span>
                     </div>
-                    <div className="met-course-v2-insight-card__stats">
-                      <span>{card.estimatedConsumption}</span>
-                      <span>满课率 {card.fillRate}</span>
-                      <span>{card.opportunity}</span>
-                    </div>
+                    <p className="met-course-v2-insight-card__stats">
+                      {card.estimatedConsumption} · 满课率 {card.fillRate} · {card.opportunity}
+                    </p>
                     <div className="met-course-v2-insight-card__indicators">
                       {card.indicators.map(ind => (
                         <div key={ind.label} className="met-course-v2-indicator">
@@ -456,26 +475,15 @@ const CourseV2Page: React.FC = () => {
                   </div>
                 ))}
               </div>
-
-              <p className="met-course-v2-heatmap-section-label">关键判断摘要</p>
-              <div className="met-course-v2-insight-list">
-                {courseHeatmap.insights.map(insight => (
-                  <div key={insight.id} className="met-course-v2-insight">
-                    <p className="met-course-v2-insight__title">{insight.title}</p>
-                    <p className="met-course-v2-insight__body">{insight.body}</p>
-                    <p className="met-course-v2-insight__suggestion">{insight.suggestion}</p>
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
         </article>
 
-        <article className="met-course-v2-card met-course-v2-card--schedule met-course-v2-card--schedule-detail">
-          <h2 className="met-course-v2-card__title">{weekSchedule.title}</h2>
-          <p className="met-course-v2-card__subtitle met-course-v2-card__subtitle--compact">
-            {weekSchedule.subtitle}
-          </p>
+        <article className="met-course-v2-zone met-course-v2-zone--evidence">
+          <header className="met-course-v2-zone__head met-course-v2-zone__head--compact">
+            <h2 className="met-course-v2-zone__title met-course-v2-zone__title--secondary">{weekSchedule.title}</h2>
+            <p className="met-course-v2-zone__subtitle">{weekSchedule.subtitle}</p>
+          </header>
           <div className="met-course-v2-lanes">
             {weekSchedule.days.map(day => (
               <div key={day.id} className={['met-course-v2-lane', day.id === 'day-fri' ? 'is-today' : ''].filter(Boolean).join(' ')}>
@@ -496,109 +504,109 @@ const CourseV2Page: React.FC = () => {
           </div>
         </article>
 
-        <article className="met-course-v2-card met-course-v2-card--issues">
-          <h2 className="met-course-v2-card__title">{courseIssueQueue.title}</h2>
-          <p className="met-course-v2-card__subtitle met-course-v2-card__subtitle--compact">
-            {courseIssueQueue.subtitle}
-          </p>
-          <div className="met-course-v2-issue-list">
-            {courseIssueQueue.items.map(item => (
-              <div key={item.id} className="met-course-v2-issue-row">
-                <span className={['met-course-v2-priority', PRIORITY_CLASS[item.priority]].join(' ')}>{item.priority}</span>
-                <div>
-                  <p className="met-course-v2-issue-row__title">{item.title}</p>
-                  <p className="met-course-v2-issue-row__fact">事实：{item.fact}</p>
-                  <p className="met-course-v2-issue-row__impact">影响对象：{item.impact}</p>
-                </div>
-                <div className="met-course-v2-issue-row__aside">
-                  <span className={['met-course-v2-source-tag', SOURCE_TAG_CLASS[item.suggestionSource]].join(' ')}>
-                    {item.suggestionSourceLabel}
-                  </span>
-                  <button type="button" className="met-course-v2-btn" onClick={() => handleIssueAction(item)}>
-                    {item.actionLabel}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </article>
+        <section className="met-course-v2-zone met-course-v2-zone--basis">
+          <header className="met-course-v2-zone__head">
+            <h2 className="met-course-v2-zone__title">{adjustmentBasis.title}</h2>
+            <p className="met-course-v2-zone__subtitle">{adjustmentBasis.subtitle}</p>
+          </header>
 
-        <section className="met-course-v2__row-resources">
-          <article className="met-course-v2-card met-course-v2-card--teachers">
-            <h2 className="met-course-v2-card__title">{teacherSupply.title}</h2>
-            <p className="met-course-v2-card__subtitle met-course-v2-card__subtitle--compact">{teacherSupply.subtitle}</p>
-            <div className="met-course-v2-teacher-grid">
-              {teacherSupply.teachers.map(teacher => (
-                <div key={teacher.id} className="met-course-v2-teacher-card">
-                  <h3 className="met-course-v2-teacher-card__name">{teacher.name}</h3>
-                  <p className="met-course-v2-teacher-card__stats">
-                    本周排课：{teacher.weeklySessions}
-                    <br />
-                    预计耗课：{teacher.estimatedConsumption} · 理论满班 {teacher.theoreticalConsumption}
-                    <br />
-                    晚高峰：{teacher.peakSessions} · {teacher.statusLabel}
-                  </p>
-                  <div className="met-course-v2-teacher-card__load">
-                    <div
-                      className={['met-course-v2-teacher-card__load-fill', teacher.loadPercent >= 80 ? 'is-high' : ''].filter(Boolean).join(' ')}
-                      style={{ width: `${teacher.loadPercent}%` }}
-                    />
+          <div className="met-course-v2-zone__stack">
+            <article className="met-course-v2-subcard met-course-v2-subcard--issues">
+              <h3 className="met-course-v2-subcard__title">{courseIssueQueue.title}</h3>
+              <div className="met-course-v2-issue-list">
+                {courseIssueQueue.items.map(item => (
+                  <div key={item.id} className="met-course-v2-issue-row">
+                    <span className={['met-course-v2-priority', PRIORITY_CLASS[item.priority]].join(' ')}>{item.priority}</span>
+                    <div className="met-course-v2-issue-row__main">
+                      <p className="met-course-v2-issue-row__title">{item.title}</p>
+                      <p className="met-course-v2-issue-row__fact">{item.fact}</p>
+                      <p className="met-course-v2-issue-row__action">{item.suggestionAction}</p>
+                    </div>
+                    <div className="met-course-v2-issue-row__aside">
+                      <span className={['met-course-v2-source-tag met-course-v2-source-tag--mini', SOURCE_TAG_CLASS[item.suggestionSource]].join(' ')}>
+                        {item.suggestionSourceLabel}
+                      </span>
+                      <button type="button" className="met-course-v2-btn met-course-v2-btn--sm" onClick={() => handleIssueAction(item)}>
+                        {item.actionLabel}
+                      </button>
+                    </div>
                   </div>
-                  <p className="met-course-v2-teacher-card__note">{teacher.availabilityNote}</p>
-                  <div className="met-course-v2-teacher-card__foot">
-                    <span className="met-course-v2-tag">{teacher.statusLabel}</span>
-                    <button
-                      type="button"
-                      className="met-course-v2-btn met-course-v2-btn--sm"
-                      onClick={() =>
-                        showToast(
-                          teacher.actionLabel === '调整'
-                            ? '进入老师供给调整（待建设）'
-                            : `${teacher.actionLabel}：${teacher.name}`,
-                        )
-                      }
+                ))}
+              </div>
+            </article>
+
+            <div className="met-course-v2__row-resources">
+              <article className="met-course-v2-subcard met-course-v2-subcard--teachers">
+                <h3 className="met-course-v2-subcard__title">{teacherSupply.title}</h3>
+                <div className="met-course-v2-teacher-grid">
+                  {teacherSupply.teachers.map(teacher => (
+                    <div key={teacher.id} className="met-course-v2-teacher-card">
+                      <h4 className="met-course-v2-teacher-card__name">{teacher.name}</h4>
+                      <p className="met-course-v2-teacher-card__stats">
+                        {teacher.weeklySessions} · 预计 {teacher.estimatedConsumption} / 满班 {teacher.theoreticalConsumption}
+                        <br />
+                        晚高峰 {teacher.peakSessions} · {teacher.statusLabel}
+                      </p>
+                      <div className="met-course-v2-teacher-card__load">
+                        <div
+                          className={['met-course-v2-teacher-card__load-fill', teacher.loadPercent >= 80 ? 'is-high' : ''].filter(Boolean).join(' ')}
+                          style={{ width: `${teacher.loadPercent}%` }}
+                        />
+                      </div>
+                      <p className="met-course-v2-teacher-card__note">{teacher.availabilityNote}</p>
+                      <div className="met-course-v2-teacher-card__foot">
+                        <button
+                          type="button"
+                          className="met-course-v2-btn met-course-v2-btn--sm"
+                          onClick={() =>
+                            showToast(
+                              teacher.actionLabel === '调整'
+                                ? '进入老师供给调整（待建设）'
+                                : `${teacher.actionLabel}：${teacher.name}`,
+                            )
+                          }
+                        >
+                          {teacher.actionLabel}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </article>
+
+              <aside className="met-course-v2-subcard met-course-v2-subcard--resources">
+                <h3 className="met-course-v2-subcard__title">{resourceHints.title}</h3>
+                <ul className="met-course-v2-resource-list">
+                  {resourceHints.items.map(item => (
+                    <li
+                      key={item.id}
+                      className={['met-course-v2-resource-item', getResourceHintToneClass(item.tone)].join(' ')}
                     >
-                      {teacher.actionLabel}
-                    </button>
-                  </div>
-                </div>
-              ))}
+                      <span className="met-course-v2-resource-item__title">{item.title}</span>
+                      <span className="met-course-v2-resource-item__desc">{item.description}</span>
+                    </li>
+                  ))}
+                </ul>
+              </aside>
             </div>
-          </article>
 
-          <aside className="met-course-v2-card met-course-v2-card--resources">
-            <h2 className="met-course-v2-card__title">{resourceHints.title}</h2>
-            <ul className="met-course-v2-resource-list">
-              {resourceHints.items.map(item => (
-                <li
-                  key={item.id}
-                  className={['met-course-v2-resource-item', getResourceHintToneClass(item.tone)].join(' ')}
-                >
-                  <span className="met-course-v2-resource-item__title">{item.title}</span>
-                  <span className="met-course-v2-resource-item__desc">{item.description}</span>
-                </li>
-              ))}
-            </ul>
-          </aside>
-        </section>
-
-        <article className="met-course-v2-card met-course-v2-card--performance">
-          <h2 className="met-course-v2-card__title">{coursePerformance.title}</h2>
-          <p className="met-course-v2-card__subtitle met-course-v2-card__subtitle--compact">{coursePerformance.subtitle}</p>
-          <div className="met-course-v2-perf-grid">
-            {coursePerformance.items.map(item => (
-              <div key={item.id} className="met-course-v2-perf-card">
-                <h3 className="met-course-v2-perf-card__type">{item.courseType}</h3>
-                <div className="met-course-v2-perf-card__rate">{item.estimatedConsumption}</div>
-                <p className="met-course-v2-perf-card__meta">
-                  {item.weeklySessions} · 满课率 {item.fillRate}
-                </p>
-                <p className="met-course-v2-perf-card__highlight">可补员空间 {item.fillableSpace} · {item.highlight}</p>
-                <p className="met-course-v2-perf-card__judgment">{item.judgment}</p>
+            <article className="met-course-v2-subcard met-course-v2-subcard--performance">
+              <h3 className="met-course-v2-subcard__title">{coursePerformance.title}</h3>
+              <div className="met-course-v2-perf-grid">
+                {coursePerformance.items.map(item => (
+                  <div key={item.id} className="met-course-v2-perf-card">
+                    <h4 className="met-course-v2-perf-card__type">{item.courseType}</h4>
+                    <div className="met-course-v2-perf-card__rate">{item.estimatedConsumption}</div>
+                    <p className="met-course-v2-perf-card__meta">
+                      {item.weeklySessions} · 满课率 {item.fillRate} · 可补 {item.fillableSpace}
+                    </p>
+                    <p className="met-course-v2-perf-card__judgment">{item.judgment}</p>
+                  </div>
+                ))}
               </div>
-            ))}
+            </article>
           </div>
-        </article>
+        </section>
       </div>
 
       {drawerDetail && cs ? (

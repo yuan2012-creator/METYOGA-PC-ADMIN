@@ -82,13 +82,10 @@ export interface CourseV2SupplyFocusItem {
   id: string;
   priority: CourseV2Priority;
   title: string;
-  currentBooking?: string;
-  consumptionText?: string;
-  opportunityText: string;
+  coreNumbers: string;
   judgement: string;
   suggestionSource: CourseV2SuggestionSource;
   suggestionSourceLabel: string;
-  suggestionAction: string;
   actionLabel: string;
   tone: CourseV2SupplyFocusTone;
   relatedCourseId?: string;
@@ -108,6 +105,11 @@ export interface CourseV2ForecastMetric {
   isOpportunity?: boolean;
 }
 
+export interface CourseV2SectionHeader {
+  title: string;
+  subtitle: string;
+}
+
 export interface CourseV2WeeklyConsumptionForecast {
   title: string;
   subtitle: string;
@@ -118,6 +120,7 @@ export interface CourseV2WeeklyConsumptionForecast {
   attendanceRate: number;
   forecastNote: string;
   conclusion: string;
+  conclusionHighlight: string;
   metrics: CourseV2ForecastMetric[];
 }
 
@@ -187,8 +190,7 @@ export interface CourseV2ResourceHints {
 export interface CourseV2HeatmapInsight {
   id: string;
   title: string;
-  body: string;
-  suggestion: string;
+  summary: string;
 }
 
 export interface CourseV2CourseHeatmap {
@@ -329,11 +331,13 @@ export interface CourseV2Snapshot {
   meta: CourseV2PageMeta;
   filters: CourseV2Filters;
   viewTabs: CourseV2ViewTab[];
+  warroomSection: CourseV2SectionHeader;
   supplyFocus: CourseV2SupplyFocus;
   weeklyForecast: CourseV2WeeklyConsumptionForecast;
   scheduleDiagnosis: CourseV2ScheduleDiagnosis;
   courseHeatmap: CourseV2CourseHeatmap;
   weekSchedule: CourseV2WeekSchedule;
+  adjustmentBasis: CourseV2SectionHeader;
   courseIssueQueue: CourseV2IssueQueue;
   teacherSupply: CourseV2TeacherSupply;
   resourceHints: CourseV2ResourceHints;
@@ -690,6 +694,10 @@ export function buildCourseV2Snapshot(): CourseV2Snapshot {
       { id: 'today', label: '今日待处理' },
       { id: 'teacher', label: '老师供给' },
     ],
+    warroomSection: {
+      title: '本周排课判断',
+      subtitle: '结合耗课预测、供给焦点和排课诊断判断本周课程是否需要调整',
+    },
     supplyFocus: {
       title: '本周供给焦点',
       subtitle: '按低预约、满员候补、高需求时段与空档识别排课机会',
@@ -698,13 +706,10 @@ export function buildCourseV2Snapshot(): CourseV2Snapshot {
           id: 'sf-1',
           priority: 'P0',
           title: '19:30 普拉提小班低预约',
-          currentBooking: '2/6 人',
-          consumptionText: '4 / 12 点',
-          opportunityText: '可补耗课空间 8 点',
+          coreNumbers: '2/6 人｜耗课 4/12 点｜可补 8 点',
           judgement: '已排老师和场地，但当前耗课贡献偏低',
           suggestionSource: 'system_rule',
           suggestionSourceLabel: '系统规则建议',
-          suggestionAction: '匹配同类同频会员补员',
           actionLabel: '匹配会员',
           tone: 'low_booking',
           relatedCourseId: 'cs-fri-1930',
@@ -713,13 +718,10 @@ export function buildCourseV2Snapshot(): CourseV2Snapshot {
           id: 'sf-2',
           priority: 'P1',
           title: '18:30 流瑜伽满员候补',
-          currentBooking: '18/18 人',
-          consumptionText: '18 / 18 点',
-          opportunityText: '候补 4 人',
+          coreNumbers: '18/18 人｜候补 4｜耗课已满',
           judgement: '晚高峰容量已满，有加课机会',
           suggestionSource: 'system_rule',
           suggestionSourceLabel: '系统规则建议',
-          suggestionAction: '评估 19:45 同类课程加开',
           actionLabel: '加课建议',
           tone: 'waitlist',
           toastMessage: '进入加课建议（待建设）',
@@ -727,14 +729,11 @@ export function buildCourseV2Snapshot(): CourseV2Snapshot {
         {
           id: 'sf-3',
           priority: 'P1',
-          title: '周六上午普拉提连续高需求',
-          currentBooking: '满课率 92%',
-          consumptionText: '56 点',
-          opportunityText: '候补累计 6 人',
+          title: '周六上午普拉提高需求',
+          coreNumbers: '满课率 92%｜候补累计 6｜预计 56 点',
           judgement: '周末上午需求稳定，下周可增加 1 节',
           suggestionSource: 'system_rule',
           suggestionSourceLabel: '系统规则建议',
-          suggestionAction: '下周模板中增加普拉提小班',
           actionLabel: '下周排课',
           tone: 'high_demand',
           toastMessage: '进入下周排课（待建设）',
@@ -743,13 +742,10 @@ export function buildCourseV2Snapshot(): CourseV2Snapshot {
           id: 'sf-4',
           priority: 'P2',
           title: '周三上午供给偏弱',
-          currentBooking: '10:30–14:00',
-          consumptionText: '6 点',
-          opportunityText: '空档 3.5 小时',
-          judgement: '低强度课程或私教可观察补排',
+          coreNumbers: '预计 6 点｜空档 3.5h',
+          judgement: '可观察低强度课或私教补排',
           suggestionSource: 'pending_config',
           suggestionSourceLabel: '待配置规则',
-          suggestionAction: '结合老师空闲与会员偏好评估',
           actionLabel: '记录',
           tone: 'idle_gap',
           toastMessage: '记录供给观察（待建设）',
@@ -765,7 +761,8 @@ export function buildCourseV2Snapshot(): CourseV2Snapshot {
       fillableConsumptionSpace: 208,
       attendanceRate: 0.9,
       forecastNote: '耗课点数为交付口径，不等于实收现金',
-      conclusion: '本周预计到课耗课 386 点，距离理论满班仍有 208 点可补空间，优先处理晚高峰低预约与高需求候补。',
+      conclusion: '本周预计到课耗课 386 点，仍有 208 点可补空间。优先处理 19:30 低预约、18:30 候补与周六高需求时段。',
+      conclusionHighlight: '208 点',
       metrics: [
         { label: '理论满班耗课', value: '620 点', note: '全部课程满员后的供给上限' },
         { label: '当前预约预计耗课', value: '412 点', note: '按当前预约人数估算' },
@@ -804,8 +801,8 @@ export function buildCourseV2Snapshot(): CourseV2Snapshot {
       ],
     },
     courseHeatmap: {
-      title: '本周课程热力图',
-      subtitle: '按时段、课程类型和耗课贡献判断旺时 / 闲时 / 补员机会',
+      title: '本周课程热力分析',
+      subtitle: '通过时段耗课、课程类型与关键结论识别旺时、闲时和补员机会',
       dayLabels: HEATMAP_DAY_LABELS,
       timeSlotLabels: HEATMAP_SLOT_LABELS,
       legend: [
@@ -849,8 +846,8 @@ export function buildCourseV2Snapshot(): CourseV2Snapshot {
           opportunity: '召回价值高', judgement: '适合低频会员召回', judgementTag: '会员召回',
           indicators: [
             { label: '耗课贡献', level: 'mid' },
-            { label: '召回价值', level: 'high' },
             { label: '满课率', level: 'mid' },
+            { label: '补员空间', level: 'mid' },
           ],
         },
         {
@@ -864,15 +861,19 @@ export function buildCourseV2Snapshot(): CourseV2Snapshot {
         },
       ],
       insights: [
-        { id: 'hi-1', title: '周五晚高峰需求集中', body: '18:30 满员候补，19:30 低预约但可补员', suggestion: '建议：先补员，后评估加课' },
-        { id: 'hi-2', title: '周三上午供给偏弱', body: '预计耗课仅 6 点', suggestion: '建议：观察是否补充低强度课或私教' },
-        { id: 'hi-3', title: '内观流当前低满课，但匹配人群充足', body: '推荐 18 人，高匹配 6 人', suggestion: '建议：使用点对点邀约，不建议直接取消' },
+        { id: 'hi-1', title: '周五晚高峰需求集中', summary: '18:30 满员候补，19:30 低预约但可补员 · 先补员后加课' },
+        { id: 'hi-2', title: '周三上午供给偏弱', summary: '预计耗课仅 6 点 · 可观察低强度课或私教' },
+        { id: 'hi-3', title: '内观流低满课但匹配人群充足', summary: '推荐 18 人高匹配 6 人 · 精准邀约不建议取消' },
       ],
     },
     weekSchedule: {
       title: '本周排课明细',
-      subtitle: '完整查看一周课程安排，支持进入名单 / 签到 / 处理',
+      subtitle: '用于查看完整课程安排，异常课程已在上方汇总',
       days: weekDays,
+    },
+    adjustmentBasis: {
+      title: '排课调整依据',
+      subtitle: '结合课程问题、老师供给、教室资源和课程表现，为加课、补员和调课提供依据',
     },
     courseIssueQueue: {
       title: '课程问题队列',
@@ -880,42 +881,42 @@ export function buildCourseV2Snapshot(): CourseV2Snapshot {
       items: [
         {
           id: 'ci-1', priority: 'P0', title: '低预约课程待处理',
-          fact: '19:30 普拉提小班当前 2/6，预计耗课 4 / 12 点',
-          impact: '课程收入、老师排班、耗课交付',
+          fact: '19:30 普拉提 2/6 · 耗课 4/12 点',
+          impact: '耗课交付',
           suggestionSource: 'system_rule', suggestionSourceLabel: '系统规则建议',
-          suggestionAction: '匹配同类同频会员补员', actionLabel: '匹配会员',
+          suggestionAction: '匹配会员补员', actionLabel: '匹配会员',
           relatedSessionId: 'cs-fri-1930', toastMessage: '进入会员经营匹配名单（待建设）',
         },
         {
           id: 'ci-2', priority: 'P1', title: '满员候补未加课',
-          fact: '18:30 流瑜伽 18/18，耗课已达 18 / 18 点，候补 4 人',
-          impact: '晚高峰容量与耗课上限',
+          fact: '18:30 流瑜伽 18/18 · 候补 4 人',
+          impact: '晚高峰容量',
           suggestionSource: 'system_rule', suggestionSourceLabel: '系统规则建议',
           suggestionAction: '评估加开同类课程', actionLabel: '加课建议',
           relatedSessionId: 'cs-fri-1830', toastMessage: '进入加课建议（待建设）',
         },
         {
           id: 'ci-3', priority: 'P1', title: '签到异常待确认',
-          fact: '昨日存在 3 条签到异常记录',
-          impact: '会员权益 / 耗课记录',
+          fact: '昨日 3 条签到异常',
+          impact: '耗课记录',
           suggestionSource: 'system_rule', suggestionSourceLabel: '系统规则建议',
-          suggestionAction: '核对老师记录后补签', actionLabel: '补签',
+          suggestionAction: '核对后补签', actionLabel: '补签',
           toastMessage: '进入签到处理（待建设）',
         },
         {
           id: 'ci-4', priority: 'P1', title: '老师排课负载偏高',
-          fact: 'Mia 本周晚高峰排课 7 节',
-          impact: '老师状态 / 课程稳定',
+          fact: 'Mia 晚高峰 7 节',
+          impact: '老师状态',
           suggestionSource: 'system_rule', suggestionSourceLabel: '系统规则建议',
-          suggestionAction: '调配同类型老师分担', actionLabel: '调整',
+          suggestionAction: '调配同类型老师', actionLabel: '调整',
           toastMessage: '进入老师供给调整（待建设）',
         },
         {
           id: 'ci-5', priority: 'P2', title: '课程结构偏重普拉提',
-          fact: '本周小班课程占比 62%，修复类课程偏少',
-          impact: '会员偏好覆盖',
+          fact: '小班占比 62%，修复类偏少',
+          impact: '会员偏好',
           suggestionSource: 'pending_config', suggestionSourceLabel: '待配置规则',
-          suggestionAction: '补充 1–2 节修复类课程', actionLabel: '记录',
+          suggestionAction: '补充修复类课程', actionLabel: '记录',
         },
       ],
     },

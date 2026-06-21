@@ -1,4 +1,4 @@
-/* 课程与排课 V2 v1.2 — 供给焦点去重 + 热力图可读性优化 */
+/* 课程与排课 V2 v1.3 — 视觉层级收口与模块聚合 */
 
 .met-course-v2 {
   --v2-bg-page: #f1f1f1;
@@ -268,6 +268,212 @@
   color: var(--v2-green);
 }
 
+.met-course-v2-source-tag--mini {
+  height: 18px;
+  padding: 0 6px;
+  font-size: 9px;
+}
+
+/* —— 大区容器 —— */
+.met-course-v2-zone {
+  border: 1px solid var(--v2-border);
+  border-radius: var(--v2-radius-card);
+  background: var(--v2-bg-card);
+  box-shadow: var(--v2-shadow);
+  padding: 20px 22px 18px;
+}
+
+.met-course-v2-zone--judgment {
+  padding-bottom: 22px;
+}
+
+.met-course-v2-zone--evidence {
+  background: #fafafa;
+  box-shadow: none;
+  border-color: #e8e8e8;
+  padding: 16px 18px 14px;
+}
+
+.met-course-v2-zone--basis {
+  background: #fafafa;
+  border-color: #e8e8e8;
+}
+
+.met-course-v2-zone__head {
+  margin-bottom: 16px;
+}
+
+.met-course-v2-zone__head--compact {
+  margin-bottom: 12px;
+}
+
+.met-course-v2-zone__title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--v2-text-title);
+}
+
+.met-course-v2-zone__title--secondary {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--v2-text-secondary);
+}
+
+.met-course-v2-zone__subtitle {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--v2-text-secondary);
+  line-height: 1.45;
+}
+
+.met-course-v2-zone__body {
+  margin-top: 4px;
+}
+
+.met-course-v2-zone__stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.met-course-v2-panel {
+  border: 1px solid var(--v2-border-light);
+  border-radius: 14px;
+  background: #fafafa;
+  padding: 14px 16px;
+}
+
+.met-course-v2-panel__title {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--v2-text-title);
+}
+
+.met-course-v2-panel-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.met-course-v2-subcard {
+  border: 1px solid var(--v2-border-light);
+  border-radius: 14px;
+  background: #fff;
+  padding: 14px 16px;
+}
+
+.met-course-v2-subcard__title {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--v2-text-title);
+}
+
+.met-course-v2-source-tag--mini {
+  height: 18px;
+  padding: 0 6px;
+  font-size: 9px;
+}
+
+/* —— 大区容器 —— */
+.met-course-v2-zone {
+  border: 1px solid var(--v2-border);
+  border-radius: var(--v2-radius-card);
+  background: var(--v2-bg-card);
+  box-shadow: var(--v2-shadow);
+  padding: 20px 22px 18px;
+}
+
+.met-course-v2-zone--judgment {
+  padding-bottom: 22px;
+}
+
+.met-course-v2-zone--evidence {
+  background: #fafafa;
+  box-shadow: none;
+  border-color: #e8e8e8;
+  padding: 16px 18px 14px;
+}
+
+.met-course-v2-zone--basis {
+  background: #fafafa;
+  border-color: #e8e8e8;
+}
+
+.met-course-v2-zone__head {
+  margin-bottom: 16px;
+}
+
+.met-course-v2-zone__head--compact {
+  margin-bottom: 12px;
+}
+
+.met-course-v2-zone__title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--v2-text-title);
+}
+
+.met-course-v2-zone__title--secondary {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--v2-text-secondary);
+}
+
+.met-course-v2-zone__subtitle {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--v2-text-secondary);
+  line-height: 1.45;
+}
+
+.met-course-v2-zone__body {
+  margin-top: 4px;
+}
+
+.met-course-v2-zone__stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.met-course-v2-panel {
+  border: 1px solid var(--v2-border-light);
+  border-radius: 14px;
+  background: #fafafa;
+  padding: 14px 16px;
+}
+
+.met-course-v2-panel__title {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--v2-text-title);
+}
+
+.met-course-v2-panel-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.met-course-v2-subcard {
+  border: 1px solid var(--v2-border-light);
+  border-radius: 14px;
+  background: #fff;
+  padding: 14px 16px;
+}
+
+.met-course-v2-subcard__title {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--v2-text-title);
+}
+
 /* —— Row 1: 供给作战台 —— */
 .met-course-v2__row-warroom {
   display: grid;
@@ -276,39 +482,35 @@
   align-items: start;
 }
 
-.met-course-v2__warroom-aside {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.met-course-v2-card--focus {
-  padding: 18px 20px 16px;
-}
-
-.met-course-v2-supply-focus-list {
+.met-course-v2__warroom-aside,
+.met-course-v2-panel-group {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.met-course-v2-supply-focus {
+.met-course-v2-supply-focus-list {
   display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.met-course-v2-supply-focus {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
   width: 100%;
-  padding: 14px 16px;
+  padding: 12px 14px;
   border: 1px solid var(--v2-border-light);
-  border-radius: 14px;
+  border-radius: 12px;
   background: #fff;
   text-align: left;
   cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color 0.15s;
 }
 
 .met-course-v2-supply-focus:hover {
   border-color: var(--v2-green);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
 .met-course-v2-supply-focus.is-low-booking {
@@ -339,62 +541,68 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .met-course-v2-supply-focus__title {
+  flex: 1;
+  min-width: 0;
   font-size: 13px;
   font-weight: 600;
   color: var(--v2-text-title);
 }
 
-.met-course-v2-supply-focus__metrics {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 12px;
-  font-size: 12px;
-  color: var(--v2-text-secondary);
-}
-
-.met-course-v2-supply-focus__consumption {
+.met-course-v2-supply-focus__numbers {
+  margin: 0;
+  font-size: 13px;
   font-weight: 600;
   color: var(--v2-text-title);
-}
-
-.met-course-v2-supply-focus__opportunity {
-  font-weight: 500;
-  color: var(--v2-green);
+  letter-spacing: -0.01em;
 }
 
 .met-course-v2-supply-focus__judgement {
   margin: 0;
   font-size: 11px;
-  color: var(--v2-text-faint);
+  color: var(--v2-text-secondary);
   line-height: 1.4;
 }
 
-.met-course-v2-supply-focus__foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
+.met-course-v2-supply-focus__action {
+  align-self: flex-start;
   margin-top: 2px;
 }
 
-.met-course-v2-card--forecast {
-  padding: 16px 18px;
+.met-course-v2-panel--forecast {
+  background: #fff;
+}
+
+.met-course-v2-forecast-conclusion--hero {
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--v2-green-soft);
+  border: 1px solid #cfe8d8;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--v2-text-title);
+}
+
+.met-course-v2-forecast-conclusion__highlight {
+  color: var(--v2-green);
+  font-weight: 700;
 }
 
 .met-course-v2-forecast-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  margin-top: 10px;
+  gap: 6px;
 }
 
 .met-course-v2-forecast-item {
-  padding: 10px;
+  padding: 8px 10px;
   border: 1px solid var(--v2-border-light);
-  border-radius: 10px;
+  border-radius: 8px;
   background: #fafafa;
 }
 
@@ -405,7 +613,7 @@
 
 .met-course-v2-forecast-item__value {
   display: block;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--v2-text-title);
 }
@@ -417,37 +625,14 @@
 .met-course-v2-forecast-item__label {
   display: block;
   margin-top: 2px;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--v2-text-body);
-}
-
-.met-course-v2-forecast-item__note {
-  display: block;
-  margin-top: 2px;
-  font-size: 9px;
-  color: var(--v2-text-faint);
-  line-height: 1.35;
-}
-
-.met-course-v2-forecast-conclusion {
-  margin: 10px 0 0;
-  padding: 10px 12px;
-  border-radius: 10px;
-  background: var(--v2-green-soft);
-  font-size: 11px;
-  line-height: 1.45;
-  color: var(--v2-text-body);
+  font-size: 10px;
+  color: var(--v2-text-secondary);
 }
 
 .met-course-v2-forecast-note {
-  margin: 10px 0 0;
+  margin: 8px 0 0;
   font-size: 10px;
   color: var(--v2-text-faint);
-}
-
-.met-course-v2-card--diagnosis-compact {
-  padding: 14px 16px;
 }
 
 .met-course-v2-diagnosis-list--compact .met-course-v2-diagnosis-item {
@@ -462,16 +647,80 @@
   font-size: 10px;
 }
 
-/* —— 热力图 —— */
-.met-course-v2-card--heatmap {
-  padding: 18px 20px 16px;
+/* —— 热力分析 —— */
+.met-course-v2-zone--heatmap {
+  padding-bottom: 20px;
+}
+
+.met-course-v2-heatmap-conclusions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.met-course-v2-heatmap-conclusion {
+  padding: 12px 14px;
+  border-left: 3px solid var(--v2-green);
+  border-radius: 0 10px 10px 0;
+  background: #fafafa;
+}
+
+.met-course-v2-heatmap-conclusion__title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--v2-text-title);
+}
+
+.met-course-v2-heatmap-conclusion__summary {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: var(--v2-text-secondary);
+  line-height: 1.4;
 }
 
 .met-course-v2-heatmap-legend {
   display: flex;
   flex-wrap: wrap;
   gap: 10px 16px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--v2-border-light);
+}
+
+.met-course-v2-heatmap-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(260px, 0.85fr);
+  gap: 16px;
+  align-items: start;
+}
+
+.met-course-v2-heatmap-types {
+  border: 1px solid var(--v2-border-light);
+  border-radius: 12px;
+  background: #fafafa;
+  padding: 12px;
+}
+
+.met-course-v2-heatmap-legend__swatch.is-idle {
+  background: #e8e8e8;
+}
+
+.met-course-v2-heatmap-legend__swatch.is-normal {
+  background: #e4f0ea;
+}
+
+.met-course-v2-heatmap-legend__swatch.is-high {
+  background: #c5dfd0;
+}
+
+.met-course-v2-heatmap-legend__swatch.is-warn {
+  background: #f8ecd8;
+}
+
+.met-course-v2-heatmap-legend__swatch.is-risk {
+  background: #f8dedc;
 }
 
 .met-course-v2-heatmap-legend__item {
@@ -487,39 +736,6 @@
   height: 14px;
   border-radius: 4px;
   border: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.met-course-v2-heatmap-legend__swatch.is-idle {
-  background: #ececec;
-}
-
-.met-course-v2-heatmap-legend__swatch.is-normal {
-  background: #e8f5ee;
-}
-
-.met-course-v2-heatmap-legend__swatch.is-high {
-  background: #c8e6d4;
-}
-
-.met-course-v2-heatmap-legend__swatch.is-warn {
-  background: var(--v2-warn-bg);
-}
-
-.met-course-v2-heatmap-legend__swatch.is-risk {
-  background: var(--v2-risk-bg);
-}
-
-.met-course-v2-heatmap-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(280px, 0.8fr);
-  gap: 20px;
-}
-
-.met-course-v2-heatmap-section-label {
-  margin: 0 0 10px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--v2-text-title);
 }
 
 .met-course-v2-heatmap-grid {
@@ -543,20 +759,26 @@
   padding-right: 6px;
 }
 
+.met-course-v2-heatmap-section-label {
+  margin: 0 0 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--v2-text-title);
+}
+
 .met-course-v2-heatmap-cell {
-  min-height: 58px;
-  padding: 6px 4px;
-  border: 1px solid var(--v2-border-light);
+  min-height: 56px;
+  padding: 7px 5px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: 8px;
   background: #f5f5f5;
   text-align: center;
   cursor: pointer;
-  transition: transform 0.12s, box-shadow 0.12s;
+  transition: transform 0.12s;
 }
 
 .met-course-v2-heatmap-cell:hover {
   transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
 }
 
 .met-course-v2-heatmap-cell.is-idle {
@@ -565,23 +787,23 @@
 }
 
 .met-course-v2-heatmap-cell.is-normal {
-  background: #e8f5ee;
-  border-color: #d4ebe0;
+  background: #e4f0ea;
+  border-color: #cddfd6;
 }
 
 .met-course-v2-heatmap-cell.is-high {
-  background: #c8e6d4;
-  border-color: #a8d4bc;
+  background: #c5dfd0;
+  border-color: #a8cdb8;
 }
 
 .met-course-v2-heatmap-cell.is-warn {
-  background: var(--v2-warn-bg);
-  border-color: #f0e0c0;
+  background: #f8ecd8;
+  border-color: #ead8b8;
 }
 
 .met-course-v2-heatmap-cell.is-risk {
-  background: var(--v2-risk-bg);
-  border-color: #f5d0cc;
+  background: #f8dedc;
+  border-color: #efc8c4;
 }
 
 .met-course-v2-heatmap-cell__points {
@@ -594,14 +816,14 @@
 .met-course-v2-heatmap-cell__count {
   display: block;
   margin-top: 2px;
-  font-size: 10px;
+  font-size: 11px;
   color: var(--v2-text-secondary);
 }
 
 .met-course-v2-heatmap-cell__status {
   display: block;
   margin-top: 2px;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 600;
   color: var(--v2-text-body);
 }
@@ -609,15 +831,14 @@
 .met-course-v2-insight-cards {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  margin-bottom: 16px;
+  gap: 8px;
 }
 
 .met-course-v2-insight-card {
-  padding: 12px 14px;
+  padding: 10px 12px;
   border: 1px solid var(--v2-border-light);
-  border-radius: 12px;
-  background: #fafafa;
+  border-radius: 10px;
+  background: #fff;
 }
 
 .met-course-v2-insight-card__head {
@@ -628,34 +849,27 @@
 }
 
 .met-course-v2-insight-card__type {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--v2-text-title);
 }
 
 .met-course-v2-insight-card__tag {
-  height: 20px;
-  padding: 0 8px;
+  height: 18px;
+  padding: 0 7px;
   border-radius: 5px;
   background: var(--v2-green-soft);
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 600;
   color: var(--v2-green);
-  line-height: 20px;
+  line-height: 18px;
+  white-space: nowrap;
 }
 
 .met-course-v2-insight-card__stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 8px;
+  margin: 6px 0 0;
   font-size: 11px;
   color: var(--v2-text-secondary);
-}
-
-.met-course-v2-insight-card__stats span:first-child {
-  font-weight: 600;
-  color: var(--v2-text-title);
 }
 
 .met-course-v2-insight-card__indicators {
@@ -730,12 +944,41 @@
   color: var(--v2-green);
 }
 
-.met-course-v2-card--schedule-detail {
-  opacity: 0.98;
+.met-course-v2-card--schedule-detail,
+.met-course-v2-zone--evidence .met-course-v2-lanes {
+  opacity: 1;
 }
 
-.met-course-v2-card--schedule-detail .met-course-v2-session.is-muted {
-  opacity: 0.65;
+.met-course-v2-zone--evidence .met-course-v2-lane__head {
+  background: #f3f3f3;
+  padding: 6px;
+}
+
+.met-course-v2-zone--evidence .met-course-v2-lane.is-today .met-course-v2-lane__head {
+  background: #eef5f1;
+  border: 1px solid #d8ebe2;
+}
+
+.met-course-v2-zone--evidence .met-course-v2-session {
+  padding: 8px;
+  gap: 5px;
+  box-shadow: none;
+}
+
+.met-course-v2-zone--evidence .met-course-v2-session.is-normal-card {
+  background: #fff;
+  border-color: #ececec;
+  opacity: 0.88;
+}
+
+.met-course-v2-zone--evidence .met-course-v2-session.is-muted {
+  opacity: 0.45;
+}
+
+.met-course-v2-zone--evidence .met-course-v2-session.is-low,
+.met-course-v2-zone--evidence .met-course-v2-session.is-waitlist {
+  opacity: 1;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
 }
 
 /* —— Row 1 legacy / 明细泳道 —— */
@@ -961,15 +1204,15 @@
 }
 
 .met-course-v2-issue-row__fact {
-  margin: 4px 0 0;
+  margin: 3px 0 0;
   font-size: 11px;
   color: var(--v2-text-secondary);
 }
 
-.met-course-v2-issue-row__impact {
+.met-course-v2-issue-row__action {
   margin: 2px 0 0;
   font-size: 10px;
-  color: var(--v2-text-faint);
+  color: var(--v2-green);
 }
 
 .met-course-v2-issue-row__aside {
@@ -987,8 +1230,35 @@
   align-items: start;
 }
 
-.met-course-v2-card--resources {
-  padding: 18px 20px 16px;
+.met-course-v2-card--resources,
+.met-course-v2-subcard--resources {
+  padding: 12px 14px;
+}
+
+.met-course-v2-subcard--resources .met-course-v2-subcard__title {
+  margin-bottom: 10px;
+}
+
+.met-course-v2-subcard--teachers .met-course-v2-teacher-card {
+  background: #fafafa;
+  padding: 12px;
+}
+
+.met-course-v2-perf-card__rate {
+  margin-top: 6px;
+  font-size: 22px;
+}
+
+.met-course-v2-perf-card__meta {
+  margin-top: 4px;
+  font-size: 10px;
+}
+
+.met-course-v2-perf-card__judgment {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--v2-border-light);
+  font-size: 10px;
 }
 
 .met-course-v2-resource-list {
@@ -1415,7 +1685,11 @@
     grid-template-columns: 1fr;
   }
 
-  .met-course-v2-heatmap-layout {
+  .met-course-v2-heatmap-conclusions {
+    grid-template-columns: 1fr;
+  }
+
+  .met-course-v2-heatmap-body {
     grid-template-columns: 1fr;
   }
 

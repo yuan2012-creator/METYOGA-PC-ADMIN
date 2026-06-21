@@ -4,6 +4,7 @@ export type {
   CourseV2Detail,
   CourseV2Session,
   CourseV2Status,
+  CourseV2SectionHeader,
   CourseV2WeeklyConsumptionForecast,
   CourseV2HeatmapCell,
   CourseV2SupplyFocusItem,
