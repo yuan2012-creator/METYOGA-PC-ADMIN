@@ -1,0 +1,801 @@
+/* 今日运营 V2 v1.1 — 当日作战台（作用域隔离） */
+
+.met-today-v2 {
+  --v2-bg-page: #f1f1f1;
+  --v2-bg-card: #ffffff;
+  --v2-green: #006b42;
+  --v2-green-soft: rgba(0, 107, 66, 0.08);
+  --v2-text-title: #1f1f1f;
+  --v2-text-body: #333333;
+  --v2-text-secondary: #777777;
+  --v2-text-faint: #a0a0a0;
+  --v2-border: #e5e5e5;
+  --v2-border-light: #efefef;
+  --v2-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+  --v2-radius-card: 20px;
+  --v2-padding-page: 32px;
+  --v2-gap-card: 24px;
+  --v2-gap-inner: 16px;
+  --v2-warn: #c27803;
+  --v2-warn-bg: #fef7e8;
+  --v2-risk: #b42318;
+  --v2-risk-bg: #feeceb;
+  --v2-info-bg: #eef4ff;
+  --v2-info: #3d5a8a;
+  --v2-sidebar-width: 300px;
+
+  min-height: 100%;
+  padding: var(--v2-padding-page);
+  background: var(--v2-bg-page);
+  color: var(--v2-text-body);
+  box-sizing: border-box;
+}
+
+.met-today-v2 *,
+.met-today-v2 *::before,
+.met-today-v2 *::after {
+  box-sizing: border-box;
+}
+
+.met-today-v2__inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v2-gap-card);
+  width: min(100%, 1440px);
+  margin: 0 auto;
+}
+
+/* —— 页面标题 —— */
+.met-today-v2__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--v2-gap-inner);
+  flex-wrap: wrap;
+  min-height: 52px;
+}
+
+.met-today-v2__header-copy h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--v2-text-title);
+}
+
+.met-today-v2__header-copy p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--v2-text-secondary);
+}
+
+.met-today-v2__filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.met-today-v2__filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--v2-border);
+  border-radius: 10px;
+  background: var(--v2-bg-card);
+  font-size: 13px;
+  color: var(--v2-text-body);
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.met-today-v2__filter-btn:hover {
+  border-color: #cccccc;
+}
+
+.met-today-v2__filter-btn--primary {
+  border-color: var(--v2-green);
+  background: var(--v2-green);
+  color: #ffffff;
+}
+
+.met-today-v2__filter-btn--primary:hover {
+  background: #005a38;
+  border-color: #005a38;
+}
+
+/* —— 卡片基础 —— */
+.met-today-v2-card {
+  border: 1px solid var(--v2-border);
+  border-radius: var(--v2-radius-card);
+  background: var(--v2-bg-card);
+  box-shadow: var(--v2-shadow);
+}
+
+.met-today-v2-card__title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--v2-text-title);
+}
+
+.met-today-v2-card__subtitle {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--v2-text-secondary);
+}
+
+.met-today-v2-card__subtitle--compact {
+  margin-bottom: 12px;
+}
+
+/* —— 第一屏：作战台 —— */
+.met-today-v2__war-room {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--v2-sidebar-width);
+  gap: var(--v2-gap-card);
+  align-items: start;
+}
+
+.met-today-v2-card--timeline {
+  padding: 20px 22px 16px;
+  min-height: 420px;
+}
+
+.met-today-v2__sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.met-today-v2-card--urgent {
+  padding: 16px 18px;
+}
+
+.met-today-v2-card--tools {
+  padding: 14px 16px;
+}
+
+.met-today-v2-card--brief {
+  padding: 12px 16px 14px;
+  background: #fafafa;
+  box-shadow: none;
+}
+
+/* —— 作战状态条 —— */
+.met-today-v2-focus-status {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.met-today-v2-focus-status__item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px;
+  border: 1px solid var(--v2-border-light);
+  border-radius: 10px;
+  background: #fafafa;
+}
+
+.met-today-v2-focus-status__item.is-next {
+  background: #fef9f3;
+  border-color: #f0e4d0;
+}
+
+.met-today-v2-focus-status__label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--v2-text-faint);
+}
+
+.met-today-v2-focus-status__text {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--v2-text-title);
+  line-height: 1.35;
+}
+
+.met-today-v2-focus-status__item.is-next .met-today-v2-focus-status__label {
+  color: var(--v2-warn);
+}
+
+/* —— 课程时间轴 —— */
+.met-today-v2-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.met-today-v2-timeline__item {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  min-height: 58px;
+  padding: 6px 10px 6px 0;
+  border-radius: 10px;
+}
+
+.met-today-v2-timeline__item.is-current-focus {
+  background: #f8faf8;
+  border: 1px solid #dce8df;
+  padding-left: 10px;
+}
+
+.met-today-v2-timeline__item.is-next-focus {
+  background: #fef9f3;
+  border: 1px solid #f0e4d0;
+  padding-left: 10px;
+}
+
+.met-today-v2-timeline__rail {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  align-self: stretch;
+  width: 28px;
+}
+
+.met-today-v2-timeline__dot {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  margin-top: 6px;
+  border: 2px solid var(--v2-green);
+  border-radius: 50%;
+  background: #ffffff;
+}
+
+.met-today-v2-timeline__item.is-current-focus .met-today-v2-timeline__dot {
+  border-color: var(--v2-green);
+  background: var(--v2-green-soft);
+}
+
+.met-today-v2-timeline__item.is-next-focus .met-today-v2-timeline__dot {
+  border-color: var(--v2-warn);
+  background: var(--v2-warn-bg);
+}
+
+.met-today-v2-timeline__focus-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 4px;
+  background: rgba(0, 107, 66, 0.1);
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--v2-green);
+}
+
+.met-today-v2-timeline__focus-tag.is-next {
+  background: var(--v2-warn-bg);
+  color: var(--v2-warn);
+}
+
+.met-today-v2-timeline__line {
+  flex: 1;
+  width: 2px;
+  margin-top: 4px;
+  background: var(--v2-border-light);
+}
+
+.met-today-v2-timeline__content {
+  min-width: 0;
+}
+
+.met-today-v2-timeline__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.met-today-v2-timeline__time {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--v2-text-title);
+}
+
+.met-today-v2-timeline__title {
+  margin: 4px 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--v2-text-title);
+}
+
+.met-today-v2-timeline__meta {
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: var(--v2-text-secondary);
+}
+
+.met-today-v2-course-status {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.met-today-v2-course-status--success {
+  background: rgba(139, 192, 163, 0.18);
+  color: #16734a;
+}
+
+.met-today-v2-course-status--warning {
+  background: var(--v2-warn-bg);
+  color: var(--v2-warn);
+}
+
+.met-today-v2-course-status--danger {
+  background: var(--v2-risk-bg);
+  color: var(--v2-risk);
+}
+
+.met-today-v2-course-status--neutral {
+  background: #f3f3f3;
+  color: var(--v2-text-secondary);
+}
+
+.met-today-v2-course-status--info {
+  background: var(--v2-info-bg);
+  color: var(--v2-info);
+}
+
+/* —— 当前最紧急 —— */
+.met-today-v2-urgent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.met-today-v2-urgent-item {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 12px 12px 14px;
+  border: 1px solid var(--v2-border-light);
+  border-radius: 12px;
+  background: #fafafa;
+  overflow: hidden;
+}
+
+.met-today-v2-urgent-item.is-p0 {
+  background: #fdf5f4;
+  border-color: #f0d4d0;
+}
+
+.met-today-v2-urgent-item.is-p0::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 3px;
+  background: #d49a9a;
+}
+
+.met-today-v2-urgent-item__main {
+  min-width: 0;
+}
+
+.met-today-v2-urgent-item__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.met-today-v2-urgent-item__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: var(--v2-text-title);
+}
+
+.met-today-v2-urgent-item__meta {
+  margin: 6px 0 0 36px;
+  font-size: 11px;
+  color: var(--v2-text-secondary);
+}
+
+.met-today-v2-urgent-item__deadline {
+  font-weight: 600;
+  color: var(--v2-text-title);
+}
+
+.met-today-v2-urgent-item.is-p0 .met-today-v2-urgent-item__deadline {
+  color: var(--v2-risk);
+}
+
+/* —— 快捷操作 —— */
+.met-today-v2-quick__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.met-today-v2-quick__btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid var(--v2-border-light);
+  border-radius: 10px;
+  background: #fafafa;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--v2-text-title);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.met-today-v2-quick__btn:hover {
+  border-color: var(--v2-green);
+  background: var(--v2-green-soft);
+  color: var(--v2-green);
+}
+
+.met-today-v2-quick__btn svg {
+  flex-shrink: 0;
+  color: var(--v2-green);
+}
+
+/* —— 今日简报 mini stats —— */
+.met-today-v2-brief-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.met-today-v2-brief-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid var(--v2-border-light);
+}
+
+.met-today-v2-brief-stat__label {
+  font-size: 10px;
+  color: var(--v2-text-faint);
+}
+
+.met-today-v2-brief-stat__value {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--v2-text-title);
+}
+
+.met-today-v2-brief-stat__value.is-warning {
+  color: var(--v2-warn);
+}
+
+/* —— 通用标签 / 按钮 —— */
+.met-today-v2-priority {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.met-today-v2-priority--p0 {
+  background: var(--v2-risk-bg);
+  color: var(--v2-risk);
+}
+
+.met-today-v2-priority--p1 {
+  background: var(--v2-warn-bg);
+  color: var(--v2-warn);
+}
+
+.met-today-v2-priority--p2 {
+  background: #eef0f2;
+  color: #5f6368;
+}
+
+.met-today-v2-source-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.met-today-v2-source-tag--rule {
+  background: var(--v2-green-soft);
+  color: var(--v2-green);
+}
+
+.met-today-v2-source-tag--pending {
+  background: #f3f3f3;
+  color: var(--v2-text-secondary);
+}
+
+.met-today-v2-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.met-today-v2-btn--ghost {
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--v2-border);
+  background: #ffffff;
+  font-size: 12px;
+  color: var(--v2-text-secondary);
+}
+
+.met-today-v2-btn--ghost:hover {
+  border-color: var(--v2-green);
+  color: var(--v2-green);
+}
+
+.met-today-v2-btn--sm {
+  height: 28px;
+  padding: 0 10px;
+  font-size: 12px;
+}
+
+/* —— 第二屏：任务工单 —— */
+.met-today-v2-card--orders {
+  padding: 16px 20px 10px;
+}
+
+.met-today-v2-order-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.met-today-v2-order-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 76px;
+  max-height: 88px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--v2-border-light);
+}
+
+.met-today-v2-order-row:last-child {
+  border-bottom: none;
+}
+
+.met-today-v2-order-row__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--v2-text-title);
+  line-height: 1.3;
+}
+
+.met-today-v2-order-row__fact {
+  margin: 2px 0 0;
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--v2-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.met-today-v2-order-row__meta {
+  margin: 2px 0 0;
+  font-size: 10px;
+  color: var(--v2-text-faint);
+}
+
+.met-today-v2-order-row__aside {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* —— 第三屏：会员 + 本周 —— */
+.met-today-v2__row-bottom {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+  gap: var(--v2-gap-card);
+}
+
+.met-today-v2-card--members {
+  padding: 18px 20px 14px;
+}
+
+.met-today-v2-member-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.met-today-v2-member-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--v2-border-light);
+  border-radius: 12px;
+  background: #fafafa;
+}
+
+.met-today-v2-member-item__label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--v2-text-title);
+}
+
+.met-today-v2-member-item__value {
+  margin: 4px 0 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--v2-text-title);
+}
+
+.met-today-v2-member-item__note {
+  margin: 2px 0 0;
+  font-size: 10px;
+  color: var(--v2-text-faint);
+}
+
+.met-today-v2-card--weekly {
+  padding: 18px 20px 14px;
+  background: #fafafa;
+  box-shadow: none;
+}
+
+.met-today-v2-weekly-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.met-today-v2-weekly-item {
+  padding: 12px 14px;
+  border: 1px solid var(--v2-border-light);
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.met-today-v2-weekly-item__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.met-today-v2-weekly-item__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--v2-text-title);
+}
+
+.met-today-v2-weekly-item__summary {
+  margin: 6px 0 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--v2-text-title);
+}
+
+.met-today-v2-weekly-item .met-today-v2-btn {
+  margin-top: 10px;
+}
+
+/* —— Toast —— */
+.met-today-v2-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 32px;
+  z-index: 100;
+  padding: 12px 18px;
+  border-radius: 12px;
+  background: var(--v2-text-title);
+  color: #ffffff;
+  font-size: 13px;
+  box-shadow: var(--v2-shadow);
+  animation: met-today-v2-toast-in 0.2s ease;
+}
+
+@keyframes met-today-v2-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 1100px) {
+  .met-today-v2__war-room {
+    grid-template-columns: 1fr;
+  }
+
+  .met-today-v2__sidebar {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .met-today-v2__row-bottom {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .met-today-v2-focus-status {
+    grid-template-columns: 1fr;
+  }
+
+  .met-today-v2__sidebar {
+    grid-template-columns: 1fr;
+  }
+
+  .met-today-v2-member-list {
+    grid-template-columns: 1fr;
+  }
+
+  .met-today-v2-timeline__item {
+    grid-template-columns: 28px minmax(0, 1fr);
+  }
+
+  .met-today-v2-timeline__item .met-today-v2-btn {
+    grid-column: 2;
+    justify-self: start;
+    margin-top: 4px;
+  }
+
+  .met-today-v2-order-row {
+    grid-template-columns: 1fr;
+    align-items: flex-start;
+  }
+
+  .met-today-v2-order-row__aside {
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    justify-content: space-between;
+  }
+}

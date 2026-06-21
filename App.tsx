@@ -5,7 +5,6 @@ import Dashboard from './components/Dashboard';
 import Shop from './components/Shop';
 import StaffPage from './components/Staff'; // Renamed to avoid conflict with type 'Staff'
 import Courses from './components/Courses';
-import TodayOperation from './components/TodayOperation';
 import Mall from './components/Mall'; // New Component
 import Finance from './components/Finance';
 import Marketing from './components/Marketing';
@@ -15,6 +14,7 @@ import Partner from './components/Partner';
 import Settings from './components/Settings';
 import Audit from './components/Audit';
 import { DashboardV2Page } from './components/v2/dashboard';
+import { TodayV2Page } from './components/v2/today';
 import {
   ModulePlaceholder,
   SIDEBAR_V2_DEFAULT_NAV,
@@ -25,7 +25,7 @@ import {
 import { MockAdminScopeProvider } from './context/MockAdminScopeContext';
 import { MOCK_ADMIN_UI_DEFAULT } from './constants/mockAdminScope';
 
-const SCROLLABLE_NAV_IDS = new Set(['dashboard', 'dashboard-v2']);
+const SCROLLABLE_NAV_IDS = new Set(['dashboard', 'dashboard-v2', 'today']);
 
 const App: React.FC = () => {
   const [activeNav, setActiveNav] = useState<string>(SIDEBAR_V2_DEFAULT_NAV);
@@ -55,11 +55,7 @@ const App: React.FC = () => {
       case 'dashboard-v2':
         return <DashboardV2Page />;
       case 'today':
-        return (
-          <div className="met-today-page h-full min-h-0 min-w-0">
-            <TodayOperation />
-          </div>
-        );
+        return <TodayV2Page />;
       case 'shop':
         return <Shop />;
       case 'staff':
