@@ -1,0 +1,12 @@
+export { default as CourseV2Page } from './CourseV2Page';
+export type {
+  CourseV2Snapshot,
+  CourseV2Detail,
+  CourseV2Session,
+  CourseV2Status,
+  CourseV2WeeklyConsumptionForecast,
+  CourseV2HeatmapCell,
+  CourseV2SupplyFocusItem,
+  CourseV2CourseTypeInsightCard,
+  CourseV2ExceptionSummary,
+} from './courseV2.viewModel';
