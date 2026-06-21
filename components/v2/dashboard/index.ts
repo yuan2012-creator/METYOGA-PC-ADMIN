@@ -4,5 +4,6 @@ export type {
   DashboardV2Snapshot,
   DashboardV2Metric,
   DashboardV2RiskItem,
-  DashboardV2StoreComparisonRow,
+  DashboardV2StoreStructureRow,
+  DashboardV2OperatingProfitSummary,
 } from './dashboardV2.viewModel';
