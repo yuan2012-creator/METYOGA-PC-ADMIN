@@ -3,6 +3,9 @@ import { ChevronDown } from 'lucide-react';
 import {
   buildMemberV2Snapshot,
   getSecondaryEntranceLabel,
+  type MemberV2AudienceMatchPreview,
+  type MemberV2LifecycleStage,
+  type MemberV2MatchDimension,
   type MemberV2MatchLevel,
   type MemberV2MemberDetail,
   type MemberV2RiskPriority,
@@ -33,16 +36,89 @@ const MATCH_LEVEL_LABEL: Record<MemberV2MatchLevel, string> = {
   low: '低',
 };
 
-const MATCH_LEVEL_FILL: Record<MemberV2MatchLevel, string> = {
-  high: 'is-high',
-  medium: 'is-medium',
-  low: 'is-low',
+const MATCH_DOT_COUNT: Record<MemberV2MatchLevel, number> = {
+  high: 3,
+  medium: 2,
+  low: 1,
 };
+
+function MatchDimensionDots({ dimension }: { dimension: MemberV2MatchDimension }) {
+  const filled = MATCH_DOT_COUNT[dimension.level];
+  const isPositive = dimension.tone === 'positive';
+
+  return (
+    <div className="met-member-v2-dim-dots">
+      <span className="met-member-v2-dim-dots__label">{dimension.label}</span>
+      <span className="met-member-v2-dim-dots__matrix">
+        {[1, 2, 3].map(dot => (
+          <span
+            key={dot}
+            className={[
+              'met-member-v2-dim-dots__dot',
+              dot <= filled ? 'is-filled' : '',
+              dot <= filled && isPositive ? 'is-positive' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+          />
+        ))}
+      </span>
+      <span
+        className={[
+          'met-member-v2-dim-dots__level',
+          dimension.level === 'high' ? 'is-high' : '',
+          isPositive ? 'is-positive' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
+        {MATCH_LEVEL_LABEL[dimension.level]}
+      </span>
+    </div>
+  );
+}
+
+function FlowNode({
+  stage,
+  onSelect,
+}: {
+  stage: MemberV2LifecycleStage;
+  onSelect: (stage: MemberV2LifecycleStage) => void;
+}) {
+  return (
+    <button
+      type="button"
+      className={[
+        'met-member-v2-flow-node',
+        stage.riskVariant ? `is-${stage.riskVariant}` : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      onClick={() => onSelect(stage)}
+    >
+      <span className="met-member-v2-flow-node__code">{stage.code}</span>
+      <span className="met-member-v2-flow-node__name">{stage.name}</span>
+      <span className="met-member-v2-flow-node__count">{stage.count}</span>
+      <span
+        className={[
+          'met-member-v2-flow-node__change',
+          stage.weeklyChangeUp ? 'is-up' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
+        较上周 {stage.weeklyChange}
+      </span>
+      <span className="met-member-v2-flow-node__action">{stage.coreAction}</span>
+    </button>
+  );
+}
 
 const MemberV2Page: React.FC = () => {
   const snapshot = useMemo(() => buildMemberV2Snapshot(), []);
   const [toast, setToast] = useState<string | null>(null);
   const [drawerMemberId, setDrawerMemberId] = useState<string | null>(null);
+  const [matchPreviewId, setMatchPreviewId] = useState<string | null>(null);
 
   const showToast = useCallback((message: string) => {
     console.log('[MemberV2]', message);
@@ -65,11 +141,31 @@ const MemberV2Page: React.FC = () => {
     ? snapshot.drawerMemberDetails[drawerMemberId] ?? null
     : null;
 
-  const closeDrawer = useCallback(() => setDrawerMemberId(null), []);
+  const matchPreview: MemberV2AudienceMatchPreview | null = matchPreviewId
+    ? snapshot.audienceMatchPreviews[matchPreviewId] ?? null
+    : null;
+
+  const closeAllDrawers = useCallback(() => {
+    setDrawerMemberId(null);
+    setMatchPreviewId(null);
+  }, []);
 
   const openDetail = useCallback((memberId: string) => {
+    setMatchPreviewId(null);
     setDrawerMemberId(memberId);
   }, []);
+
+  const openMatchPreview = useCallback((packId: string) => {
+    setDrawerMemberId(null);
+    setMatchPreviewId(packId);
+  }, []);
+
+  const handleStageSelect = useCallback(
+    (stage: MemberV2LifecycleStage) => {
+      showToast(`进入 ${stage.code} ${stage.name} 会员名单 二级页（待建设）`);
+    },
+    [showToast],
+  );
 
   const {
     meta,
@@ -81,6 +177,9 @@ const MemberV2Page: React.FC = () => {
     riskGraph,
     keyMemberEntrances,
   } = snapshot;
+
+  const growthStages = lifecycleFlow.stages.filter(stage => stage.zone === 'growth');
+  const riskStages = lifecycleFlow.stages.filter(stage => stage.zone === 'risk');
 
   return (
     <div className="met-member-v2">
@@ -130,43 +229,42 @@ const MemberV2Page: React.FC = () => {
             <p className="met-member-v2-card__subtitle met-member-v2-card__subtitle--compact">
               {lifecycleFlow.subtitle}
             </p>
-            <div className="met-member-v2-flow">
-              {lifecycleFlow.stages.map((stage, index) => (
-                <button
-                  key={stage.id}
-                  type="button"
-                  className={[
-                    'met-member-v2-flow__segment',
-                    stage.zone === 'risk' ? 'is-risk' : '',
-                    stage.code === 'S6' ? 'is-risk-s6' : '',
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
-                  onClick={() =>
-                    showToast(`进入 ${stage.code} ${stage.name} 会员名单 二级页（待建设）`)
-                  }
-                >
-                  <span className="met-member-v2-flow__code">{stage.code}</span>
-                  <span className="met-member-v2-flow__name">{stage.name}</span>
-                  <span className="met-member-v2-flow__count">{stage.count}</span>
-                  <span
-                    className={[
-                      'met-member-v2-flow__change',
-                      stage.weeklyChangeUp ? 'is-up' : '',
-                    ]
-                      .filter(Boolean)
-                      .join(' ')}
-                  >
-                    较上周 {stage.weeklyChange}
-                  </span>
-                  <span className="met-member-v2-flow__action">{stage.coreAction}</span>
-                  {index < lifecycleFlow.stages.length - 1 ? (
-                    <span className="met-member-v2-flow__arrow" aria-hidden>
-                      →
-                    </span>
-                  ) : null}
-                </button>
-              ))}
+            <div className="met-member-v2-flow-wrap">
+              <div className="met-member-v2-flow-zone met-member-v2-flow-zone--growth">
+                <span className="met-member-v2-flow-zone__label">成长链路 S0 → S3</span>
+                <div className="met-member-v2-flow-track">
+                  {growthStages.map((stage, index) => (
+                    <React.Fragment key={stage.id}>
+                      {index > 0 ? (
+                        <span className="met-member-v2-flow-connector" aria-hidden>
+                          →
+                        </span>
+                      ) : null}
+                      <FlowNode stage={stage} onSelect={handleStageSelect} />
+                    </React.Fragment>
+                  ))}
+                </div>
+              </div>
+              <div className="met-member-v2-flow-bridge">
+                <span className="met-member-v2-flow-bridge__line" />
+                <span className="met-member-v2-flow-bridge__label">活跃进入风险</span>
+                <span className="met-member-v2-flow-bridge__line" />
+              </div>
+              <div className="met-member-v2-flow-zone met-member-v2-flow-zone--risk">
+                <span className="met-member-v2-flow-zone__label">风险 / 经营动作 S4 → S6</span>
+                <div className="met-member-v2-flow-track">
+                  {riskStages.map((stage, index) => (
+                    <React.Fragment key={stage.id}>
+                      {index > 0 ? (
+                        <span className="met-member-v2-flow-connector" aria-hidden>
+                          →
+                        </span>
+                      ) : null}
+                      <FlowNode stage={stage} onSelect={handleStageSelect} />
+                    </React.Fragment>
+                  ))}
+                </div>
+              </div>
             </div>
           </article>
 
@@ -181,13 +279,20 @@ const MemberV2Page: React.FC = () => {
                   key={item.id}
                   className={`met-member-v2-attention-bubble is-${item.tone}`}
                 >
+                  <span className="met-member-v2-attention-bubble__type">{item.typeLabel}</span>
                   <div className="met-member-v2-attention-bubble__ring">{item.count}</div>
                   <p className="met-member-v2-attention-bubble__label">{item.label}</p>
                   <p className="met-member-v2-attention-bubble__note">{item.note}</p>
                   <button
                     type="button"
                     className="met-member-v2-btn met-member-v2-btn--ghost met-member-v2-btn--sm"
-                    onClick={() => openSecondary(item.secondaryKey)}
+                    onClick={() => {
+                      if (item.matchPreviewPackId && item.actionLabel === '匹配') {
+                        openMatchPreview(item.matchPreviewPackId);
+                        return;
+                      }
+                      openSecondary(item.secondaryKey);
+                    }}
                   >
                     {item.actionLabel}
                   </button>
@@ -320,28 +425,7 @@ const MemberV2Page: React.FC = () => {
                 </div>
                 <div className="met-member-v2-pack__dims">
                   {pack.dimensions.map(dim => (
-                    <div key={dim.key} className="met-member-v2-dim-row">
-                      <span className="met-member-v2-dim-row__label">{dim.label}</span>
-                      <div className="met-member-v2-dim-row__bar">
-                        <div
-                          className={[
-                            'met-member-v2-dim-row__fill',
-                            MATCH_LEVEL_FILL[dim.level],
-                          ].join(' ')}
-                        />
-                      </div>
-                      <span
-                        className={[
-                          'met-member-v2-dim-row__level',
-                          dim.level === 'medium' ? 'is-medium' : '',
-                          dim.level === 'low' ? 'is-low' : '',
-                        ]
-                          .filter(Boolean)
-                          .join(' ')}
-                      >
-                        {MATCH_LEVEL_LABEL[dim.level]}
-                      </span>
-                    </div>
+                    <MatchDimensionDots key={dim.key} dimension={dim} />
                   ))}
                 </div>
                 <div className="met-member-v2-pack__excludes">
@@ -356,7 +440,13 @@ const MemberV2Page: React.FC = () => {
                     <button
                       type="button"
                       className="met-member-v2-btn met-member-v2-btn--ghost met-member-v2-btn--sm"
-                      onClick={() => openSecondary('match_list')}
+                      onClick={() => {
+                        if (pack.primaryActionLabel === '查看名单') {
+                          openMatchPreview(pack.previewId);
+                          return;
+                        }
+                        showToast(`${pack.primaryActionLabel}：${pack.title}`);
+                      }}
                     >
                       {pack.primaryActionLabel}
                     </button>
@@ -364,7 +454,7 @@ const MemberV2Page: React.FC = () => {
                       <button
                         type="button"
                         className="met-member-v2-btn met-member-v2-btn--ghost met-member-v2-btn--sm"
-                        onClick={() => openSecondary('assign_invite')}
+                        onClick={() => showToast(`已分配邀约：${pack.title}`)}
                       >
                         {pack.secondaryActionLabel}
                       </button>
@@ -488,7 +578,7 @@ const MemberV2Page: React.FC = () => {
             type="button"
             className="met-member-v2-drawer-overlay"
             aria-label="关闭会员详情"
-            onClick={closeDrawer}
+            onClick={closeAllDrawers}
           />
           <aside className="met-member-v2-drawer" role="dialog" aria-labelledby="member-v2-drawer-title">
             <div className="met-member-v2-drawer__head">
@@ -499,7 +589,7 @@ const MemberV2Page: React.FC = () => {
                 type="button"
                 className="met-member-v2-drawer__close"
                 aria-label="关闭"
-                onClick={closeDrawer}
+                onClick={closeAllDrawers}
               >
                 ×
               </button>
@@ -627,6 +717,125 @@ const MemberV2Page: React.FC = () => {
                   <span className="met-member-v2-drawer__row-value">{drawerDetail.riskHandleStatus}</span>
                 </div>
               </section>
+            </div>
+          </aside>
+        </>
+      ) : null}
+
+      {matchPreview ? (
+        <>
+          <button
+            type="button"
+            className="met-member-v2-drawer-overlay"
+            aria-label="关闭匹配名单预览"
+            onClick={closeAllDrawers}
+          />
+          <aside
+            className="met-member-v2-drawer met-member-v2-drawer--match"
+            role="dialog"
+            aria-labelledby="member-v2-match-drawer-title"
+          >
+            <div className="met-member-v2-drawer__head">
+              <div>
+                <h2 id="member-v2-match-drawer-title" className="met-member-v2-drawer__title">
+                  {matchPreview.title}
+                </h2>
+                <p className="met-member-v2-drawer__subtitle">{matchPreview.subtitle}</p>
+              </div>
+              <button
+                type="button"
+                className="met-member-v2-drawer__close"
+                aria-label="关闭"
+                onClick={closeAllDrawers}
+              >
+                ×
+              </button>
+            </div>
+            <div className="met-member-v2-drawer__body">
+              <div className="met-member-v2-match-stats">
+                {matchPreview.stats.map(stat => (
+                  <div key={stat.label} className="met-member-v2-match-stat">
+                    <span className="met-member-v2-match-stat__value">{stat.value}</span>
+                    <span className="met-member-v2-match-stat__label">{stat.label}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="met-member-v2-match-hint">点对点邀约名单 · 非群发</p>
+              <section className="met-member-v2-drawer__section">
+                <h3 className="met-member-v2-drawer__section-title">匹配规则摘要</h3>
+                <div className="met-member-v2-drawer__tags">
+                  {matchPreview.ruleTags.map(tag => (
+                    <span key={tag} className="met-member-v2-tag">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </section>
+              <section className="met-member-v2-drawer__section">
+                <h3 className="met-member-v2-drawer__section-title">推荐会员</h3>
+                {matchPreview.candidates.map(candidate => (
+                  <div key={candidate.id} className="met-member-v2-candidate">
+                    <div className="met-member-v2-candidate__head">
+                      <h4 className="met-member-v2-candidate__name">{candidate.name}</h4>
+                      <span
+                        className={[
+                          'met-member-v2-match-level',
+                          candidate.matchLevel === '中匹配' ? 'met-member-v2-match-level--mid' : '',
+                        ]
+                          .filter(Boolean)
+                          .join(' ')}
+                      >
+                        {candidate.matchLevel}
+                      </span>
+                    </div>
+                    <p className="met-member-v2-candidate__meta">
+                      {candidate.stage} · {candidate.assetSummary}
+                      <br />
+                      上次到店：{candidate.lastVisit} · 常去门店：{candidate.preferredStore}
+                      <br />
+                      建议触达：{candidate.recommendedTouch} · 触达状态：{candidate.touchStatus}
+                    </p>
+                    <div className="met-member-v2-candidate__reasons">
+                      {candidate.matchReasons.map(reason => (
+                        <span key={reason} className="met-member-v2-tag">
+                          {reason}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="met-member-v2-candidate__foot">
+                      <span className="met-member-v2-source-tag met-member-v2-source-tag--rule">
+                        系统规则建议
+                      </span>
+                      <div className="met-member-v2-candidate__btns">
+                        <button
+                          type="button"
+                          className="met-member-v2-btn met-member-v2-btn--ghost met-member-v2-btn--sm"
+                          onClick={() => showToast(`已分配邀约：${candidate.name}`)}
+                        >
+                          {candidate.primaryActionLabel}
+                        </button>
+                        <button
+                          type="button"
+                          className="met-member-v2-btn met-member-v2-btn--ghost met-member-v2-btn--sm"
+                          onClick={() => showToast(`已记录：${candidate.name}`)}
+                        >
+                          {candidate.secondaryActionLabel}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </section>
+              <div className="met-member-v2-excluded">
+                <p className="met-member-v2-excluded__title">{matchPreview.excludedSummary}</p>
+                <ul className="met-member-v2-excluded__list">
+                  {matchPreview.excludedReasons.map(reason => (
+                    <li key={reason.label}>
+                      {reason.label}：{reason.count} 人
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </aside>
         </>

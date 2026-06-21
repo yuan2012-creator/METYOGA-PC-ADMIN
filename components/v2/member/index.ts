@@ -4,5 +4,7 @@ export type {
   MemberV2MemberDetail,
   MemberV2LifecycleStage,
   MemberV2AudienceMatchPack,
+  MemberV2AudienceMatchPreview,
+  MemberV2AudienceCandidate,
   MemberV2KeyMemberEntrance,
 } from './memberV2.viewModel';

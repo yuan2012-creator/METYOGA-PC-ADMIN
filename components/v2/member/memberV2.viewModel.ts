@@ -8,7 +8,9 @@ export type MemberV2MatchLevel = 'high' | 'medium' | 'low';
 
 export type MemberV2RiskPriority = 'P0' | 'P1' | 'P2';
 
-export type MemberV2HighlightTone = 'service' | 'risk' | 'recall' | 'opportunity';
+export type MemberV2HighlightTone = 'service' | 'renewal' | 'recall' | 'opportunity';
+
+export type MemberV2DimensionTone = 'neutral' | 'positive';
 
 export interface MemberV2PageMeta {
   title: string;
@@ -23,6 +25,8 @@ export interface MemberV2PageMeta {
   };
 }
 
+export type MemberV2LifecycleRiskVariant = 's4' | 's5' | 's6';
+
 export interface MemberV2LifecycleStage {
   id: string;
   code: MemberV2LifecycleCode;
@@ -32,6 +36,7 @@ export interface MemberV2LifecycleStage {
   weeklyChangeUp: boolean;
   coreAction: string;
   zone: MemberV2LifecycleZone;
+  riskVariant?: MemberV2LifecycleRiskVariant;
 }
 
 export interface MemberV2LifecycleFlow {
@@ -45,9 +50,11 @@ export interface MemberV2AttentionHighlight {
   label: string;
   count: number;
   note: string;
+  typeLabel: string;
   actionLabel: string;
   tone: MemberV2HighlightTone;
   secondaryKey: string;
+  matchPreviewPackId?: string;
 }
 
 export interface MemberV2AttentionHighlights {
@@ -105,11 +112,13 @@ export interface MemberV2MatchDimension {
   key: string;
   label: string;
   level: MemberV2MatchLevel;
+  tone?: MemberV2DimensionTone;
 }
 
 export interface MemberV2AudienceMatchPack {
   id: string;
   title: string;
+  scene: string;
   recommendedCount: number;
   highMatchCount: number;
   suggestionSource: MemberV2SuggestionSource;
@@ -118,6 +127,43 @@ export interface MemberV2AudienceMatchPack {
   excludeTags: string[];
   primaryActionLabel: string;
   secondaryActionLabel?: string;
+  previewId: string;
+}
+
+export interface MemberV2AudienceMatchPreviewStat {
+  label: string;
+  value: string;
+}
+
+export interface MemberV2AudienceCandidate {
+  id: string;
+  name: string;
+  stage: string;
+  matchLevel: string;
+  assetSummary: string;
+  lastVisit: string;
+  preferredStore: string;
+  recommendedTouch: string;
+  matchReasons: string[];
+  touchStatus: string;
+  primaryActionLabel: string;
+  secondaryActionLabel: string;
+}
+
+export interface MemberV2AudienceExcludedReason {
+  label: string;
+  count: number;
+}
+
+export interface MemberV2AudienceMatchPreview {
+  id: string;
+  title: string;
+  subtitle: string;
+  stats: MemberV2AudienceMatchPreviewStat[];
+  ruleTags: string[];
+  candidates: MemberV2AudienceCandidate[];
+  excludedSummary: string;
+  excludedReasons: MemberV2AudienceExcludedReason[];
 }
 
 export interface MemberV2AudienceMatchPacksSection {
@@ -204,6 +250,7 @@ export interface MemberV2Snapshot {
   serviceQueue: MemberV2ServiceQueueSection;
   salesQueue: MemberV2SalesQueueSection;
   audienceMatchPacks: MemberV2AudienceMatchPacksSection;
+  audienceMatchPreviews: Record<string, MemberV2AudienceMatchPreview>;
   riskGraph: MemberV2RiskGraphSection;
   keyMemberEntrances: MemberV2KeyMemberEntrancesSection;
   secondaryEntrances: MemberV2SecondaryEntrance[];
@@ -325,6 +372,164 @@ const DRAWER_DETAILS: Record<string, MemberV2MemberDetail> = {
   },
 };
 
+const MATCH_PREVIEW_PLACEHOLDER_CANDIDATES: MemberV2AudienceCandidate[] = [
+  {
+    id: 'ac-ph-1',
+    name: '示例会员 A',
+    stage: 'S3 稳定活跃',
+    matchLevel: '高匹配',
+    assetSummary: '锦鲤卡 · 剩余 36 点',
+    lastVisit: '5 天前',
+    preferredStore: '滨江馆',
+    recommendedTouch: '微信私聊',
+    matchReasons: ['符合场景规则', '资产可用', '触达疲劳低'],
+    touchStatus: '待分配',
+    primaryActionLabel: '分配邀约',
+    secondaryActionLabel: '记录',
+  },
+];
+
+const MATCH_PREVIEWS: Record<string, MemberV2AudienceMatchPreview> = {
+  'am-1': {
+    id: 'am-1',
+    title: '明晚内观流补员 · 匹配名单',
+    subtitle: '按课程偏好、时间习惯、门店距离、资产可用和触达疲劳筛选',
+    stats: [
+      { label: '推荐会员', value: '18 人' },
+      { label: '高匹配', value: '6 人' },
+      { label: '待邀约', value: '6 人' },
+      { label: '已排除', value: '5 人' },
+    ],
+    ruleTags: [
+      '喜欢内观流',
+      '周三晚课活跃',
+      '滨江馆常客',
+      '剩余点数充足',
+      '近 14 天未到店',
+      '触达疲劳低',
+    ],
+    candidates: [
+      {
+        id: 'ac-1',
+        name: '王静怡',
+        stage: 'S3 稳定活跃',
+        matchLevel: '高匹配',
+        assetSummary: '锦鲤卡 · 剩余 42 点',
+        lastVisit: '10 天前',
+        preferredStore: '滨江馆',
+        recommendedTouch: '微信私聊',
+        matchReasons: ['喜欢内观流', '周三晚课活跃', '滨江馆常客', '到课稳定'],
+        touchStatus: '待分配',
+        primaryActionLabel: '分配邀约',
+        secondaryActionLabel: '记录',
+      },
+      {
+        id: 'ac-2',
+        name: '许倩',
+        stage: 'S4 低频风险',
+        matchLevel: '高匹配',
+        assetSummary: '天选卡 · 剩余 96 点',
+        lastVisit: '21 天前',
+        preferredStore: '滨江馆',
+        recommendedTouch: '微信私聊',
+        matchReasons: ['高余额低耗课', '喜欢低强度流动课', '晚课活跃'],
+        touchStatus: '待邀约',
+        primaryActionLabel: '分配邀约',
+        secondaryActionLabel: '记录',
+      },
+      {
+        id: 'ac-3',
+        name: '何珊',
+        stage: 'S5 续费窗口',
+        matchLevel: '中匹配',
+        assetSummary: '锦鲤卡 · 剩余 18 点',
+        lastVisit: '3 天前',
+        preferredStore: '滨江馆',
+        recommendedTouch: '课程复盘后邀约',
+        matchReasons: ['近期活跃', '晚课习惯稳定', '可作为续费沟通前的服务触点'],
+        touchStatus: '待邀约',
+        primaryActionLabel: '分配邀约',
+        secondaryActionLabel: '记录',
+      },
+      {
+        id: 'ac-4',
+        name: '林可',
+        stage: 'S2 新成交激活',
+        matchLevel: '中匹配',
+        assetSummary: '初遇卡 · 剩余 39 点',
+        lastVisit: '7 天前',
+        preferredStore: '滨江馆',
+        recommendedTouch: '预约提醒',
+        matchReasons: ['新成交未形成稳定频率', '晚间可约', '课程强度适中'],
+        touchStatus: '待分配',
+        primaryActionLabel: '分配邀约',
+        secondaryActionLabel: '记录',
+      },
+    ],
+    excludedSummary: '已排除 5 人',
+    excludedReasons: [
+      { label: '近 7 天已邀约 ≥ 2 次', count: 2 },
+      { label: '已预约同类课程', count: 1 },
+      { label: '身体标签不适合', count: 1 },
+      { label: '暂不打扰', count: 1 },
+    ],
+  },
+  'am-2': {
+    id: 'am-2',
+    title: '周末普拉提小班补员 · 匹配名单',
+    subtitle: '按课程偏好、时间习惯、门店距离、资产可用和触达疲劳筛选',
+    stats: [
+      { label: '推荐会员', value: '22 人' },
+      { label: '高匹配', value: '9 人' },
+      { label: '待邀约', value: '9 人' },
+      { label: '已排除', value: '4 人' },
+    ],
+    ruleTags: ['常约普拉提', '周末上午活跃', '小班偏好', '剩余点数充足', '触达疲劳中'],
+    candidates: MATCH_PREVIEW_PLACEHOLDER_CANDIDATES,
+    excludedSummary: '已排除 4 人',
+    excludedReasons: [
+      { label: '不接受跨店', count: 2 },
+      { label: '近 7 天已拒绝邀约', count: 2 },
+    ],
+  },
+  'am-3': {
+    id: 'am-3',
+    title: '高余额低耗课召回 · 匹配名单',
+    subtitle: '按课程偏好、时间习惯、门店距离、资产可用和触达疲劳筛选',
+    stats: [
+      { label: '推荐会员', value: '12 人' },
+      { label: '高匹配', value: '5 人' },
+      { label: '待邀约', value: '5 人' },
+      { label: '已排除', value: '3 人' },
+    ],
+    ruleTags: ['余额 ≥ 60 点', '30 天耗课 ≤ 2 次', '近期未触达', '触达疲劳低'],
+    candidates: MATCH_PREVIEW_PLACEHOLDER_CANDIDATES,
+    excludedSummary: '已排除 3 人',
+    excludedReasons: [
+      { label: '暂不打扰', count: 2 },
+      { label: '冻结中', count: 1 },
+    ],
+  },
+  'am-4': {
+    id: 'am-4',
+    title: '新成交 7 天未预约 · 匹配名单',
+    subtitle: '按课程偏好、时间习惯、门店距离、资产可用和触达疲劳筛选',
+    stats: [
+      { label: '推荐会员', value: '8 人' },
+      { label: '高匹配', value: '4 人' },
+      { label: '待邀约', value: '4 人' },
+      { label: '已排除', value: '2 人' },
+    ],
+    ruleTags: ['S2 新成交', '7 天内未预约', '合同已签', '触达疲劳低'],
+    candidates: MATCH_PREVIEW_PLACEHOLDER_CANDIDATES,
+    excludedSummary: '已排除 2 人',
+    excludedReasons: [
+      { label: '合同未签', count: 1 },
+      { label: '卡项未生效', count: 1 },
+    ],
+  },
+};
+
 export function buildMemberV2Snapshot(): MemberV2Snapshot {
   return {
     meta: {
@@ -392,6 +597,7 @@ export function buildMemberV2Snapshot(): MemberV2Snapshot {
           weeklyChangeUp: true,
           coreAction: '召回触达',
           zone: 'risk',
+          riskVariant: 's4',
         },
         {
           id: 'ls-s5',
@@ -402,6 +608,7 @@ export function buildMemberV2Snapshot(): MemberV2Snapshot {
           weeklyChangeUp: true,
           coreAction: '续费跟进',
           zone: 'risk',
+          riskVariant: 's5',
         },
         {
           id: 'ls-s6',
@@ -412,6 +619,7 @@ export function buildMemberV2Snapshot(): MemberV2Snapshot {
           weeklyChangeUp: true,
           coreAction: '唤醒 / 归档',
           zone: 'risk',
+          riskVariant: 's6',
         },
       ],
     },
@@ -424,6 +632,7 @@ export function buildMemberV2Snapshot(): MemberV2Snapshot {
           label: '身体标签到店',
           count: 5,
           note: '今晚到店需老师注意',
+          typeLabel: '服务',
           actionLabel: '查看',
           tone: 'service',
           secondaryKey: 'service_tasks',
@@ -433,8 +642,9 @@ export function buildMemberV2Snapshot(): MemberV2Snapshot {
           label: '续费窗口',
           count: 24,
           note: '余额或有效期接近阈值',
+          typeLabel: '续费',
           actionLabel: '跟进',
-          tone: 'risk',
+          tone: 'renewal',
           secondaryKey: 'sales_followups',
         },
         {
@@ -442,6 +652,7 @@ export function buildMemberV2Snapshot(): MemberV2Snapshot {
           label: '高余额低耗课',
           count: 12,
           note: '余额 ≥ 60 点，30 天耗课 ≤ 2 次',
+          typeLabel: '风险',
           actionLabel: '名单',
           tone: 'recall',
           secondaryKey: 'risk_list',
@@ -451,9 +662,11 @@ export function buildMemberV2Snapshot(): MemberV2Snapshot {
           label: '明晚内观流补员',
           count: 18,
           note: '同类同频可邀约人群',
+          typeLabel: '机会',
           actionLabel: '匹配',
           tone: 'opportunity',
           secondaryKey: 'match_list',
+          matchPreviewPackId: 'am-1',
         },
       ],
     },
@@ -552,6 +765,7 @@ export function buildMemberV2Snapshot(): MemberV2Snapshot {
         {
           id: 'am-1',
           title: '明晚内观流补员',
+          scene: '课程补员',
           recommendedCount: 18,
           highMatchCount: 6,
           suggestionSource: 'system_rule',
@@ -561,15 +775,17 @@ export function buildMemberV2Snapshot(): MemberV2Snapshot {
             { key: 'time', label: '时间习惯', level: 'high' },
             { key: 'store', label: '门店距离', level: 'medium' },
             { key: 'asset', label: '资产可用', level: 'high' },
-            { key: 'fatigue', label: '触达疲劳', level: 'low' },
+            { key: 'fatigue', label: '触达疲劳', level: 'low', tone: 'positive' },
           ],
           excludeTags: ['近 7 天已邀约 ≥ 2 次', '已预约同类课程', '身体标签不适合'],
           primaryActionLabel: '查看名单',
           secondaryActionLabel: '分配邀约',
+          previewId: 'am-1',
         },
         {
           id: 'am-2',
           title: '周末普拉提小班补员',
+          scene: '课程补员',
           recommendedCount: 22,
           highMatchCount: 9,
           suggestionSource: 'system_rule',
@@ -577,17 +793,19 @@ export function buildMemberV2Snapshot(): MemberV2Snapshot {
           dimensions: [
             { key: 'course', label: '课程偏好', level: 'high' },
             { key: 'time', label: '时间习惯', level: 'high' },
-            { key: 'store', label: '门店距离', level: 'high' },
+            { key: 'store', label: '门店距离', level: 'medium' },
             { key: 'asset', label: '资产可用', level: 'high' },
             { key: 'fatigue', label: '触达疲劳', level: 'medium' },
           ],
           excludeTags: ['不接受跨店', '近 7 天已拒绝邀约'],
           primaryActionLabel: '查看名单',
           secondaryActionLabel: '分配邀约',
+          previewId: 'am-2',
         },
         {
           id: 'am-3',
           title: '高余额低耗课召回',
+          scene: '会员召回',
           recommendedCount: 12,
           highMatchCount: 5,
           suggestionSource: 'system_rule',
@@ -597,30 +815,34 @@ export function buildMemberV2Snapshot(): MemberV2Snapshot {
             { key: 'time', label: '时间习惯', level: 'medium' },
             { key: 'store', label: '门店距离', level: 'high' },
             { key: 'asset', label: '资产可用', level: 'high' },
-            { key: 'fatigue', label: '触达疲劳', level: 'low' },
+            { key: 'fatigue', label: '触达疲劳', level: 'low', tone: 'positive' },
           ],
           excludeTags: ['暂不打扰', '冻结中'],
           primaryActionLabel: '生成任务',
+          previewId: 'am-3',
         },
         {
           id: 'am-4',
           title: '新成交 7 天未预约',
+          scene: '新会员激活',
           recommendedCount: 8,
           highMatchCount: 4,
           suggestionSource: 'pending_config',
           suggestionSourceLabel: '待配置规则',
           dimensions: [
             { key: 'course', label: '课程偏好', level: 'medium' },
-            { key: 'time', label: '时间习惯', level: 'low' },
-            { key: 'store', label: '门店距离', level: 'high' },
+            { key: 'time', label: '时间习惯', level: 'medium' },
+            { key: 'store', label: '门店距离', level: 'medium' },
             { key: 'asset', label: '资产可用', level: 'high' },
-            { key: 'fatigue', label: '触达疲劳', level: 'low' },
+            { key: 'fatigue', label: '触达疲劳', level: 'low', tone: 'positive' },
           ],
           excludeTags: ['合同未签', '卡项未生效'],
           primaryActionLabel: '查看名单',
+          previewId: 'am-4',
         },
       ],
     },
+    audienceMatchPreviews: MATCH_PREVIEWS,
     riskGraph: {
       title: '会员风险图谱',
       subtitle: '按资产、行为和触达状态识别风险会员',
