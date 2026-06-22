@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import Dashboard from './components/Dashboard';
 import Shop from './components/Shop';
 import Mall from './components/Mall'; // New Component
-import Finance from './components/Finance';
 import Marketing from './components/Marketing';
 import Data from './components/Data';
 import Investor from './components/Investor';
@@ -15,6 +14,7 @@ import { TodayV2Page } from './components/v2/today';
 import { MemberV2Page } from './components/v2/member';
 import { CourseV2Page } from './components/v2/course';
 import { StaffV2Page } from './components/v2/staff';
+import { FinanceV2Page } from './components/v2/finance';
 import {
   ModulePlaceholder,
   SIDEBAR_V2_DEFAULT_NAV,
@@ -25,7 +25,7 @@ import {
 import { MockAdminScopeProvider } from './context/MockAdminScopeContext';
 import { MOCK_ADMIN_UI_DEFAULT } from './constants/mockAdminScope';
 
-const SCROLLABLE_NAV_IDS = new Set(['dashboard', 'dashboard-v2', 'today', 'member', 'course', 'staff']);
+const SCROLLABLE_NAV_IDS = new Set(['dashboard', 'dashboard-v2', 'today', 'member', 'course', 'staff', 'finance']);
 
 const App: React.FC = () => {
   const [activeNav, setActiveNav] = useState<string>(SIDEBAR_V2_DEFAULT_NAV);
@@ -67,7 +67,7 @@ const App: React.FC = () => {
       case 'member':
         return <MemberV2Page />;
       case 'finance':
-        return <Finance />;
+        return <FinanceV2Page />;
       case 'marketing':
         return <Marketing />;
       case 'data':
