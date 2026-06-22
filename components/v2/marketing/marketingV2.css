@@ -1,0 +1,1095 @@
+/* 活动与获客 V2 v1.2 — 转化主线收口 */
+
+.met-marketing-v2 {
+  --v2-bg-page: #f1f1f1;
+  --v2-bg-card: #ffffff;
+  --v2-green: #006b42;
+  --v2-green-soft: rgba(0, 107, 66, 0.08);
+  --v2-text-title: #1f1f1f;
+  --v2-text-body: #333333;
+  --v2-text-secondary: #777777;
+  --v2-text-faint: #a0a0a0;
+  --v2-border: #e5e5e5;
+  --v2-border-light: #efefef;
+  --v2-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+  --v2-radius-card: 20px;
+  --v2-padding-page: 32px;
+  --v2-gap-card: 24px;
+  --v2-warn: #c27803;
+  --v2-warn-bg: #fef7e8;
+  --v2-risk: #b42318;
+  --v2-risk-bg: #feeceb;
+  --v2-drawer-width: 680px;
+
+  min-height: 100%;
+  padding: var(--v2-padding-page);
+  background: var(--v2-bg-page);
+  color: var(--v2-text-body);
+  box-sizing: border-box;
+}
+
+.met-marketing-v2 *,
+.met-marketing-v2 *::before,
+.met-marketing-v2 *::after {
+  box-sizing: border-box;
+}
+
+.met-marketing-v2__inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--v2-gap-card);
+  width: min(100%, 1480px);
+  margin: 0 auto;
+}
+
+.met-marketing-v2__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.met-marketing-v2__header-copy h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 600;
+  color: var(--v2-text-title);
+}
+
+.met-marketing-v2__header-copy p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--v2-text-secondary);
+}
+
+.met-marketing-v2__header-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.met-marketing-v2__filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.met-marketing-v2__filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--v2-border);
+  border-radius: 10px;
+  background: var(--v2-bg-card);
+  font-size: 12px;
+  color: var(--v2-text-body);
+  cursor: pointer;
+}
+
+.met-marketing-v2__filter-btn--primary {
+  border-color: var(--v2-green);
+  background: var(--v2-green);
+  color: #fff;
+}
+
+.met-marketing-v2__filter-btn--ghost {
+  background: #fff;
+}
+
+.met-marketing-v2__detail-link {
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 12px;
+  color: var(--v2-green);
+  cursor: pointer;
+}
+
+.met-marketing-v2-zone {
+  border: 1px solid var(--v2-border);
+  border-radius: var(--v2-radius-card);
+  background: var(--v2-bg-card);
+  box-shadow: var(--v2-shadow);
+  padding: 20px 22px 18px;
+}
+
+.met-marketing-v2-zone--lite {
+  padding: 12px 18px 10px;
+  background: #fafafa;
+  box-shadow: none;
+  border-color: var(--v2-border-light);
+}
+
+.met-marketing-v2-zone__head {
+  margin-bottom: 16px;
+}
+
+.met-marketing-v2-zone__head--lite {
+  margin-bottom: 8px;
+}
+
+.met-marketing-v2-zone__title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--v2-text-title);
+}
+
+.met-marketing-v2-zone--lite .met-marketing-v2-zone__title {
+  font-size: 14px;
+}
+
+.met-marketing-v2-zone__subtitle {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--v2-text-secondary);
+  line-height: 1.45;
+}
+
+.met-marketing-v2-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--v2-border);
+  border-radius: 8px;
+  background: #fff;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--v2-text-secondary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.met-marketing-v2-btn:hover {
+  border-color: var(--v2-green);
+  color: var(--v2-green);
+}
+
+.met-marketing-v2-btn--sm {
+  height: 24px;
+  padding: 0 8px;
+  font-size: 10px;
+}
+
+.met-marketing-v2-source-tag {
+  display: inline-flex;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 500;
+}
+
+.met-marketing-v2-source-tag.is-rule {
+  background: var(--v2-green-soft);
+  color: var(--v2-green);
+}
+
+.met-marketing-v2-source-tag.is-pending {
+  background: #f3f3f3;
+  color: var(--v2-text-faint);
+}
+
+.met-marketing-v2-priority {
+  display: inline-flex;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.met-marketing-v2-priority.is-p0 { background: var(--v2-risk-bg); color: var(--v2-risk); }
+.met-marketing-v2-priority.is-p1 { background: var(--v2-warn-bg); color: var(--v2-warn); }
+.met-marketing-v2-priority.is-p2 { background: #f3f3f3; color: var(--v2-text-secondary); }
+
+/* —— 第一屏：获客转化作战台 —— */
+.met-marketing-v2-warroom {
+  padding: 22px 24px 14px;
+}
+
+.met-marketing-v2-warroom__body {
+  display: grid;
+  grid-template-columns: minmax(0, 7fr) minmax(220px, 3fr);
+  gap: 16px;
+  align-items: start;
+}
+
+/* 主漏斗路径 */
+.met-marketing-v2-funnel-main {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  padding: 16px 14px 8px;
+  border: 1px solid var(--v2-border-light);
+  border-radius: 16px;
+  background: #fafafa;
+  min-height: 168px;
+  overflow-x: auto;
+}
+
+.met-marketing-v2-funnel-main__unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.met-marketing-v2-funnel-stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  max-width: 140px;
+  padding: 10px 8px;
+  border: 1px solid #cfe8d8;
+  border-radius: 10px 10px 6px 6px;
+  background: #fff;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  clip-path: polygon(4% 0, 96% 0, 100% 100%, 0 100%);
+}
+
+.met-marketing-v2-funnel-stage:hover {
+  border-color: var(--v2-green);
+  box-shadow: 0 4px 12px rgba(0, 107, 66, 0.1);
+}
+
+.met-marketing-v2-funnel-stage__name {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--v2-text-title);
+  line-height: 1.25;
+}
+
+.met-marketing-v2-funnel-stage__count {
+  margin-top: 4px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--v2-green);
+  line-height: 1;
+}
+
+.met-marketing-v2-funnel-stage__rate {
+  margin-top: 3px;
+  font-size: 9px;
+  color: var(--v2-text-secondary);
+  line-height: 1.25;
+}
+
+.met-marketing-v2-funnel-main__arrow {
+  display: flex;
+  align-items: center;
+  padding-bottom: 28px;
+  font-size: 14px;
+  color: var(--v2-text-faint);
+  flex-shrink: 0;
+}
+
+.met-marketing-v2-funnel-break {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 6px;
+  padding: 3px 6px;
+  border-radius: 6px;
+  max-width: 100px;
+  text-align: center;
+  line-height: 1.25;
+}
+
+.met-marketing-v2-funnel-break.is-primary {
+  background: var(--v2-warn-bg);
+  border: 1px solid #ebe4d8;
+}
+
+.met-marketing-v2-funnel-break.is-secondary {
+  background: #f8f8f8;
+  border: 1px solid var(--v2-border-light);
+}
+
+.met-marketing-v2-funnel-break.is-handoff {
+  background: var(--v2-green-soft);
+  border: 1px solid #d8ebe3;
+}
+
+.met-marketing-v2-funnel-break__label {
+  font-size: 8px;
+  font-weight: 700;
+  color: var(--v2-text-secondary);
+}
+
+.met-marketing-v2-funnel-break.is-primary .met-marketing-v2-funnel-break__label {
+  color: var(--v2-warn);
+}
+
+.met-marketing-v2-funnel-break__detail {
+  font-size: 8px;
+  color: var(--v2-text-body);
+  margin-top: 1px;
+}
+
+/* 紧凑行动列表 */
+.met-marketing-v2-action-compact__head {
+  margin-bottom: 8px;
+}
+
+.met-marketing-v2-action-compact__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--v2-text-title);
+}
+
+.met-marketing-v2-action-compact__subtitle {
+  margin: 2px 0 0;
+  font-size: 10px;
+  color: var(--v2-text-faint);
+}
+
+.met-marketing-v2-action-compact__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--v2-border-light);
+  border-radius: 10px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.met-marketing-v2-action-compact__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 56px;
+  max-height: 60px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--v2-border-light);
+}
+
+.met-marketing-v2-action-compact__row:last-child {
+  border-bottom: none;
+}
+
+.met-marketing-v2-action-compact__row.is-p0 {
+  box-shadow: inset 3px 0 0 var(--v2-risk);
+}
+
+.met-marketing-v2-action-compact__row.is-p1 {
+  box-shadow: inset 3px 0 0 var(--v2-warn);
+}
+
+.met-marketing-v2-action-compact__main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  min-width: 0;
+}
+
+.met-marketing-v2-action-compact__name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--v2-text-title);
+}
+
+.met-marketing-v2-action-compact__count {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--v2-text-title);
+}
+
+.met-marketing-v2-action-compact__desc {
+  flex: 1 0 100%;
+  font-size: 9px;
+  color: var(--v2-text-faint);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 弱化简报条 */
+.met-marketing-v2-warroom__brief {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--v2-border-light);
+}
+
+.met-marketing-v2-warroom__brief-item {
+  font-size: 11px;
+  color: var(--v2-text-faint);
+}
+
+.met-marketing-v2-warroom__brief-item strong {
+  font-weight: 600;
+  color: var(--v2-text-secondary);
+}
+
+/* —— 第二屏：渠道价值四象限 —— */
+.met-marketing-v2-channel-quadrants__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.met-marketing-v2-quadrant {
+  padding: 12px 14px;
+  border: 1px solid var(--v2-border-light);
+  border-radius: 12px;
+  background: #fafafa;
+  min-height: 140px;
+}
+
+.met-marketing-v2-quadrant.is-follow-up { border-top: 3px solid #6b8fbf; }
+.met-marketing-v2-quadrant.is-quality { border-top: 3px solid var(--v2-green); background: #f8fbf9; }
+.met-marketing-v2-quadrant.is-low { border-top: 3px solid var(--v2-warn); }
+.met-marketing-v2-quadrant.is-stable { border-top: 3px solid #9ab0a0; }
+
+.met-marketing-v2-quadrant__title {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--v2-text-title);
+}
+
+.met-marketing-v2-quadrant__channels {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.met-marketing-v2-channel-pill {
+  padding: 8px 10px;
+  border: 1px solid var(--v2-border-light);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.met-marketing-v2-channel-pill__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+}
+
+.met-marketing-v2-channel-pill__name {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--v2-text-title);
+}
+
+.met-marketing-v2-channel-pill__meta {
+  font-size: 9px;
+  color: var(--v2-text-faint);
+}
+
+.met-marketing-v2-channel-pill__judgement {
+  margin: 4px 0 6px;
+  font-size: 9px;
+  color: var(--v2-text-secondary);
+  line-height: 1.35;
+}
+
+.met-marketing-v2-channel-quadrants__judgements {
+  margin: 12px 0 0;
+  padding: 10px 14px;
+  list-style: none;
+  border: 1px solid var(--v2-border-light);
+  border-radius: 10px;
+  background: #fafafa;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+
+.met-marketing-v2-channel-quadrants__judgements li {
+  font-size: 11px;
+  color: var(--v2-text-body);
+}
+
+.met-marketing-v2-channel-quadrants__judgements li::before {
+  content: '→ ';
+  color: var(--v2-green);
+  font-weight: 700;
+}
+
+/* —— 第三屏：活动战役复盘 —— */
+.met-marketing-v2-battle-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.met-marketing-v2-battle-hero {
+  padding: 18px 20px;
+  border: 1px solid var(--v2-border-light);
+  border-radius: 16px;
+  background: #fff;
+  border-left: 4px solid var(--v2-green);
+}
+
+.met-marketing-v2-battle-hero__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.met-marketing-v2-battle-hero__badge {
+  display: inline-block;
+  margin-bottom: 4px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--v2-green-soft);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--v2-green);
+}
+
+.met-marketing-v2-battle-hero__name {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--v2-text-title);
+}
+
+.met-marketing-v2-battle-hero__status {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--v2-green);
+}
+
+.met-marketing-v2-battle-hero__goal {
+  margin: 10px 0 0;
+  font-size: 11px;
+  color: var(--v2-text-secondary);
+}
+
+.met-marketing-v2-battle-hero__progress-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+
+.met-marketing-v2-battle-hero__progress-label {
+  font-size: 10px;
+  color: var(--v2-text-faint);
+}
+
+.met-marketing-v2-battle-hero__progress-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--v2-green);
+  line-height: 1;
+}
+
+.met-marketing-v2-battle-hero__goal-bar {
+  height: 6px;
+  margin-top: 6px;
+  border-radius: 999px;
+  background: #ececec;
+  overflow: hidden;
+}
+
+.met-marketing-v2-battle-hero__goal-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--v2-green);
+}
+
+.met-marketing-v2-campaign-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 14px 0 10px;
+}
+
+.met-marketing-v2-campaign-progress__stage {
+  display: grid;
+  grid-template-columns: 32px 1fr auto;
+  gap: 6px;
+  align-items: center;
+}
+
+.met-marketing-v2-campaign-progress__bar {
+  height: 7px;
+  border-radius: 999px;
+  background: #ececec;
+  overflow: hidden;
+}
+
+.met-marketing-v2-campaign-progress__fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--v2-green);
+  min-width: 3px;
+}
+
+.met-marketing-v2-campaign-progress__label {
+  font-size: 9px;
+  color: var(--v2-text-faint);
+}
+
+.met-marketing-v2-campaign-progress__value {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--v2-text-title);
+}
+
+.met-marketing-v2-battle-hero__issue {
+  margin: 0;
+  font-size: 11px;
+  color: var(--v2-warn);
+}
+
+.met-marketing-v2-battle-hero__next {
+  margin: 4px 0 0;
+  font-size: 10px;
+  color: var(--v2-green);
+}
+
+.met-marketing-v2-battle-hero__copy {
+  margin: 4px 0 12px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--v2-text-body);
+}
+
+.met-marketing-v2-battle-support {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.met-marketing-v2-battle-support__card {
+  padding: 12px 14px;
+  border: 1px solid var(--v2-border-light);
+  border-radius: 12px;
+  background: #fafafa;
+}
+
+.met-marketing-v2-battle-support__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.met-marketing-v2-battle-support__name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--v2-text-title);
+}
+
+.met-marketing-v2-battle-support__status {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--v2-green);
+}
+
+.met-marketing-v2-battle-support__card.is-review .met-marketing-v2-battle-support__status {
+  color: var(--v2-warn);
+}
+
+.met-marketing-v2-battle-support__stats {
+  margin: 6px 0 0;
+  font-size: 10px;
+  color: var(--v2-text-secondary);
+}
+
+.met-marketing-v2-battle-support__copy {
+  margin: 4px 0 8px;
+  font-size: 10px;
+  color: var(--v2-text-body);
+}
+
+/* —— 第四屏：线索跟进行动队列 —— */
+.met-marketing-v2-action-queue {
+  display: flex;
+  flex-direction: column;
+}
+
+.met-marketing-v2-action-queue__row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--v2-border-light);
+}
+
+.met-marketing-v2-action-queue__row:last-child {
+  border-bottom: none;
+}
+
+.met-marketing-v2-action-queue__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--v2-text-title);
+}
+
+.met-marketing-v2-action-queue__fact {
+  margin: 3px 0 0;
+  font-size: 11px;
+  color: var(--v2-text-secondary);
+  line-height: 1.45;
+}
+
+.met-marketing-v2-action-queue__action {
+  margin: 2px 0 0;
+  font-size: 10px;
+  color: var(--v2-green);
+}
+
+.met-marketing-v2-action-queue__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin-top: 3px;
+  font-size: 9px;
+  color: var(--v2-text-faint);
+}
+
+/* —— 第五屏：体验成交承接 —— */
+.met-marketing-v2-handoff-compact__flow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+  padding: 12px 14px;
+  border: 1px solid var(--v2-border-light);
+  border-radius: 12px;
+  background: #fafafa;
+}
+
+.met-marketing-v2-handoff-compact__node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid var(--v2-border-light);
+  border-radius: 8px;
+  background: #fff;
+  min-width: 76px;
+  text-align: center;
+}
+
+.met-marketing-v2-handoff-compact__label {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--v2-text-title);
+}
+
+.met-marketing-v2-handoff-compact__count {
+  margin-top: 3px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--v2-green);
+}
+
+.met-marketing-v2-handoff-compact__arrow {
+  font-size: 12px;
+  color: var(--v2-text-faint);
+}
+
+.met-marketing-v2-handoff-compact__breaks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.met-marketing-v2-handoff-compact__break {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--v2-border-light);
+  border-radius: 8px;
+  background: #fff;
+  font-size: 10px;
+  color: var(--v2-text-secondary);
+}
+
+.met-marketing-v2-handoff-compact__break strong {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--v2-warn);
+}
+
+.met-marketing-v2-handoff-compact__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* —— 第六屏：内容与活动节奏（轻量） —— */
+.met-marketing-v2-timeline-lite {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.met-marketing-v2-timeline-lite__item {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--v2-border-light);
+  font-size: 11px;
+}
+
+.met-marketing-v2-timeline-lite__item:last-child {
+  border-bottom: none;
+}
+
+.met-marketing-v2-timeline-lite__date {
+  font-weight: 700;
+  color: var(--v2-text-title);
+}
+
+.met-marketing-v2-timeline-lite__title {
+  color: var(--v2-text-body);
+}
+
+.met-marketing-v2-timeline-lite__status {
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.met-marketing-v2-timeline-lite__status.is-done {
+  background: var(--v2-green-soft);
+  color: var(--v2-green);
+}
+
+.met-marketing-v2-timeline-lite__status.is-active {
+  background: #f5f8ff;
+  color: #4a6fa5;
+}
+
+.met-marketing-v2-timeline-lite__status.is-pending {
+  background: var(--v2-warn-bg);
+  color: var(--v2-warn);
+}
+
+.met-marketing-v2-timeline-lite__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* —— 抽屉 —— */
+.met-marketing-v2-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(0, 0, 0, 0.28);
+  border: none;
+  cursor: pointer;
+}
+
+.met-marketing-v2-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 201;
+  display: flex;
+  flex-direction: column;
+  width: min(var(--v2-drawer-width), 100vw);
+  height: 100%;
+  background: var(--v2-bg-card);
+  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.08);
+}
+
+.met-marketing-v2-drawer__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--v2-border-light);
+}
+
+.met-marketing-v2-drawer__title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--v2-text-title);
+}
+
+.met-marketing-v2-drawer__subtitle {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--v2-text-secondary);
+}
+
+.met-marketing-v2-drawer__close {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--v2-border);
+  border-radius: 8px;
+  background: #fff;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.met-marketing-v2-drawer__body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px 32px;
+}
+
+.met-marketing-v2-drawer__section {
+  margin-bottom: 18px;
+}
+
+.met-marketing-v2-drawer__section-title {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--v2-text-title);
+}
+
+.met-marketing-v2-drawer__highlight {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--v2-border-light);
+  border-radius: 8px;
+  background: #fafafa;
+  font-size: 12px;
+  color: var(--v2-text-body);
+  line-height: 1.45;
+}
+
+.met-marketing-v2-drawer__highlight.is-warn {
+  background: var(--v2-warn-bg);
+  border-color: #ebe4d8;
+  color: var(--v2-warn);
+}
+
+.met-marketing-v2-drawer__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  font-size: 12px;
+  border-bottom: 1px solid var(--v2-border-light);
+}
+
+.met-marketing-v2-drawer__row span:first-child {
+  color: var(--v2-text-faint);
+}
+
+.met-marketing-v2-drawer__row span:last-child {
+  text-align: right;
+  color: var(--v2-text-body);
+}
+
+.met-marketing-v2-drawer__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.met-marketing-v2-drawer__tag {
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--v2-green-soft);
+  font-size: 10px;
+  color: var(--v2-green);
+}
+
+.met-marketing-v2-drawer__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.met-marketing-v2-drawer__list li {
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  border: 1px solid var(--v2-border-light);
+  border-radius: 8px;
+  background: #fafafa;
+  font-size: 11px;
+  color: var(--v2-text-secondary);
+}
+
+.met-marketing-v2-drawer__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.met-marketing-v2-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 32px;
+  z-index: 300;
+  padding: 12px 18px;
+  border-radius: 12px;
+  background: var(--v2-text-title);
+  color: #fff;
+  font-size: 13px;
+  box-shadow: var(--v2-shadow);
+}
+
+@media (max-width: 1200px) {
+  .met-marketing-v2-warroom__body {
+    grid-template-columns: 1fr;
+  }
+
+  .met-marketing-v2-battle-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .met-marketing-v2-funnel-main {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .met-marketing-v2-funnel-main__arrow {
+    padding-bottom: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .met-marketing-v2-channel-quadrants__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .met-marketing-v2-action-queue__row {
+    grid-template-columns: 1fr;
+  }
+
+  .met-marketing-v2-action-compact__row {
+    max-height: none;
+    min-height: 52px;
+  }
+}
