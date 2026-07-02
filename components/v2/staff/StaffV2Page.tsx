@@ -12,6 +12,8 @@ import {
   type StaffV2AttentionHighlight,
   type StaffV2CourseCoverageItem,
   type StaffV2IssueItem,
+  type StaffOwnedMemberQueueItem,
+  type StaffOwnedMemberSummary,
   type StaffV2Priority,
   type StaffV2SuggestionSource,
   type StaffV2TeacherApplicationItem,
@@ -135,6 +137,20 @@ const StaffV2Page: React.FC = () => {
     [showToast],
   );
 
+  const handleOwnedMemberView = useCallback(
+    (summary: StaffOwnedMemberSummary) => {
+      openDrawer(summary.teacherId);
+    },
+    [openDrawer],
+  );
+
+  const handleOwnedMemberQueueAction = useCallback(
+    (item: StaffOwnedMemberQueueItem) => {
+      showToast(item.toastMessage);
+    },
+    [showToast],
+  );
+
   const {
     meta,
     filters,
@@ -142,6 +158,7 @@ const StaffV2Page: React.FC = () => {
     teacherApplications,
     workloadHeatmap,
     courseCoverage,
+    ownedMemberManagement,
     teacherContribution,
     staffIssueQueue,
     growthCoaching,
@@ -452,6 +469,119 @@ const StaffV2Page: React.FC = () => {
           </div>
         </article>
 
+        <article className="met-staff-v2-zone met-staff-v2-zone--owned-members">
+          <header className="met-staff-v2-zone__head">
+            <h2 className="met-staff-v2-zone__title">{ownedMemberManagement.title}</h2>
+            <p className="met-staff-v2-zone__subtitle">{ownedMemberManagement.subtitle}</p>
+          </header>
+          <div className="met-staff-v2-owned-members">
+            <div className="met-staff-v2-owned-members__grid">
+              {ownedMemberManagement.teacherSummaries.map(summary => {
+                const stageTotal = summary.stageDistribution.reduce((sum, s) => sum + s.count, 0);
+                return (
+                  <div key={summary.id} className="met-staff-v2-owned-member-card">
+                    <div className="met-staff-v2-owned-member-card__head">
+                      <span className="met-staff-v2-owned-member-card__name">{summary.name}</span>
+                      <span className="met-staff-v2-owned-member-card__level">{summary.level}</span>
+                    </div>
+                    <div className="met-staff-v2-owned-member-card__metrics">
+                      <div className="met-staff-v2-owned-member-card__metric">
+                        <span className="met-staff-v2-owned-member-card__metric-value">{summary.totalMembers}</span>
+                        <span className="met-staff-v2-owned-member-card__metric-label">名下会员</span>
+                      </div>
+                      <div className="met-staff-v2-owned-member-card__metric">
+                        <span className="met-staff-v2-owned-member-card__metric-value">{summary.activeMembers}</span>
+                        <span className="met-staff-v2-owned-member-card__metric-label">活跃会员</span>
+                      </div>
+                      <div className="met-staff-v2-owned-member-card__metric is-risk">
+                        <span className="met-staff-v2-owned-member-card__metric-value">{summary.highRiskMembers}</span>
+                        <span className="met-staff-v2-owned-member-card__metric-label">高风险</span>
+                      </div>
+                      <div className="met-staff-v2-owned-member-card__metric">
+                        <span className="met-staff-v2-owned-member-card__metric-value">{summary.followedThisWeek}</span>
+                        <span className="met-staff-v2-owned-member-card__metric-label">本周已跟进</span>
+                      </div>
+                      <div className="met-staff-v2-owned-member-card__metric is-pending">
+                        <span className="met-staff-v2-owned-member-card__metric-value">{summary.pendingFollowUp}</span>
+                        <span className="met-staff-v2-owned-member-card__metric-label">待跟进</span>
+                      </div>
+                    </div>
+                    <div className="met-staff-v2-owned-member-card__stage" aria-label="S 阶段分布">
+                      <span className="met-staff-v2-owned-member-card__stage-label">S 阶段分布</span>
+                      <div className="met-staff-v2-owned-member-card__stage-bar">
+                        {summary.stageDistribution.map(stage => (
+                          <span
+                            key={stage.stage}
+                            className={['met-staff-v2-owned-member-card__stage-seg', `is-${stage.stage.toLowerCase()}`].join(' ')}
+                            style={{ flex: stageTotal > 0 ? stage.count : 1 }}
+                            title={`${stage.stageLabel} ${stage.count} 人`}
+                          />
+                        ))}
+                      </div>
+                      <div className="met-staff-v2-owned-member-card__stage-pills">
+                        {summary.stageDistribution.filter(s => s.count > 0).map(stage => (
+                          <span key={stage.stage} className="met-staff-v2-owned-member-card__stage-pill">
+                            {stage.stage} {stage.count}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <p className="met-staff-v2-owned-member-card__risk">
+                      <span className="met-staff-v2-owned-member-card__risk-label">主要风险</span>
+                      {summary.mainRisks}
+                    </p>
+                    <p className="met-staff-v2-owned-member-card__next">
+                      <span className="met-staff-v2-owned-member-card__next-label">下一动作</span>
+                      {summary.nextAction}
+                    </p>
+                    <button
+                      type="button"
+                      className="met-staff-v2-btn met-staff-v2-btn--sm"
+                      onClick={() => handleOwnedMemberView(summary)}
+                    >
+                      {summary.actionLabel}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="met-staff-v2-owned-member-queue">
+              {ownedMemberManagement.queue.map(item => (
+                <div
+                  key={item.id}
+                  className={['met-staff-v2-owned-member-row', `met-staff-v2-owned-member-row--${item.priority.toLowerCase()}`].join(' ')}
+                >
+                  <span className={['met-staff-v2-priority', PRIORITY_CLASS[item.priority]].join(' ')}>{item.priority}</span>
+                  <div className="met-staff-v2-owned-member-row__main">
+                    <p className="met-staff-v2-owned-member-row__title">{item.title}</p>
+                    <p className="met-staff-v2-owned-member-row__fact">{item.fact}</p>
+                    <p className="met-staff-v2-owned-member-row__impact">
+                      <span className="met-staff-v2-owned-member-row__impact-tag">影响：{item.impact}</span>
+                    </p>
+                    <div className="met-staff-v2-owned-member-row__meta">
+                      <span className="met-staff-v2-owned-member-row__status">老师端：{item.teacherAppStatus}</span>
+                      <span className="met-staff-v2-owned-member-row__modules">关联：{item.relatedModules}</span>
+                    </div>
+                    <p className="met-staff-v2-owned-member-row__action">{item.suggestionAction}</p>
+                  </div>
+                  <div className="met-staff-v2-owned-member-row__aside">
+                    <span className={['met-staff-v2-source-tag met-staff-v2-source-tag--mini', SOURCE_TAG_CLASS[item.suggestionSource]].join(' ')}>
+                      {item.suggestionSourceLabel}
+                    </span>
+                    <button
+                      type="button"
+                      className="met-staff-v2-btn met-staff-v2-btn--sm"
+                      onClick={() => handleOwnedMemberQueueAction(item)}
+                    >
+                      {item.actionLabel}
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </article>
+
         <article className="met-staff-v2-zone">
           <header className="met-staff-v2-zone__head">
             <h2 className="met-staff-v2-zone__title">{teacherContribution.title}</h2>
@@ -646,6 +776,61 @@ const StaffV2Page: React.FC = () => {
                 <div className="met-staff-v2-drawer__row"><span>可代课</span><span>{drawerDetail.supply.substituteFor}</span></div>
                 <div className="met-staff-v2-drawer__row met-staff-v2-drawer__row--highlight"><span>当前风险</span><span>{drawerDetail.supply.currentRisk}</span></div>
                 <div className="met-staff-v2-drawer__row"><span>请假 / 代课申请</span><span>{drawerDetail.supply.pendingApplications}</span></div>
+              </section>
+
+              <section className="met-staff-v2-drawer__section met-staff-v2-drawer-owned-members">
+                <h3 className="met-staff-v2-drawer__section-title">名下会员</h3>
+                <h4 className="met-staff-v2-drawer-owned-members__subtitle">名下会员概览</h4>
+                <div className="met-staff-v2-drawer__row"><span>名下会员总数</span><span>{drawerDetail.ownedMemberDetail.overview.totalMembers}</span></div>
+                <div className="met-staff-v2-drawer__row"><span>活跃会员</span><span>{drawerDetail.ownedMemberDetail.overview.activeMembers}</span></div>
+                <div className="met-staff-v2-drawer__row"><span>高风险会员</span><span>{drawerDetail.ownedMemberDetail.overview.highRiskMembers}</span></div>
+                <div className="met-staff-v2-drawer__row"><span>本周已跟进</span><span>{drawerDetail.ownedMemberDetail.overview.followedThisWeek}</span></div>
+                <div className="met-staff-v2-drawer__row"><span>待跟进</span><span>{drawerDetail.ownedMemberDetail.overview.pendingFollowUp}</span></div>
+                <div className="met-staff-v2-drawer__row"><span>近 14 天未到店</span><span>{drawerDetail.ownedMemberDetail.overview.notVisited14Days}</span></div>
+                <div className="met-staff-v2-drawer__row"><span>新会员未激活</span><span>{drawerDetail.ownedMemberDetail.overview.newMemberInactive}</span></div>
+                <div className="met-staff-v2-drawer__row"><span>续费窗口会员</span><span>{drawerDetail.ownedMemberDetail.overview.renewalWindow}</span></div>
+
+                <h4 className="met-staff-v2-drawer-owned-members__subtitle">S 阶段分布</h4>
+                <div className="met-staff-v2-drawer-owned-members__stages">
+                  {drawerDetail.ownedMemberDetail.stageDistribution.map(stage => (
+                    <div key={stage.stage} className="met-staff-v2-drawer-owned-members__stage">
+                      <span className="met-staff-v2-drawer-owned-members__stage-label">{stage.stageLabel}</span>
+                      <span className="met-staff-v2-drawer-owned-members__stage-count">{stage.count} 人</span>
+                    </div>
+                  ))}
+                </div>
+
+                <h4 className="met-staff-v2-drawer-owned-members__subtitle">最近会员动作</h4>
+                <ul className="met-staff-v2-drawer-owned-members__actions">
+                  {drawerDetail.ownedMemberDetail.recentActions.map(action => (
+                    <li key={`${action.memberName}-${action.stageLabel}`} className="met-staff-v2-drawer-owned-members__action-item">
+                      <span className="met-staff-v2-drawer-owned-members__action-name">{action.memberName}</span>
+                      <span className="met-staff-v2-drawer-owned-members__action-stage">{action.stageLabel}</span>
+                      <span className="met-staff-v2-drawer-owned-members__action-status">{action.actionStatus}</span>
+                      <span className="met-staff-v2-drawer-owned-members__action-detail">{action.detail}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                <h4 className="met-staff-v2-drawer-owned-members__subtitle">风险提示</h4>
+                <ul className="met-staff-v2-drawer-owned-members__risks">
+                  {drawerDetail.ownedMemberDetail.riskNotes.map(note => (
+                    <li key={note}>{note}</li>
+                  ))}
+                </ul>
+
+                <div className="met-staff-v2-drawer-owned-members__foot">
+                  {drawerDetail.ownedMemberDetail.actions.map(action => (
+                    <button
+                      key={action.label}
+                      type="button"
+                      className="met-staff-v2-btn met-staff-v2-btn--sm"
+                      onClick={() => showToast(action.toastMessage)}
+                    >
+                      {action.label}
+                    </button>
+                  ))}
+                </div>
               </section>
 
               <section className="met-staff-v2-drawer__section">

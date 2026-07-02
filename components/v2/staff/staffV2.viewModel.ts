@@ -264,6 +264,75 @@ export interface StaffV2TeacherApplications {
   items: StaffV2TeacherApplicationItem[];
 }
 
+export interface StaffOwnedMemberStageDistribution {
+  stage: string;
+  stageLabel: string;
+  count: number;
+}
+
+export interface StaffOwnedMemberSummary {
+  id: string;
+  teacherId: string;
+  name: string;
+  level: string;
+  totalMembers: number;
+  activeMembers: number;
+  highRiskMembers: number;
+  followedThisWeek: number;
+  pendingFollowUp: number;
+  mainRisks: string;
+  nextAction: string;
+  stageDistribution: StaffOwnedMemberStageDistribution[];
+  actionLabel: string;
+}
+
+export interface StaffOwnedMemberQueueItem {
+  id: string;
+  priority: StaffV2Priority;
+  title: string;
+  fact: string;
+  impact: string;
+  teacherAppStatus: string;
+  relatedModules: string;
+  suggestionSource: StaffV2SuggestionSource;
+  suggestionSourceLabel: string;
+  suggestionAction: string;
+  actionLabel: string;
+  toastMessage: string;
+  relatedTeacherId?: string;
+}
+
+export interface StaffOwnedMemberRecentAction {
+  memberName: string;
+  stageLabel: string;
+  actionStatus: string;
+  detail: string;
+}
+
+export interface StaffOwnedMemberDrawerSummary {
+  overview: {
+    totalMembers: string;
+    activeMembers: string;
+    highRiskMembers: string;
+    followedThisWeek: string;
+    pendingFollowUp: string;
+    notVisited14Days: string;
+    newMemberInactive: string;
+    renewalWindow: string;
+  };
+  stageDistribution: StaffOwnedMemberStageDistribution[];
+  recentActions: StaffOwnedMemberRecentAction[];
+  riskNotes: string[];
+  actions: { label: string; toastMessage: string }[];
+}
+
+export interface StaffOwnedMemberManagement {
+  title: string;
+  subtitle: string;
+  teacherSummaries: StaffOwnedMemberSummary[];
+  queue: StaffOwnedMemberQueueItem[];
+}
+
 export interface StaffV2TeacherProfile {
   phone: string;
   joinDate: string;
@@ -338,6 +407,7 @@ export interface StaffV2TeacherDetail {
     lastReviewDate: string;
   };
   recentRecords: StaffV2TeacherRecord[];
+  ownedMemberDetail: StaffOwnedMemberDrawerSummary;
   actions: { label: string; toastMessage: string }[];
 }
 
@@ -348,6 +418,7 @@ export interface StaffV2Snapshot {
   teacherApplications: StaffV2TeacherApplications;
   workloadHeatmap: StaffV2WorkloadHeatmap;
   courseCoverage: StaffV2CourseCoverage;
+  ownedMemberManagement: StaffOwnedMemberManagement;
   teacherContribution: StaffV2TeacherContribution;
   staffIssueQueue: StaffV2IssueQueue;
   growthCoaching: StaffV2GrowthCoaching;
@@ -398,6 +469,214 @@ function buildWorkloadCells(): StaffV2WorkloadCell[] {
     { teacher: '陈悦', day: '周日', sessionCount: 0, statusLabel: '请假', tone: 'leave' },
   ];
   return seeds.map((seed, i) => ({ id: `wl-${i}`, ...seed }));
+}
+
+const OWNED_MEMBER_STAGES: Omit<StaffOwnedMemberStageDistribution, 'count'>[] = [
+  { stage: 'S0', stageLabel: 'S0 新线索' },
+  { stage: 'S1', stageLabel: 'S1 体验待转化' },
+  { stage: 'S2', stageLabel: 'S2 新成交激活' },
+  { stage: 'S3', stageLabel: 'S3 稳定活跃' },
+  { stage: 'S4', stageLabel: 'S4 低频风险' },
+  { stage: 'S5', stageLabel: 'S5 续费窗口' },
+  { stage: 'S6', stageLabel: 'S6 沉睡流失' },
+];
+
+function buildStageDistribution(counts: number[]): StaffOwnedMemberStageDistribution[] {
+  return OWNED_MEMBER_STAGES.map((item, i) => ({
+    ...item,
+    count: counts[i] ?? 0,
+  }));
+}
+
+const OWNED_MEMBER_DRAWER_ACTIONS = [
+  { label: '查看全部名下会员', toastMessage: '查看全部名下会员（待建设）' },
+  { label: '提醒老师跟进', toastMessage: '提醒老师跟进（待建设）' },
+  { label: '同步会员经营', toastMessage: '同步会员经营（待建设）' },
+];
+
+function buildOwnedMemberDrawerDetail(
+  teacherId: string,
+  totals: {
+    total: number;
+    active: number;
+    highRisk: number;
+    followed: number;
+    pending: number;
+    notVisited14: number;
+    newInactive: number;
+    renewal: number;
+  },
+  stageCounts: number[],
+  recentActions: StaffOwnedMemberRecentAction[],
+  riskNotes: string[],
+): StaffOwnedMemberDrawerSummary {
+  return {
+    overview: {
+      totalMembers: `${totals.total} 人`,
+      activeMembers: `${totals.active} 人`,
+      highRiskMembers: `${totals.highRisk} 人`,
+      followedThisWeek: `${totals.followed} 人`,
+      pendingFollowUp: `${totals.pending} 人`,
+      notVisited14Days: `${totals.notVisited14} 人`,
+      newMemberInactive: `${totals.newInactive} 人`,
+      renewalWindow: `${totals.renewal} 人`,
+    },
+    stageDistribution: buildStageDistribution(stageCounts),
+    recentActions,
+    riskNotes,
+    actions: OWNED_MEMBER_DRAWER_ACTIONS,
+  };
+}
+
+const OWNED_MEMBER_DETAIL_BY_TEACHER: Record<string, StaffOwnedMemberDrawerSummary> = {
+  'teacher-mia': buildOwnedMemberDrawerDetail(
+    'teacher-mia',
+    { total: 32, active: 18, highRisk: 5, followed: 12, pending: 4, notVisited14: 6, newInactive: 1, renewal: 3 },
+    [2, 4, 5, 12, 5, 3, 1],
+    [
+      { memberName: '王静怡', stageLabel: 'S3 稳定活跃', actionStatus: '已约下一节', detail: '老师端已记录' },
+      { memberName: '许倩', stageLabel: 'S4 低频风险', actionStatus: '待跟进', detail: '近 21 天未到店' },
+      { memberName: '陈雨', stageLabel: 'S1 体验待转化', actionStatus: '待回访', detail: '体验后 24h 未记录' },
+      { memberName: '何珊', stageLabel: 'S5 续费窗口', actionStatus: '待沟通', detail: '剩余 18 点' },
+    ],
+    [
+      '高余额低耗课会员需优先跟进',
+      '新成交 7 天内未预约需提醒老师处理',
+      '续费窗口会员需同步管家或会员经营',
+      '老师端跟进记录会进入会员证据链',
+    ],
+  ),
+  'teacher-anna': buildOwnedMemberDrawerDetail(
+    'teacher-anna',
+    { total: 28, active: 15, highRisk: 3, followed: 10, pending: 2, notVisited14: 4, newInactive: 3, renewal: 2 },
+    [1, 5, 6, 10, 3, 2, 1],
+    [
+      { memberName: '林晓', stageLabel: 'S2 新成交激活', actionStatus: '待约下一节', detail: '成交后 5 天未预约' },
+      { memberName: '周敏', stageLabel: 'S3 稳定活跃', actionStatus: '已跟进', detail: '本周已记录沟通' },
+      { memberName: '张悦', stageLabel: 'S1 体验待转化', actionStatus: '待回访', detail: '体验课反馈待补' },
+      { memberName: '刘芳', stageLabel: 'S4 低频风险', actionStatus: '待观察', detail: '近 18 天未到店' },
+    ],
+    [
+      '新会员未激活需优先安排首次正式预约',
+      '体验待转化会员需 24h 内完成回访记录',
+      '老师端约课动作会同步到会员经营',
+    ],
+  ),
+  'teacher-nora': buildOwnedMemberDrawerDetail(
+    'teacher-nora',
+    { total: 24, active: 16, highRisk: 2, followed: 9, pending: 1, notVisited14: 5, newInactive: 0, renewal: 1 },
+    [1, 3, 4, 11, 3, 1, 1],
+    [
+      { memberName: '赵琳', stageLabel: 'S3 稳定活跃', actionStatus: '已约下一节', detail: '连续 3 周练习' },
+      { memberName: '孙婷', stageLabel: 'S4 低频风险', actionStatus: '待邀约', detail: '近 14 天未预约' },
+      { memberName: '吴佳', stageLabel: 'S3 稳定活跃', actionStatus: '已记录', detail: '课后记录完整' },
+      { memberName: '郑雪', stageLabel: 'S4 低频风险', actionStatus: '待观察', detail: '练习频率下降' },
+    ],
+    [
+      '低频会员需筛选适配课程并点对点邀约',
+      '预约连续性下降需同步课程与排课',
+    ],
+  ),
+  'teacher-leo': buildOwnedMemberDrawerDetail(
+    'teacher-leo',
+    { total: 21, active: 13, highRisk: 4, followed: 8, pending: 3, notVisited14: 3, newInactive: 0, renewal: 2 },
+    [0, 2, 3, 9, 4, 2, 1],
+    [
+      { memberName: '黄薇', stageLabel: 'S5 续费窗口', actionStatus: '待沟通', detail: '无最近沟通记录' },
+      { memberName: '钱璐', stageLabel: 'S5 续费窗口', actionStatus: '待沟通', detail: '剩余 12 点' },
+      { memberName: '沈洁', stageLabel: 'S3 稳定活跃', actionStatus: '已约下一节', detail: '私教课已排' },
+      { memberName: '韩冰', stageLabel: 'S4 低频风险', actionStatus: '待跟进', detail: '近 20 天未到店' },
+    ],
+    [
+      '续费窗口会员需补充沟通记录',
+      '必要时同步管家或会员经营继续处理',
+    ],
+  ),
+  'teacher-chen': buildOwnedMemberDrawerDetail(
+    'teacher-chen',
+    { total: 18, active: 11, highRisk: 1, followed: 7, pending: 1, notVisited14: 2, newInactive: 0, renewal: 0 },
+    [2, 4, 3, 6, 2, 1, 0],
+    [
+      { memberName: '冯娜', stageLabel: 'S3 稳定活跃', actionStatus: '已记录', detail: '基础流课后记录完整' },
+      { memberName: '曹颖', stageLabel: 'S2 新成交激活', actionStatus: '已约下一节', detail: '跟课会员' },
+      { memberName: '丁悦', stageLabel: 'S3 稳定活跃', actionStatus: '记录待补', detail: '近 7 天 1 节课缺记录' },
+      { memberName: '蒋雯', stageLabel: 'S4 低频风险', actionStatus: '待观察', detail: '课程频率下降' },
+    ],
+    [
+      '课后记录不完整会影响会员服务留痕',
+      '带教期间名下会员跟进需店长协同观察',
+    ],
+  ),
+};
+
+function buildOwnedMemberSummaries(
+  teachers: StaffV2TeacherContributionItem[],
+): StaffOwnedMemberSummary[] {
+  const specs: Omit<StaffOwnedMemberSummary, 'id' | 'teacherId' | 'name' | 'level' | 'stageDistribution' | 'actionLabel'>[] = [
+    {
+      totalMembers: 32,
+      activeMembers: 18,
+      highRiskMembers: 5,
+      followedThisWeek: 12,
+      pendingFollowUp: 4,
+      mainRisks: '高余额低耗课 / 临期未续',
+      nextAction: '提醒完成 4 名会员跟进',
+    },
+    {
+      totalMembers: 28,
+      activeMembers: 15,
+      highRiskMembers: 3,
+      followedThisWeek: 10,
+      pendingFollowUp: 2,
+      mainRisks: '新会员未激活',
+      nextAction: '补充课后记录',
+    },
+    {
+      totalMembers: 24,
+      activeMembers: 16,
+      highRiskMembers: 2,
+      followedThisWeek: 9,
+      pendingFollowUp: 1,
+      mainRisks: '低频到店',
+      nextAction: '安排下一节',
+    },
+    {
+      totalMembers: 21,
+      activeMembers: 13,
+      highRiskMembers: 4,
+      followedThisWeek: 8,
+      pendingFollowUp: 3,
+      mainRisks: '续费窗口',
+      nextAction: '同步会员经营',
+    },
+    {
+      totalMembers: 18,
+      activeMembers: 11,
+      highRiskMembers: 1,
+      followedThisWeek: 7,
+      pendingFollowUp: 1,
+      mainRisks: '课程频率下降',
+      nextAction: '观察',
+    },
+  ];
+
+  const stageCountsByTeacher: number[][] = [
+    [2, 4, 5, 12, 5, 3, 1],
+    [1, 5, 6, 10, 3, 2, 1],
+    [1, 3, 4, 11, 3, 1, 1],
+    [0, 2, 3, 9, 4, 2, 1],
+    [2, 4, 3, 6, 2, 1, 0],
+  ];
+
+  return teachers.map((teacher, i) => ({
+    id: `om-${teacher.id}`,
+    teacherId: teacher.id,
+    name: teacher.name,
+    level: teacher.level,
+    actionLabel: '查看名下会员',
+    stageDistribution: buildStageDistribution(stageCountsByTeacher[i] ?? []),
+    ...specs[i],
+  }));
 }
 
 const MIA_APP_PERMISSIONS: StaffV2TeacherAppPermissionSummary = {
@@ -473,6 +752,7 @@ const MIA_DETAIL: StaffV2TeacherDetail = {
     { label: '资料审核：无待审', category: 'material' },
     { label: '权限变更：无近期变更', category: 'permission' },
   ],
+  ownedMemberDetail: OWNED_MEMBER_DETAIL_BY_TEACHER['teacher-mia'],
   actions: [
     { label: '调整排课', toastMessage: '进入课程与排课调整（待建设）' },
     { label: '记录复盘', toastMessage: '进入成长与带教（待建设）' },
@@ -548,6 +828,16 @@ function buildGenericDetail(teacher: StaffV2TeacherContributionItem): StaffV2Tea
       { label: '请假申请记录：占位', category: 'leave' },
       { label: '资料审核记录：占位', category: 'material' },
     ],
+    ownedMemberDetail: OWNED_MEMBER_DETAIL_BY_TEACHER[teacher.id] ?? buildOwnedMemberDrawerDetail(
+      teacher.id,
+      { total: 20, active: 12, highRisk: 2, followed: 8, pending: 2, notVisited14: 3, newInactive: 1, renewal: 1 },
+      [1, 3, 4, 8, 2, 1, 1],
+      [
+        { memberName: '会员 A', stageLabel: 'S3 稳定活跃', actionStatus: '已记录', detail: '老师端已记录' },
+        { memberName: '会员 B', stageLabel: 'S4 低频风险', actionStatus: '待跟进', detail: '近 14 天未到店' },
+      ],
+      ['老师端跟进记录会进入会员证据链'],
+    ),
     actions: [
       { label: '调整排课', toastMessage: '进入课程与排课调整（待建设）' },
       { label: '记录复盘', toastMessage: '进入成长与带教（待建设）' },
@@ -762,6 +1052,88 @@ export function buildStaffV2Snapshot(): StaffV2Snapshot {
           risk: 'Leo 档期紧',
           suggestionAction: '控制私教与小班冲突', actionLabel: '查看',
           indicators: [{ label: '师资覆盖', level: 'mid' }, { label: '需求热度', level: 'high' }, { label: '加课能力', level: 'low' }],
+        },
+      ],
+    },
+    ownedMemberManagement: {
+      title: '老师名下会员管理',
+      subtitle: '查看老师负责会员的阶段分布、跟进状态、预约连续性和风险承接',
+      teacherSummaries: buildOwnedMemberSummaries(teachers),
+      queue: [
+        {
+          id: 'omq-1',
+          priority: 'P0',
+          title: 'Mia 名下 4 名高余额低耗课会员未完成跟进',
+          fact: '剩余点数均超过 60 点，近 30 天到店 ≤ 2 次',
+          impact: 'Mia 名下会员 4 人',
+          teacherAppStatus: '待跟进',
+          relatedModules: '会员经营 / 课程与排课',
+          suggestionSource: 'system_rule',
+          suggestionSourceLabel: '系统规则建议',
+          suggestionAction: '提醒老师完成跟进，并同步会员经营',
+          actionLabel: '提醒老师',
+          toastMessage: '提醒老师跟进（待建设）',
+          relatedTeacherId: 'teacher-mia',
+        },
+        {
+          id: 'omq-2',
+          priority: 'P1',
+          title: 'Anna 名下新会员 7 天未预约',
+          fact: '3 名新成交会员 7 天内未完成首次正式预约',
+          impact: 'Anna 名下会员 3 人',
+          teacherAppStatus: '待约下一节',
+          relatedModules: '会员经营 / 今日运营',
+          suggestionSource: 'pending_config',
+          suggestionSourceLabel: '待配置规则',
+          suggestionAction: '安排老师点对点邀约',
+          actionLabel: '分配跟进',
+          toastMessage: '分配跟进（待建设）',
+          relatedTeacherId: 'teacher-anna',
+        },
+        {
+          id: 'omq-3',
+          priority: 'P1',
+          title: 'Leo 名下续费窗口会员未记录沟通',
+          fact: '2 名会员进入 S5 续费窗口，但无最近沟通记录',
+          impact: 'Leo 名下会员 2 人',
+          teacherAppStatus: '未记录',
+          relatedModules: '会员经营',
+          suggestionSource: 'system_rule',
+          suggestionSourceLabel: '系统规则建议',
+          suggestionAction: '补充沟通记录，必要时同步管家',
+          actionLabel: '记录提醒',
+          toastMessage: '记录提醒（待建设）',
+          relatedTeacherId: 'teacher-leo',
+        },
+        {
+          id: 'omq-4',
+          priority: 'P1',
+          title: 'Nora 名下低频会员预约连续性下降',
+          fact: '5 名会员近 14 天未预约，历史练习频率下降',
+          impact: 'Nora 名下会员 5 人',
+          teacherAppStatus: '待观察',
+          relatedModules: '课程与排课 / 会员经营',
+          suggestionSource: 'system_rule',
+          suggestionSourceLabel: '系统规则建议',
+          suggestionAction: '筛选适配课程，发起点对点邀约',
+          actionLabel: '查看名单',
+          toastMessage: '查看名单（待建设）',
+          relatedTeacherId: 'teacher-nora',
+        },
+        {
+          id: 'omq-5',
+          priority: 'P2',
+          title: '陈悦名下会员课后记录不完整',
+          fact: '近 7 天有 3 节课缺少课后记录',
+          impact: '陈悦名下会员 6 人',
+          teacherAppStatus: '记录待补',
+          relatedModules: '今日运营 / 师资与团队',
+          suggestionSource: 'pending_config',
+          suggestionSourceLabel: '待配置规则',
+          suggestionAction: '提醒补充课后记录',
+          actionLabel: '提醒',
+          toastMessage: '提醒老师跟进（待建设）',
+          relatedTeacherId: 'teacher-chen',
         },
       ],
     },
