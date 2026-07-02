@@ -305,7 +305,15 @@ const FinanceV2Page: React.FC = () => {
   );
 
   const renderStoreRow = (store: StoreFinanceRow) => (
-    <div key={store.id} className="met-finance-v2-store-row">
+    <div
+      key={store.id}
+      className={[
+        'met-finance-v2-store-row',
+        store.coverageTone === 'warning' || store.coverageTone === 'danger' ? 'is-low-coverage' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
       <div className="met-finance-v2-store-row__identity">
         <p className="met-finance-v2-store-row__name">{store.storeName}</p>
         <span className={['met-finance-v2-store-status', getStoreStatusClass(store.statusLevel)].join(' ')}>
@@ -468,7 +476,18 @@ const FinanceV2Page: React.FC = () => {
               </div>
               <div className="met-finance-v2-evidence-grid">
                 {healthSummary.evidence.map(ev => (
-                  <div key={ev.label} className="met-finance-v2-evidence-item">
+                  <div
+                    key={ev.label}
+                    className={[
+                      'met-finance-v2-evidence-item',
+                      ev.label === '实收金额' ? 'met-finance-v2-evidence-item--cash' : '',
+                      ev.label === '确认收入' ? 'met-finance-v2-evidence-item--revenue' : '',
+                      ev.label === '预收负债' ? 'met-finance-v2-evidence-item--liability' : '',
+                      ev.label === '现金安全覆盖率' ? 'met-finance-v2-evidence-item--coverage' : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                  >
                     <span className="met-finance-v2-evidence-item__value">{ev.value}</span>
                     <span className="met-finance-v2-evidence-item__label">{ev.label}</span>
                   </div>
@@ -629,14 +648,16 @@ const FinanceV2Page: React.FC = () => {
           </header>
           <div className="met-finance-v2-risk-list">
             {assetRiskQueue.items.map(item => (
-              <div key={item.id} className="met-finance-v2-risk-row">
+              <div key={item.id} className={['met-finance-v2-risk-row', `met-finance-v2-risk-row--${item.priority.toLowerCase()}`].join(' ')}>
                 <span className={['met-finance-v2-priority', getPriorityClass(item.priority)].join(' ')}>
                   {item.priority}
                 </span>
                 <div className="met-finance-v2-risk-row__main">
                   <p className="met-finance-v2-risk-row__title">{item.title}</p>
                   <p className="met-finance-v2-risk-row__fact">{item.fact}</p>
-                  <p className="met-finance-v2-risk-row__impact">影响：{item.impact}</p>
+                  <p className="met-finance-v2-risk-row__impact">
+                    <span className="met-finance-v2-risk-row__impact-tag">影响：{item.impact}</span>
+                  </p>
                   <p className="met-finance-v2-risk-row__action">{item.suggestionAction}</p>
                 </div>
                 <div className="met-finance-v2-risk-row__aside">
