@@ -30,10 +30,13 @@ const PRIORITY_CLASS: Record<CourseV2Priority, string> = {
   P2: 'met-course-v2-priority--p2',
 };
 
-const VIEW_TAB_TOAST: Record<CourseV2ViewMode, string> = {
-  week: '切换周视图（待建设）',
-  today: '切换今日待处理视图（待建设）',
-  teacher: '切换老师供给视图（待建设）',
+const VIEW_ENTRY_META: Record<
+  CourseV2ViewMode,
+  { label: string; toast: string; isCurrent: boolean }
+> = {
+  week: { label: '周排课视图', toast: '当前为周排课视图', isCurrent: true },
+  today: { label: '今日待处理入口', toast: '进入今日待处理视图（待建设）', isCurrent: false },
+  teacher: { label: '老师供给入口', toast: '进入老师供给视图（待建设）', isCurrent: false },
 };
 
 const SESSION_STATUS_CLASS: Record<string, string> = {
@@ -160,7 +163,6 @@ function renderForecastConclusion(text: string, highlight: string) {
 const CourseV2Page: React.FC = () => {
   const snapshot = useMemo(() => buildCourseV2Snapshot(), []);
   const [toast, setToast] = useState<string | null>(null);
-  const [activeView, setActiveView] = useState<CourseV2ViewMode>('week');
   const [drawerSessionId, setDrawerSessionId] = useState<string | null>(null);
 
   const showToast = useCallback((message: string) => {
@@ -328,20 +330,33 @@ const CourseV2Page: React.FC = () => {
                 {filters.primaryActionLabel}
               </button>
             </div>
-            <div className="met-course-v2__view-tabs">
-              {viewTabs.map(tab => (
-                <button
-                  key={tab.id}
-                  type="button"
-                  className={['met-course-v2__view-tab', activeView === tab.id ? 'is-active' : ''].filter(Boolean).join(' ')}
-                  onClick={() => {
-                    setActiveView(tab.id);
-                    showToast(VIEW_TAB_TOAST[tab.id]);
-                  }}
-                >
-                  {tab.label}
-                </button>
-              ))}
+            <div className="met-course-v2__view-entries">
+              <span className="met-course-v2__view-entries-label">视图入口</span>
+              {viewTabs.map(tab => {
+                const entry = VIEW_ENTRY_META[tab.id];
+                if (entry.isCurrent) {
+                  return (
+                    <span
+                      key={tab.id}
+                      className="met-course-v2__view-entry met-course-v2__view-entry--current"
+                    >
+                      {entry.label}
+                      <span className="met-course-v2__view-entry-badge">当前</span>
+                    </span>
+                  );
+                }
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    className="met-course-v2__view-entry met-course-v2__view-entry--link"
+                    onClick={() => showToast(entry.toast)}
+                  >
+                    {entry.label}
+                    <span className="met-course-v2__view-entry-badge is-pending">待建设</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </header>

@@ -96,7 +96,7 @@ const TodayV2Page: React.FC = () => {
             </button>
             <button
               type="button"
-              className="met-today-v2__filter-btn met-today-v2__filter-btn--primary"
+              className="met-today-v2__filter-btn met-today-v2__filter-btn--ghost"
               onClick={() => showToast('演示：扫码核销')}
             >
               <QrCode size={14} aria-hidden />

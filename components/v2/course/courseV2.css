@@ -114,33 +114,73 @@
   color: var(--met-v2-text-primary);
 }
 
-.met-course-v2__view-tabs {
-  display: inline-flex;
-  padding: 3px;
-  border: 1px solid var(--met-v2-border-soft);
-  border-radius: var(--met-v2-radius-sm);
-  background: var(--met-v2-surface-soft);
+.met-course-v2__view-entries {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  width: 100%;
 }
 
-.met-course-v2__view-tab {
+.met-course-v2__view-entries-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--met-v2-text-tertiary);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.met-course-v2__view-entry {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   height: 28px;
-  padding: 0 12px;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
+  padding: 0 10px;
+  border-radius: var(--met-v2-button-radius);
   font-size: 11px;
   font-weight: 500;
-  color: var(--met-v2-text-tertiary);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.met-course-v2__view-entry--current {
+  border: 1px solid var(--met-v2-border);
+  background: var(--met-v2-surface);
+  color: var(--met-v2-text-primary);
+}
+
+.met-course-v2__view-entry--link {
+  border: 1px dashed var(--met-v2-border);
+  background: transparent;
+  color: var(--met-v2-text-secondary);
   cursor: pointer;
   transition:
     background var(--met-v2-transition-fast),
+    border-color var(--met-v2-transition-fast),
     color var(--met-v2-transition-fast);
 }
 
-.met-course-v2__view-tab.is-active {
-  background: var(--met-v2-surface);
-  color: var(--met-v2-text-secondary);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+.met-course-v2__view-entry--link:hover {
+  background: var(--met-v2-neutral-bg);
+  border-color: var(--met-v2-border);
+  color: var(--met-v2-text-primary);
+}
+
+.met-course-v2__view-entry-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.2;
+  background: var(--met-v2-brand-soft);
+  color: var(--met-v2-brand-dark);
+}
+
+.met-course-v2__view-entry-badge.is-pending {
+  background: var(--met-v2-neutral-bg);
+  color: var(--met-v2-text-tertiary);
 }
 
 /* —— 通用组件 —— */

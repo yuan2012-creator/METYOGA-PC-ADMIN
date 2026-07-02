@@ -440,7 +440,7 @@ const FinanceV2Page: React.FC = () => {
               </button>
               <button
                 type="button"
-                className="met-finance-v2__filter-btn met-finance-v2__filter-btn--primary"
+                className="met-finance-v2__filter-btn met-finance-v2__filter-btn--ghost"
                 onClick={() => showToast('导出财务报告（待建设）')}
               >
                 {filters.primaryActionLabel}

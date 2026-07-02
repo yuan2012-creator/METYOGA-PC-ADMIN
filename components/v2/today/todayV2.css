@@ -84,16 +84,14 @@
   color: var(--met-v2-text-primary);
 }
 
-.met-today-v2__filter-btn--primary {
-  background: var(--met-v2-brand);
-  border-color: var(--met-v2-brand);
-  color: var(--met-v2-text-inverse);
+.met-today-v2__filter-btn--ghost {
+  background: var(--met-v2-surface);
+  color: var(--met-v2-text-secondary);
 }
 
-.met-today-v2__filter-btn--primary:hover {
-  background: var(--met-v2-brand-dark);
-  border-color: var(--met-v2-brand-dark);
-  color: var(--met-v2-text-inverse);
+.met-today-v2__filter-btn--ghost:hover {
+  background: var(--met-v2-neutral-bg);
+  color: var(--met-v2-text-primary);
 }
 
 /* —— 卡片基础 —— */
