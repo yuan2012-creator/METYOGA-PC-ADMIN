@@ -1,11 +1,13 @@
-/* V2 App 壳 + 左侧导航（C 版设计令牌，不修改 index.css） */
+@import '../styles/v2DesignTokens.css';
+
+/* V2 App 壳 + 左侧导航 */
 
 .met-app-shell-v2 {
   display: flex;
   height: 100vh;
   overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
-  background: #f1f1f1;
+  background: var(--met-v2-page-bg);
 }
 
 .met-app-shell-v2__main {
@@ -15,7 +17,7 @@
   min-height: 0;
   flex: 1;
   flex-direction: column;
-  background: #f1f1f1;
+  background: var(--met-v2-page-bg);
 }
 
 .met-app-shell-v2__content {
@@ -52,8 +54,8 @@
   --sb-v2-text: #b8b8b8;
   --sb-v2-icon: #b8b8b8;
   --sb-v2-active-bg: #ffffff;
-  --sb-v2-active-text: #006b42;
-  --sb-v2-active-icon: #006b42;
+  --sb-v2-active-text: var(--met-v2-brand);
+  --sb-v2-active-icon: var(--met-v2-brand);
   --sb-v2-width-expanded: 232px;
   --sb-v2-width-collapsed: 80px;
   --sb-v2-border: rgba(255, 255, 255, 0.08);
@@ -345,7 +347,7 @@
 }
 
 .met-sidebar-v2__identity:hover .met-sidebar-v2__identity-switch {
-  color: #006b42;
+  color: var(--met-v2-brand);
 }
 
 /* —— 模块占位页 —— */
@@ -357,7 +359,7 @@
   align-items: center;
   justify-content: center;
   padding: 32px;
-  background: #f1f1f1;
+  background: var(--met-v2-page-bg);
   color: #333333;
   text-align: center;
 }
@@ -394,7 +396,7 @@
   padding: 0 18px;
   border: none;
   border-radius: 10px;
-  background: #006b42;
+  background: var(--met-v2-brand);
   color: #ffffff;
   font-size: 13px;
   font-weight: 500;

@@ -1,25 +1,9 @@
-/* 活动与获客 V2 v1.2 — 转化主线收口 */
+@import '../styles/v2DesignTokens.css';
+
+/* 活动与获客 — 模块局部令牌 */
 
 .met-marketing-v2 {
-  --v2-bg-page: #f1f1f1;
-  --v2-bg-card: #ffffff;
-  --v2-green: #006b42;
-  --v2-green-soft: rgba(0, 107, 66, 0.08);
-  --v2-text-title: #1f1f1f;
-  --v2-text-body: #333333;
-  --v2-text-secondary: #777777;
-  --v2-text-faint: #a0a0a0;
-  --v2-border: #e5e5e5;
-  --v2-border-light: #efefef;
-  --v2-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
-  --v2-radius-card: 20px;
-  --v2-padding-page: 32px;
-  --v2-gap-card: 24px;
-  --v2-warn: #c27803;
-  --v2-warn-bg: #fef7e8;
-  --v2-risk: #b42318;
-  --v2-risk-bg: #feeceb;
-  --v2-drawer-width: 680px;
+  --v2-drawer-width: var(--met-v2-drawer-width);
 
   min-height: 100%;
   padding: var(--v2-padding-page);
@@ -81,24 +65,34 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 36px;
-  padding: 0 12px;
+  height: var(--met-v2-filter-height);
+  padding: 0 14px;
   border: 1px solid var(--v2-border);
-  border-radius: 10px;
+  border-radius: var(--met-v2-button-radius);
   background: var(--v2-bg-card);
-  font-size: 12px;
+  font-size: 13px;
   color: var(--v2-text-body);
   cursor: pointer;
+  transition: background var(--met-v2-transition-fast), border-color var(--met-v2-transition-fast);
+}
+
+.met-marketing-v2__filter-btn:hover {
+  background: var(--met-v2-neutral-bg);
 }
 
 .met-marketing-v2__filter-btn--primary {
   border-color: var(--v2-green);
   background: var(--v2-green);
-  color: #fff;
+  color: var(--met-v2-text-inverse);
+}
+
+.met-marketing-v2__filter-btn--primary:hover {
+  background: var(--met-v2-brand-dark);
+  border-color: var(--met-v2-brand-dark);
 }
 
 .met-marketing-v2__filter-btn--ghost {
-  background: #fff;
+  background: var(--v2-bg-card);
 }
 
 .met-marketing-v2__detail-link {
@@ -188,13 +182,13 @@
 }
 
 .met-marketing-v2-source-tag.is-rule {
-  background: var(--v2-green-soft);
-  color: var(--v2-green);
+  background: var(--v2-rule-bg);
+  color: var(--v2-rule-text);
 }
 
 .met-marketing-v2-source-tag.is-pending {
-  background: #f3f3f3;
-  color: var(--v2-text-faint);
+  background: var(--v2-pending-bg);
+  color: var(--v2-pending-text);
 }
 
 .met-marketing-v2-priority {
@@ -209,7 +203,7 @@
 
 .met-marketing-v2-priority.is-p0 { background: var(--v2-risk-bg); color: var(--v2-risk); }
 .met-marketing-v2-priority.is-p1 { background: var(--v2-warn-bg); color: var(--v2-warn); }
-.met-marketing-v2-priority.is-p2 { background: #f3f3f3; color: var(--v2-text-secondary); }
+.met-marketing-v2-priority.is-p2 { background: var(--v2-p2-bg); color: var(--v2-p2); }
 
 /* —— 第一屏：获客转化作战台 —— */
 .met-marketing-v2-warroom {
@@ -922,7 +916,7 @@
   width: min(var(--v2-drawer-width), 100vw);
   height: 100%;
   background: var(--v2-bg-card);
-  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--met-v2-drawer-shadow);
 }
 
 .met-marketing-v2-drawer__head {

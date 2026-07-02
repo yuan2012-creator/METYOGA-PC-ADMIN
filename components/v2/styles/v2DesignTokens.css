@@ -1,0 +1,331 @@
+/**
+ * MET YOGA PC 后台 V2 — 统一设计令牌 v1
+ * 全局 :root token + 8 模块共享别名 + 基础 utility class
+ */
+
+:root {
+  /* 页面背景 */
+  --met-v2-page-bg: #f1f1f1;
+  --met-v2-surface: #ffffff;
+  --met-v2-surface-soft: #fafaf8;
+  --met-v2-border: #e5e5e5;
+  --met-v2-border-soft: #efefef;
+
+  /* 文本 */
+  --met-v2-text-primary: #171717;
+  --met-v2-text-secondary: #666666;
+  --met-v2-text-tertiary: #999999;
+  --met-v2-text-inverse: #ffffff;
+
+  /* 品牌主色 */
+  --met-v2-brand: #006b42;
+  --met-v2-brand-dark: #005436;
+  --met-v2-brand-soft: #eaf4ef;
+
+  /* 状态色 */
+  --met-v2-success: #16734a;
+  --met-v2-success-bg: #eaf5ef;
+
+  --met-v2-warning: #a86d00;
+  --met-v2-warning-bg: #fff6e3;
+
+  --met-v2-danger: #b84640;
+  --met-v2-danger-bg: #fdecea;
+
+  --met-v2-neutral: #777777;
+  --met-v2-neutral-bg: #f5f5f3;
+
+  /* P 级状态 */
+  --met-v2-p0: #d6453d;
+  --met-v2-p0-bg: #fdecea;
+
+  --met-v2-p1: #b87900;
+  --met-v2-p1-bg: #fff3d6;
+
+  --met-v2-p2: #777777;
+  --met-v2-p2-bg: #f2f2f0;
+
+  /* 业务状态：健康 / 观察 / 待完善 / 建议来源 */
+  --met-v2-watch-bg: #eef5f0;
+  --met-v2-watch-text: #16734a;
+
+  --met-v2-status-pending-bg: #fff8e8;
+  --met-v2-status-pending-text: #a86d00;
+
+  --met-v2-rule-bg: var(--met-v2-brand-soft);
+  --met-v2-rule-text: var(--met-v2-brand);
+
+  --met-v2-pending-bg: var(--met-v2-neutral-bg);
+  --met-v2-pending-text: var(--met-v2-text-secondary);
+
+  /* 卡片 */
+  --met-v2-radius-lg: 20px;
+  --met-v2-radius-md: 14px;
+  --met-v2-radius-sm: 10px;
+  --met-v2-card-padding: 24px;
+  --met-v2-card-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+
+  /* 页面间距 */
+  --met-v2-page-padding: 32px;
+  --met-v2-section-gap: 24px;
+  --met-v2-card-gap: 16px;
+  --met-v2-inline-gap: 8px;
+
+  /* 按钮 */
+  --met-v2-button-height: 36px;
+  --met-v2-button-height-sm: 30px;
+  --met-v2-button-radius: 10px;
+  --met-v2-button-radius-pill: 999px;
+
+  /* 筛选器 */
+  --met-v2-filter-height: 34px;
+
+  /* 抽屉 */
+  --met-v2-drawer-width: 680px;
+  --met-v2-drawer-width-sm: 580px;
+  --met-v2-drawer-width-md: 640px;
+  --met-v2-drawer-width-lg: 720px;
+  --met-v2-drawer-shadow: -12px 0 32px rgba(0, 0, 0, 0.08);
+
+  /* 动画 */
+  --met-v2-transition-fast: 120ms ease;
+  --met-v2-transition-base: 180ms ease;
+}
+
+/* —— 8 模块共享局部别名（兼容既有 --v2-* 引用）—— */
+.met-dashboard-v2,
+.met-today-v2,
+.met-member-v2,
+.met-course-v2,
+.met-staff-v2,
+.met-finance-v2,
+.met-marketing-v2,
+.met-settings-v2 {
+  --v2-bg-page: var(--met-v2-page-bg);
+  --v2-bg-card: var(--met-v2-surface);
+  --v2-green: var(--met-v2-brand);
+  --v2-green-soft: var(--met-v2-brand-soft);
+  --v2-text-title: var(--met-v2-text-primary);
+  --v2-text-body: var(--met-v2-text-primary);
+  --v2-text-secondary: var(--met-v2-text-secondary);
+  --v2-text-muted: var(--met-v2-text-tertiary);
+  --v2-text-faint: var(--met-v2-text-tertiary);
+  --v2-border: var(--met-v2-border);
+  --v2-border-light: var(--met-v2-border-soft);
+  --v2-shadow: var(--met-v2-card-shadow);
+  --v2-radius-card: var(--met-v2-radius-lg);
+  --v2-padding-page: var(--met-v2-page-padding);
+  --v2-gap-card: var(--met-v2-section-gap);
+  --v2-gap-inner: var(--met-v2-card-gap);
+  --v2-warn: var(--met-v2-p1);
+  --v2-warn-bg: var(--met-v2-p1-bg);
+  --v2-risk: var(--met-v2-p0);
+  --v2-risk-bg: var(--met-v2-p0-bg);
+  --v2-p2: var(--met-v2-p2);
+  --v2-p2-bg: var(--met-v2-p2-bg);
+  --v2-success: var(--met-v2-success);
+  --v2-success-bg: var(--met-v2-success-bg);
+  --v2-neutral-bg: var(--met-v2-neutral-bg);
+  --v2-rule-bg: var(--met-v2-rule-bg);
+  --v2-rule-text: var(--met-v2-rule-text);
+  --v2-pending-bg: var(--met-v2-pending-bg);
+  --v2-pending-text: var(--met-v2-pending-text);
+  --v2-watch-bg: var(--met-v2-watch-bg);
+  --v2-watch-text: var(--met-v2-watch-text);
+}
+
+/* —— 基础 utility —— */
+.met-v2-card {
+  background: var(--met-v2-surface);
+  border: 1px solid var(--met-v2-border);
+  border-radius: var(--met-v2-radius-lg);
+  box-shadow: var(--met-v2-card-shadow);
+}
+
+.met-v2-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--met-v2-button-height);
+  padding: 0 16px;
+  border: 1px solid var(--met-v2-brand);
+  border-radius: var(--met-v2-button-radius);
+  background: var(--met-v2-brand);
+  color: var(--met-v2-text-inverse);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--met-v2-transition-fast), border-color var(--met-v2-transition-fast);
+}
+
+.met-v2-btn-primary:hover {
+  background: var(--met-v2-brand-dark);
+  border-color: var(--met-v2-brand-dark);
+}
+
+.met-v2-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--met-v2-button-height-sm);
+  padding: 0 14px;
+  border: 1px solid var(--met-v2-border);
+  border-radius: var(--met-v2-button-radius-pill);
+  background: var(--met-v2-surface);
+  color: var(--met-v2-text-primary);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background var(--met-v2-transition-fast), border-color var(--met-v2-transition-fast);
+}
+
+.met-v2-btn-ghost:hover {
+  background: var(--met-v2-neutral-bg);
+}
+
+.met-v2-filter-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--met-v2-filter-height);
+  padding: 0 14px;
+  border: 1px solid var(--met-v2-border);
+  border-radius: var(--met-v2-button-radius);
+  background: var(--met-v2-surface);
+  color: var(--met-v2-text-primary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background var(--met-v2-transition-fast), border-color var(--met-v2-transition-fast);
+}
+
+.met-v2-filter-button:hover {
+  background: var(--met-v2-neutral-bg);
+}
+
+.met-v2-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.met-v2-pill--p0 {
+  background: var(--met-v2-p0-bg);
+  color: var(--met-v2-p0);
+}
+
+.met-v2-pill--p1 {
+  background: var(--met-v2-p1-bg);
+  color: var(--met-v2-p1);
+}
+
+.met-v2-pill--p2 {
+  background: var(--met-v2-p2-bg);
+  color: var(--met-v2-p2);
+}
+
+.met-v2-pill--success {
+  background: var(--met-v2-success-bg);
+  color: var(--met-v2-success);
+}
+
+.met-v2-pill--warning {
+  background: var(--met-v2-warning-bg);
+  color: var(--met-v2-warning);
+}
+
+.met-v2-pill--danger {
+  background: var(--met-v2-danger-bg);
+  color: var(--met-v2-danger);
+}
+
+.met-v2-pill--neutral {
+  background: var(--met-v2-neutral-bg);
+  color: var(--met-v2-neutral);
+}
+
+.met-v2-pill--watch {
+  background: var(--met-v2-watch-bg);
+  color: var(--met-v2-watch-text);
+}
+
+.met-v2-pill--rule {
+  background: var(--met-v2-rule-bg);
+  color: var(--met-v2-rule-text);
+}
+
+.met-v2-pill--pending-config {
+  background: var(--met-v2-pending-bg);
+  color: var(--met-v2-pending-text);
+}
+
+/* P 级命名兼容：--p0 / .is-p0 / --p0 后缀 */
+[class*='priority--p0'],
+[class*='priority'].is-p0,
+[class*='-priority--p0'] {
+  background: var(--met-v2-p0-bg) !important;
+  color: var(--met-v2-p0) !important;
+}
+
+[class*='priority--p1'],
+[class*='priority'].is-p1,
+[class*='-priority--p1'] {
+  background: var(--met-v2-p1-bg) !important;
+  color: var(--met-v2-p1) !important;
+}
+
+[class*='priority--p2'],
+[class*='priority'].is-p2,
+[class*='-priority--p2'] {
+  background: var(--met-v2-p2-bg) !important;
+  color: var(--met-v2-p2) !important;
+}
+
+.met-v2-drawer {
+  width: var(--met-v2-drawer-width);
+  background: var(--met-v2-surface);
+  box-shadow: var(--met-v2-drawer-shadow);
+}
+
+.met-v2-drawer-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--met-v2-border-soft);
+}
+
+.met-v2-drawer-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--met-v2-text-primary);
+}
+
+.met-v2-drawer-subtitle {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--met-v2-text-secondary);
+}
+
+.met-v2-drawer-section {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--met-v2-border-soft);
+}
+
+.met-v2-empty {
+  padding: 24px;
+  border: 1px dashed var(--met-v2-border);
+  border-radius: var(--met-v2-radius-md);
+  background: var(--met-v2-surface-soft);
+  color: var(--met-v2-text-tertiary);
+  font-size: 13px;
+  text-align: center;
+}
+
+.met-v2-placeholder {
+  padding: 16px;
+  border-radius: var(--met-v2-radius-md);
+  background: var(--met-v2-neutral-bg);
+  color: var(--met-v2-text-secondary);
+  font-size: 12px;
+}

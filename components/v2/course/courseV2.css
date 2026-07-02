@@ -1,28 +1,11 @@
-/* 课程与排课 V2 v1.3 — 视觉层级收口与模块聚合 */
+@import '../styles/v2DesignTokens.css';
+
+/* 课程与排课 — 模块局部令牌 */
 
 .met-course-v2 {
-  --v2-bg-page: #f1f1f1;
-  --v2-bg-card: #ffffff;
-  --v2-green: #006b42;
-  --v2-green-soft: rgba(0, 107, 66, 0.08);
-  --v2-text-title: #1f1f1f;
-  --v2-text-body: #333333;
-  --v2-text-secondary: #777777;
-  --v2-text-faint: #a0a0a0;
-  --v2-border: #e5e5e5;
-  --v2-border-light: #efefef;
-  --v2-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
-  --v2-radius-card: 20px;
-  --v2-padding-page: 32px;
-  --v2-gap-card: 24px;
-  --v2-gap-inner: 16px;
-  --v2-warn: #c27803;
-  --v2-warn-bg: #fef7e8;
-  --v2-risk: #b42318;
-  --v2-risk-bg: #feeceb;
   --v2-info-bg: #eef4ff;
   --v2-sidebar-width: 360px;
-  --v2-drawer-width: 620px;
+  --v2-drawer-width: var(--met-v2-drawer-width-md);
 
   min-height: 100%;
   padding: var(--v2-padding-page);
@@ -84,24 +67,34 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 36px;
-  padding: 0 12px;
+  height: var(--met-v2-filter-height);
+  padding: 0 14px;
   border: 1px solid var(--v2-border);
-  border-radius: 10px;
+  border-radius: var(--met-v2-button-radius);
   background: var(--v2-bg-card);
-  font-size: 12px;
+  font-size: 13px;
   color: var(--v2-text-body);
   cursor: pointer;
+  transition: background var(--met-v2-transition-fast), border-color var(--met-v2-transition-fast);
+}
+
+.met-course-v2__filter-btn:hover {
+  background: var(--met-v2-neutral-bg);
 }
 
 .met-course-v2__filter-btn--primary {
   border-color: var(--v2-green);
   background: var(--v2-green);
-  color: #fff;
+  color: var(--met-v2-text-inverse);
+}
+
+.met-course-v2__filter-btn--primary:hover {
+  background: var(--met-v2-brand-dark);
+  border-color: var(--met-v2-brand-dark);
 }
 
 .met-course-v2__filter-btn--ghost {
-  background: #fff;
+  background: var(--v2-bg-card);
 }
 
 .met-course-v2__view-tabs {
@@ -198,13 +191,13 @@
 }
 
 .met-course-v2-source-tag--rule {
-  background: var(--v2-green-soft);
-  color: var(--v2-green);
+  background: var(--v2-rule-bg);
+  color: var(--v2-rule-text);
 }
 
 .met-course-v2-source-tag--pending {
-  background: #f3f3f3;
-  color: var(--v2-text-secondary);
+  background: var(--v2-pending-bg);
+  color: var(--v2-pending-text);
 }
 
 .met-course-v2-priority {
@@ -227,8 +220,8 @@
 }
 
 .met-course-v2-priority--p2 {
-  background: #f3f3f3;
-  color: var(--v2-text-secondary);
+  background: var(--v2-p2-bg);
+  color: var(--v2-p2);
 }
 
 .met-course-v2-status {
@@ -1441,7 +1434,7 @@
   width: min(var(--v2-drawer-width), 100vw);
   height: 100%;
   background: var(--v2-bg-card);
-  box-shadow: -8px 0 32px rgba(0, 0, 0, 0.08);
+  box-shadow: var(--met-v2-drawer-shadow);
 }
 
 .met-course-v2-drawer__head {
