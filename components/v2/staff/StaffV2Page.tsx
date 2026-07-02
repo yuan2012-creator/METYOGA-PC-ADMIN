@@ -32,6 +32,14 @@ const PRIORITY_CLASS: Record<StaffV2Priority, string> = {
   P2: 'met-staff-v2-priority--p2',
 };
 
+const APPLICATION_PRIORITY_CLASS: Record<string, string> = {
+  'ta-1': 'met-staff-v2-application-card--p0',
+  'ta-2': 'met-staff-v2-application-card--p1',
+  'ta-3': 'met-staff-v2-application-card--p1',
+  'ta-4': 'met-staff-v2-application-card--p2',
+  'ta-5': 'met-staff-v2-application-card--p2',
+};
+
 const StaffV2Page: React.FC = () => {
   const snapshot = useMemo(() => buildStaffV2Snapshot(), []);
   const [toast, setToast] = useState<string | null>(null);
@@ -309,7 +317,13 @@ const StaffV2Page: React.FC = () => {
             {teacherApplications.items.map(item => (
               <div
                 key={item.id}
-                className={['met-staff-v2-application-card', getApplicationTypeClass(item.type)].join(' ')}
+                className={[
+                  'met-staff-v2-application-card',
+                  getApplicationTypeClass(item.type),
+                  APPLICATION_PRIORITY_CLASS[item.id] ?? '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
               >
                 <div className="met-staff-v2-application-card__head">
                   <span className="met-staff-v2-application-card__type">{item.typeLabel}</span>
@@ -319,7 +333,7 @@ const StaffV2Page: React.FC = () => {
                 <p className="met-staff-v2-application-card__summary">{item.summary}</p>
                 <p className="met-staff-v2-application-card__detail">{item.detail}</p>
                 {item.impact ? (
-                  <p className="met-staff-v2-application-card__impact">影响：{item.impact}</p>
+                  <span className="met-staff-v2-application-card__impact">影响：{item.impact}</span>
                 ) : null}
                 <div className="met-staff-v2-application-card__meta">
                   <span className="met-staff-v2-application-card__status">{item.status}</span>
@@ -496,7 +510,7 @@ const StaffV2Page: React.FC = () => {
           </header>
           <div className="met-staff-v2-issue-list">
             {staffIssueQueue.items.map(item => (
-              <div key={item.id} className="met-staff-v2-issue-row">
+              <div key={item.id} className={['met-staff-v2-issue-row', `met-staff-v2-issue-row--${item.priority.toLowerCase()}`].join(' ')}>
                 <span className={['met-staff-v2-priority', PRIORITY_CLASS[item.priority]].join(' ')}>{item.priority}</span>
                 <div className="met-staff-v2-issue-row__main">
                   <div className="met-staff-v2-issue-row__title-row">
