@@ -395,7 +395,7 @@ const CourseV2Page: React.FC = () => {
                 <h3 className="met-course-v2-panel__title">{scheduleDiagnosis.title}</h3>
                 <div className="met-course-v2-diagnosis-list met-course-v2-diagnosis-list--compact">
                   {scheduleDiagnosis.items.map(item => (
-                    <div key={item.id} className="met-course-v2-diagnosis-item met-course-v2-diagnosis-item--compact">
+                    <div key={item.id} className={['met-course-v2-diagnosis-item', 'met-course-v2-diagnosis-item--compact', `met-course-v2-diagnosis-item--${item.priority.toLowerCase()}`].join(' ')}>
                       <p className="met-course-v2-diagnosis-item__title">
                         <span className={['met-course-v2-priority', PRIORITY_CLASS[item.priority]].join(' ')}>
                           {item.priority}
@@ -548,7 +548,7 @@ const CourseV2Page: React.FC = () => {
               <h3 className="met-course-v2-subcard__title">{courseIssueQueue.title}</h3>
               <div className="met-course-v2-issue-list">
                 {courseIssueQueue.items.map(item => (
-                  <div key={item.id} className="met-course-v2-issue-row">
+                  <div key={item.id} className={['met-course-v2-issue-row', `met-course-v2-issue-row--${item.priority.toLowerCase()}`].join(' ')}>
                     <span className={['met-course-v2-priority', PRIORITY_CLASS[item.priority]].join(' ')}>{item.priority}</span>
                     <div className="met-course-v2-issue-row__main">
                       <p className="met-course-v2-issue-row__title">{item.title}</p>
@@ -756,7 +756,7 @@ const CourseV2Page: React.FC = () => {
 
               <section className="met-course-v2-drawer__section">
                 <h3 className="met-course-v2-drawer__section-title">异常记录</h3>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                <div className="met-course-v2-drawer__tags">
                   {drawerDetail.exceptions.map(exItem => (
                     <span key={exItem.label} className="met-course-v2-tag">{exItem.label}</span>
                   ))}
