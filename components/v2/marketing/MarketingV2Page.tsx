@@ -38,6 +38,17 @@ const MarketingV2Page: React.FC = () => {
     );
   }, []);
 
+  const handleAction = useCallback(
+    (label: string) => {
+      const message =
+        label.includes('（待建设）') || label.startsWith('进入 ')
+          ? label
+          : `${label}（待建设）`;
+      showToast(message);
+    },
+    [showToast],
+  );
+
   const openActivityDrawer = useCallback((id: string) => {
     setDrawer({ type: 'activity', id });
   }, []);
@@ -78,7 +89,7 @@ const MarketingV2Page: React.FC = () => {
         openActivityDrawer(item.id);
         return;
       }
-      showToast(item.toastMessage ?? `${item.actionLabel}：${item.name}`);
+      showToast(item.toastMessage ?? `${item.actionLabel}（待建设）`);
     },
     [openActivityDrawer, showToast, snapshot.activityDetailMap],
   );
@@ -89,7 +100,7 @@ const MarketingV2Page: React.FC = () => {
         openActivityDrawer(item.id);
         return;
       }
-      showToast(item.toastMessage ?? `${item.actionLabel}：${item.name}`);
+      showToast(item.toastMessage ?? `${item.actionLabel}（待建设）`);
     },
     [openActivityDrawer, showToast, snapshot.activityDetailMap],
   );
@@ -230,19 +241,39 @@ const MarketingV2Page: React.FC = () => {
           </div>
           <div className="met-marketing-v2__header-actions">
             <div className="met-marketing-v2__filters">
-              <button type="button" className="met-marketing-v2__filter-btn">
+              <button
+                type="button"
+                className="met-marketing-v2__filter-btn"
+                onClick={() => handleAction('切换门店筛选')}
+              >
                 门店：{filters.storeLabel}<ChevronDown size={14} aria-hidden />
               </button>
-              <button type="button" className="met-marketing-v2__filter-btn">
+              <button
+                type="button"
+                className="met-marketing-v2__filter-btn"
+                onClick={() => handleAction('切换周期筛选')}
+              >
                 周期：{filters.periodLabel}<ChevronDown size={14} aria-hidden />
               </button>
-              <button type="button" className="met-marketing-v2__filter-btn">
+              <button
+                type="button"
+                className="met-marketing-v2__filter-btn"
+                onClick={() => handleAction('切换渠道筛选')}
+              >
                 渠道：{filters.channelLabel}<ChevronDown size={14} aria-hidden />
               </button>
-              <button type="button" className="met-marketing-v2__filter-btn">
+              <button
+                type="button"
+                className="met-marketing-v2__filter-btn"
+                onClick={() => handleAction('切换活动状态筛选')}
+              >
                 活动状态：{filters.campaignStatusLabel}<ChevronDown size={14} aria-hidden />
               </button>
-              <button type="button" className="met-marketing-v2__filter-btn">
+              <button
+                type="button"
+                className="met-marketing-v2__filter-btn"
+                onClick={() => handleAction('切换线索阶段筛选')}
+              >
                 线索阶段：{filters.leadStageLabel}<ChevronDown size={14} aria-hidden />
               </button>
               <button type="button" className="met-marketing-v2__filter-btn met-marketing-v2__filter-btn--ghost" onClick={() => showToast('进入渠道规则（待建设）')}>

@@ -44,6 +44,17 @@ const SettingsV2Page: React.FC = () => {
     );
   }, []);
 
+  const handleAction = useCallback(
+    (label: string) => {
+      const message =
+        label.includes('（待建设）') || label.startsWith('进入 ')
+          ? label
+          : `${label}（待建设）`;
+      showToast(message);
+    },
+    [showToast],
+  );
+
   const openEntryDrawer = useCallback((id: SettingsDetailType) => {
     setDrawer({ type: 'entry', id });
   }, []);
@@ -379,16 +390,32 @@ const SettingsV2Page: React.FC = () => {
           </div>
           <div className="met-settings-v2__header-actions">
             <div className="met-settings-v2__filters">
-              <button type="button" className="met-settings-v2__filter-btn">
+              <button
+                type="button"
+                className="met-settings-v2__filter-btn"
+                onClick={() => handleAction('切换配置范围筛选')}
+              >
                 配置范围：{filters.scopeLabel}<ChevronDown size={14} aria-hidden />
               </button>
-              <button type="button" className="met-settings-v2__filter-btn">
+              <button
+                type="button"
+                className="met-settings-v2__filter-btn"
+                onClick={() => handleAction('切换配置类型筛选')}
+              >
                 配置类型：{filters.typeLabel}<ChevronDown size={14} aria-hidden />
               </button>
-              <button type="button" className="met-settings-v2__filter-btn">
+              <button
+                type="button"
+                className="met-settings-v2__filter-btn"
+                onClick={() => handleAction('切换状态筛选')}
+              >
                 状态：{filters.statusLabel}<ChevronDown size={14} aria-hidden />
               </button>
-              <button type="button" className="met-settings-v2__filter-btn">
+              <button
+                type="button"
+                className="met-settings-v2__filter-btn"
+                onClick={() => handleAction('切换风险等级筛选')}
+              >
                 风险等级：{filters.riskLabel}<ChevronDown size={14} aria-hidden />
               </button>
               <button type="button" className="met-settings-v2__filter-btn met-settings-v2__filter-btn--ghost" onClick={() => showToast('导出配置清单（待建设）')}>

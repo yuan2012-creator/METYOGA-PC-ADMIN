@@ -46,6 +46,7 @@ const TodayV2Page: React.FC = () => {
   const [toast, setToast] = useState<string | null>(null);
 
   const showToast = useCallback((message: string) => {
+    console.log('[TodayV2]', message);
     setToast(message);
     window.setTimeout(() => setToast(current => (current === message ? null : current)), 2400);
   }, []);

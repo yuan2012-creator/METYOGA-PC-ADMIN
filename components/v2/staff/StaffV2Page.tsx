@@ -46,6 +46,17 @@ const StaffV2Page: React.FC = () => {
     );
   }, []);
 
+  const handleAction = useCallback(
+    (label: string) => {
+      const message =
+        label.includes('（待建设）') || label.startsWith('进入 ')
+          ? label
+          : `${label}（待建设）`;
+      showToast(message);
+    },
+    [showToast],
+  );
+
   const openDrawer = useCallback((teacherId: string) => {
     setDrawerTeacherId(teacherId);
   }, []);
@@ -79,7 +90,7 @@ const StaffV2Page: React.FC = () => {
               ? '进入加课建议（待建设）'
               : teacher.secondaryActionLabel === '带教'
                 ? '进入成长与带教（待建设）'
-                : `${teacher.secondaryActionLabel}：${teacher.name}`;
+                : `${teacher.secondaryActionLabel}（待建设）`;
       showToast(msg);
     },
     [openDrawer, showToast],
@@ -96,7 +107,7 @@ const StaffV2Page: React.FC = () => {
   const handleCoverageAction = useCallback(
     (item: StaffV2CourseCoverageItem) => {
       if (item.toastMessage) showToast(item.toastMessage);
-      else showToast(`${item.actionLabel}：${item.courseType}`);
+      else showToast(`${item.actionLabel}（待建设）`);
     },
     [showToast],
   );
@@ -148,37 +159,57 @@ const StaffV2Page: React.FC = () => {
           </div>
           <div className="met-staff-v2__header-actions">
             <div className="met-staff-v2__filters">
-              <button type="button" className="met-staff-v2__filter-btn">
+              <button
+                type="button"
+                className="met-staff-v2__filter-btn"
+                onClick={() => handleAction('切换门店筛选')}
+              >
                 门店：{filters.storeLabel}
                 <ChevronDown size={14} aria-hidden />
               </button>
-              <button type="button" className="met-staff-v2__filter-btn">
+              <button
+                type="button"
+                className="met-staff-v2__filter-btn"
+                onClick={() => handleAction('切换角色筛选')}
+              >
                 角色：{filters.roleLabel}
                 <ChevronDown size={14} aria-hidden />
               </button>
-              <button type="button" className="met-staff-v2__filter-btn">
+              <button
+                type="button"
+                className="met-staff-v2__filter-btn"
+                onClick={() => handleAction('切换课程类型筛选')}
+              >
                 课程类型：{filters.courseTypeLabel}
                 <ChevronDown size={14} aria-hidden />
               </button>
-              <button type="button" className="met-staff-v2__filter-btn">
+              <button
+                type="button"
+                className="met-staff-v2__filter-btn"
+                onClick={() => handleAction('切换等级筛选')}
+              >
                 等级：{filters.levelLabel}
                 <ChevronDown size={14} aria-hidden />
               </button>
-              <button type="button" className="met-staff-v2__filter-btn">
+              <button
+                type="button"
+                className="met-staff-v2__filter-btn"
+                onClick={() => handleAction('切换状态筛选')}
+              >
                 状态：{filters.statusLabel}
                 <ChevronDown size={14} aria-hidden />
               </button>
               <button
                 type="button"
                 className="met-staff-v2__filter-btn met-staff-v2__filter-btn--ghost"
-                onClick={() => showToast('成长规则')}
+                onClick={() => showToast('打开成长规则配置（待建设）')}
               >
                 {filters.secondaryActionLabel}
               </button>
               <button
                 type="button"
                 className="met-staff-v2__filter-btn met-staff-v2__filter-btn--primary"
-                onClick={() => showToast('新增老师')}
+                onClick={() => handleAction('新增老师')}
               >
                 {filters.primaryActionLabel}
               </button>

@@ -159,6 +159,8 @@ export interface MemberV2AudienceMatchPreview {
   id: string;
   title: string;
   subtitle: string;
+  suggestionSource: MemberV2SuggestionSource;
+  suggestionSourceLabel: string;
   stats: MemberV2AudienceMatchPreviewStat[];
   ruleTags: string[];
   candidates: MemberV2AudienceCandidate[];
@@ -394,8 +396,10 @@ const MATCH_PREVIEWS: Record<string, MemberV2AudienceMatchPreview> = {
     id: 'am-1',
     title: '明晚内观流补员 · 匹配名单',
     subtitle: '按课程偏好、时间习惯、门店距离、资产可用和触达疲劳筛选',
+    suggestionSource: 'system_rule',
+    suggestionSourceLabel: '系统规则建议',
     stats: [
-      { label: '推荐会员', value: '18 人' },
+      { label: '匹配会员', value: '18 人' },
       { label: '高匹配', value: '6 人' },
       { label: '待邀约', value: '6 人' },
       { label: '已排除', value: '5 人' },
@@ -478,8 +482,10 @@ const MATCH_PREVIEWS: Record<string, MemberV2AudienceMatchPreview> = {
     id: 'am-2',
     title: '周末普拉提小班补员 · 匹配名单',
     subtitle: '按课程偏好、时间习惯、门店距离、资产可用和触达疲劳筛选',
+    suggestionSource: 'system_rule',
+    suggestionSourceLabel: '系统规则建议',
     stats: [
-      { label: '推荐会员', value: '22 人' },
+      { label: '匹配会员', value: '22 人' },
       { label: '高匹配', value: '9 人' },
       { label: '待邀约', value: '9 人' },
       { label: '已排除', value: '4 人' },
@@ -496,8 +502,10 @@ const MATCH_PREVIEWS: Record<string, MemberV2AudienceMatchPreview> = {
     id: 'am-3',
     title: '高余额低耗课召回 · 匹配名单',
     subtitle: '按课程偏好、时间习惯、门店距离、资产可用和触达疲劳筛选',
+    suggestionSource: 'system_rule',
+    suggestionSourceLabel: '系统规则建议',
     stats: [
-      { label: '推荐会员', value: '12 人' },
+      { label: '匹配会员', value: '12 人' },
       { label: '高匹配', value: '5 人' },
       { label: '待邀约', value: '5 人' },
       { label: '已排除', value: '3 人' },
@@ -514,8 +522,10 @@ const MATCH_PREVIEWS: Record<string, MemberV2AudienceMatchPreview> = {
     id: 'am-4',
     title: '新成交 7 天未预约 · 匹配名单',
     subtitle: '按课程偏好、时间习惯、门店距离、资产可用和触达疲劳筛选',
+    suggestionSource: 'pending_config',
+    suggestionSourceLabel: '待配置规则',
     stats: [
-      { label: '推荐会员', value: '8 人' },
+      { label: '匹配会员', value: '8 人' },
       { label: '高匹配', value: '4 人' },
       { label: '待邀约', value: '4 人' },
       { label: '已排除', value: '2 人' },

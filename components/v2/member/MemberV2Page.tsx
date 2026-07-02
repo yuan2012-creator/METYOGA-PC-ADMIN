@@ -129,6 +129,17 @@ const MemberV2Page: React.FC = () => {
     );
   }, []);
 
+  const handleAction = useCallback(
+    (label: string) => {
+      const message =
+        label.includes('（待建设）') || label.startsWith('进入 ')
+          ? label
+          : `${label}（待建设）`;
+      showToast(message);
+    },
+    [showToast],
+  );
+
   const openSecondary = useCallback(
     (key: string) => {
       const label = getSecondaryEntranceLabel(snapshot.secondaryEntrances, key);
@@ -190,33 +201,49 @@ const MemberV2Page: React.FC = () => {
             <p>{meta.subtitle}</p>
           </div>
           <div className="met-member-v2__filters">
-            <button type="button" className="met-member-v2__filter-btn">
+            <button
+              type="button"
+              className="met-member-v2__filter-btn"
+              onClick={() => handleAction('切换门店筛选')}
+            >
               门店：{meta.filters.storeLabel}
               <ChevronDown size={14} aria-hidden />
             </button>
-            <button type="button" className="met-member-v2__filter-btn">
+            <button
+              type="button"
+              className="met-member-v2__filter-btn"
+              onClick={() => handleAction('切换会员阶段筛选')}
+            >
               会员阶段：{meta.filters.stageLabel}
               <ChevronDown size={14} aria-hidden />
             </button>
-            <button type="button" className="met-member-v2__filter-btn">
+            <button
+              type="button"
+              className="met-member-v2__filter-btn"
+              onClick={() => handleAction('切换负责人筛选')}
+            >
               负责人：{meta.filters.ownerLabel}
               <ChevronDown size={14} aria-hidden />
             </button>
-            <button type="button" className="met-member-v2__filter-btn">
+            <button
+              type="button"
+              className="met-member-v2__filter-btn"
+              onClick={() => handleAction('切换风险类型筛选')}
+            >
               风险类型：{meta.filters.riskLabel}
               <ChevronDown size={14} aria-hidden />
             </button>
             <button
               type="button"
               className="met-member-v2__filter-btn met-member-v2__filter-btn--link"
-              onClick={() => openSecondary('member_list')}
+              onClick={() => showToast('进入会员名单二级页（待建设）')}
             >
               {meta.filters.memberListLabel}
             </button>
             <button
               type="button"
               className="met-member-v2__filter-btn met-member-v2__filter-btn--primary"
-              onClick={() => showToast('新增线索')}
+              onClick={() => handleAction('新增线索')}
             >
               {meta.filters.primaryActionLabel}
             </button>
@@ -330,7 +357,7 @@ const MemberV2Page: React.FC = () => {
                   <button
                     type="button"
                     className="met-member-v2-btn met-member-v2-btn--ghost met-member-v2-btn--sm"
-                    onClick={() => showToast(`${task.actionLabel}：${task.memberName}`)}
+                    onClick={() => handleAction(task.actionLabel)}
                   >
                     {task.actionLabel}
                   </button>
@@ -375,7 +402,7 @@ const MemberV2Page: React.FC = () => {
                   <button
                     type="button"
                     className="met-member-v2-btn met-member-v2-btn--ghost met-member-v2-btn--sm"
-                    onClick={() => showToast(`${task.actionLabel}：${task.name}`)}
+                    onClick={() => handleAction(task.actionLabel)}
                   >
                     {task.actionLabel}
                   </button>
@@ -416,7 +443,7 @@ const MemberV2Page: React.FC = () => {
                 <div className="met-member-v2-pack__counts">
                   <div className="met-member-v2-pack__count-block">
                     <span className="met-member-v2-pack__count-num">{pack.recommendedCount}</span>
-                    <span className="met-member-v2-pack__count-label">推荐人数</span>
+                    <span className="met-member-v2-pack__count-label">匹配人数</span>
                   </div>
                   <div className="met-member-v2-pack__count-block">
                     <span className="met-member-v2-pack__count-num">{pack.highMatchCount}</span>
@@ -445,7 +472,7 @@ const MemberV2Page: React.FC = () => {
                           openMatchPreview(pack.previewId);
                           return;
                         }
-                        showToast(`${pack.primaryActionLabel}：${pack.title}`);
+                        showToast(`${pack.primaryActionLabel}（待建设）`);
                       }}
                     >
                       {pack.primaryActionLabel}
@@ -454,7 +481,7 @@ const MemberV2Page: React.FC = () => {
                       <button
                         type="button"
                         className="met-member-v2-btn met-member-v2-btn--ghost met-member-v2-btn--sm"
-                        onClick={() => showToast(`已分配邀约：${pack.title}`)}
+                        onClick={() => handleAction('分配邀约')}
                       >
                         {pack.secondaryActionLabel}
                       </button>
@@ -514,7 +541,7 @@ const MemberV2Page: React.FC = () => {
                       if (item.actionLabel === '查看名单') {
                         openSecondary('risk_list');
                       } else {
-                        showToast(`${item.actionLabel}：${item.title}`);
+                        showToast(`${item.actionLabel}（待建设）`);
                       }
                     }}
                   >
@@ -552,7 +579,7 @@ const MemberV2Page: React.FC = () => {
                   <button
                     type="button"
                     className="met-member-v2-btn met-member-v2-btn--ghost met-member-v2-btn--sm"
-                    onClick={() => showToast(`${member.followActionLabel}：${member.name}`)}
+                    onClick={() => handleAction(member.followActionLabel)}
                   >
                     {member.followActionLabel}
                   </button>
@@ -772,7 +799,7 @@ const MemberV2Page: React.FC = () => {
                 </div>
               </section>
               <section className="met-member-v2-drawer__section">
-                <h3 className="met-member-v2-drawer__section-title">推荐会员</h3>
+                <h3 className="met-member-v2-drawer__section-title">匹配会员</h3>
                 {matchPreview.candidates.map(candidate => (
                   <div key={candidate.id} className="met-member-v2-candidate">
                     <div className="met-member-v2-candidate__head">
@@ -803,21 +830,26 @@ const MemberV2Page: React.FC = () => {
                       ))}
                     </div>
                     <div className="met-member-v2-candidate__foot">
-                      <span className="met-member-v2-source-tag met-member-v2-source-tag--rule">
-                        系统规则建议
+                      <span
+                        className={[
+                          'met-member-v2-source-tag',
+                          SOURCE_TAG_CLASS[matchPreview.suggestionSource],
+                        ].join(' ')}
+                      >
+                        {matchPreview.suggestionSourceLabel || '系统规则建议'}
                       </span>
                       <div className="met-member-v2-candidate__btns">
                         <button
                           type="button"
                           className="met-member-v2-btn met-member-v2-btn--ghost met-member-v2-btn--sm"
-                          onClick={() => showToast(`已分配邀约：${candidate.name}`)}
+                          onClick={() => handleAction('分配邀约')}
                         >
                           {candidate.primaryActionLabel}
                         </button>
                         <button
                           type="button"
                           className="met-member-v2-btn met-member-v2-btn--ghost met-member-v2-btn--sm"
-                          onClick={() => showToast(`已记录：${candidate.name}`)}
+                          onClick={() => handleAction('记录跟进')}
                         >
                           {candidate.secondaryActionLabel}
                         </button>

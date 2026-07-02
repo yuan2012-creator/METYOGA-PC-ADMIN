@@ -30,6 +30,12 @@ const PRIORITY_CLASS: Record<CourseV2Priority, string> = {
   P2: 'met-course-v2-priority--p2',
 };
 
+const VIEW_TAB_TOAST: Record<CourseV2ViewMode, string> = {
+  week: '切换周视图（待建设）',
+  today: '切换今日待处理视图（待建设）',
+  teacher: '切换老师供给视图（待建设）',
+};
+
 const SESSION_STATUS_CLASS: Record<string, string> = {
   low_booking: 'is-low',
   waitlist: 'is-waitlist',
@@ -166,6 +172,17 @@ const CourseV2Page: React.FC = () => {
     );
   }, []);
 
+  const handleAction = useCallback(
+    (label: string) => {
+      const message =
+        label.includes('（待建设）') || label.startsWith('进入 ')
+          ? label
+          : `${label}（待建设）`;
+      showToast(message);
+    },
+    [showToast],
+  );
+
   const openDrawer = useCallback((sessionId: string) => {
     setDrawerSessionId(sessionId);
   }, []);
@@ -206,7 +223,7 @@ const CourseV2Page: React.FC = () => {
         openDrawer(item.relatedSessionId);
         return;
       }
-      showToast(`${item.actionLabel}：${item.title}`);
+      showToast(`${item.actionLabel}（待建设）`);
     },
     [openDrawer, showToast],
   );
@@ -264,33 +281,49 @@ const CourseV2Page: React.FC = () => {
           </div>
           <div className="met-course-v2__header-actions">
             <div className="met-course-v2__filters">
-              <button type="button" className="met-course-v2__filter-btn">
+              <button
+                type="button"
+                className="met-course-v2__filter-btn"
+                onClick={() => handleAction('切换门店筛选')}
+              >
                 门店：{filters.storeLabel}
                 <ChevronDown size={14} aria-hidden />
               </button>
-              <button type="button" className="met-course-v2__filter-btn">
+              <button
+                type="button"
+                className="met-course-v2__filter-btn"
+                onClick={() => handleAction('切换周期筛选')}
+              >
                 周期：{filters.periodLabel}
                 <ChevronDown size={14} aria-hidden />
               </button>
-              <button type="button" className="met-course-v2__filter-btn">
+              <button
+                type="button"
+                className="met-course-v2__filter-btn"
+                onClick={() => handleAction('切换课程类型筛选')}
+              >
                 课程类型：{filters.courseTypeLabel}
                 <ChevronDown size={14} aria-hidden />
               </button>
-              <button type="button" className="met-course-v2__filter-btn">
+              <button
+                type="button"
+                className="met-course-v2__filter-btn"
+                onClick={() => handleAction('切换老师筛选')}
+              >
                 老师：{filters.teacherLabel}
                 <ChevronDown size={14} aria-hidden />
               </button>
               <button
                 type="button"
                 className="met-course-v2__filter-btn met-course-v2__filter-btn--ghost"
-                onClick={() => showToast('排课规则')}
+                onClick={() => showToast('打开排课规则配置（待建设）')}
               >
                 {filters.secondaryActionLabel}
               </button>
               <button
                 type="button"
                 className="met-course-v2__filter-btn met-course-v2__filter-btn--primary"
-                onClick={() => showToast('新增排课')}
+                onClick={() => handleAction('新增排课')}
               >
                 {filters.primaryActionLabel}
               </button>
@@ -303,7 +336,7 @@ const CourseV2Page: React.FC = () => {
                   className={['met-course-v2__view-tab', activeView === tab.id ? 'is-active' : ''].filter(Boolean).join(' ')}
                   onClick={() => {
                     setActiveView(tab.id);
-                    showToast(`切换至${tab.label}（视觉占位）`);
+                    showToast(VIEW_TAB_TOAST[tab.id]);
                   }}
                 >
                   {tab.label}
@@ -562,7 +595,7 @@ const CourseV2Page: React.FC = () => {
                             showToast(
                               teacher.actionLabel === '调整'
                                 ? '进入老师供给调整（待建设）'
-                                : `${teacher.actionLabel}：${teacher.name}`,
+                                : `${teacher.actionLabel}（待建设）`,
                             )
                           }
                         >
@@ -706,8 +739,8 @@ const CourseV2Page: React.FC = () => {
                   <div className="met-course-v2-checkin-stat"><span className="met-course-v2-checkin-stat__num">{drawerDetail.checkin.pendingResign}</span><span className="met-course-v2-checkin-stat__label">待补签</span></div>
                 </div>
                 <div className="met-course-v2-drawer__actions">
-                  <button type="button" className="met-course-v2-btn" onClick={() => showToast('扫码核销')}>扫码核销</button>
-                  <button type="button" className="met-course-v2-btn" onClick={() => showToast('手动签到')}>手动签到</button>
+                  <button type="button" className="met-course-v2-btn" onClick={() => handleAction('扫码核销')}>扫码核销</button>
+                  <button type="button" className="met-course-v2-btn" onClick={() => handleAction('手动签到')}>手动签到</button>
                   <button type="button" className="met-course-v2-btn" onClick={() => showToast('进入签到处理（待建设）')}>标记爽约</button>
                 </div>
               </section>

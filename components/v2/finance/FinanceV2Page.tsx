@@ -41,6 +41,17 @@ const FinanceV2Page: React.FC = () => {
     );
   }, []);
 
+  const handleAction = useCallback(
+    (label: string) => {
+      const message =
+        label.includes('（待建设）') || label.startsWith('进入 ')
+          ? label
+          : `${label}（待建设）`;
+      showToast(message);
+    },
+    [showToast],
+  );
+
   const openAssetDrawer = useCallback((id: string) => {
     setDrawer({ type: 'asset', id });
   }, []);
@@ -77,7 +88,7 @@ const FinanceV2Page: React.FC = () => {
   const handleChangeRequest = useCallback(
     (req: AssetChangeRequest) => {
       if (req.relatedAssetId) openAssetDrawer(req.relatedAssetId);
-      else showToast(`${req.actionLabel}：${req.memberName}`);
+      else showToast(`${req.actionLabel}（待建设）`);
     },
     [openAssetDrawer, showToast],
   );
@@ -380,19 +391,35 @@ const FinanceV2Page: React.FC = () => {
           </div>
           <div className="met-finance-v2__header-actions">
             <div className="met-finance-v2__filters">
-              <button type="button" className="met-finance-v2__filter-btn">
+              <button
+                type="button"
+                className="met-finance-v2__filter-btn"
+                onClick={() => handleAction('切换门店筛选')}
+              >
                 门店：{filters.storeLabel}
                 <ChevronDown size={14} aria-hidden />
               </button>
-              <button type="button" className="met-finance-v2__filter-btn">
+              <button
+                type="button"
+                className="met-finance-v2__filter-btn"
+                onClick={() => handleAction('切换周期筛选')}
+              >
                 周期：{filters.periodLabel}
                 <ChevronDown size={14} aria-hidden />
               </button>
-              <button type="button" className="met-finance-v2__filter-btn">
+              <button
+                type="button"
+                className="met-finance-v2__filter-btn"
+                onClick={() => handleAction('切换收款类型筛选')}
+              >
                 收款类型：{filters.paymentTypeLabel}
                 <ChevronDown size={14} aria-hidden />
               </button>
-              <button type="button" className="met-finance-v2__filter-btn">
+              <button
+                type="button"
+                className="met-finance-v2__filter-btn"
+                onClick={() => handleAction('切换资产状态筛选')}
+              >
                 资产状态：{filters.assetStatusLabel}
                 <ChevronDown size={14} aria-hidden />
               </button>
