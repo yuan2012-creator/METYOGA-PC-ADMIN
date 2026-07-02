@@ -1,14 +1,15 @@
 @import '../styles/v2DesignTokens.css';
 
-/* 活动与获客 — 模块局部令牌 */
+/* 活动与获客 V2 — 统一视觉精修 v1（线索转化作战台） */
 
 .met-marketing-v2 {
-  --v2-drawer-width: var(--met-v2-drawer-width);
+  --v2-drawer-width: var(--met-v2-drawer-width-md);
+  --v2-warroom-aside: 300px;
 
   min-height: 100%;
-  padding: var(--v2-padding-page);
-  background: var(--v2-bg-page);
-  color: var(--v2-text-body);
+  padding: var(--met-v2-page-padding);
+  background: var(--met-v2-page-bg);
+  color: var(--met-v2-text-primary);
   box-sizing: border-box;
 }
 
@@ -21,30 +22,37 @@
 .met-marketing-v2__inner {
   display: flex;
   flex-direction: column;
-  gap: var(--v2-gap-card);
+  gap: var(--met-v2-section-gap);
   width: min(100%, 1480px);
   margin: 0 auto;
 }
 
+/* —— 页面标题区 —— */
 .met-marketing-v2__header {
   display: flex;
-  align-items: flex-start;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 16px;
+  gap: var(--met-v2-card-gap);
   flex-wrap: wrap;
+  padding-bottom: 2px;
 }
 
 .met-marketing-v2__header-copy h1 {
   margin: 0;
-  font-size: 24px;
+  font-size: 26px;
   font-weight: 600;
-  color: var(--v2-text-title);
+  line-height: 1.15;
+  color: var(--met-v2-text-primary);
+  letter-spacing: -0.02em;
 }
 
 .met-marketing-v2__header-copy p {
-  margin: 4px 0 0;
+  margin: 6px 0 0;
   font-size: 13px;
-  color: var(--v2-text-secondary);
+  font-weight: 500;
+  color: var(--met-v2-text-secondary);
+  max-width: 40em;
+  line-height: 1.5;
 }
 
 .met-marketing-v2__header-actions {
@@ -57,7 +65,7 @@
 .met-marketing-v2__filters {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--met-v2-inline-gap);
   flex-wrap: wrap;
 }
 
@@ -67,32 +75,44 @@
   gap: 6px;
   height: var(--met-v2-filter-height);
   padding: 0 14px;
-  border: 1px solid var(--v2-border);
+  border: 1px solid var(--met-v2-border);
   border-radius: var(--met-v2-button-radius);
-  background: var(--v2-bg-card);
+  background: var(--met-v2-surface);
+  color: var(--met-v2-text-secondary);
   font-size: 13px;
-  color: var(--v2-text-body);
+  font-weight: 500;
   cursor: pointer;
-  transition: background var(--met-v2-transition-fast), border-color var(--met-v2-transition-fast);
+  transition:
+    background var(--met-v2-transition-fast),
+    border-color var(--met-v2-transition-fast),
+    color var(--met-v2-transition-fast);
 }
 
 .met-marketing-v2__filter-btn:hover {
   background: var(--met-v2-neutral-bg);
+  color: var(--met-v2-text-primary);
 }
 
 .met-marketing-v2__filter-btn--primary {
-  border-color: var(--v2-green);
-  background: var(--v2-green);
+  background: var(--met-v2-brand);
+  border-color: var(--met-v2-brand);
   color: var(--met-v2-text-inverse);
 }
 
 .met-marketing-v2__filter-btn--primary:hover {
   background: var(--met-v2-brand-dark);
   border-color: var(--met-v2-brand-dark);
+  color: var(--met-v2-text-inverse);
 }
 
 .met-marketing-v2__filter-btn--ghost {
-  background: var(--v2-bg-card);
+  background: var(--met-v2-surface);
+  color: var(--met-v2-text-secondary);
+}
+
+.met-marketing-v2__filter-btn--ghost:hover {
+  background: var(--met-v2-neutral-bg);
+  color: var(--met-v2-text-primary);
 }
 
 .met-marketing-v2__detail-link {
@@ -100,23 +120,33 @@
   border: none;
   background: none;
   font-size: 12px;
-  color: var(--v2-green);
+  font-weight: 500;
+  color: var(--met-v2-brand);
   cursor: pointer;
 }
 
+.met-marketing-v2__detail-link:hover {
+  color: var(--met-v2-brand-dark);
+}
+
+/* —— 大区容器 —— */
 .met-marketing-v2-zone {
-  border: 1px solid var(--v2-border);
-  border-radius: var(--v2-radius-card);
-  background: var(--v2-bg-card);
-  box-shadow: var(--v2-shadow);
-  padding: 20px 22px 18px;
+  border: 1px solid var(--met-v2-border);
+  border-radius: var(--met-v2-radius-lg);
+  background: var(--met-v2-surface);
+  box-shadow: var(--met-v2-card-shadow);
+  padding: 22px 24px 20px;
+}
+
+.met-marketing-v2-zone--warroom {
+  border-left: 3px solid var(--met-v2-brand);
 }
 
 .met-marketing-v2-zone--lite {
-  padding: 12px 18px 10px;
-  background: #fafafa;
+  padding: 14px 18px 12px;
+  background: var(--met-v2-surface-soft);
   box-shadow: none;
-  border-color: var(--v2-border-light);
+  border-color: var(--met-v2-border-soft);
 }
 
 .met-marketing-v2-zone__head {
@@ -131,102 +161,126 @@
   margin: 0;
   font-size: 17px;
   font-weight: 600;
-  color: var(--v2-text-title);
+  color: var(--met-v2-text-primary);
+  letter-spacing: -0.01em;
 }
 
 .met-marketing-v2-zone--lite .met-marketing-v2-zone__title {
   font-size: 14px;
+  font-weight: 600;
+  color: var(--met-v2-text-secondary);
 }
 
 .met-marketing-v2-zone__subtitle {
-  margin: 4px 0 0;
+  margin: 5px 0 0;
   font-size: 12px;
-  color: var(--v2-text-secondary);
+  color: var(--met-v2-text-secondary);
   line-height: 1.45;
+  max-width: 52em;
 }
 
+/* —— 通用组件 —— */
 .met-marketing-v2-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 28px;
-  padding: 0 10px;
-  border: 1px solid var(--v2-border);
-  border-radius: 8px;
-  background: #fff;
-  font-size: 11px;
+  height: var(--met-v2-button-height-sm);
+  padding: 0 12px;
+  border: 1px solid var(--met-v2-border);
+  border-radius: var(--met-v2-button-radius);
+  background: var(--met-v2-surface);
+  font-size: 12px;
   font-weight: 500;
-  color: var(--v2-text-secondary);
+  color: var(--met-v2-text-secondary);
   cursor: pointer;
   flex-shrink: 0;
+  transition:
+    border-color var(--met-v2-transition-fast),
+    color var(--met-v2-transition-fast),
+    background var(--met-v2-transition-fast);
 }
 
 .met-marketing-v2-btn:hover {
-  border-color: var(--v2-green);
-  color: var(--v2-green);
+  border-color: var(--met-v2-brand);
+  color: var(--met-v2-brand);
+  background: var(--met-v2-brand-soft);
 }
 
 .met-marketing-v2-btn--sm {
-  height: 24px;
-  padding: 0 8px;
-  font-size: 10px;
+  height: 26px;
+  padding: 0 10px;
+  font-size: 11px;
 }
 
 .met-marketing-v2-source-tag {
   display: inline-flex;
-  height: 18px;
-  padding: 0 6px;
-  border-radius: 4px;
-  font-size: 9px;
+  align-items: center;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: 6px;
+  font-size: 10px;
   font-weight: 500;
 }
 
 .met-marketing-v2-source-tag.is-rule {
-  background: var(--v2-rule-bg);
-  color: var(--v2-rule-text);
+  background: var(--met-v2-rule-bg);
+  color: var(--met-v2-rule-text);
 }
 
 .met-marketing-v2-source-tag.is-pending {
-  background: var(--v2-pending-bg);
-  color: var(--v2-pending-text);
+  background: var(--met-v2-pending-bg);
+  color: var(--met-v2-pending-text);
 }
 
 .met-marketing-v2-priority {
   display: inline-flex;
-  height: 18px;
-  padding: 0 5px;
-  border-radius: 4px;
-  font-size: 9px;
+  align-items: center;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: 6px;
+  font-size: 10px;
   font-weight: 700;
+  letter-spacing: 0.02em;
   flex-shrink: 0;
 }
 
-.met-marketing-v2-priority.is-p0 { background: var(--v2-risk-bg); color: var(--v2-risk); }
-.met-marketing-v2-priority.is-p1 { background: var(--v2-warn-bg); color: var(--v2-warn); }
-.met-marketing-v2-priority.is-p2 { background: var(--v2-p2-bg); color: var(--v2-p2); }
+.met-marketing-v2-priority.is-p0 {
+  background: var(--met-v2-p0-bg);
+  color: var(--met-v2-p0);
+}
+
+.met-marketing-v2-priority.is-p1 {
+  background: var(--met-v2-p1-bg);
+  color: var(--met-v2-p1);
+}
+
+.met-marketing-v2-priority.is-p2 {
+  background: var(--met-v2-p2-bg);
+  color: var(--met-v2-p2);
+}
 
 /* —— 第一屏：获客转化作战台 —— */
 .met-marketing-v2-warroom {
-  padding: 22px 24px 14px;
+  padding-bottom: 16px;
 }
 
 .met-marketing-v2-warroom__body {
   display: grid;
-  grid-template-columns: minmax(0, 7fr) minmax(220px, 3fr);
-  gap: 16px;
+  grid-template-columns: minmax(0, 1fr) var(--v2-warroom-aside);
+  gap: var(--met-v2-card-gap);
   align-items: start;
 }
 
-/* 主漏斗路径 */
+/* 转化链路主视觉 */
 .met-marketing-v2-funnel-main {
   display: flex;
   align-items: flex-end;
-  gap: 2px;
-  padding: 16px 14px 8px;
-  border: 1px solid var(--v2-border-light);
-  border-radius: 16px;
-  background: #fafafa;
-  min-height: 168px;
+  gap: 4px;
+  padding: 18px 16px 10px;
+  border: 1px solid var(--met-v2-border-soft);
+  border-radius: var(--met-v2-radius-md);
+  background: var(--met-v2-surface-soft);
+  min-height: 172px;
   overflow-x: auto;
 }
 
@@ -235,6 +289,7 @@
   flex-direction: column;
   align-items: center;
   flex-shrink: 0;
+  min-width: 0;
 }
 
 .met-marketing-v2-funnel-stage {
@@ -242,146 +297,183 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-width: 72px;
-  max-width: 140px;
-  padding: 10px 8px;
-  border: 1px solid #cfe8d8;
-  border-radius: 10px 10px 6px 6px;
-  background: #fff;
+  min-width: 68px;
+  max-width: 132px;
+  padding: 12px 10px;
+  border: 1px solid var(--met-v2-border);
+  border-radius: var(--met-v2-radius-sm);
+  background: var(--met-v2-surface);
   text-align: center;
   cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s;
-  clip-path: polygon(4% 0, 96% 0, 100% 100%, 0 100%);
+  transition:
+    border-color var(--met-v2-transition-fast),
+    box-shadow var(--met-v2-transition-fast);
 }
 
 .met-marketing-v2-funnel-stage:hover {
-  border-color: var(--v2-green);
-  box-shadow: 0 4px 12px rgba(0, 107, 66, 0.1);
+  border-color: var(--met-v2-brand);
+  box-shadow: 0 4px 12px rgba(0, 107, 66, 0.08);
 }
 
 .met-marketing-v2-funnel-stage__name {
   font-size: 10px;
   font-weight: 600;
-  color: var(--v2-text-title);
-  line-height: 1.25;
+  color: var(--met-v2-text-primary);
+  line-height: 1.3;
 }
 
 .met-marketing-v2-funnel-stage__count {
-  margin-top: 4px;
-  font-size: 17px;
+  margin-top: 6px;
+  font-size: 18px;
   font-weight: 700;
-  color: var(--v2-green);
+  color: var(--met-v2-text-primary);
   line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
 .met-marketing-v2-funnel-stage__rate {
-  margin-top: 3px;
+  margin-top: 4px;
   font-size: 9px;
-  color: var(--v2-text-secondary);
+  font-weight: 500;
+  color: var(--met-v2-text-tertiary);
   line-height: 1.25;
+}
+
+.met-marketing-v2-funnel-main__unit:last-of-type .met-marketing-v2-funnel-stage__count {
+  color: var(--met-v2-brand);
 }
 
 .met-marketing-v2-funnel-main__arrow {
   display: flex;
   align-items: center;
-  padding-bottom: 28px;
-  font-size: 14px;
-  color: var(--v2-text-faint);
+  padding-bottom: 32px;
+  font-size: 13px;
+  color: var(--met-v2-text-tertiary);
   flex-shrink: 0;
 }
 
+/* 转化断点 */
 .met-marketing-v2-funnel-break {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 6px;
-  padding: 3px 6px;
+  margin-top: 8px;
+  padding: 5px 8px;
   border-radius: 6px;
-  max-width: 100px;
+  max-width: 108px;
   text-align: center;
-  line-height: 1.25;
+  line-height: 1.3;
 }
 
 .met-marketing-v2-funnel-break.is-primary {
-  background: var(--v2-warn-bg);
-  border: 1px solid #ebe4d8;
+  background: var(--met-v2-p0-bg);
+  border: 1px solid #f0d4cc;
 }
 
 .met-marketing-v2-funnel-break.is-secondary {
-  background: #f8f8f8;
-  border: 1px solid var(--v2-border-light);
+  background: var(--met-v2-p1-bg);
+  border: 1px solid #f0e0c4;
 }
 
 .met-marketing-v2-funnel-break.is-handoff {
-  background: var(--v2-green-soft);
-  border: 1px solid #d8ebe3;
+  background: var(--met-v2-brand-soft);
+  border: 1px solid #cfe8d8;
 }
 
 .met-marketing-v2-funnel-break__label {
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 700;
-  color: var(--v2-text-secondary);
+  color: var(--met-v2-text-secondary);
+  letter-spacing: 0.02em;
 }
 
 .met-marketing-v2-funnel-break.is-primary .met-marketing-v2-funnel-break__label {
-  color: var(--v2-warn);
+  color: var(--met-v2-p0);
+}
+
+.met-marketing-v2-funnel-break.is-secondary .met-marketing-v2-funnel-break__label {
+  color: var(--met-v2-p1);
+}
+
+.met-marketing-v2-funnel-break.is-handoff .met-marketing-v2-funnel-break__label {
+  color: var(--met-v2-brand);
 }
 
 .met-marketing-v2-funnel-break__detail {
-  font-size: 8px;
-  color: var(--v2-text-body);
-  margin-top: 1px;
+  font-size: 9px;
+  color: var(--met-v2-text-secondary);
+  margin-top: 2px;
 }
 
-/* 紧凑行动列表 */
+/* 今日必须处理（紧凑行动列表） */
+.met-marketing-v2-action-compact {
+  padding: 12px 14px;
+  border: 1px solid var(--met-v2-border-soft);
+  border-radius: var(--met-v2-radius-sm);
+  background: var(--met-v2-surface);
+}
+
 .met-marketing-v2-action-compact__head {
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .met-marketing-v2-action-compact__title {
   margin: 0;
   font-size: 13px;
   font-weight: 600;
-  color: var(--v2-text-title);
+  color: var(--met-v2-text-primary);
 }
 
 .met-marketing-v2-action-compact__subtitle {
-  margin: 2px 0 0;
+  margin: 3px 0 0;
   font-size: 10px;
-  color: var(--v2-text-faint);
+  color: var(--met-v2-text-tertiary);
+  line-height: 1.35;
 }
 
 .met-marketing-v2-action-compact__list {
   margin: 0;
   padding: 0;
   list-style: none;
-  border: 1px solid var(--v2-border-light);
-  border-radius: 10px;
-  background: #fff;
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .met-marketing-v2-action-compact__row {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  min-height: 56px;
-  max-height: 60px;
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--v2-border-light);
+  min-height: 52px;
+  padding: 8px 10px 8px 12px;
+  border: 1px solid var(--met-v2-border-soft);
+  border-radius: 8px;
+  background: var(--met-v2-surface-soft);
 }
 
-.met-marketing-v2-action-compact__row:last-child {
-  border-bottom: none;
+.met-marketing-v2-action-compact__row::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 3px;
+  border-radius: 8px 0 0 8px;
+  background: var(--met-v2-p2);
 }
 
-.met-marketing-v2-action-compact__row.is-p0 {
-  box-shadow: inset 3px 0 0 var(--v2-risk);
+.met-marketing-v2-action-compact__row.is-p0::before {
+  background: var(--met-v2-p0);
 }
 
-.met-marketing-v2-action-compact__row.is-p1 {
-  box-shadow: inset 3px 0 0 var(--v2-warn);
+.met-marketing-v2-action-compact__row.is-p1::before {
+  background: var(--met-v2-p1);
+}
+
+.met-marketing-v2-action-compact__row.is-p2::before {
+  background: var(--met-v2-p2);
 }
 
 .met-marketing-v2-action-compact__main {
@@ -395,19 +487,20 @@
 .met-marketing-v2-action-compact__name {
   font-size: 11px;
   font-weight: 600;
-  color: var(--v2-text-title);
+  color: var(--met-v2-text-primary);
 }
 
 .met-marketing-v2-action-compact__count {
   font-size: 11px;
   font-weight: 700;
-  color: var(--v2-text-title);
+  color: var(--met-v2-text-primary);
+  font-variant-numeric: tabular-nums;
 }
 
 .met-marketing-v2-action-compact__desc {
   flex: 1 0 100%;
   font-size: 9px;
-  color: var(--v2-text-faint);
+  color: var(--met-v2-text-tertiary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -417,60 +510,100 @@
 .met-marketing-v2-warroom__brief {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 20px;
+  gap: 6px 18px;
   margin-top: 12px;
   padding-top: 10px;
-  border-top: 1px solid var(--v2-border-light);
+  border-top: 1px solid var(--met-v2-border-soft);
 }
 
 .met-marketing-v2-warroom__brief-item {
-  font-size: 11px;
-  color: var(--v2-text-faint);
+  font-size: 10px;
+  color: var(--met-v2-text-tertiary);
 }
 
 .met-marketing-v2-warroom__brief-item strong {
   font-weight: 600;
-  color: var(--v2-text-secondary);
+  color: var(--met-v2-text-secondary);
+  font-variant-numeric: tabular-nums;
 }
 
-/* —— 第二屏：渠道价值四象限 —— */
+/* —— 渠道价值四象限 —— */
 .met-marketing-v2-channel-quadrants__grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 12px;
 }
 
 .met-marketing-v2-quadrant {
-  padding: 12px 14px;
-  border: 1px solid var(--v2-border-light);
-  border-radius: 12px;
-  background: #fafafa;
-  min-height: 140px;
+  padding: 14px 16px;
+  border: 1px solid var(--met-v2-border-soft);
+  border-radius: var(--met-v2-radius-sm);
+  background: var(--met-v2-surface-soft);
+  min-height: 148px;
 }
 
-.met-marketing-v2-quadrant.is-follow-up { border-top: 3px solid #6b8fbf; }
-.met-marketing-v2-quadrant.is-quality { border-top: 3px solid var(--v2-green); background: #f8fbf9; }
-.met-marketing-v2-quadrant.is-low { border-top: 3px solid var(--v2-warn); }
-.met-marketing-v2-quadrant.is-stable { border-top: 3px solid #9ab0a0; }
+.met-marketing-v2-quadrant.is-follow-up {
+  border-top: 3px solid var(--met-v2-p1);
+  background: var(--met-v2-surface);
+}
+
+.met-marketing-v2-quadrant.is-quality {
+  border-top: 3px solid var(--met-v2-brand);
+  background: linear-gradient(180deg, var(--met-v2-brand-soft) 0%, var(--met-v2-surface) 36%);
+}
+
+.met-marketing-v2-quadrant.is-low {
+  border-top: 3px solid var(--met-v2-p1);
+}
+
+.met-marketing-v2-quadrant.is-stable {
+  border-top: 3px solid var(--met-v2-neutral);
+}
 
 .met-marketing-v2-quadrant__title {
-  margin: 0 0 8px;
+  margin: 0 0 10px;
   font-size: 12px;
   font-weight: 600;
-  color: var(--v2-text-title);
+  color: var(--met-v2-text-primary);
+  line-height: 1.35;
 }
 
 .met-marketing-v2-quadrant__channels {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .met-marketing-v2-channel-pill {
-  padding: 8px 10px;
-  border: 1px solid var(--v2-border-light);
-  border-radius: 8px;
-  background: #fff;
+  padding: 10px 12px;
+  border: 1px solid var(--met-v2-border-soft);
+  border-radius: var(--met-v2-radius-sm);
+  background: var(--met-v2-surface);
+}
+
+.met-marketing-v2-channel-pill.is-quality {
+  border-color: #cfe8d8;
+  background: var(--met-v2-brand-soft);
+}
+
+.met-marketing-v2-channel-pill.is-follow-up {
+  border-color: #f0e0c4;
+  background: var(--met-v2-p1-bg);
+}
+
+.met-marketing-v2-channel-pill.is-filter {
+  border-color: var(--met-v2-border);
+  background: var(--met-v2-neutral-bg);
+}
+
+.met-marketing-v2-channel-pill.is-stable {
+  border-color: var(--met-v2-border-soft);
+  background: var(--met-v2-surface);
+}
+
+.met-marketing-v2-channel-pill.is-low {
+  border-color: #f0e0c4;
+  background: var(--met-v2-warning-bg);
 }
 
 .met-marketing-v2-channel-pill__head {
@@ -481,30 +614,32 @@
 }
 
 .met-marketing-v2-channel-pill__name {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
-  color: var(--v2-text-title);
+  color: var(--met-v2-text-primary);
 }
 
 .met-marketing-v2-channel-pill__meta {
-  font-size: 9px;
-  color: var(--v2-text-faint);
+  font-size: 10px;
+  color: var(--met-v2-text-tertiary);
+  font-variant-numeric: tabular-nums;
 }
 
 .met-marketing-v2-channel-pill__judgement {
-  margin: 4px 0 6px;
-  font-size: 9px;
-  color: var(--v2-text-secondary);
-  line-height: 1.35;
+  margin: 5px 0 8px;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--met-v2-text-secondary);
+  line-height: 1.4;
 }
 
 .met-marketing-v2-channel-quadrants__judgements {
   margin: 12px 0 0;
   padding: 10px 14px;
   list-style: none;
-  border: 1px solid var(--v2-border-light);
-  border-radius: 10px;
-  background: #fafafa;
+  border: 1px solid var(--met-v2-border-soft);
+  border-radius: var(--met-v2-radius-sm);
+  background: var(--met-v2-neutral-bg);
   display: flex;
   flex-wrap: wrap;
   gap: 8px 20px;
@@ -512,29 +647,38 @@
 
 .met-marketing-v2-channel-quadrants__judgements li {
   font-size: 11px;
-  color: var(--v2-text-body);
+  color: var(--met-v2-text-secondary);
+  line-height: 1.4;
 }
 
 .met-marketing-v2-channel-quadrants__judgements li::before {
   content: '→ ';
-  color: var(--v2-green);
+  color: var(--met-v2-brand);
   font-weight: 700;
 }
 
-/* —— 第三屏：活动战役复盘 —— */
+/* —— 活动战役复盘 —— */
 .met-marketing-v2-battle-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-  gap: 12px;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+  gap: 14px;
   align-items: start;
 }
 
 .met-marketing-v2-battle-hero {
-  padding: 18px 20px;
-  border: 1px solid var(--v2-border-light);
-  border-radius: 16px;
-  background: #fff;
-  border-left: 4px solid var(--v2-green);
+  padding: 20px 22px;
+  border: 1px solid #cfe8d8;
+  border-radius: var(--met-v2-radius-md);
+  background: linear-gradient(135deg, var(--met-v2-brand-soft) 0%, var(--met-v2-surface) 42%);
+  box-shadow: 0 4px 16px rgba(0, 107, 66, 0.06);
+}
+
+.met-marketing-v2-battle-hero.is-active {
+  border-left: 4px solid var(--met-v2-brand);
+}
+
+.met-marketing-v2-battle-hero.is-review {
+  border-left-color: var(--met-v2-p1);
 }
 
 .met-marketing-v2-battle-hero__head {
@@ -546,123 +690,142 @@
 
 .met-marketing-v2-battle-hero__badge {
   display: inline-block;
-  margin-bottom: 4px;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: var(--v2-green-soft);
+  margin-bottom: 6px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: var(--met-v2-brand);
   font-size: 9px;
   font-weight: 700;
-  color: var(--v2-green);
+  color: var(--met-v2-text-inverse);
+  letter-spacing: 0.04em;
 }
 
 .met-marketing-v2-battle-hero__name {
   margin: 0;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
-  color: var(--v2-text-title);
+  color: var(--met-v2-text-primary);
+  letter-spacing: -0.01em;
+  line-height: 1.25;
 }
 
 .met-marketing-v2-battle-hero__status {
   font-size: 11px;
   font-weight: 600;
-  color: var(--v2-green);
+  color: var(--met-v2-brand);
+  white-space: nowrap;
 }
 
 .met-marketing-v2-battle-hero__goal {
-  margin: 10px 0 0;
-  font-size: 11px;
-  color: var(--v2-text-secondary);
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: var(--met-v2-text-secondary);
+  line-height: 1.45;
 }
 
 .met-marketing-v2-battle-hero__progress-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  margin-top: 12px;
+  margin-top: 14px;
 }
 
 .met-marketing-v2-battle-hero__progress-label {
   font-size: 10px;
-  color: var(--v2-text-faint);
+  font-weight: 500;
+  color: var(--met-v2-text-tertiary);
 }
 
 .met-marketing-v2-battle-hero__progress-value {
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 700;
-  color: var(--v2-green);
+  color: var(--met-v2-brand);
   line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
 .met-marketing-v2-battle-hero__goal-bar {
   height: 6px;
-  margin-top: 6px;
+  margin-top: 8px;
   border-radius: 999px;
-  background: #ececec;
+  background: var(--met-v2-border-soft);
   overflow: hidden;
 }
 
 .met-marketing-v2-battle-hero__goal-fill {
   height: 100%;
   border-radius: 999px;
-  background: var(--v2-green);
+  background: var(--met-v2-brand);
 }
 
 .met-marketing-v2-campaign-progress {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  margin: 14px 0 10px;
+  gap: 6px;
+  margin: 16px 0 12px;
+  padding: 12px;
+  border-radius: var(--met-v2-radius-sm);
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--met-v2-border-soft);
 }
 
 .met-marketing-v2-campaign-progress__stage {
   display: grid;
-  grid-template-columns: 32px 1fr auto;
-  gap: 6px;
+  grid-template-columns: 72px 1fr auto;
+  gap: 8px;
   align-items: center;
 }
 
 .met-marketing-v2-campaign-progress__bar {
-  height: 7px;
+  height: 6px;
   border-radius: 999px;
-  background: #ececec;
+  background: var(--met-v2-border-soft);
   overflow: hidden;
 }
 
 .met-marketing-v2-campaign-progress__fill {
   height: 100%;
   border-radius: 999px;
-  background: var(--v2-green);
+  background: var(--met-v2-brand);
   min-width: 3px;
 }
 
 .met-marketing-v2-campaign-progress__label {
   font-size: 9px;
-  color: var(--v2-text-faint);
+  font-weight: 500;
+  color: var(--met-v2-text-tertiary);
 }
 
 .met-marketing-v2-campaign-progress__value {
   font-size: 10px;
   font-weight: 600;
-  color: var(--v2-text-title);
+  color: var(--met-v2-text-primary);
+  font-variant-numeric: tabular-nums;
 }
 
 .met-marketing-v2-battle-hero__issue {
   margin: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--met-v2-p1-bg);
   font-size: 11px;
-  color: var(--v2-warn);
+  font-weight: 500;
+  color: var(--met-v2-p1);
+  line-height: 1.4;
 }
 
 .met-marketing-v2-battle-hero__next {
-  margin: 4px 0 0;
-  font-size: 10px;
-  color: var(--v2-green);
+  margin: 8px 0 0;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--met-v2-brand);
 }
 
 .met-marketing-v2-battle-hero__copy {
-  margin: 4px 0 12px;
+  margin: 6px 0 14px;
   font-size: 10px;
-  font-weight: 600;
-  color: var(--v2-text-body);
+  font-weight: 500;
+  color: var(--met-v2-text-secondary);
 }
 
 .met-marketing-v2-battle-support {
@@ -673,9 +836,10 @@
 
 .met-marketing-v2-battle-support__card {
   padding: 12px 14px;
-  border: 1px solid var(--v2-border-light);
-  border-radius: 12px;
-  background: #fafafa;
+  border: 1px solid var(--met-v2-border-soft);
+  border-radius: var(--met-v2-radius-sm);
+  background: var(--met-v2-surface-soft);
+  opacity: 0.92;
 }
 
 .met-marketing-v2-battle-support__head {
@@ -688,127 +852,178 @@
 .met-marketing-v2-battle-support__name {
   font-size: 12px;
   font-weight: 600;
-  color: var(--v2-text-title);
+  color: var(--met-v2-text-secondary);
 }
 
 .met-marketing-v2-battle-support__status {
   font-size: 9px;
   font-weight: 600;
-  color: var(--v2-green);
+  color: var(--met-v2-brand);
 }
 
 .met-marketing-v2-battle-support__card.is-review .met-marketing-v2-battle-support__status {
-  color: var(--v2-warn);
+  color: var(--met-v2-p1);
+}
+
+.met-marketing-v2-battle-support__card.is-ended .met-marketing-v2-battle-support__status {
+  color: var(--met-v2-text-tertiary);
 }
 
 .met-marketing-v2-battle-support__stats {
   margin: 6px 0 0;
   font-size: 10px;
-  color: var(--v2-text-secondary);
+  color: var(--met-v2-text-tertiary);
+  font-variant-numeric: tabular-nums;
 }
 
 .met-marketing-v2-battle-support__copy {
   margin: 4px 0 8px;
   font-size: 10px;
-  color: var(--v2-text-body);
+  color: var(--met-v2-text-secondary);
+  line-height: 1.4;
 }
 
-/* —— 第四屏：线索跟进行动队列 —— */
+/* —— 线索跟进行动队列 —— */
 .met-marketing-v2-action-queue {
   display: flex;
   flex-direction: column;
+  gap: 10px;
 }
 
 .met-marketing-v2-action-queue__row {
+  position: relative;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 12px;
+  gap: 14px;
   align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--v2-border-light);
+  padding: 14px 16px 14px 18px;
+  border: 1px solid var(--met-v2-border-soft);
+  border-radius: var(--met-v2-radius-sm);
+  background: var(--met-v2-surface);
 }
 
-.met-marketing-v2-action-queue__row:last-child {
-  border-bottom: none;
+.met-marketing-v2-action-queue__row::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 3px;
+  border-radius: var(--met-v2-radius-sm) 0 0 var(--met-v2-radius-sm);
+  background: var(--met-v2-p2);
+}
+
+.met-marketing-v2-action-queue__row--p0::before {
+  background: var(--met-v2-p0);
+}
+
+.met-marketing-v2-action-queue__row--p1::before {
+  background: var(--met-v2-p1);
+}
+
+.met-marketing-v2-action-queue__row--p2::before {
+  background: var(--met-v2-p2);
 }
 
 .met-marketing-v2-action-queue__title {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
-  color: var(--v2-text-title);
+  color: var(--met-v2-text-primary);
+  line-height: 1.35;
 }
 
 .met-marketing-v2-action-queue__fact {
-  margin: 3px 0 0;
-  font-size: 11px;
-  color: var(--v2-text-secondary);
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--met-v2-text-secondary);
   line-height: 1.45;
+  max-width: 42em;
 }
 
 .met-marketing-v2-action-queue__action {
-  margin: 2px 0 0;
-  font-size: 10px;
-  color: var(--v2-green);
+  margin: 6px 0 0;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--met-v2-brand);
 }
 
 .met-marketing-v2-action-queue__meta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px 10px;
-  margin-top: 3px;
-  font-size: 9px;
-  color: var(--v2-text-faint);
+  gap: 8px;
+  margin-top: 6px;
 }
 
-/* —— 第五屏：体验成交承接 —— */
+.met-marketing-v2-action-queue__impact-tag {
+  display: inline-flex;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--met-v2-neutral-bg);
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--met-v2-text-secondary);
+}
+
+/* —— 体验成交承接 —— */
 .met-marketing-v2-handoff-compact__flow {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 6px;
-  padding: 12px 14px;
-  border: 1px solid var(--v2-border-light);
-  border-radius: 12px;
-  background: #fafafa;
+  gap: 6px 8px;
+  padding: 14px 16px;
+  border: 1px solid var(--met-v2-border-soft);
+  border-radius: var(--met-v2-radius-sm);
+  background: var(--met-v2-surface-soft);
 }
 
 .met-marketing-v2-handoff-compact__node {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 8px 10px;
-  border: 1px solid var(--v2-border-light);
-  border-radius: 8px;
-  background: #fff;
-  min-width: 76px;
+  padding: 10px 12px;
+  border: 1px solid var(--met-v2-border-soft);
+  border-radius: var(--met-v2-radius-sm);
+  background: var(--met-v2-surface);
+  min-width: 80px;
   text-align: center;
+}
+
+.met-marketing-v2-handoff-compact__node:last-of-type {
+  border-color: #cfe8d8;
+  background: var(--met-v2-brand-soft);
 }
 
 .met-marketing-v2-handoff-compact__label {
   font-size: 9px;
   font-weight: 600;
-  color: var(--v2-text-title);
+  color: var(--met-v2-text-secondary);
+  line-height: 1.3;
 }
 
 .met-marketing-v2-handoff-compact__count {
-  margin-top: 3px;
-  font-size: 14px;
+  margin-top: 4px;
+  font-size: 16px;
   font-weight: 700;
-  color: var(--v2-green);
+  color: var(--met-v2-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.met-marketing-v2-handoff-compact__node:last-of-type .met-marketing-v2-handoff-compact__count {
+  color: var(--met-v2-brand);
 }
 
 .met-marketing-v2-handoff-compact__arrow {
   font-size: 12px;
-  color: var(--v2-text-faint);
+  color: var(--met-v2-text-tertiary);
 }
 
 .met-marketing-v2-handoff-compact__breaks {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin: 10px 0 0;
+  margin: 12px 0 0;
   padding: 0;
   list-style: none;
 }
@@ -816,29 +1031,30 @@
 .met-marketing-v2-handoff-compact__break {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border: 1px solid var(--v2-border-light);
-  border-radius: 8px;
-  background: #fff;
-  font-size: 10px;
-  color: var(--v2-text-secondary);
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid #f0e0c4;
+  border-radius: var(--met-v2-radius-sm);
+  background: var(--met-v2-p1-bg);
+  font-size: 11px;
+  color: var(--met-v2-text-secondary);
 }
 
 .met-marketing-v2-handoff-compact__break strong {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
-  color: var(--v2-warn);
+  color: var(--met-v2-p1);
+  font-variant-numeric: tabular-nums;
 }
 
 .met-marketing-v2-handoff-compact__actions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 10px;
+  margin-top: 12px;
 }
 
-/* —— 第六屏：内容与活动节奏（轻量） —— */
+/* —— 内容与活动节奏（轻量降级） —— */
 .met-marketing-v2-timeline-lite {
   margin: 0;
   padding: 0;
@@ -851,7 +1067,7 @@
   gap: 8px;
   align-items: center;
   padding: 5px 0;
-  border-bottom: 1px solid var(--v2-border-light);
+  border-bottom: 1px solid var(--met-v2-border-soft);
   font-size: 11px;
 }
 
@@ -860,34 +1076,34 @@
 }
 
 .met-marketing-v2-timeline-lite__date {
-  font-weight: 700;
-  color: var(--v2-text-title);
+  font-weight: 600;
+  color: var(--met-v2-text-tertiary);
 }
 
 .met-marketing-v2-timeline-lite__title {
-  color: var(--v2-text-body);
+  color: var(--met-v2-text-secondary);
 }
 
 .met-marketing-v2-timeline-lite__status {
-  padding: 1px 5px;
-  border-radius: 4px;
+  padding: 2px 6px;
+  border-radius: 5px;
   font-size: 9px;
   font-weight: 600;
 }
 
 .met-marketing-v2-timeline-lite__status.is-done {
-  background: var(--v2-green-soft);
-  color: var(--v2-green);
+  background: var(--met-v2-brand-soft);
+  color: var(--met-v2-brand);
 }
 
 .met-marketing-v2-timeline-lite__status.is-active {
-  background: #f5f8ff;
-  color: #4a6fa5;
+  background: var(--met-v2-neutral-bg);
+  color: var(--met-v2-text-secondary);
 }
 
 .met-marketing-v2-timeline-lite__status.is-pending {
-  background: var(--v2-warn-bg);
-  color: var(--v2-warn);
+  background: var(--met-v2-p1-bg);
+  color: var(--met-v2-p1);
 }
 
 .met-marketing-v2-timeline-lite__actions {
@@ -915,7 +1131,7 @@
   flex-direction: column;
   width: min(var(--v2-drawer-width), 100vw);
   height: 100%;
-  background: var(--v2-bg-card);
+  background: var(--met-v2-surface);
   box-shadow: var(--met-v2-drawer-shadow);
 }
 
@@ -925,83 +1141,111 @@
   justify-content: space-between;
   gap: 12px;
   padding: 20px 24px;
-  border-bottom: 1px solid var(--v2-border-light);
+  border-bottom: 1px solid var(--met-v2-border-soft);
 }
 
 .met-marketing-v2-drawer__title {
   margin: 0;
   font-size: 18px;
   font-weight: 600;
-  color: var(--v2-text-title);
+  color: var(--met-v2-text-primary);
+  letter-spacing: -0.01em;
 }
 
 .met-marketing-v2-drawer__subtitle {
   margin: 4px 0 0;
   font-size: 12px;
-  color: var(--v2-text-secondary);
+  color: var(--met-v2-text-secondary);
+  line-height: 1.45;
+  max-width: 28em;
 }
 
 .met-marketing-v2-drawer__close {
   width: 32px;
   height: 32px;
-  border: 1px solid var(--v2-border);
-  border-radius: 8px;
-  background: #fff;
+  border: 1px solid var(--met-v2-border);
+  border-radius: var(--met-v2-button-radius);
+  background: var(--met-v2-surface);
   font-size: 18px;
   line-height: 1;
+  color: var(--met-v2-text-secondary);
   cursor: pointer;
+  flex-shrink: 0;
+}
+
+.met-marketing-v2-drawer__close:hover {
+  border-color: var(--met-v2-brand);
+  color: var(--met-v2-brand);
 }
 
 .met-marketing-v2-drawer__body {
   flex: 1;
   overflow-y: auto;
-  padding: 20px 24px 32px;
+  padding: 16px 24px 32px;
 }
 
 .met-marketing-v2-drawer__section {
-  margin-bottom: 18px;
+  margin-bottom: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--met-v2-border-soft);
+  border-radius: var(--met-v2-radius-sm);
+  background: var(--met-v2-surface-soft);
 }
 
 .met-marketing-v2-drawer__section-title {
   margin: 0 0 10px;
-  font-size: 13px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--met-v2-border-soft);
+  font-size: 12px;
   font-weight: 600;
-  color: var(--v2-text-title);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--met-v2-text-secondary);
 }
 
 .met-marketing-v2-drawer__highlight {
   margin: 0;
   padding: 10px 12px;
-  border: 1px solid var(--v2-border-light);
+  border: 1px solid var(--met-v2-border-soft);
   border-radius: 8px;
-  background: #fafafa;
+  background: var(--met-v2-surface);
   font-size: 12px;
-  color: var(--v2-text-body);
+  color: var(--met-v2-text-primary);
   line-height: 1.45;
 }
 
 .met-marketing-v2-drawer__highlight.is-warn {
-  background: var(--v2-warn-bg);
-  border-color: #ebe4d8;
-  color: var(--v2-warn);
+  background: var(--met-v2-p1-bg);
+  border-color: #f0e0c4;
+  color: var(--met-v2-p1);
+  font-weight: 500;
 }
 
 .met-marketing-v2-drawer__row {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
-  padding: 6px 0;
+  gap: 16px;
+  padding: 7px 0;
   font-size: 12px;
-  border-bottom: 1px solid var(--v2-border-light);
+  border-bottom: 1px solid var(--met-v2-border-soft);
+}
+
+.met-marketing-v2-drawer__row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
 }
 
 .met-marketing-v2-drawer__row span:first-child {
-  color: var(--v2-text-faint);
+  color: var(--met-v2-text-tertiary);
+  flex-shrink: 0;
+  font-size: 11px;
 }
 
 .met-marketing-v2-drawer__row span:last-child {
   text-align: right;
-  color: var(--v2-text-body);
+  color: var(--met-v2-text-primary);
+  line-height: 1.45;
+  max-width: 62%;
 }
 
 .met-marketing-v2-drawer__tags {
@@ -1013,9 +1257,10 @@
 .met-marketing-v2-drawer__tag {
   padding: 4px 8px;
   border-radius: 6px;
-  background: var(--v2-green-soft);
+  background: var(--met-v2-brand-soft);
   font-size: 10px;
-  color: var(--v2-green);
+  font-weight: 500;
+  color: var(--met-v2-brand);
 }
 
 .met-marketing-v2-drawer__list {
@@ -1027,11 +1272,16 @@
 .met-marketing-v2-drawer__list li {
   padding: 8px 10px;
   margin-bottom: 6px;
-  border: 1px solid var(--v2-border-light);
+  border: 1px solid var(--met-v2-border-soft);
   border-radius: 8px;
-  background: #fafafa;
+  background: var(--met-v2-surface);
   font-size: 11px;
-  color: var(--v2-text-secondary);
+  color: var(--met-v2-text-secondary);
+  line-height: 1.45;
+}
+
+.met-marketing-v2-drawer__list li:last-child {
+  margin-bottom: 0;
 }
 
 .met-marketing-v2-drawer__actions {
@@ -1047,13 +1297,14 @@
   right: 32px;
   z-index: 300;
   padding: 12px 18px;
-  border-radius: 12px;
-  background: var(--v2-text-title);
-  color: #fff;
+  border-radius: var(--met-v2-radius-sm);
+  background: var(--met-v2-text-primary);
+  color: var(--met-v2-text-inverse);
   font-size: 13px;
-  box-shadow: var(--v2-shadow);
+  box-shadow: var(--met-v2-card-shadow);
 }
 
+/* —— 响应式 —— */
 @media (max-width: 1200px) {
   .met-marketing-v2-warroom__body {
     grid-template-columns: 1fr;
@@ -1063,27 +1314,21 @@
     grid-template-columns: 1fr;
   }
 
-  .met-marketing-v2-funnel-main {
-    flex-wrap: wrap;
-    align-items: flex-start;
-  }
-
-  .met-marketing-v2-funnel-main__arrow {
-    padding-bottom: 0;
+  .met-marketing-v2-channel-quadrants__grid {
+    grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 768px) {
-  .met-marketing-v2-channel-quadrants__grid {
-    grid-template-columns: 1fr;
+  .met-marketing-v2 {
+    padding: 20px 16px;
   }
 
   .met-marketing-v2-action-queue__row {
     grid-template-columns: 1fr;
   }
 
-  .met-marketing-v2-action-compact__row {
-    max-height: none;
-    min-height: 52px;
+  .met-marketing-v2-action-queue__row .met-marketing-v2-btn {
+    justify-self: start;
   }
 }

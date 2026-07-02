@@ -290,7 +290,7 @@ const MarketingV2Page: React.FC = () => {
         </header>
 
         {/* 第一屏：获客转化作战台 */}
-        <section className="met-marketing-v2-zone met-marketing-v2-warroom">
+        <section className="met-marketing-v2-zone met-marketing-v2-zone--warroom met-marketing-v2-warroom">
           <header className="met-marketing-v2-zone__head">
             <h2 className="met-marketing-v2-zone__title">{warroom.section.title}</h2>
             <p className="met-marketing-v2-zone__subtitle">{warroom.section.subtitle}</p>
@@ -470,14 +470,14 @@ const MarketingV2Page: React.FC = () => {
           </header>
           <div className="met-marketing-v2-action-queue">
             {leadActionQueue.items.map(item => (
-              <div key={item.id} className="met-marketing-v2-action-queue__row">
+              <div key={item.id} className={['met-marketing-v2-action-queue__row', `met-marketing-v2-action-queue__row--${item.priority.toLowerCase()}`].join(' ')}>
                 <span className={['met-marketing-v2-priority', getPriorityClass(item.priority)].join(' ')}>{item.priority}</span>
                 <div className="met-marketing-v2-action-queue__main">
                   <p className="met-marketing-v2-action-queue__title">{item.title}</p>
                   <p className="met-marketing-v2-action-queue__fact">{item.fact}</p>
                   <p className="met-marketing-v2-action-queue__action">{item.suggestionAction}</p>
                   <p className="met-marketing-v2-action-queue__meta">
-                    <span>影响：{item.impact}</span>
+                    <span className="met-marketing-v2-action-queue__impact-tag">影响：{item.impact}</span>
                     <span className={['met-marketing-v2-source-tag', getSuggestionSourceClass(item.suggestionSource)].join(' ')}>
                       {item.suggestionSourceLabel}
                     </span>
