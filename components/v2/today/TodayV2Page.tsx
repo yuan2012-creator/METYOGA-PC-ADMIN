@@ -34,6 +34,13 @@ const COURSE_STATUS_CLASS: Record<TodayV2CourseStatusTone, string> = {
   info: 'met-today-v2-course-status--info',
 };
 
+const MEMBER_ITEM_CLASS: Record<string, string> = {
+  'mr-1': 'met-today-v2-member-item--service',
+  'mr-2': 'met-today-v2-member-item--service',
+  'mr-3': 'met-today-v2-member-item--care',
+  'mr-4': 'met-today-v2-member-item--sales',
+};
+
 const QUICK_ACTION_ICON: Record<TodayV2QuickAction['icon'], React.ReactNode> = {
   scan: <QrCode size={16} aria-hidden />,
   users: <Users size={16} aria-hidden />,
@@ -130,6 +137,8 @@ const TodayV2Page: React.FC = () => {
                     'met-today-v2-timeline__item',
                     course.focusMarker === 'current' ? 'is-current-focus' : '',
                     course.focusMarker === 'next' ? 'is-next-focus' : '',
+                    course.statusTone === 'danger' ? 'has-anomaly' : '',
+                    course.statusTone === 'warning' ? 'has-watch' : '',
                   ]
                     .filter(Boolean)
                     .join(' ')}
@@ -154,7 +163,8 @@ const TodayV2Page: React.FC = () => {
                       </span>
                     </div>
                     <p className="met-today-v2-timeline__title">
-                      {course.courseName} · {course.teacherName}
+                      <span className="met-today-v2-timeline__course">{course.courseName}</span>
+                      <span className="met-today-v2-timeline__teacher">{course.teacherName}</span>
                     </p>
                     <p className="met-today-v2-timeline__meta">
                       {course.bookedCount}/{course.capacity} 人
@@ -177,10 +187,10 @@ const TodayV2Page: React.FC = () => {
               <h2 className="met-today-v2-card__title">{urgentNow.title}</h2>
               <div className="met-today-v2-urgent-list">
                 {urgentNow.tasks.map(task => (
-                  <div
-                    key={task.id}
-                    className={`met-today-v2-urgent-item${task.priority === 'P0' ? ' is-p0' : ''}`}
-                  >
+                <div
+                  key={task.id}
+                  className={`met-today-v2-urgent-item met-today-v2-urgent-item--${task.priority.toLowerCase()}`}
+                >
                     <div className="met-today-v2-urgent-item__main">
                       <div className="met-today-v2-urgent-item__head">
                         <span className={`met-today-v2-priority ${PRIORITY_CLASS[task.priority]}`}>
@@ -250,7 +260,10 @@ const TodayV2Page: React.FC = () => {
             </p>
             <div className="met-today-v2-order-list">
               {mustHandleToday.tasks.map(task => (
-                <div key={task.id} className="met-today-v2-order-row">
+                <div
+                  key={task.id}
+                  className={`met-today-v2-order-row met-today-v2-order-row--${task.priority.toLowerCase()}`}
+                >
                   <span className={`met-today-v2-priority ${PRIORITY_CLASS[task.priority]}`}>
                     {task.priority}
                   </span>
@@ -287,7 +300,15 @@ const TodayV2Page: React.FC = () => {
             </p>
             <div className="met-today-v2-member-list">
               {memberReminders.items.map(item => (
-                <div key={item.id} className="met-today-v2-member-item">
+                <div
+                  key={item.id}
+                  className={[
+                    'met-today-v2-member-item',
+                    MEMBER_ITEM_CLASS[item.id] ?? '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                >
                   <div>
                     <p className="met-today-v2-member-item__label">{item.label}</p>
                     <p className="met-today-v2-member-item__value">{item.value}</p>
