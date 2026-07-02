@@ -15,6 +15,7 @@ import { CourseV2Page } from './components/v2/course';
 import { StaffV2Page } from './components/v2/staff';
 import { FinanceV2Page } from './components/v2/finance';
 import { MarketingV2Page } from './components/v2/marketing';
+import { SettingsV2Page } from './components/v2/settings';
 import {
   ModulePlaceholder,
   SIDEBAR_V2_DEFAULT_NAV,
@@ -25,7 +26,7 @@ import {
 import { MockAdminScopeProvider } from './context/MockAdminScopeContext';
 import { MOCK_ADMIN_UI_DEFAULT } from './constants/mockAdminScope';
 
-const SCROLLABLE_NAV_IDS = new Set(['dashboard', 'dashboard-v2', 'today', 'member', 'course', 'staff', 'finance', 'marketing']);
+const SCROLLABLE_NAV_IDS = new Set(['dashboard', 'dashboard-v2', 'today', 'member', 'course', 'staff', 'finance', 'marketing', 'settings']);
 
 const App: React.FC = () => {
   const [activeNav, setActiveNav] = useState<string>(SIDEBAR_V2_DEFAULT_NAV);
@@ -77,7 +78,7 @@ const App: React.FC = () => {
       case 'partner':
         return <Partner />;
       case 'settings':
-        return <Settings />;
+        return <SettingsV2Page />;
       case 'permission-audit':
         return <Audit />;
       default:
