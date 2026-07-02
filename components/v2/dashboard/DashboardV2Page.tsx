@@ -188,7 +188,18 @@ const DashboardV2Page: React.FC = () => {
                 {diagnosis.tags.map(tag => (
                   <span
                     key={tag}
-                    className={`met-dashboard-v2-tag ${tag.startsWith('P0') ? 'met-dashboard-v2-tag--p0' : 'met-dashboard-v2-tag--neutral'}`}
+                    className={[
+                      'met-dashboard-v2-tag',
+                      tag.startsWith('P0')
+                        ? 'met-dashboard-v2-tag--p0'
+                        : tag.startsWith('P1')
+                          ? 'met-dashboard-v2-tag--p1'
+                          : tag.includes('系统规则')
+                            ? 'met-dashboard-v2-tag--rule'
+                            : tag.includes('待配置')
+                              ? 'met-dashboard-v2-tag--pending'
+                              : 'met-dashboard-v2-tag--neutral',
+                    ].join(' ')}
                   >
                     {tag}
                   </span>
@@ -211,7 +222,7 @@ const DashboardV2Page: React.FC = () => {
                 </div>
                 <div className="met-dashboard-v2-hero__evidence-item">
                   <span className="met-dashboard-v2-hero__evidence-label">当前覆盖率</span>
-                  <span className="met-dashboard-v2-hero__evidence-value">72%</span>
+                  <span className="met-dashboard-v2-hero__evidence-value is-warning">72%</span>
                 </div>
                 <div className="met-dashboard-v2-hero__evidence-item">
                   <span className="met-dashboard-v2-hero__evidence-label">安全线</span>
@@ -268,7 +279,7 @@ const DashboardV2Page: React.FC = () => {
             </p>
             <div className="met-dashboard-v2-risk-list">
               {riskQueue.map(item => (
-                <div key={item.id} className="met-dashboard-v2-risk-item">
+                <div key={item.id} className={`met-dashboard-v2-risk-item met-dashboard-v2-risk-item--${item.priority.toLowerCase()}`}>
                   <div className="met-dashboard-v2-risk-item__head">
                     <div className="met-dashboard-v2-risk-item__title-wrap">
                       <span className={`met-dashboard-v2-action-item__priority ${PRIORITY_CLASS[item.priority]}`}>
@@ -292,7 +303,7 @@ const DashboardV2Page: React.FC = () => {
                       </div>
                       <div className="met-dashboard-v2-risk-item__field">
                         <span className="met-dashboard-v2-risk-item__label">影响对象</span>
-                        <p className="met-dashboard-v2-risk-item__text">{item.impact}</p>
+                        <p className="met-dashboard-v2-risk-item__text met-dashboard-v2-risk-item__impact">{item.impact}</p>
                       </div>
                     </div>
                     <div className="met-dashboard-v2-risk-item__col met-dashboard-v2-risk-item__col--right">
