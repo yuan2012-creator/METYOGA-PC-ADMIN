@@ -452,7 +452,18 @@ const SettingsV2Page: React.FC = () => {
               </div>
               <div className="met-settings-v2-evidence-grid">
                 {healthSummary.evidence.map(ev => (
-                  <div key={ev.label} className="met-settings-v2-evidence-item">
+                  <div
+                    key={ev.label}
+                    className={[
+                      'met-settings-v2-evidence-item',
+                      ev.label === '已启用规则' ? 'met-settings-v2-evidence-item--rules' : '',
+                      ev.label === '待补配置' ? 'met-settings-v2-evidence-item--pending' : '',
+                      ev.label === '角色权限' ? 'met-settings-v2-evidence-item--roles' : '',
+                      ev.label === '审批流' ? 'met-settings-v2-evidence-item--approval' : '',
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                  >
                     <span className="met-settings-v2-evidence-item__value">{ev.value}</span>
                     <span className="met-settings-v2-evidence-item__label">{ev.label}</span>
                   </div>
@@ -526,14 +537,14 @@ const SettingsV2Page: React.FC = () => {
           </header>
           <div className="met-settings-v2-highrisk-queue">
             {highRiskQueue.items.map(item => (
-              <div key={item.id} className="met-settings-v2-risk-row">
+              <div key={item.id} className={['met-settings-v2-risk-row', `met-settings-v2-risk-row--${item.priority.toLowerCase()}`].join(' ')}>
                 <span className={['met-settings-v2-priority', getPriorityClass(item.priority)].join(' ')}>{item.priority}</span>
                 <div className="met-settings-v2-risk-row__main">
                   <p className="met-settings-v2-risk-row__title">{item.title}</p>
                   <p className="met-settings-v2-risk-row__fact">{item.fact}</p>
                   <p className="met-settings-v2-risk-row__meta">
-                    <span>影响：{item.impact}</span>
-                    <span>关联：{item.relatedModules}</span>
+                    <span className="met-settings-v2-risk-row__impact-tag">影响：{item.impact}</span>
+                    <span className="met-settings-v2-risk-row__module">关联：{item.relatedModules}</span>
                     <span className={['met-settings-v2-source-tag', getSuggestionSourceClass(item.suggestionSource)].join(' ')}>
                       {item.suggestionSourceLabel}
                     </span>
