@@ -90,6 +90,7 @@ function FlowNode({
       type="button"
       className={[
         'met-member-v2-flow-node',
+        stage.zone === 'growth' ? 'met-member-v2-flow-node--growth' : 'met-member-v2-flow-node--risk',
         stage.riskVariant ? `is-${stage.riskVariant}` : '',
       ]
         .filter(Boolean)
@@ -330,7 +331,7 @@ const MemberV2Page: React.FC = () => {
         </section>
 
         <section className="met-member-v2__row-queues">
-          <article className="met-member-v2-card met-member-v2-card--queue">
+          <article className="met-member-v2-card met-member-v2-card--queue met-member-v2-card--queue-service">
             <h2 className="met-member-v2-card__title">{serviceQueue.title}</h2>
             <p className="met-member-v2-card__subtitle met-member-v2-card__subtitle--compact">
               {serviceQueue.subtitle}
@@ -344,14 +345,16 @@ const MemberV2Page: React.FC = () => {
             </div>
             <div className="met-member-v2-top-list">
               {serviceQueue.topTasks.map(task => (
-                <div key={task.id} className="met-member-v2-top-row">
+                <div key={task.id} className="met-member-v2-top-row met-member-v2-top-row--service">
                   <div className="met-member-v2-top-row__main">
-                    <span className="met-member-v2-top-row__name">{task.memberName}</span>
-                    <span className="met-member-v2-top-row__stage">{task.stageCode}</span>
-                    <span className="met-member-v2-top-row__tag">{task.mainTag}</span>
-                    <span>｜{task.triggerReason}</span>
+                    <div className="met-member-v2-top-row__head">
+                      <span className="met-member-v2-top-row__name">{task.memberName}</span>
+                      <span className="met-member-v2-top-row__stage">{task.stageCode}</span>
+                      <span className="met-member-v2-top-row__tag">{task.mainTag}</span>
+                    </div>
+                    <p className="met-member-v2-top-row__fact">{task.triggerReason}</p>
                     <p className="met-member-v2-top-row__meta">
-                      {task.owner} · {task.deadline}
+                      {task.owner} · 截止 {task.deadline}
                     </p>
                   </div>
                   <button
@@ -375,7 +378,7 @@ const MemberV2Page: React.FC = () => {
             </div>
           </article>
 
-          <article className="met-member-v2-card met-member-v2-card--queue">
+          <article className="met-member-v2-card met-member-v2-card--queue met-member-v2-card--queue-sales">
             <h2 className="met-member-v2-card__title">{salesQueue.title}</h2>
             <p className="met-member-v2-card__subtitle met-member-v2-card__subtitle--compact">
               {salesQueue.subtitle}
@@ -389,14 +392,16 @@ const MemberV2Page: React.FC = () => {
             </div>
             <div className="met-member-v2-top-list">
               {salesQueue.topTasks.map(task => (
-                <div key={task.id} className="met-member-v2-top-row">
+                <div key={task.id} className="met-member-v2-top-row met-member-v2-top-row--sales">
                   <div className="met-member-v2-top-row__main">
-                    <span className="met-member-v2-top-row__name">{task.name}</span>
-                    <span className="met-member-v2-top-row__stage">{task.stageCode}</span>
-                    <span className="met-member-v2-top-row__tag">{task.mainTag}</span>
-                    <span>｜{task.triggerReason}</span>
+                    <div className="met-member-v2-top-row__head">
+                      <span className="met-member-v2-top-row__name">{task.name}</span>
+                      <span className="met-member-v2-top-row__stage">{task.stageCode}</span>
+                      <span className="met-member-v2-top-row__tag">{task.mainTag}</span>
+                    </div>
+                    <p className="met-member-v2-top-row__fact">{task.triggerReason}</p>
                     <p className="met-member-v2-top-row__meta">
-                      {task.owner} · {task.deadline}
+                      {task.owner} · 截止 {task.deadline}
                     </p>
                   </div>
                   <button
@@ -422,10 +427,15 @@ const MemberV2Page: React.FC = () => {
         </section>
 
         <article className="met-member-v2-card met-member-v2-card--audience">
-          <h2 className="met-member-v2-card__title">{audienceMatchPacks.title}</h2>
-          <p className="met-member-v2-card__subtitle met-member-v2-card__subtitle--compact">
-            {audienceMatchPacks.subtitle}
-          </p>
+          <div className="met-member-v2-card__head-row">
+            <div>
+              <h2 className="met-member-v2-card__title">{audienceMatchPacks.title}</h2>
+              <p className="met-member-v2-card__subtitle met-member-v2-card__subtitle--compact">
+                {audienceMatchPacks.subtitle}
+              </p>
+            </div>
+            <span className="met-member-v2-audience-hint">点对点邀约 · 非群发</span>
+          </div>
           <div className="met-member-v2-pack-grid">
             {audienceMatchPacks.packs.map(pack => (
               <div key={pack.id} className="met-member-v2-pack">
@@ -609,9 +619,14 @@ const MemberV2Page: React.FC = () => {
           />
           <aside className="met-member-v2-drawer" role="dialog" aria-labelledby="member-v2-drawer-title">
             <div className="met-member-v2-drawer__head">
-              <h2 id="member-v2-drawer-title" className="met-member-v2-drawer__title">
-                会员详情
-              </h2>
+              <div>
+                <h2 id="member-v2-drawer-title" className="met-member-v2-drawer__title">
+                  会员详情
+                </h2>
+                <p className="met-member-v2-drawer__hero">
+                  {drawerDetail.name} · {drawerDetail.stageLabel}
+                </p>
+              </div>
               <button
                 type="button"
                 className="met-member-v2-drawer__close"
