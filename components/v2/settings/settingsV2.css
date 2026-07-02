@@ -264,7 +264,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--v2-health-aside);
   gap: var(--met-v2-card-gap);
-  align-items: start;
+  align-items: stretch;
 }
 
 .met-settings-v2-panel {
@@ -287,6 +287,12 @@
 
 .met-settings-v2-panel--risks {
   background: var(--met-v2-surface);
+  display: flex;
+  flex-direction: column;
+}
+
+.met-settings-v2-panel--risks .met-settings-v2-risk-grid--compact {
+  flex: 1;
 }
 
 .met-settings-v2-conclusion {
@@ -413,12 +419,15 @@
 
 .met-settings-v2-risk-card__head {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 6px;
+  gap: 8px;
+  width: 100%;
 }
 
 .met-settings-v2-risk-card__count {
+  flex: 1;
+  min-width: 0;
   font-size: 20px;
   font-weight: 700;
   color: var(--met-v2-text-primary);
@@ -426,12 +435,43 @@
   line-height: 1.1;
 }
 
-.met-settings-v2-risk-card__type {
-  font-size: 9px;
-  font-weight: 700;
-  color: var(--met-v2-text-tertiary);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+.met-settings-v2-risk-card__type-tag {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.met-settings-v2-risk-card__type-tag.is-risk {
+  background: var(--met-v2-p1-bg);
+  color: var(--met-v2-p1);
+  border: 1px solid #f0e0c4;
+}
+
+.met-settings-v2-risk-card__type-tag.is-approval {
+  background: var(--met-v2-neutral-bg);
+  color: var(--met-v2-text-secondary);
+  border: 1px solid var(--met-v2-border);
+}
+
+.met-settings-v2-risk-card__type-tag.is-notification {
+  background: var(--met-v2-surface-soft);
+  color: var(--met-v2-text-secondary);
+  border: 1px solid var(--met-v2-border-soft);
+}
+
+.met-settings-v2-risk-card__type-tag.is-permission {
+  background: var(--met-v2-brand-soft);
+  color: var(--met-v2-brand-dark);
+  border: 1px solid #cfe8d8;
 }
 
 .met-settings-v2-risk-card__title {
@@ -444,15 +484,23 @@
 
 .met-settings-v2-risk-grid--compact .met-settings-v2-risk-card--compact {
   padding: 11px 12px;
-  min-height: 92px;
+  min-height: 108px;
   display: flex;
   flex-direction: column;
+  gap: 0;
 }
 
 .met-settings-v2-risk-card--compact .met-settings-v2-risk-card__title {
   flex: 1;
   margin: 6px 0 10px;
   font-size: 11px;
+  line-height: 1.4;
+}
+
+.met-settings-v2-risk-card__action {
+  width: 100%;
+  margin-top: auto;
+  justify-content: center;
 }
 
 /* —— 核心配置入口地图 —— */

@@ -276,16 +276,18 @@ const MarketingV2Page: React.FC = () => {
               >
                 线索阶段：{filters.leadStageLabel}<ChevronDown size={14} aria-hidden />
               </button>
+            </div>
+            <div className="met-marketing-v2__header-ops">
               <button type="button" className="met-marketing-v2__filter-btn met-marketing-v2__filter-btn--ghost" onClick={() => showToast('进入渠道规则（待建设）')}>
                 {filters.secondaryActionLabel}
               </button>
               <button type="button" className="met-marketing-v2__filter-btn met-marketing-v2__filter-btn--primary" onClick={() => showToast('新增活动（待建设）')}>
                 {filters.primaryActionLabel}
               </button>
+              <button type="button" className="met-marketing-v2__filter-btn met-marketing-v2__filter-btn--link" onClick={() => showToast('进入线索池二级页（待建设）')}>
+                {filters.leadPoolLinkLabel}
+              </button>
             </div>
-            <button type="button" className="met-marketing-v2__detail-link" onClick={() => showToast('进入线索池二级页（待建设）')}>
-              {filters.leadPoolLinkLabel}
-            </button>
           </div>
         </header>
 
@@ -297,18 +299,21 @@ const MarketingV2Page: React.FC = () => {
           </header>
           <div className="met-marketing-v2-warroom__body">
             <div className="met-marketing-v2-funnel-main">
+              <div className="met-marketing-v2-funnel-main__track">
               {warroom.funnelStages.map((stage, index) => {
                 const bp = breakpointMap.get(stage.id);
                 const isLast = index === warroom.funnelStages.length - 1;
                 return (
                   <React.Fragment key={stage.id}>
-                    <div className="met-marketing-v2-funnel-main__unit">
+                    <div
+                      className="met-marketing-v2-funnel-main__unit"
+                      style={{ flex: `${stage.widthPercent} 1 0` }}
+                    >
                       <button
                         type="button"
                         className="met-marketing-v2-funnel-stage"
                         style={{
-                          width: `${stage.widthPercent}%`,
-                          minHeight: `${56 + stage.widthPercent * 0.45}px`,
+                          minHeight: `${52 + stage.widthPercent * 0.32}px`,
                         }}
                         onClick={() => handleFunnelStageClick(stage.id)}
                       >
@@ -333,6 +338,7 @@ const MarketingV2Page: React.FC = () => {
                   </React.Fragment>
                 );
               })}
+              </div>
             </div>
             <aside className="met-marketing-v2-action-compact">
               <header className="met-marketing-v2-action-compact__head">

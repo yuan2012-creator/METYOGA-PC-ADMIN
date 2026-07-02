@@ -480,10 +480,12 @@ const SettingsV2Page: React.FC = () => {
                   <div key={item.id} className={['met-settings-v2-risk-card met-settings-v2-risk-card--compact', getRiskToneClass(item.tone)].join(' ')}>
                     <div className="met-settings-v2-risk-card__head">
                       <span className="met-settings-v2-risk-card__count">{item.count}</span>
-                      <span className="met-settings-v2-risk-card__type">{item.tone === 'risk' ? '风险' : item.tone === 'approval' ? '审批' : item.tone === 'notification' ? '通知' : '权限'}</span>
+                      <span className={['met-settings-v2-risk-card__type-tag', getRiskToneClass(item.tone)].join(' ')}>
+                        {item.tone === 'risk' ? '风险' : item.tone === 'approval' ? '审批' : item.tone === 'notification' ? '通知' : '权限'}
+                      </span>
                     </div>
                     <p className="met-settings-v2-risk-card__title">{item.title}</p>
-                    <button type="button" className="met-settings-v2-btn met-settings-v2-btn--sm" onClick={() => {
+                    <button type="button" className="met-settings-v2-btn met-settings-v2-btn--sm met-settings-v2-risk-card__action" onClick={() => {
                       showToast(item.toastMessage);
                       if (item.relatedDetailId) {
                         if (detailMaps.settingDetailMap[item.relatedDetailId]) openSettingDrawer(item.relatedDetailId);
