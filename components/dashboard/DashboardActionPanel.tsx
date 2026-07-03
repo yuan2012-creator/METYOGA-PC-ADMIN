@@ -61,7 +61,7 @@ const SuggestionCards: React.FC<{
   suggestions: DashboardActionSuggestion[];
   onSuggestionAction: (item: DashboardActionSuggestion) => void;
 }> = ({ suggestions, onSuggestionAction }) => (
-  <aside className="met-dashboard-suggestions met-today-surface">
+  <aside className="met-dashboard-suggestions met-dashboard-surface">
     <header className="met-dashboard-suggestions__head">
       <h2>待办与行动建议</h2>
     </header>
@@ -130,7 +130,7 @@ const WorkbenchPanel: React.FC<WorkbenchPanelProps> = ({
   }, [items]);
 
   return (
-    <aside className="met-dashboard-action-panel met-today-surface">
+    <aside className="met-dashboard-action-panel met-dashboard-surface">
       <header className="met-dashboard-action-panel__head">
         <h2>今日经营行动区</h2>
         <p>按经营影响优先处理，不按模块堆任务</p>

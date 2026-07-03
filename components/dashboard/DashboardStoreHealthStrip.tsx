@@ -17,9 +17,12 @@ const DashboardStoreHealthStrip: React.FC<{
   items: DashboardStoreHealthItem[];
   onStoreClick: (storeName: string) => void;
 }> = ({ items, onStoreClick }) => (
-  <aside className="met-dashboard-store-health met-today-surface">
+  <aside className="met-dashboard-store-health met-dashboard-surface">
     <header className="met-dashboard-store-health__head">
-      <h2>五馆健康速览</h2>
+      <div>
+        <h2>五馆风险热度</h2>
+        <p>只看需总部关注的强弱和趋势</p>
+      </div>
     </header>
     <ul className="met-dashboard-store-health__list">
       {items.map(item => {
@@ -48,7 +51,7 @@ const DashboardStoreHealthStrip: React.FC<{
                   />
                 </div>
               </div>
-              <span className="met-dashboard-store-health-item__issue">问题 {item.issueCount}</span>
+              <span className="met-dashboard-store-health-item__issue">{item.issueCount} 项</span>
             </button>
           </li>
         );

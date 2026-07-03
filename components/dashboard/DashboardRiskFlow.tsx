@@ -12,7 +12,7 @@ const DashboardRiskFlow: React.FC<{
     return (
       <section className="met-dashboard-evidence-section">
         {title ? <h2 className="met-dashboard-evidence-section__title">{title}</h2> : null}
-        <div className="met-dashboard-evidence-chain met-today-surface">
+        <div className="met-dashboard-evidence-chain met-dashboard-surface">
           <div className="met-dashboard-evidence-chain__track-wrap">
             <span className="met-dashboard-evidence-chain__dash" aria-hidden />
             <div className="met-dashboard-evidence-chain__track" role="list">

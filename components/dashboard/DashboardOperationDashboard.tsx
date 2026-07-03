@@ -12,6 +12,7 @@ import DashboardRiskFlow from './DashboardRiskFlow';
 import DashboardWorkspaceTable from './DashboardWorkspaceTable';
 import DashboardActionPanel from './DashboardActionPanel';
 import DashboardDetailModal from './DashboardDetailModal';
+import './dashboardStitch.css';
 
 const DashboardOperationDashboard: React.FC = () => {
   const snapshot = useMemo(() => buildDashboardOperationSnapshot(), []);
@@ -44,72 +45,80 @@ const DashboardOperationDashboard: React.FC = () => {
   };
 
   return (
-    <div className="met-today-page met-dashboard-page met-dashboard-page--stitch">
-      <header className="met-dashboard-status-hero">
-        <div className="met-dashboard-status-hero__copy">
-          <h1>{stitch.statusHero.title}</h1>
-          <p className="met-dashboard-status-hero__summary">
-            {stitch.statusHero.line1}
-            <br />
-            {stitch.statusHero.line2}
-          </p>
-        </div>
-        <div className="met-dashboard-status-hero__kpis">
-          <div className="met-dashboard-status-hero__kpi">
-            <span className="met-dashboard-status-hero__kpi-label">待处理</span>
-            <span className="met-dashboard-status-hero__kpi-value">{stitch.statusHero.totalPending}</span>
+    <div className="met-dashboard-page met-dashboard-page--stitch met-dashboard-stitch-shell">
+      <div className="met-dashboard-stitch-inner">
+        <section className="met-dashboard-overview-panel met-dashboard-surface">
+          <header className="met-dashboard-status-hero">
+            <div className="met-dashboard-status-hero__copy">
+              <span className="met-dashboard-status-hero__eyebrow">经营总览 · 总部经营视角</span>
+              <h1>{stitch.statusHero.title}</h1>
+              <p className="met-dashboard-status-hero__summary">
+                {stitch.statusHero.line1}
+                <br />
+                {stitch.statusHero.line2}
+              </p>
+            </div>
+            <div className="met-dashboard-status-hero__kpis" aria-label="今日经营摘要">
+              <div className="met-dashboard-status-hero__kpi">
+                <span className="met-dashboard-status-hero__kpi-label">待处理</span>
+                <span className="met-dashboard-status-hero__kpi-value">{stitch.statusHero.totalPending}</span>
+              </div>
+              <div className="met-dashboard-status-hero__kpi">
+                <span className="met-dashboard-status-hero__kpi-label">高优先级</span>
+                <span className="met-dashboard-status-hero__kpi-value is-warn">
+                  {stitch.statusHero.highPriorityCount}
+                </span>
+              </div>
+              <div className="met-dashboard-status-hero__kpi">
+                <span className="met-dashboard-status-hero__kpi-label">临近超时</span>
+                <span className="met-dashboard-status-hero__kpi-value is-overdue">
+                  {stitch.statusHero.nearOverdueCount}
+                </span>
+              </div>
+            </div>
+          </header>
+
+          <div className="met-dashboard-hero-grid">
+            <DashboardVisualPanel judgment={stitch.judgment} />
+            <DashboardStoreHealthStrip
+              items={snapshot.cockpit.storeHealthItems}
+              onStoreClick={store => showToast(dashboardDemoToast.storeFilter(store))}
+            />
           </div>
-          <div className="met-dashboard-status-hero__kpi">
-            <span className="met-dashboard-status-hero__kpi-label">高优先级</span>
-            <span className="met-dashboard-status-hero__kpi-value is-warn">
-              {stitch.statusHero.highPriorityCount}
-            </span>
+        </section>
+
+        <section className="met-dashboard-kpis-section">
+          <div className="met-dashboard-section-head">
+            <h2 className="met-dashboard-section-title">核心经营指标（实时）</h2>
+            <p className="met-dashboard-section-desc">收款、确认收入、预约到课与风险事项保持同屏可扫。</p>
           </div>
-          <div className="met-dashboard-status-hero__kpi">
-            <span className="met-dashboard-status-hero__kpi-label">临近超时</span>
-            <span className="met-dashboard-status-hero__kpi-value is-overdue">
-              {stitch.statusHero.nearOverdueCount}
-            </span>
+          <div className="met-dashboard-kpis">
+            {snapshot.metrics.map(item => (
+              <DashboardMetricCard key={item.id} item={item} compact stitch />
+            ))}
           </div>
-        </div>
-      </header>
+        </section>
 
-      <section className="met-dashboard-hero-grid">
-        <DashboardVisualPanel judgment={stitch.judgment} />
-        <DashboardStoreHealthStrip
-          items={snapshot.cockpit.storeHealthItems}
-          onStoreClick={store => showToast(dashboardDemoToast.storeFilter(store))}
+        <DashboardRiskFlow
+          title="跨模块证据链"
+          nodes={stitch.evidenceNodes}
+          insight={stitch.evidenceInsight}
         />
-      </section>
 
-      <section className="met-dashboard-kpis-section">
-        <h2 className="met-dashboard-section-title">核心经营指标（实时）</h2>
-        <div className="met-dashboard-kpis">
-          {snapshot.metrics.map(item => (
-            <DashboardMetricCard key={item.id} item={item} compact stitch />
-          ))}
-        </div>
-      </section>
-
-      <DashboardRiskFlow
-        title="跨模块证据链"
-        nodes={stitch.evidenceNodes}
-        insight={stitch.evidenceInsight}
-      />
-
-      <section className="met-dashboard-bottom-grid">
-        <DashboardWorkspaceTable
-          variant="storeMonitor"
-          snapshot={snapshot}
-          highlightId={modalOpen ? modalEntityId : null}
-          onOpenDetail={id => openDetail(id)}
-        />
-        <DashboardActionPanel
-          variant="suggestions"
-          suggestions={stitch.actionSuggestions}
-          onSuggestionAction={handleSuggestion}
-        />
-      </section>
+        <section className="met-dashboard-bottom-grid">
+          <DashboardWorkspaceTable
+            variant="storeMonitor"
+            snapshot={snapshot}
+            highlightId={modalOpen ? modalEntityId : null}
+            onOpenDetail={id => openDetail(id)}
+          />
+          <DashboardActionPanel
+            variant="suggestions"
+            suggestions={stitch.actionSuggestions}
+            onSuggestionAction={handleSuggestion}
+          />
+        </section>
+      </div>
 
       <DashboardDetailModal
         open={modalOpen}

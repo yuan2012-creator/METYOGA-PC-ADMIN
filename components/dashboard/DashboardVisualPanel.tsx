@@ -3,7 +3,7 @@ import type { DashboardJudgmentPanel } from './dashboardOperationViewModel';
 
 const CHART_W = 360;
 const CHART_H = 88;
-const PAD = { l: 10, r: 10, t: 12, b: 20 };
+const PAD = { l: 12, r: 14, t: 14, b: 22 };
 
 const TrendLineChart: React.FC<{ points: DashboardJudgmentPanel['trend'] }> = ({ points }) => {
   const { coords, linePath, areaPath } = useMemo(() => {
@@ -52,14 +52,14 @@ const TrendLineChart: React.FC<{ points: DashboardJudgmentPanel['trend'] }> = ({
             />
           );
         })}
-        <path d={areaPath} fill="url(#met-dashboard-trend-area)" />
+        <path d={areaPath} className="met-dashboard-trend-chart__area" />
         <path d={linePath} className="met-dashboard-trend-chart__line" fill="none" />
         {coords.map(c => (
           <g key={c.dateLabel}>
             <circle
               cx={c.x}
               cy={c.y}
-              r={c.isToday ? 4.5 : 2.5}
+              r={c.isToday ? 3.6 : 2.2}
               className={`met-dashboard-trend-chart__dot${c.isToday ? ' is-today' : ''}`}
             />
             {c.isToday ? (
@@ -69,7 +69,7 @@ const TrendLineChart: React.FC<{ points: DashboardJudgmentPanel['trend'] }> = ({
                 textAnchor="middle"
                 className="met-dashboard-trend-chart__today-value"
               >
-                {c.count}
+                今日 {c.count}
               </text>
             ) : null}
             <text
@@ -88,7 +88,7 @@ const TrendLineChart: React.FC<{ points: DashboardJudgmentPanel['trend'] }> = ({
 };
 
 const DashboardVisualPanel: React.FC<{ judgment: DashboardJudgmentPanel }> = ({ judgment }) => (
-  <article className="met-dashboard-judgment-card met-today-surface">
+  <article className="met-dashboard-judgment-card met-dashboard-surface">
     <header className="met-dashboard-judgment-card__head">
       <div className="met-dashboard-judgment-card__head-left">
         <h2 className="met-dashboard-judgment-card__title">今日经营判断</h2>
@@ -108,7 +108,10 @@ const DashboardVisualPanel: React.FC<{ judgment: DashboardJudgmentPanel }> = ({ 
     </header>
 
     <div className="met-dashboard-judgment-card__chart-wrap">
-      <p className="met-dashboard-judgment-card__chart-title">近 7 日待处理趋势</p>
+      <p className="met-dashboard-judgment-card__chart-title">
+        <span>近 7 日待处理趋势</span>
+        <span>趋势上升 +24%</span>
+      </p>
       <TrendLineChart points={judgment.trend} />
     </div>
 

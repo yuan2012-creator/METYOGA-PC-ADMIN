@@ -25,7 +25,7 @@ const DashboardMetricCard: React.FC<{
 
   return (
     <article
-      className={`met-dashboard-metric-card met-today-surface${compact ? ' met-dashboard-metric-card--compact' : ''}${stitch ? ' met-dashboard-metric-card--stitch' : ''}${item.label === '预约 / 到课' && stitch ? ' is-booking' : ''}${item.tone === 'amber' ? ' is-amber' : ''}${item.tone === 'rose' ? ' is-rose' : ''}`}
+      className={`met-dashboard-metric-card met-dashboard-surface${compact ? ' met-dashboard-metric-card--compact' : ''}${stitch ? ' met-dashboard-metric-card--stitch' : ''}${item.label === '预约 / 到课' && stitch ? ' is-booking' : ''}${item.tone === 'amber' ? ' is-amber' : ''}${item.tone === 'rose' ? ' is-rose' : ''}`}
     >
       <div className="met-dashboard-metric-card__label-row">
         <p className="met-dashboard-metric-card__label">{labelText}</p>

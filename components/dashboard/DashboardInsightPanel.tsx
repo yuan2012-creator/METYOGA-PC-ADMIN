@@ -9,7 +9,7 @@ const DashboardInsightPanel: React.FC<{
     <h2 className="met-dashboard-insights__title">今日经营建议</h2>
     <div className="met-dashboard-insights__row">
       {tips.map(tip => (
-        <article key={tip.id} className="met-dashboard-insight-card met-today-surface">
+        <article key={tip.id} className="met-dashboard-insight-card met-dashboard-surface">
           <div className="met-dashboard-insight-card__main">
             <span className="met-dashboard-insight-card__tag">{tip.tag}</span>
             <p className="met-dashboard-insight-card__line">{tip.line}</p>

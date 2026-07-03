@@ -97,7 +97,7 @@ const StoreMonitorTable: React.FC<{
   highlightId?: string | null;
   onOpenDetail: (id: string) => void;
 }> = ({ snapshot, highlightId, onOpenDetail }) => (
-  <section className="met-dashboard-monitor-card met-today-surface">
+  <section className="met-dashboard-monitor-card met-dashboard-surface">
     <header className="met-dashboard-monitor-card__head">
       <h2>门店健康监测表</h2>
     </header>
@@ -278,7 +278,7 @@ const DashboardWorkspaceTable: React.FC<DashboardWorkspaceTableProps> = props =>
   };
 
   return (
-    <section className="met-dashboard-list-card met-today-surface">
+    <section className="met-dashboard-list-card met-dashboard-surface">
       <header className="met-dashboard-list-card__head">
         <h2>经营诊断工作台</h2>
         <p className="met-dashboard-list-card__hint">{DASHBOARD_SEGMENT_HINTS[segment]}</p>
