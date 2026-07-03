@@ -56,8 +56,9 @@
   --sb-v2-active-bg: #ffffff;
   --sb-v2-active-text: var(--met-v2-brand);
   --sb-v2-active-icon: var(--met-v2-brand);
-  --sb-v2-width-expanded: 232px;
+  --sb-v2-width-expanded: 224px;
   --sb-v2-width-collapsed: 80px;
+  --sb-v2-nav-inset: 14px;
   --sb-v2-border: rgba(255, 255, 255, 0.08);
 
   z-index: 20;
@@ -83,9 +84,9 @@
   flex-shrink: 0;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
-  height: 56px;
-  padding: 0 12px;
+  gap: 4px;
+  height: 52px;
+  padding: 0 var(--sb-v2-nav-inset);
 }
 
 .met-sidebar-v2.is-collapsed .met-sidebar-v2__head {
@@ -99,26 +100,15 @@
   min-width: 0;
   flex: 1;
   align-items: center;
-  gap: 8px;
 }
 
 .met-sidebar-v2.is-collapsed .met-sidebar-v2__brand {
   flex: 0;
+  justify-content: center;
 }
 
 .met-sidebar-v2__brand-mark {
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.07);
-  color: #ffffff;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.03em;
+  display: none;
 }
 
 .met-sidebar-v2__brand-wordmark {
@@ -126,7 +116,7 @@
   color: #ffffff;
   font-size: 13px;
   font-weight: 600;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
   white-space: nowrap;
 }
 
@@ -164,11 +154,11 @@
   min-height: 0;
   flex: 1;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 6px 10px;
+  padding: 4px var(--sb-v2-nav-inset) 6px;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
 }
@@ -187,16 +177,16 @@
 }
 
 .met-sidebar-v2.is-collapsed .met-sidebar-v2__nav {
-  padding: 6px 8px;
+  padding: 4px 8px 6px;
 }
 
 .met-sidebar-v2__nav-item {
   display: flex;
   width: 100%;
   align-items: center;
-  gap: 10px;
-  height: 42px;
-  padding: 0 12px;
+  gap: 9px;
+  height: 40px;
+  padding: 0 10px;
   border: none;
   border-radius: 999px;
   background: transparent;
@@ -241,8 +231,10 @@
 
 .met-sidebar-v2__nav-label {
   overflow: hidden;
+  flex: 1;
   min-width: 0;
   font-size: 14px;
+  font-weight: 500;
   white-space: nowrap;
   text-overflow: ellipsis;
 }
@@ -253,12 +245,12 @@
 
 .met-sidebar-v2__footer {
   flex-shrink: 0;
-  padding: 8px 10px 10px;
+  padding: 6px var(--sb-v2-nav-inset) 10px;
   overflow: hidden;
 }
 
 .met-sidebar-v2.is-collapsed .met-sidebar-v2__footer {
-  padding: 8px;
+  padding: 6px 8px 10px;
 }
 
 .met-sidebar-v2__identity {
@@ -266,11 +258,11 @@
   width: 100%;
   align-items: center;
   gap: 8px;
-  min-height: 56px;
-  max-height: 64px;
-  padding: 10px 11px;
+  min-height: 52px;
+  max-height: 58px;
+  padding: 8px 10px;
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
   background: #2f2f2f;
   color: inherit;
   text-align: left;
@@ -295,8 +287,8 @@
 
 .met-sidebar-v2__identity-dot {
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
   border-radius: 999px;
   background: linear-gradient(145deg, #454545, #333333);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -340,8 +332,8 @@
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   color: #8f8f8f;
   transition: color 0.15s ease;
 }

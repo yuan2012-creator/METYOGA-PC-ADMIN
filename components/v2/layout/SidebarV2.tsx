@@ -21,9 +21,6 @@ const SidebarV2: React.FC<SidebarV2Props> = ({ activeNav, onNavigate }) => {
     >
       <div className="met-sidebar-v2__head">
         <div className="met-sidebar-v2__brand">
-          <span className="met-sidebar-v2__brand-mark" aria-hidden>
-            MET
-          </span>
           <span className="met-sidebar-v2__brand-wordmark">MET YOGA</span>
         </div>
         <button
