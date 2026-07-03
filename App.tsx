@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import Dashboard from './components/Dashboard';
 import Shop from './components/Shop';
 import Mall from './components/Mall'; // New Component
@@ -14,6 +14,7 @@ import { MemberV2Page } from './components/v2/member';
 import { CourseV2Page } from './components/v2/course';
 import { StaffV2Page } from './components/v2/staff';
 import { FinanceV2Page } from './components/v2/finance';
+import { ProductRightsV2Page } from './components/v2/product-rights';
 import { MarketingV2Page } from './components/v2/marketing';
 import { SettingsV2Page } from './components/v2/settings';
 import {
@@ -23,13 +24,31 @@ import {
   findSidebarV2NavItem,
   type SidebarV2NavId,
 } from './components/v2/layout';
+import {
+  V2_DEFAULT_ROLE,
+  getV2RoleProfile,
+  type V2AdminRole,
+} from './components/v2/types/roleView.types';
 import { MockAdminScopeProvider } from './context/MockAdminScopeContext';
 import { MOCK_ADMIN_UI_DEFAULT } from './constants/mockAdminScope';
 
-const SCROLLABLE_NAV_IDS = new Set(['dashboard', 'dashboard-v2', 'today', 'member', 'course', 'staff', 'finance', 'marketing', 'settings']);
+const SCROLLABLE_NAV_IDS = new Set([
+  'dashboard',
+  'dashboard-v2',
+  'today',
+  'member',
+  'course',
+  'staff',
+  'finance',
+  'product-rights',
+  'marketing',
+  'settings',
+]);
 
 const App: React.FC = () => {
   const [activeNav, setActiveNav] = useState<string>(SIDEBAR_V2_DEFAULT_NAV);
+  const [currentRole, setCurrentRole] = useState<V2AdminRole>(V2_DEFAULT_ROLE);
+  const [roleToast, setRoleToast] = useState<string | null>(null);
 
   const activeNavItem = findSidebarV2NavItem(activeNav);
   const isOldDashboard = activeNav === 'dashboard';
@@ -45,16 +64,27 @@ const App: React.FC = () => {
     .filter(Boolean)
     .join(' ');
 
-  const handleNavigate = (id: SidebarV2NavId) => {
+  const handleNavigate = useCallback((id: SidebarV2NavId) => {
     setActiveNav(id);
-  };
+  }, []);
+
+  const handleRoleChange = useCallback((role: V2AdminRole) => {
+    const profile = getV2RoleProfile(role);
+    setCurrentRole(role);
+    setActiveNav(profile.defaultNav);
+    setRoleToast(profile.switchToast);
+    window.setTimeout(
+      () => setRoleToast(current => (current === profile.switchToast ? null : current)),
+      2400,
+    );
+  }, []);
 
   const renderContent = () => {
     switch (activeNav) {
       case 'dashboard':
         return <Dashboard />;
       case 'dashboard-v2':
-        return <DashboardV2Page />;
+        return <DashboardV2Page currentRole={currentRole} />;
       case 'today':
         return <TodayV2Page />;
       case 'shop':
@@ -69,6 +99,8 @@ const App: React.FC = () => {
         return <MemberV2Page />;
       case 'finance':
         return <FinanceV2Page />;
+      case 'product-rights':
+        return <ProductRightsV2Page />;
       case 'marketing':
         return <MarketingV2Page />;
       case 'data':
@@ -78,7 +110,7 @@ const App: React.FC = () => {
       case 'partner':
         return <Partner />;
       case 'settings':
-        return <SettingsV2Page />;
+        return <SettingsV2Page onNavigate={handleNavigate} />;
       case 'permission-audit':
         return <Audit />;
       default:
@@ -94,7 +126,12 @@ const App: React.FC = () => {
   return (
     <MockAdminScopeProvider initialConfig={MOCK_ADMIN_UI_DEFAULT}>
       <div className="met-app-shell-v2">
-        <SidebarV2 activeNav={activeNav} onNavigate={handleNavigate} />
+        <SidebarV2
+          activeNav={activeNav}
+          onNavigate={handleNavigate}
+          currentRole={currentRole}
+          onRoleChange={handleRoleChange}
+        />
 
         <main className="met-app-shell-v2__main">
           {shouldShowGlobalHeader ? (
@@ -129,6 +166,16 @@ const App: React.FC = () => {
           <div className={contentShellClassName}>{renderContent()}</div>
         </main>
       </div>
+
+      {roleToast ? (
+        <div
+          className="met-dashboard-v2-toast"
+          role="status"
+          style={{ position: 'fixed', bottom: 24, right: 32, zIndex: 120 }}
+        >
+          {roleToast}
+        </div>
+      ) : null}
     </MockAdminScopeProvider>
   );
 };

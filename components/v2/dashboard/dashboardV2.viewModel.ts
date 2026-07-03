@@ -147,6 +147,106 @@ export interface DashboardV2StoreComparison {
   stores: DashboardV2StoreStructureRow[];
 }
 
+export type DashboardV2ViewMode = 'hq' | 'storeManager';
+
+export type StoreOperatingStatusLevel = 'healthy' | 'watch' | 'warning' | 'highRisk';
+
+export type StoreMetricStatusLevel = 'normal' | 'watch' | 'warning' | 'highRisk';
+
+export interface StoreInsightEvidence {
+  label: string;
+  value: string;
+  isWarning?: boolean;
+}
+
+export interface StoreOperatingConclusion {
+  storeName: string;
+  periodLabel: string;
+  operatingStatus: StoreOperatingStatusLevel;
+  statusLabel: string;
+  headline: string;
+  primaryReason: string;
+  judgmentSources: string[];
+  updatedAt: string;
+  evidence: StoreInsightEvidence[];
+  evidenceButtonLabel: string;
+  evidenceToastMessage: string;
+}
+
+export interface StoreCoreMetric {
+  id: string;
+  label: string;
+  value: string;
+  changeLabel: string;
+  status: StoreMetricStatusLevel;
+  statusLabel: string;
+  explanation: string;
+  sourceModule: string;
+  drillDownToast: string;
+}
+
+export interface StorePriorityAction {
+  id: string;
+  priority: DashboardV2PriorityLevel;
+  title: string;
+  impactScope: string;
+  sourceModules: string[];
+  ownerRole: string;
+  suggestedAction: string;
+  buttonLabel: string;
+  drillDownToast: string;
+}
+
+export interface StoreWeeklyAction {
+  id: string;
+  priority: DashboardV2PriorityLevel;
+  title: string;
+  impactScope: string;
+  ownerRole: string;
+  sourceModule: string;
+  suggestedAction: string;
+  buttonLabel: string;
+  drillDownToast: string;
+}
+
+export interface StoreIssueCategory {
+  id: string;
+  title: string;
+  status: StoreMetricStatusLevel;
+  statusLabel: string;
+  riskCount: number;
+  representativeIssue: string;
+  suggestedAction: string;
+  entryModule: string;
+  entryButtonLabel: string;
+  drillDownToast: string;
+}
+
+export interface StoreStructureCard {
+  id: string;
+  title: string;
+  fields: { label: string; value: string; isWarning?: boolean }[];
+  entryModule: string;
+  entryButtonLabel: string;
+  drillDownToast: string;
+}
+
+export interface StoreDrillDownEntry {
+  id: string;
+  label: string;
+  drillDownToast: string;
+}
+
+export interface StoreManagerDashboardSnapshot {
+  conclusion: StoreOperatingConclusion;
+  coreMetrics: StoreCoreMetric[];
+  todayActions: StorePriorityAction[];
+  issueCategories: StoreIssueCategory[];
+  structureCards: StoreStructureCard[];
+  weekActions: StoreWeeklyAction[];
+  drillDownEntries: StoreDrillDownEntry[];
+}
+
 export interface DashboardV2Snapshot {
   meta: DashboardV2PageMeta;
   diagnosis: DashboardV2DiagnosisHero;
@@ -156,6 +256,7 @@ export interface DashboardV2Snapshot {
   profitTrend: DashboardV2ProfitTrend;
   deliverySummary: DashboardV2DeliverySummary;
   storeComparison: DashboardV2StoreComparison;
+  storeManagerView: StoreManagerDashboardSnapshot;
 }
 
 
@@ -289,6 +390,367 @@ function buildStoreStructureRow(seed: DashboardV2StoreStructureSeed): DashboardV
     coverageTone: coverageToneFromPercent(seed.cashSafetyCoveragePercent),
     businessJudgement: seed.businessJudgement,
     nextActionLabel: seed.nextActionLabel,
+  };
+}
+
+function buildStoreManagerView(): StoreManagerDashboardSnapshot {
+  return {
+    conclusion: {
+      storeName: '滨江馆',
+      periodLabel: '2026年6月',
+      operatingStatus: 'watch',
+      statusLabel: '观察',
+      headline: '滨江馆 · 本月经营状态：观察',
+      primaryReason:
+        '本月实收正常，但现金安全覆盖率低于 80%，耗课目标完成偏慢，高余额低耗课会员增加，需要优先处理交付和会员风险。',
+      judgmentSources: ['财务与资产', '会员经营', '课程与排课'],
+      updatedAt: '2026-06-26 09:30 更新',
+      evidence: [
+        { label: '现金安全覆盖率', value: '72%，安全线 80%', isWarning: true },
+        { label: '耗课目标完成率', value: '68%', isWarning: true },
+        { label: '高余额低耗课会员', value: '12 人', isWarning: true },
+        { label: '本月退费申请', value: '4 笔' },
+      ],
+      evidenceButtonLabel: '查看判断依据',
+      evidenceToastMessage: '查看判断依据（待建设）',
+    },
+    coreMetrics: [
+      {
+        id: 'sm-received',
+        label: '本月实收',
+        value: '¥286,000',
+        changeLabel: '较上月 +8%',
+        status: 'normal',
+        statusLabel: '正常',
+        explanation: '实收现金到账正常，不等于确认收入',
+        sourceModule: '财务与资产',
+        drillDownToast: '进入财务与资产（待建设）',
+      },
+      {
+        id: 'sm-recognized',
+        label: '本月确认收入',
+        value: '¥231,000',
+        changeLabel: '较上月 +5%',
+        status: 'normal',
+        statusLabel: '正常',
+        explanation: '按耗课确认，区别于实收现金',
+        sourceModule: '财务与资产',
+        drillDownToast: '进入财务与资产（待建设）',
+      },
+      {
+        id: 'sm-profit',
+        label: '经营利润',
+        value: '¥46,000',
+        changeLabel: '利润率 19.9%',
+        status: 'watch',
+        statusLabel: '观察',
+        explanation: '确认收入 − 成本，需关注成本压力',
+        sourceModule: '财务与资产',
+        drillDownToast: '进入财务与资产（待建设）',
+      },
+      {
+        id: 'sm-coverage',
+        label: '现金安全覆盖率',
+        value: '72%',
+        changeLabel: '低于安全线 80%',
+        status: 'watch',
+        statusLabel: '观察',
+        explanation: '可用现金对预收责任覆盖不足',
+        sourceModule: '财务与资产',
+        drillDownToast: '进入财务与资产（待建设）',
+      },
+      {
+        id: 'sm-consumption',
+        label: '本月耗课目标完成率',
+        value: '68%',
+        changeLabel: '落后时间进度 9%',
+        status: 'warning',
+        statusLabel: '预警',
+        explanation: '交付进度偏慢，需补排与跟进',
+        sourceModule: '课程与排课',
+        drillDownToast: '进入课程与排课（待建设）',
+      },
+      {
+        id: 'sm-liability',
+        label: '预收负债',
+        value: '¥418,000',
+        changeLabel: '已收未交付压力偏高',
+        status: 'watch',
+        statusLabel: '观察',
+        explanation: '预收负债不是收入，需推进耗课交付',
+        sourceModule: '财务与资产',
+        drillDownToast: '进入财务与资产（待建设）',
+      },
+      {
+        id: 'sm-active',
+        label: '活跃会员数',
+        value: '326 人',
+        changeLabel: '较上月 -3%',
+        status: 'watch',
+        statusLabel: '观察',
+        explanation: '活跃会员略有下降，需关注低频风险',
+        sourceModule: '会员经营',
+        drillDownToast: '进入会员经营（待建设）',
+      },
+      {
+        id: 'sm-refund-risk',
+        label: '本月退费 / 流失风险',
+        value: '退费 4 笔',
+        changeLabel: '流失风险 18 人',
+        status: 'warning',
+        statusLabel: '预警',
+        explanation: '退费与流失风险需优先处理证据链',
+        sourceModule: '会员经营 / 财务与资产',
+        drillDownToast: '进入会员经营（待建设）',
+      },
+    ],
+    todayActions: [
+      {
+        id: 'ta-1',
+        priority: 'P0',
+        title: '跟进 12 名高余额低耗课会员',
+        impactScope: '预收负债与现金安全',
+        sourceModules: ['会员经营', '财务与资产'],
+        ownerRole: '管家 / 对应老师',
+        suggestedAction: '分配老师或管家点对点跟进',
+        buttonLabel: '去处理',
+        drillDownToast: '进入会员经营（待建设）',
+      },
+      {
+        id: 'ta-2',
+        priority: 'P1',
+        title: '补排 2 节高需求课程',
+        impactScope: '耗课目标与会员到店频率',
+        sourceModules: ['课程与排课'],
+        ownerRole: '店长',
+        suggestedAction: '优先补排晚间普拉提小班',
+        buttonLabel: '去排课',
+        drillDownToast: '进入课程与排课（待建设）',
+      },
+      {
+        id: 'ta-3',
+        priority: 'P1',
+        title: '处理 4 笔退费证据链',
+        impactScope: '现金安全与合同争议',
+        sourceModules: ['财务与资产'],
+        ownerRole: '店长 / 财务',
+        suggestedAction: '补齐合同、支付、耗课、积分证据',
+        buttonLabel: '去核对',
+        drillDownToast: '进入财务与资产（待建设）',
+      },
+    ],
+    issueCategories: [
+      {
+        id: 'ic-cash',
+        title: '现金与财务',
+        status: 'watch',
+        statusLabel: '观察',
+        riskCount: 3,
+        representativeIssue: '现金安全覆盖率 72%，低于安全线 80%',
+        suggestedAction: '处理高余额低耗课与退费证据链',
+        entryModule: '财务与资产',
+        entryButtonLabel: '进入财务与资产',
+        drillDownToast: '进入财务与资产（待建设）',
+      },
+      {
+        id: 'ic-course',
+        title: '耗课与课程',
+        status: 'warning',
+        statusLabel: '预警',
+        riskCount: 4,
+        representativeIssue: '耗课完成率 68%，落后时间进度 9%',
+        suggestedAction: '补排高需求课程，处理低满班课程',
+        entryModule: '课程与排课',
+        entryButtonLabel: '进入课程与排课',
+        drillDownToast: '进入课程与排课（待建设）',
+      },
+      {
+        id: 'ic-member',
+        title: '会员与资产',
+        status: 'watch',
+        statusLabel: '观察',
+        riskCount: 5,
+        representativeIssue: '高余额低耗课会员增加 12 人',
+        suggestedAction: '分配老师 / 管家点对点跟进',
+        entryModule: '会员经营',
+        entryButtonLabel: '进入会员经营',
+        drillDownToast: '进入会员经营（待建设）',
+      },
+      {
+        id: 'ic-teacher',
+        title: '老师与供给',
+        status: 'watch',
+        statusLabel: '观察',
+        riskCount: 2,
+        representativeIssue: '2 位老师负载偏高，1 位老师可补排',
+        suggestedAction: '调整排课与代课安排',
+        entryModule: '师资与团队',
+        entryButtonLabel: '进入师资与团队',
+        drillDownToast: '进入师资与团队（待建设）',
+      },
+      {
+        id: 'ic-marketing',
+        title: '获客与转化',
+        status: 'watch',
+        statusLabel: '观察',
+        riskCount: 2,
+        representativeIssue: '预约未到店 46 人',
+        suggestedAction: '跟进未到店线索并同步会员经营',
+        entryModule: '活动与获客',
+        entryButtonLabel: '进入活动与获客',
+        drillDownToast: '进入活动与获客（待建设）',
+      },
+    ],
+    structureCards: [
+      {
+        id: 'sc-consumption',
+        title: '耗课目标进度',
+        fields: [
+          { label: '本月目标', value: '520 点' },
+          { label: '已完成', value: '354 点' },
+          { label: '完成率', value: '68%', isWarning: true },
+          { label: '日均还需', value: '9.2 点' },
+          { label: '可补耗课程', value: '7 节' },
+        ],
+        entryModule: '课程与排课',
+        entryButtonLabel: '进入课程与排课',
+        drillDownToast: '进入课程与排课（待建设）',
+      },
+      {
+        id: 'sc-cost',
+        title: '成本压力',
+        fields: [
+          { label: '本月预算', value: '¥190,000' },
+          { label: '已发生', value: '¥176,000' },
+          { label: '成本使用率', value: '92%', isWarning: true },
+          { label: '风险', value: '接近预算上限' },
+          { label: '主要压力', value: '老师课酬预估 / 活动成本' },
+        ],
+        entryModule: '财务与资产',
+        entryButtonLabel: '进入财务与资产',
+        drillDownToast: '进入财务与资产（待建设）',
+      },
+      {
+        id: 'sc-cash',
+        title: '现金安全与预收负债',
+        fields: [
+          { label: '现金安全覆盖率', value: '72%', isWarning: true },
+          { label: '预收负债', value: '¥418,000' },
+          { label: '待退费金额', value: '¥36,000' },
+          { label: '判断', value: '观察' },
+        ],
+        entryModule: '财务与资产',
+        entryButtonLabel: '进入财务与资产',
+        drillDownToast: '进入财务与资产（待建设）',
+      },
+      {
+        id: 'sc-member',
+        title: '会员结构',
+        fields: [
+          { label: '总会员', value: '482' },
+          { label: '活跃会员', value: '326' },
+          { label: '低频风险', value: '42' },
+          { label: '续费窗口', value: '28' },
+          { label: '沉睡流失', value: '31' },
+        ],
+        entryModule: '会员经营',
+        entryButtonLabel: '进入会员经营',
+        drillDownToast: '进入会员经营（待建设）',
+      },
+      {
+        id: 'sc-marketing',
+        title: '获客转化',
+        fields: [
+          { label: '线索', value: '186' },
+          { label: '预约体验', value: '92' },
+          { label: '到店体验', value: '46' },
+          { label: '成交', value: '18' },
+          { label: '最大断点', value: '预约未到店', isWarning: true },
+        ],
+        entryModule: '活动与获客',
+        entryButtonLabel: '进入活动与获客',
+        drillDownToast: '进入活动与获客（待建设）',
+      },
+      {
+        id: 'sc-teacher',
+        title: '师资供给',
+        fields: [
+          { label: '可用老师', value: '12' },
+          { label: '负载偏高', value: '2', isWarning: true },
+          { label: '可代课', value: '4' },
+          { label: '老师端待处理申请', value: '5' },
+          { label: '名下会员风险', value: '9' },
+        ],
+        entryModule: '师资与团队',
+        entryButtonLabel: '进入师资与团队',
+        drillDownToast: '进入师资与团队（待建设）',
+      },
+    ],
+    weekActions: [
+      {
+        id: 'wa-1',
+        priority: 'P1',
+        title: '补排周六上午普拉提小班',
+        impactScope: '耗课目标与周末供给',
+        ownerRole: '店长',
+        sourceModule: '课程与排课',
+        suggestedAction: '评估满班需求后补排 1–2 节',
+        buttonLabel: '去排课',
+        drillDownToast: '进入课程与排课（待建设）',
+      },
+      {
+        id: 'wa-2',
+        priority: 'P1',
+        title: '跟进 S4 低频风险会员',
+        impactScope: '活跃会员与续费窗口',
+        ownerRole: '管家',
+        sourceModule: '会员经营',
+        suggestedAction: '本周内完成首轮点对点触达',
+        buttonLabel: '去跟进',
+        drillDownToast: '进入会员经营（待建设）',
+      },
+      {
+        id: 'wa-3',
+        priority: 'P1',
+        title: '复核退费 / 冻结 / 转卡证据链',
+        impactScope: '现金安全与合同争议',
+        ownerRole: '店长 / 财务',
+        sourceModule: '财务与资产',
+        suggestedAction: '补齐合同、支付、耗课、积分证据',
+        buttonLabel: '去核对',
+        drillDownToast: '进入财务与资产（待建设）',
+      },
+      {
+        id: 'wa-4',
+        priority: 'P2',
+        title: '处理老师代课 / 请假申请',
+        impactScope: '课程供给与会员通知',
+        ownerRole: '教学负责人',
+        sourceModule: '师资与团队',
+        suggestedAction: '优先处理晚高峰代课申请',
+        buttonLabel: '去处理',
+        drillDownToast: '进入师资与团队（待建设）',
+      },
+      {
+        id: 'wa-5',
+        priority: 'P2',
+        title: '复盘朋友圈渠道线索转化',
+        impactScope: '获客转化与会员承接',
+        ownerRole: '运营',
+        sourceModule: '活动与获客',
+        suggestedAction: '分析预约未到店断点并调整跟进',
+        buttonLabel: '去复盘',
+        drillDownToast: '进入活动与获客（待建设）',
+      },
+    ],
+    drillDownEntries: [
+      { id: 'dd-member', label: '查看会员风险', drillDownToast: '进入会员经营（待建设）' },
+      { id: 'dd-course', label: '查看耗课目标', drillDownToast: '进入课程与排课（待建设）' },
+      { id: 'dd-finance', label: '查看财务资产', drillDownToast: '进入财务与资产（待建设）' },
+      { id: 'dd-staff', label: '查看师资供给', drillDownToast: '进入师资与团队（待建设）' },
+      { id: 'dd-marketing', label: '查看活动转化', drillDownToast: '进入活动与获客（待建设）' },
+      { id: 'dd-today', label: '查看今日运营', drillDownToast: '进入今日运营（待建设）' },
+    ],
   };
 }
 
@@ -507,5 +969,6 @@ export function buildDashboardV2Snapshot(): DashboardV2Snapshot {
         }),
       ],
     },
+    storeManagerView: buildStoreManagerView(),
   };
 }

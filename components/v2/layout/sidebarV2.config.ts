@@ -2,6 +2,7 @@ import type { LucideIcon } from 'lucide-react';
 import {
   CalendarCheck,
   CalendarDays,
+  Gift,
   LayoutDashboard,
   Megaphone,
   Settings,
@@ -18,6 +19,7 @@ export type SidebarV2NavId =
   | 'course'
   | 'staff'
   | 'finance'
+  | 'product-rights'
   | 'marketing'
   | 'settings';
 
@@ -34,6 +36,7 @@ export const SIDEBAR_V2_NAV_ITEMS: SidebarV2NavItem[] = [
   { id: 'course', label: '课程与排课', icon: CalendarDays },
   { id: 'staff', label: '师资与团队', icon: UsersRound },
   { id: 'finance', label: '财务与资产', icon: WalletCards },
+  { id: 'product-rights', label: '产品与权益', icon: Gift },
   { id: 'marketing', label: '活动与获客', icon: Megaphone },
   { id: 'settings', label: '系统设置', icon: Settings },
 ];

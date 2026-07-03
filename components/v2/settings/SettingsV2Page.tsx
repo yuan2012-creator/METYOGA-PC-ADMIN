@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
+import type { SidebarV2NavId } from '../layout/sidebarV2.config';
 import {
   buildSettingsV2Snapshot,
   getConfigStatusClass,
@@ -40,7 +41,7 @@ function V2DrawerEmpty({ onClose }: { onClose: () => void }) {
   );
 }
 
-const SettingsV2Page: React.FC = () => {
+const SettingsV2Page: React.FC<{ onNavigate?: (id: SidebarV2NavId) => void }> = ({ onNavigate }) => {
   const snapshot = useMemo(() => buildSettingsV2Snapshot(), []);
   const [toast, setToast] = useState<string | null>(null);
   const [drawer, setDrawer] = useState<DrawerState>(null);
@@ -110,14 +111,19 @@ const SettingsV2Page: React.FC = () => {
 
   const handleEntryAction = useCallback(
     (entry: ControlCenterEntry) => {
+      if (entry.navigateTo && onNavigate) {
+        onNavigate(entry.navigateTo);
+        return;
+      }
       openEntryDrawer(entry.detailType);
     },
-    [openEntryDrawer],
+    [onNavigate, openEntryDrawer],
   );
 
   const handleHighRiskAction = useCallback(
     (item: HighRiskConfigItem) => {
       showToast(item.toastMessage);
+      if (item.relatedDetailType === 'productRights') return;
       if (item.relatedDetailType) openEntryDrawer(item.relatedDetailType);
     },
     [openEntryDrawer, showToast],
@@ -525,7 +531,14 @@ const SettingsV2Page: React.FC = () => {
           </header>
           <div className="met-settings-v2-control-map">
             {controlCenterEntries.entries.map(entry => (
-              <div key={entry.id} className={['met-settings-v2-control-entry', getConfigStatusClass(entry.statusLevel)].join(' ')}>
+              <div
+                key={entry.id}
+                className={[
+                  'met-settings-v2-control-entry',
+                  getConfigStatusClass(entry.statusLevel),
+                  entry.featured ? 'met-settings-v2-control-entry--featured' : '',
+                ].join(' ')}
+              >
                 <div className="met-settings-v2-control-entry__head">
                   <h3 className="met-settings-v2-control-entry__title">{entry.title}</h3>
                   <span className="met-settings-v2-control-entry__status">{entry.status}</span>

@@ -521,6 +521,11 @@
 }
 
 .met-settings-v2-control-entry:first-child {
+  border-color: var(--met-v2-border-soft);
+  background: var(--met-v2-surface);
+}
+
+.met-settings-v2-control-entry--featured {
   border-color: #cfe8d8;
   background: linear-gradient(180deg, var(--met-v2-brand-soft) 0%, var(--met-v2-surface) 38%);
 }

@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ChevronDown,
   Download,
@@ -20,7 +20,12 @@ import {
   type DashboardV2Snapshot,
   type DashboardV2StoreStatusLevel,
   type DashboardV2SuggestionSource,
+  type DashboardV2ViewMode,
+  type StoreManagerDashboardSnapshot,
+  type StoreMetricStatusLevel,
+  type StoreOperatingStatusLevel,
 } from './dashboardV2.viewModel';
+import { getV2RoleProfile, type V2AdminRole } from '../types/roleView.types';
 import './dashboardV2.css';
 
 const PRIORITY_CLASS: Record<DashboardV2PriorityLevel, string> = {
@@ -47,6 +52,25 @@ const COVERAGE_TONE_CLASS: Record<'danger' | 'warning' | 'success', string> = {
   warning: 'is-warning',
   success: 'is-success',
 };
+
+const STORE_OP_STATUS_CLASS: Record<StoreOperatingStatusLevel, string> = {
+  healthy: 'met-dashboard-v2-sm-status--healthy',
+  watch: 'met-dashboard-v2-sm-status--watch',
+  warning: 'met-dashboard-v2-sm-status--warning',
+  highRisk: 'met-dashboard-v2-sm-status--high-risk',
+};
+
+const STORE_METRIC_STATUS_CLASS: Record<StoreMetricStatusLevel, string> = {
+  normal: 'met-dashboard-v2-sm-metric__status--normal',
+  watch: 'met-dashboard-v2-sm-metric__status--watch',
+  warning: 'met-dashboard-v2-sm-metric__status--warning',
+  highRisk: 'met-dashboard-v2-sm-metric__status--high-risk',
+};
+
+const VIEW_MODE_OPTIONS: { id: DashboardV2ViewMode; label: string }[] = [
+  { id: 'hq', label: '总部视角' },
+  { id: 'storeManager', label: '店长视角' },
+];
 
 const COST_SEGMENTS = [
   {
@@ -129,9 +153,238 @@ const ProfitTrendChart: React.FC<ProfitTrendChartProps> = ({ points }) => (
   </div>
 );
 
-const DashboardV2Page: React.FC = () => {
+interface StoreManagerDashboardProps {
+  data: StoreManagerDashboardSnapshot;
+  onToast: (message: string) => void;
+}
+
+const StoreManagerDashboard: React.FC<StoreManagerDashboardProps> = ({ data, onToast }) => {
+  const { conclusion, coreMetrics, todayActions, issueCategories, structureCards, weekActions, drillDownEntries } = data;
+
+  return (
+    <>
+      <section className="met-dashboard-v2__row-sm-conclusion">
+        <article className="met-dashboard-v2-card met-dashboard-v2-card--sm-conclusion">
+          <div className="met-dashboard-v2-sm-conclusion__head">
+            <h2 className="met-dashboard-v2-sm-conclusion__headline">{conclusion.headline}</h2>
+            <span className={`met-dashboard-v2-sm-status ${STORE_OP_STATUS_CLASS[conclusion.operatingStatus]}`}>
+              {conclusion.statusLabel}
+            </span>
+          </div>
+          <p className="met-dashboard-v2-sm-conclusion__reason">{conclusion.primaryReason}</p>
+          <div className="met-dashboard-v2-sm-conclusion__meta">
+            <span>门店：{conclusion.storeName}</span>
+            <span>周期：{conclusion.periodLabel}</span>
+            <span>更新时间：{conclusion.updatedAt}</span>
+          </div>
+          <div className="met-dashboard-v2-sm-conclusion__sources">
+            <span className="met-dashboard-v2-sm-conclusion__sources-label">系统判断来源</span>
+            {conclusion.judgmentSources.map(source => (
+              <span key={source} className="met-dashboard-v2-tag met-dashboard-v2-tag--rule">{source}</span>
+            ))}
+          </div>
+          <div className="met-dashboard-v2-sm-conclusion__evidence" aria-label="关键证据">
+            {conclusion.evidence.map(item => (
+              <div key={item.label} className="met-dashboard-v2-sm-conclusion__evidence-item">
+                <span className="met-dashboard-v2-sm-conclusion__evidence-label">{item.label}</span>
+                <span className={`met-dashboard-v2-sm-conclusion__evidence-value${item.isWarning ? ' is-warning' : ''}`}>
+                  {item.value}
+                </span>
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            className="met-dashboard-v2-btn met-dashboard-v2-btn--ghost met-dashboard-v2-btn--sm"
+            onClick={() => onToast(conclusion.evidenceToastMessage)}
+          >
+            {conclusion.evidenceButtonLabel}
+          </button>
+        </article>
+      </section>
+
+      <section className="met-dashboard-v2__row-sm-metrics">
+        {coreMetrics.map(metric => (
+          <article
+            key={metric.id}
+            className="met-dashboard-v2-card met-dashboard-v2-card--sm-metric"
+            role="button"
+            tabIndex={0}
+            onClick={() => onToast(metric.drillDownToast)}
+            onKeyDown={e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onToast(metric.drillDownToast);
+              }
+            }}
+          >
+            <div className="met-dashboard-v2-sm-metric__head">
+              <p className="met-dashboard-v2-sm-metric__label">{metric.label}</p>
+              <span className={`met-dashboard-v2-sm-metric__status ${STORE_METRIC_STATUS_CLASS[metric.status]}`}>
+                {metric.statusLabel}
+              </span>
+            </div>
+            <p className={`met-dashboard-v2-sm-metric__value${metric.status === 'warning' || metric.status === 'highRisk' ? ' is-warning' : ''}`}>
+              {metric.value}
+            </p>
+            <p className="met-dashboard-v2-sm-metric__change">{metric.changeLabel}</p>
+            <p className="met-dashboard-v2-sm-metric__note">{metric.explanation}</p>
+            <span className="met-dashboard-v2-sm-metric__source">{metric.sourceModule}</span>
+          </article>
+        ))}
+      </section>
+
+      <section className="met-dashboard-v2__row-sm-actions">
+        <article className="met-dashboard-v2-card met-dashboard-v2-card--sm-queue">
+          <h2 className="met-dashboard-v2-card__title">今日优先动作</h2>
+          <p className="met-dashboard-v2-card__subtitle met-dashboard-v2-card__subtitle--compact">
+            最多 3 条 · 按优先级处理
+          </p>
+          <div className="met-dashboard-v2-sm-action-list">
+            {todayActions.map(action => (
+              <div key={action.id} className={`met-dashboard-v2-sm-action-item met-dashboard-v2-sm-action-item--${action.priority.toLowerCase()}`}>
+                <div className="met-dashboard-v2-sm-action-item__head">
+                  <span className={`met-dashboard-v2-action-item__priority ${PRIORITY_CLASS[action.priority]}`}>
+                    {action.priority}
+                  </span>
+                  <p className="met-dashboard-v2-sm-action-item__title">{action.title}</p>
+                  <button
+                    type="button"
+                    className="met-dashboard-v2-btn met-dashboard-v2-btn--ghost met-dashboard-v2-btn--sm"
+                    onClick={() => onToast(action.drillDownToast)}
+                  >
+                    {action.buttonLabel}
+                  </button>
+                </div>
+                <div className="met-dashboard-v2-sm-action-item__body">
+                  <p><span>影响</span>{action.impactScope}</p>
+                  <p><span>来源</span>{action.sourceModules.join(' / ')}</p>
+                  <p><span>负责人</span>{action.ownerRole}</p>
+                  <p><span>建议动作</span>{action.suggestedAction}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </article>
+      </section>
+
+      <section className="met-dashboard-v2__zone-sm-issues">
+        <header className="met-dashboard-v2-zone__head">
+          <h2 className="met-dashboard-v2-zone__title">经营问题分类</h2>
+          <p className="met-dashboard-v2-zone__subtitle">把门店经营问题按财务、耗课、会员、老师和获客拆开看</p>
+        </header>
+        <div className="met-dashboard-v2-sm-issue-grid">
+          {issueCategories.map(category => (
+            <article key={category.id} className={`met-dashboard-v2-card met-dashboard-v2-card--sm-issue met-dashboard-v2-sm-issue--${category.status}`}>
+              <div className="met-dashboard-v2-sm-issue__head">
+                <h3 className="met-dashboard-v2-sm-issue__title">{category.title}</h3>
+                <span className={`met-dashboard-v2-sm-metric__status ${STORE_METRIC_STATUS_CLASS[category.status]}`}>
+                  {category.statusLabel}
+                </span>
+              </div>
+              <p className="met-dashboard-v2-sm-issue__risk">风险 {category.riskCount} 项</p>
+              <p className="met-dashboard-v2-sm-issue__issue">{category.representativeIssue}</p>
+              <p className="met-dashboard-v2-sm-issue__action">{category.suggestedAction}</p>
+              <button
+                type="button"
+                className="met-dashboard-v2-btn met-dashboard-v2-btn--sm"
+                onClick={() => onToast(category.drillDownToast)}
+              >
+                {category.entryButtonLabel}
+              </button>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="met-dashboard-v2__zone-sm-structure">
+        <header className="met-dashboard-v2-zone__head">
+          <h2 className="met-dashboard-v2-zone__title">门店经营结构</h2>
+          <p className="met-dashboard-v2-zone__subtitle">从耗课、成本、现金、会员、退费、获客和师资看本店经营压力</p>
+        </header>
+        <div className="met-dashboard-v2-sm-structure-grid">
+          {structureCards.map(card => (
+            <article key={card.id} className="met-dashboard-v2-card met-dashboard-v2-card--sm-structure">
+              <h3 className="met-dashboard-v2-sm-structure__title">{card.title}</h3>
+              <div className="met-dashboard-v2-sm-structure__fields">
+                {card.fields.map(field => (
+                  <div key={field.label} className="met-dashboard-v2-sm-structure__field">
+                    <span>{field.label}</span>
+                    <strong className={field.isWarning ? 'is-warning' : ''}>{field.value}</strong>
+                  </div>
+                ))}
+              </div>
+              <button
+                type="button"
+                className="met-dashboard-v2-btn met-dashboard-v2-btn--ghost met-dashboard-v2-btn--sm"
+                onClick={() => onToast(card.drillDownToast)}
+              >
+                {card.entryButtonLabel}
+              </button>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="met-dashboard-v2__zone-sm-week">
+        <header className="met-dashboard-v2-zone__head">
+          <h2 className="met-dashboard-v2-zone__title">本周经营动作</h2>
+        </header>
+        <div className="met-dashboard-v2-sm-week-list">
+          {weekActions.map(action => (
+            <div key={action.id} className="met-dashboard-v2-sm-week-item">
+              <span className={`met-dashboard-v2-action-item__priority ${PRIORITY_CLASS[action.priority]}`}>
+                {action.priority}
+              </span>
+              <div className="met-dashboard-v2-sm-week-item__main">
+                <p className="met-dashboard-v2-sm-week-item__title">{action.title}</p>
+                <p className="met-dashboard-v2-sm-week-item__meta">
+                  影响：{action.impactScope} · 负责人：{action.ownerRole} · 来源：{action.sourceModule}
+                </p>
+                <p className="met-dashboard-v2-sm-week-item__action">{action.suggestedAction}</p>
+              </div>
+              <button
+                type="button"
+                className="met-dashboard-v2-btn met-dashboard-v2-btn--ghost met-dashboard-v2-btn--sm"
+                onClick={() => onToast(action.drillDownToast)}
+              >
+                {action.buttonLabel}
+              </button>
+            </div>
+          ))}
+        </div>
+        <div className="met-dashboard-v2-sm-drilldown">
+          <h3 className="met-dashboard-v2-sm-drilldown__title">经营明细入口</h3>
+          <div className="met-dashboard-v2-sm-drilldown__links">
+            {drillDownEntries.map(entry => (
+              <button
+                key={entry.id}
+                type="button"
+                className="met-dashboard-v2-sm-drilldown__link"
+                onClick={() => onToast(entry.drillDownToast)}
+              >
+                {entry.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+    </>
+  );
+};
+
+const DashboardV2Page: React.FC<{ currentRole: V2AdminRole }> = ({ currentRole }) => {
   const snapshot = useMemo(() => buildDashboardV2Snapshot(), []);
+  const roleProfile = useMemo(() => getV2RoleProfile(currentRole), [currentRole]);
   const [toast, setToast] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<DashboardV2ViewMode>(roleProfile.dashboardViewMode);
+
+  useEffect(() => {
+    setViewMode(roleProfile.dashboardViewMode);
+  }, [roleProfile.dashboardViewMode]);
+
+  const isStoreManagerView = currentRole === 'storeManager' || viewMode === 'storeManager';
+  const canSwitchDashboardView = roleProfile.canSwitchDashboardView;
 
   const showToast = useCallback((message: string) => {
     console.log('[DashboardV2]', message);
@@ -148,19 +401,60 @@ const DashboardV2Page: React.FC = () => {
     profitTrend,
     deliverySummary,
     storeComparison,
+    storeManagerView,
   } = snapshot;
+
+  const headerTitle = currentRole === 'storeManager' ? '门店经营驾驶舱' : meta.title;
+
+  const headerSubtitle = currentRole === 'storeManager'
+    ? `${storeManagerView.conclusion.storeName} · ${storeManagerView.conclusion.periodLabel} · 店长视角`
+    : viewMode === 'storeManager'
+      ? `店长视角 · ${storeManagerView.conclusion.storeName} · ${storeManagerView.conclusion.periodLabel}`
+      : meta.subtitle;
+
+  const storeFilterLabel = currentRole === 'storeManager'
+    ? storeManagerView.conclusion.storeName
+    : meta.filters.storeLabel;
 
   return (
     <div className="met-dashboard-v2">
       <div className="met-dashboard-v2__inner">
         <header className="met-dashboard-v2__header">
           <div className="met-dashboard-v2__header-copy">
-            <h1>{meta.title}</h1>
-            <p>{meta.subtitle}</p>
+            <h1>{headerTitle}</h1>
+            <p>{headerSubtitle}</p>
           </div>
-          <div className="met-dashboard-v2__filters">
-            <button type="button" className="met-dashboard-v2__filter-btn" onClick={() => showToast('演示：切换门店筛选')}>
-              {meta.filters.storeLabel}
+          <div className="met-dashboard-v2__header-tools">
+            {canSwitchDashboardView ? (
+            <div className="met-dashboard-v2__view-toggle" role="tablist" aria-label="经营视角切换">
+              {VIEW_MODE_OPTIONS.map(option => (
+                <button
+                  key={option.id}
+                  type="button"
+                  role="tab"
+                  aria-selected={viewMode === option.id}
+                  className={[
+                    'met-dashboard-v2__view-toggle-btn',
+                    viewMode === option.id ? 'is-active' : '',
+                  ].join(' ')}
+                  onClick={() => setViewMode(option.id)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            ) : null}
+            <div className="met-dashboard-v2__filters">
+            <button
+              type="button"
+              className={`met-dashboard-v2__filter-btn${currentRole === 'storeManager' ? ' is-disabled' : ''}`}
+              onClick={() => {
+                if (currentRole === 'storeManager') return;
+                showToast('演示：切换门店筛选');
+              }}
+              disabled={currentRole === 'storeManager'}
+            >
+              {storeFilterLabel}
               <ChevronDown size={14} aria-hidden />
             </button>
             <button type="button" className="met-dashboard-v2__filter-btn" onClick={() => showToast('演示：切换统计周期')}>
@@ -176,8 +470,13 @@ const DashboardV2Page: React.FC = () => {
               {meta.filters.exportLabel}
             </button>
           </div>
+          </div>
         </header>
 
+        {isStoreManagerView ? (
+          <StoreManagerDashboard data={storeManagerView} onToast={showToast} />
+        ) : (
+        <>
         <section className="met-dashboard-v2__row-hero">
           <article className="met-dashboard-v2-card met-dashboard-v2-card--hero">
             <h2 className="met-dashboard-v2-card__title">经营诊断</h2>
@@ -507,6 +806,8 @@ const DashboardV2Page: React.FC = () => {
             </div>
           </article>
         </section>
+        </>
+        )}
       </div>
 
       {toast ? (

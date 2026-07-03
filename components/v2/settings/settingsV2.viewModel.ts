@@ -11,7 +11,8 @@ export type SettingsDetailType =
   | 'contract'
   | 'message'
   | 'params'
-  | 'logs';
+  | 'logs'
+  | 'productRights';
 
 export interface SettingsMeta {
   title: string;
@@ -203,6 +204,8 @@ export interface ControlCenterEntry {
   statusLevel: SettingsConfigStatus;
   actionLabel: string;
   detailType: SettingsDetailType;
+  featured?: boolean;
+  navigateTo?: 'product-rights';
 }
 
 export interface HighRiskConfigItem {
@@ -749,6 +752,24 @@ export function buildSettingsV2Snapshot(): SettingsV2Snapshot {
           actionLabel: '查看规则', detailType: 'rules',
         },
         {
+          id: 'ce-product-rights',
+          title: '产品与权益配置',
+          coverage: '卡项、积分、赠送权益与合同条款由「产品与权益」统一管理，系统设置仅显示配置健康状态。',
+          metrics: [
+            { label: '卡项', value: '8 个' },
+            { label: '积分商品', value: '12 个' },
+            { label: '待绑定合同', value: '2 项' },
+            { label: '待确认规则', value: '4 条' },
+          ],
+          risk: '配置健康状态摘要；详细配置请进入「产品与权益」模块',
+          status: '待完善',
+          statusLevel: 'pending',
+          actionLabel: '进入产品与权益',
+          detailType: 'productRights',
+          featured: true,
+          navigateTo: 'product-rights',
+        },
+        {
           id: 'ce-permission', title: '角色权限',
           coverage: '总部、投资人、店长、前台、老师、运营、财务',
           metrics: [
@@ -1034,6 +1055,104 @@ export function buildSettingsV2Snapshot(): SettingsV2Snapshot {
             ],
           }],
           actions: [{ label: '进入操作日志', toastMessage: '进入操作日志二级页（待建设）' }],
+        },
+        productRights: {
+          id: 'productRights',
+          title: '产品与权益配置',
+          subtitle: '统一管理卡项、点数、预约权益、积分商城、赠送权益与合同绑定',
+          sections: [
+            {
+              title: '配置概览',
+              items: [
+                { label: '已启用卡项', summary: '8 个', status: '已启用' },
+                { label: '草稿卡项', summary: '2 个', status: '草稿' },
+                { label: '积分商城上架商品', summary: '12 个', status: '上架' },
+                { label: '售罄商品', summary: '3 个', status: '售罄' },
+                { label: '待绑定合同', summary: '2 项', status: '待处理' },
+                { label: '待确认规则', summary: '4 条', status: '待确认' },
+              ],
+            },
+            {
+              title: '配置子域',
+              items: [
+                {
+                  label: '卡项配置',
+                  summary: '额度型 / 畅练型 / 体验卡 / 私教包 / 教培产品',
+                  status: '部分配置',
+                  actionLabel: '查看卡项配置',
+                  toastMessage: '查看卡项配置（待建设）',
+                },
+                {
+                  label: '点数与耗课规则',
+                  summary: '课程扣点、最低开班、爽约扣点、跨店结算',
+                  status: '已配置',
+                  actionLabel: '查看点数规则',
+                  toastMessage: '查看点数规则（待建设）',
+                },
+                {
+                  label: '预约与权益规则',
+                  summary: '预约窗口、取消时限、请假、冻结、转卡、退费',
+                  status: '部分配置',
+                  actionLabel: '查看预约权益',
+                  toastMessage: '查看预约权益（待建设）',
+                },
+                {
+                  label: '积分规则',
+                  summary: '积分获取、开卡积分、耗课积分、退费扣回、过期规则',
+                  status: '待完善',
+                  actionLabel: '查看积分规则',
+                  toastMessage: '查看积分规则（待建设）',
+                },
+                {
+                  label: '积分商城配置',
+                  summary: '实物、课程权益、周边、服务权益',
+                  status: '部分配置',
+                  actionLabel: '查看积分商城',
+                  toastMessage: '查看积分商城（待建设）',
+                },
+                {
+                  label: '赠送权益配置',
+                  summary: '赠送点数、赠送课程、活动权益',
+                  status: '待确认',
+                  actionLabel: '查看赠送权益',
+                  toastMessage: '查看赠送权益（待建设）',
+                },
+                {
+                  label: '合同与条款绑定',
+                  summary: '会员合同、退费条款、积分条款、赠送权益条款',
+                  status: '待完善',
+                  actionLabel: '查看合同绑定',
+                  toastMessage: '查看合同绑定（待建设）',
+                },
+              ],
+            },
+            {
+              title: '权限边界',
+              items: [
+                { label: '总部管理员', summary: '创建 / 编辑 / 上下架 / 归档 / 查看全部' },
+                { label: '运营负责人', summary: '编辑业务规则 / 提交审核 / 查看' },
+                { label: '财务', summary: '查看价格、退款、结算、积分影响' },
+                { label: '店长', summary: '查看本店适用卡项，可提交调整申请，不可改价格和退费规则' },
+                { label: '前台 / 管家', summary: '查看可售卡项和会员权益' },
+                { label: '老师', summary: '仅查看课程消耗相关必要信息' },
+              ],
+            },
+            {
+              title: '风险提示',
+              items: [
+                { label: '价格与退费', summary: '不要让店长直接改价格、退费规则、合同' },
+                { label: '积分口径', summary: '积分不是现金' },
+                { label: '赠送权益', summary: '赠送权益默认不计入退费' },
+                { label: '合同同步', summary: '卡项上下架需要合同模板同步' },
+                { label: '会员端展示', summary: '会员端展示口径必须与后台配置一致' },
+              ],
+            },
+          ],
+          actions: [
+            { label: '查看产品与权益配置', toastMessage: '查看产品与权益配置（待建设）' },
+            { label: '提交调整申请', toastMessage: '提交调整申请（待建设）' },
+            { label: '查看操作日志', toastMessage: '查看操作日志（待建设）' },
+          ],
         },
       },
       logDetailMap: {
