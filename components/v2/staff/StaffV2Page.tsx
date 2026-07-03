@@ -23,6 +23,26 @@ import {
 } from './staffV2.viewModel';
 import './staffV2.css';
 
+function V2DrawerEmpty({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="met-v2-drawer-empty">
+      <h3 className="met-v2-drawer-empty__title">暂无详情</h3>
+      <p className="met-v2-drawer-empty__desc">当前记录缺少详情数据，请检查 mock 配置</p>
+      <button type="button" className="met-v2-drawer-footer-btn" onClick={onClose}>
+        关闭
+      </button>
+    </div>
+  );
+}
+
+function formatDrawerRecordLabel(label: string): string {
+  if (!label.includes('占位')) return label;
+  if (label.includes('代课记录')) return '代课记录：暂无记录';
+  if (label.includes('请假申请')) return '请假申请记录：待复核记录';
+  if (label.includes('资料审核')) return '资料审核记录：待补充资料';
+  return label.replace(/占位/g, '暂无记录');
+}
+
 const SOURCE_TAG_CLASS: Record<StaffV2SuggestionSource, string> = {
   system_rule: 'met-staff-v2-source-tag--rule',
   pending_config: 'met-staff-v2-source-tag--pending',
@@ -719,18 +739,26 @@ const StaffV2Page: React.FC = () => {
         </article>
       </div>
 
-      {drawerDetail ? (
+      {drawerTeacherId ? (
         <>
-          <button type="button" className="met-staff-v2-drawer-overlay" aria-label="关闭老师详情" onClick={closeDrawer} />
-          <aside className="met-staff-v2-drawer" role="dialog" aria-labelledby="staff-v2-drawer-title">
-            <div className="met-staff-v2-drawer__head">
+          <button type="button" className="met-staff-v2-drawer-overlay met-v2-drawer-overlay" aria-label="关闭老师详情" onClick={closeDrawer} />
+          <aside className="met-staff-v2-drawer met-v2-drawer-panel" role="dialog" aria-labelledby="staff-v2-drawer-title">
+            <div className="met-staff-v2-drawer__head met-v2-drawer-header">
               <div>
-                <h2 id="staff-v2-drawer-title" className="met-staff-v2-drawer__title">{drawerDetail.title}</h2>
-                <p className="met-staff-v2-drawer__subtitle">{drawerDetail.subtitle}</p>
+                <h2 id="staff-v2-drawer-title" className="met-staff-v2-drawer__title met-v2-drawer-title">
+                  {drawerDetail?.title ?? '暂无详情'}
+                </h2>
+                {drawerDetail?.subtitle ? (
+                  <p className="met-staff-v2-drawer__subtitle met-v2-drawer-subtitle">{drawerDetail.subtitle}</p>
+                ) : (
+                  <p className="met-staff-v2-drawer__subtitle met-v2-drawer-subtitle">当前记录缺少详情数据</p>
+                )}
               </div>
-              <button type="button" className="met-staff-v2-drawer__close" aria-label="关闭" onClick={closeDrawer}>×</button>
+              <button type="button" className="met-staff-v2-drawer__close met-v2-drawer-close" aria-label="关闭" onClick={closeDrawer}>×</button>
             </div>
-            <div className="met-staff-v2-drawer__body">
+            <div className="met-staff-v2-drawer__body met-v2-drawer-body">
+              {drawerDetail ? (
+                <>
               <section className="met-staff-v2-drawer__section">
                 <h3 className="met-staff-v2-drawer__section-title">老师概览</h3>
                 <div className="met-staff-v2-drawer__row"><span>姓名</span><span>{drawerDetail.name}</span></div>
@@ -824,7 +852,7 @@ const StaffV2Page: React.FC = () => {
                     <button
                       key={action.label}
                       type="button"
-                      className="met-staff-v2-btn met-staff-v2-btn--sm"
+                      className="met-v2-drawer-footer-btn"
                       onClick={() => showToast(action.toastMessage)}
                     >
                       {action.label}
@@ -886,23 +914,27 @@ const StaffV2Page: React.FC = () => {
                 <h3 className="met-staff-v2-drawer__section-title">近期记录</h3>
                 <ul className="met-staff-v2-record-list">
                   {drawerDetail.recentRecords.map(rec => (
-                    <li key={rec.label}>{rec.label}</li>
+                    <li key={rec.label}>{formatDrawerRecordLabel(rec.label)}</li>
                   ))}
                 </ul>
               </section>
 
-              <div className="met-staff-v2-drawer__actions">
+              <div className="met-staff-v2-drawer__actions met-v2-drawer-footer met-v2-drawer-footer--inline">
                 {drawerDetail.actions.map(action => (
                   <button
                     key={action.label}
                     type="button"
-                    className="met-staff-v2-btn"
+                    className="met-v2-drawer-footer-btn"
                     onClick={() => showToast(action.toastMessage)}
                   >
                     {action.label}
                   </button>
                 ))}
               </div>
+                </>
+              ) : (
+                <V2DrawerEmpty onClose={closeDrawer} />
+              )}
             </div>
           </aside>
         </>

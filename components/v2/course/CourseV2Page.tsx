@@ -39,6 +39,18 @@ const VIEW_ENTRY_META: Record<
   teacher: { label: '老师供给入口', toast: '进入老师供给视图（待建设）', isCurrent: false },
 };
 
+function V2DrawerEmpty({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="met-v2-drawer-empty">
+      <h3 className="met-v2-drawer-empty__title">暂无详情</h3>
+      <p className="met-v2-drawer-empty__desc">当前记录缺少详情数据，请检查 mock 配置</p>
+      <button type="button" className="met-v2-drawer-footer-btn" onClick={onClose}>
+        关闭
+      </button>
+    </div>
+  );
+}
+
 const SESSION_STATUS_CLASS: Record<string, string> = {
   low_booking: 'is-low',
   waitlist: 'is-waitlist',
@@ -657,18 +669,26 @@ const CourseV2Page: React.FC = () => {
         </section>
       </div>
 
-      {drawerDetail && cs ? (
+      {drawerSessionId ? (
         <>
-          <button type="button" className="met-course-v2-drawer-overlay" aria-label="关闭课程详情" onClick={closeDrawer} />
-          <aside className="met-course-v2-drawer" role="dialog" aria-labelledby="course-v2-drawer-title">
-            <div className="met-course-v2-drawer__head">
+          <button type="button" className="met-course-v2-drawer-overlay met-v2-drawer-overlay" aria-label="关闭课程详情" onClick={closeDrawer} />
+          <aside className="met-course-v2-drawer met-v2-drawer-panel met-v2-drawer-panel--md" role="dialog" aria-labelledby="course-v2-drawer-title">
+            <div className="met-course-v2-drawer__head met-v2-drawer-header">
               <div>
-                <h2 id="course-v2-drawer-title" className="met-course-v2-drawer__title">{drawerDetail.title}</h2>
-                <p className="met-course-v2-drawer__subtitle">{drawerDetail.subtitle}</p>
+                <h2 id="course-v2-drawer-title" className="met-course-v2-drawer__title met-v2-drawer-title">
+                  {drawerDetail?.title ?? '暂无详情'}
+                </h2>
+                {drawerDetail?.subtitle ? (
+                  <p className="met-course-v2-drawer__subtitle met-v2-drawer-subtitle">{drawerDetail.subtitle}</p>
+                ) : (
+                  <p className="met-course-v2-drawer__subtitle met-v2-drawer-subtitle">当前记录缺少详情数据</p>
+                )}
               </div>
-              <button type="button" className="met-course-v2-drawer__close" aria-label="关闭" onClick={closeDrawer}>×</button>
+              <button type="button" className="met-course-v2-drawer__close met-v2-drawer-close" aria-label="关闭" onClick={closeDrawer}>×</button>
             </div>
-            <div className="met-course-v2-drawer__body">
+            <div className="met-course-v2-drawer__body met-v2-drawer-body">
+              {drawerDetail && cs ? (
+                <>
               {ex ? (
                 <section className="met-course-v2-drawer__section met-course-v2-drawer__section--exception">
                   <h3 className="met-course-v2-drawer__section-title">异常处理摘要</h3>
@@ -753,10 +773,10 @@ const CourseV2Page: React.FC = () => {
                   <div className="met-course-v2-checkin-stat"><span className="met-course-v2-checkin-stat__num">{drawerDetail.checkin.pendingCheckin}</span><span className="met-course-v2-checkin-stat__label">待签到</span></div>
                   <div className="met-course-v2-checkin-stat"><span className="met-course-v2-checkin-stat__num">{drawerDetail.checkin.pendingResign}</span><span className="met-course-v2-checkin-stat__label">待补签</span></div>
                 </div>
-                <div className="met-course-v2-drawer__actions">
-                  <button type="button" className="met-course-v2-btn" onClick={() => handleAction('扫码核销')}>扫码核销</button>
-                  <button type="button" className="met-course-v2-btn" onClick={() => handleAction('手动签到')}>手动签到</button>
-                  <button type="button" className="met-course-v2-btn" onClick={() => showToast('进入签到处理（待建设）')}>标记爽约</button>
+                <div className="met-course-v2-drawer__actions met-v2-drawer-footer met-v2-drawer-footer--inline">
+                  <button type="button" className="met-v2-drawer-footer-btn" onClick={() => handleAction('扫码核销')}>扫码核销</button>
+                  <button type="button" className="met-v2-drawer-footer-btn" onClick={() => handleAction('手动签到')}>手动签到</button>
+                  <button type="button" className="met-v2-drawer-footer-btn" onClick={() => showToast('进入签到处理（待建设）')}>标记爽约</button>
                 </div>
               </section>
 
@@ -764,7 +784,7 @@ const CourseV2Page: React.FC = () => {
                 <h3 className="met-course-v2-drawer__section-title">补员建议</h3>
                 <div className="met-course-v2-drawer__row"><span className="met-course-v2-drawer__row-label">推荐匹配会员</span><span className="met-course-v2-drawer__row-value">{drawerDetail.recommendation.recommendedCount} 人</span></div>
                 <div className="met-course-v2-drawer__row"><span className="met-course-v2-drawer__row-label">高匹配</span><span className="met-course-v2-drawer__row-value">{drawerDetail.recommendation.highMatchCount} 人</span></div>
-                <button type="button" className="met-course-v2-btn" style={{ marginTop: 10 }} onClick={() => showToast('进入会员经营匹配名单（待建设）')}>
+                <button type="button" className="met-v2-drawer-footer-btn" style={{ marginTop: 10 }} onClick={() => showToast('进入会员经营匹配名单（待建设）')}>
                   {drawerDetail.recommendation.actionLabel}
                 </button>
               </section>
@@ -777,6 +797,10 @@ const CourseV2Page: React.FC = () => {
                   ))}
                 </div>
               </section>
+                </>
+              ) : (
+                <V2DrawerEmpty onClose={closeDrawer} />
+              )}
             </div>
           </aside>
         </>

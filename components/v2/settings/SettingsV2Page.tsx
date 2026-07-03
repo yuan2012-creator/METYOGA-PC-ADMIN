@@ -28,6 +28,18 @@ type DrawerState =
   | { type: 'contract'; id: string }
   | null;
 
+function V2DrawerEmpty({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="met-v2-drawer-empty">
+      <h3 className="met-v2-drawer-empty__title">暂无详情</h3>
+      <p className="met-v2-drawer-empty__desc">当前记录缺少详情数据，请检查 mock 配置</p>
+      <button type="button" className="met-v2-drawer-footer-btn" onClick={onClose}>
+        关闭
+      </button>
+    </div>
+  );
+}
+
 const SettingsV2Page: React.FC = () => {
   const snapshot = useMemo(() => buildSettingsV2Snapshot(), []);
   const [toast, setToast] = useState<string | null>(null);
@@ -206,9 +218,9 @@ const SettingsV2Page: React.FC = () => {
           </div>
         ))}
       </section>
-      <div className="met-settings-v2-drawer__actions">
+      <div className="met-settings-v2-drawer__actions met-v2-drawer-footer met-v2-drawer-footer--inline">
         {detail.actions.map(action => (
-          <button key={action.label} type="button" className="met-settings-v2-btn" onClick={() => showToast(action.toastMessage)}>
+          <button key={action.label} type="button" className="met-v2-drawer-footer-btn" onClick={() => showToast(action.toastMessage)}>
             {action.label}
           </button>
         ))}
@@ -258,9 +270,9 @@ const SettingsV2Page: React.FC = () => {
         <h3 className="met-settings-v2-drawer__section-title">同步状态</h3>
         <p className="met-settings-v2-drawer__highlight">{detail.syncStatus}</p>
       </section>
-      <div className="met-settings-v2-drawer__actions">
+      <div className="met-settings-v2-drawer__actions met-v2-drawer-footer met-v2-drawer-footer--inline">
         {detail.actions.map(action => (
-          <button key={action.label} type="button" className="met-settings-v2-btn" onClick={() => showToast(action.toastMessage)}>
+          <button key={action.label} type="button" className="met-v2-drawer-footer-btn" onClick={() => showToast(action.toastMessage)}>
             {action.label}
           </button>
         ))}
@@ -297,9 +309,9 @@ const SettingsV2Page: React.FC = () => {
           </div>
         ))}
       </section>
-      <div className="met-settings-v2-drawer__actions">
+      <div className="met-settings-v2-drawer__actions met-v2-drawer-footer met-v2-drawer-footer--inline">
         {detail.actions.map(action => (
-          <button key={action.label} type="button" className="met-settings-v2-btn" onClick={() => showToast(action.toastMessage)}>
+          <button key={action.label} type="button" className="met-v2-drawer-footer-btn" onClick={() => showToast(action.toastMessage)}>
             {action.label}
           </button>
         ))}
@@ -330,9 +342,9 @@ const SettingsV2Page: React.FC = () => {
           </div>
         </section>
       ))}
-      <div className="met-settings-v2-drawer__actions">
+      <div className="met-settings-v2-drawer__actions met-v2-drawer-footer met-v2-drawer-footer--inline">
         {detail.actions.map(action => (
-          <button key={action.label} type="button" className="met-settings-v2-btn" onClick={() => showToast(action.toastMessage)}>
+          <button key={action.label} type="button" className="met-v2-drawer-footer-btn" onClick={() => showToast(action.toastMessage)}>
             {action.label}
           </button>
         ))}
@@ -363,9 +375,9 @@ const SettingsV2Page: React.FC = () => {
           </div>
         ))}
       </section>
-      <div className="met-settings-v2-drawer__actions">
+      <div className="met-settings-v2-drawer__actions met-v2-drawer-footer met-v2-drawer-footer--inline">
         {detail.actions.map(action => (
-          <button key={action.label} type="button" className="met-settings-v2-btn" onClick={() => showToast(action.toastMessage)}>
+          <button key={action.label} type="button" className="met-v2-drawer-footer-btn" onClick={() => showToast(action.toastMessage)}>
             {action.label}
           </button>
         ))}
@@ -373,12 +385,16 @@ const SettingsV2Page: React.FC = () => {
     </>
   );
 
+  const drawerHasContent = Boolean(
+    drawerEntry || drawerSetting || drawerPermission || drawerContract || drawerLog,
+  );
   const drawerTitle =
     drawerEntry?.title ?? drawerSetting?.title ?? drawerPermission?.title
-    ?? drawerContract?.title ?? drawerLog?.title ?? '';
+    ?? drawerContract?.title ?? drawerLog?.title ?? '暂无详情';
   const drawerSubtitle =
     drawerEntry?.subtitle ?? drawerSetting?.subtitle ?? drawerPermission?.subtitle
-    ?? drawerContract?.subtitle ?? drawerLog?.subtitle ?? '';
+    ?? drawerContract?.subtitle ?? drawerLog?.subtitle
+    ?? (drawerHasContent ? '' : '当前记录缺少详情数据');
 
   return (
     <div className="met-settings-v2">
@@ -601,21 +617,29 @@ const SettingsV2Page: React.FC = () => {
 
       {drawer ? (
         <>
-          <button type="button" className="met-settings-v2-drawer-overlay" aria-label="关闭详情" onClick={closeDrawer} />
-          <aside className="met-settings-v2-drawer met-settings-v2-detail-drawer" role="dialog" aria-labelledby="settings-v2-drawer-title">
-            <div className="met-settings-v2-drawer__head">
+          <button type="button" className="met-settings-v2-drawer-overlay met-v2-drawer-overlay" aria-label="关闭详情" onClick={closeDrawer} />
+          <aside className="met-settings-v2-drawer met-settings-v2-detail-drawer met-v2-drawer-panel met-v2-drawer-panel--md" role="dialog" aria-labelledby="settings-v2-drawer-title">
+            <div className="met-settings-v2-drawer__head met-v2-drawer-header">
               <div>
-                <h2 id="settings-v2-drawer-title" className="met-settings-v2-drawer__title">{drawerTitle}</h2>
-                <p className="met-settings-v2-drawer__subtitle">{drawerSubtitle}</p>
+                <h2 id="settings-v2-drawer-title" className="met-settings-v2-drawer__title met-v2-drawer-title">{drawerTitle}</h2>
+                {drawerSubtitle ? (
+                  <p className="met-settings-v2-drawer__subtitle met-v2-drawer-subtitle">{drawerSubtitle}</p>
+                ) : null}
               </div>
-              <button type="button" className="met-settings-v2-drawer__close" aria-label="关闭" onClick={closeDrawer}>×</button>
+              <button type="button" className="met-settings-v2-drawer__close met-v2-drawer-close" aria-label="关闭" onClick={closeDrawer}>×</button>
             </div>
-            <div className="met-settings-v2-drawer__body">
-              {drawer?.type === 'entry' && drawerEntry ? renderEntryDrawer(drawerEntry) : null}
-              {drawer?.type === 'setting' && drawerSetting ? renderSettingDrawer(drawerSetting) : null}
-              {drawer?.type === 'permission' && drawerPermission ? renderPermissionDrawer(drawerPermission) : null}
-              {drawer?.type === 'contract' && drawerContract ? renderContractDrawer(drawerContract) : null}
-              {drawer?.type === 'log' && drawerLog ? renderLogDrawer(drawerLog) : null}
+            <div className="met-settings-v2-drawer__body met-v2-drawer-body">
+              {drawerHasContent ? (
+                <>
+                  {drawer?.type === 'entry' && drawerEntry ? renderEntryDrawer(drawerEntry) : null}
+                  {drawer?.type === 'setting' && drawerSetting ? renderSettingDrawer(drawerSetting) : null}
+                  {drawer?.type === 'permission' && drawerPermission ? renderPermissionDrawer(drawerPermission) : null}
+                  {drawer?.type === 'contract' && drawerContract ? renderContractDrawer(drawerContract) : null}
+                  {drawer?.type === 'log' && drawerLog ? renderLogDrawer(drawerLog) : null}
+                </>
+              ) : (
+                <V2DrawerEmpty onClose={closeDrawer} />
+              )}
             </div>
           </aside>
         </>

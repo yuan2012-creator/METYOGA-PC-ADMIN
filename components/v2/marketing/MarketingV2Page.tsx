@@ -24,6 +24,27 @@ type DrawerState =
   | { type: 'lead'; id: string }
   | null;
 
+function V2DrawerEmpty({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="met-v2-drawer-empty">
+      <h3 className="met-v2-drawer-empty__title">暂无详情</h3>
+      <p className="met-v2-drawer-empty__desc">当前记录缺少详情数据，请检查 mock 配置</p>
+      <button type="button" className="met-v2-drawer-footer-btn" onClick={onClose}>
+        关闭
+      </button>
+    </div>
+  );
+}
+
+const LEAD_DRAWER_SECTIONS: { title: string; labels: string[] }[] = [
+  { title: '线索来源', labels: ['线索来源'] },
+  { title: '当前阶段', labels: ['会员姓名', '意向课程'] },
+  { title: '预约 / 到店 / 成交状态', labels: ['预约时间', '未到店原因'] },
+  { title: '跟进记录', labels: ['最近跟进', '负责人'] },
+  { title: '下一动作', labels: ['下一动作'] },
+  { title: '是否进入会员经营', labels: ['是否进入会员经营'] },
+];
+
 const MarketingV2Page: React.FC = () => {
   const snapshot = useMemo(() => buildMarketingV2Snapshot(), []);
   const [toast, setToast] = useState<string | null>(null);
@@ -198,9 +219,9 @@ const MarketingV2Page: React.FC = () => {
           </div>
         ))}
       </section>
-      <div className="met-marketing-v2-drawer__actions">
+      <div className="met-marketing-v2-drawer__actions met-v2-drawer-footer met-v2-drawer-footer--inline">
         {detail.actions.map(action => (
-          <button key={action.label} type="button" className="met-marketing-v2-btn" onClick={() => showToast(action.toastMessage)}>
+          <button key={action.label} type="button" className="met-v2-drawer-footer-btn" onClick={() => showToast(action.toastMessage)}>
             {action.label}
           </button>
         ))}
@@ -208,28 +229,56 @@ const MarketingV2Page: React.FC = () => {
     </>
   );
 
-  const renderLeadDrawer = (detail: LeadDetail) => (
-    <>
-      <section className="met-marketing-v2-drawer__section">
-        {detail.fields.map(row => (
-          <div key={row.label} className="met-marketing-v2-drawer__row">
-            <span>{row.label}</span><span>{row.value}</span>
-          </div>
-        ))}
-      </section>
-      <div className="met-marketing-v2-drawer__actions">
-        {detail.actions.map(action => (
-          <button key={action.label} type="button" className="met-marketing-v2-btn" onClick={() => showToast(action.toastMessage)}>
-            {action.label}
-          </button>
-        ))}
-      </div>
-    </>
-  );
+  const renderLeadDrawer = (detail: LeadDetail) => {
+    const renderedLabels = new Set<string>();
+    const sections = LEAD_DRAWER_SECTIONS.map(section => {
+      const rows = detail.fields.filter(field => section.labels.includes(field.label));
+      rows.forEach(row => renderedLabels.add(row.label));
+      if (!rows.length) return null;
+      return (
+        <section key={section.title} className="met-marketing-v2-drawer__section">
+          <h3 className="met-marketing-v2-drawer__section-title">{section.title}</h3>
+          {rows.map(row => (
+            <div key={row.label} className="met-marketing-v2-drawer__row">
+              <span className="met-v2-drawer-label">{row.label}</span>
+              <span className="met-v2-drawer-value">{row.value}</span>
+            </div>
+          ))}
+        </section>
+      );
+    });
+    const remaining = detail.fields.filter(field => !renderedLabels.has(field.label));
+    return (
+      <>
+        {sections}
+        {remaining.length ? (
+          <section className="met-marketing-v2-drawer__section">
+            <h3 className="met-marketing-v2-drawer__section-title">补充信息</h3>
+            {remaining.map(row => (
+              <div key={row.label} className="met-marketing-v2-drawer__row">
+                <span className="met-v2-drawer-label">{row.label}</span>
+                <span className="met-v2-drawer-value">{row.value}</span>
+              </div>
+            ))}
+          </section>
+        ) : null}
+        <p className="met-marketing-v2-drawer__follow-hint">点对点跟进 · 非群发</p>
+        <div className="met-marketing-v2-drawer__actions met-v2-drawer-footer met-v2-drawer-footer--inline">
+          {detail.actions.map(action => (
+            <button key={action.label} type="button" className="met-v2-drawer-footer-btn" onClick={() => showToast(action.toastMessage)}>
+              {action.label}
+            </button>
+          ))}
+        </div>
+      </>
+    );
+  };
 
   const { heroCampaign } = campaignBattle;
-  const drawerTitle = drawerActivity?.title ?? drawerLead?.title ?? '';
-  const drawerSubtitle = drawerActivity?.subtitle ?? drawerLead?.subtitle ?? '';
+  const drawerHasContent = Boolean(drawerActivity || drawerLead);
+  const drawerTitle = drawerActivity?.title ?? drawerLead?.title ?? '暂无详情';
+  const drawerSubtitle =
+    drawerActivity?.subtitle ?? drawerLead?.subtitle ?? (drawerHasContent ? '' : '当前记录缺少详情数据');
 
   return (
     <div className="met-marketing-v2">
@@ -564,18 +613,26 @@ const MarketingV2Page: React.FC = () => {
 
       {drawer ? (
         <>
-          <button type="button" className="met-marketing-v2-drawer-overlay" aria-label="关闭详情" onClick={closeDrawer} />
-          <aside className="met-marketing-v2-drawer" role="dialog" aria-labelledby="marketing-v2-drawer-title">
-            <div className="met-marketing-v2-drawer__head">
+          <button type="button" className="met-marketing-v2-drawer-overlay met-v2-drawer-overlay" aria-label="关闭详情" onClick={closeDrawer} />
+          <aside className="met-marketing-v2-drawer met-v2-drawer-panel" role="dialog" aria-labelledby="marketing-v2-drawer-title">
+            <div className="met-marketing-v2-drawer__head met-v2-drawer-header">
               <div>
-                <h2 id="marketing-v2-drawer-title" className="met-marketing-v2-drawer__title">{drawerTitle}</h2>
-                <p className="met-marketing-v2-drawer__subtitle">{drawerSubtitle}</p>
+                <h2 id="marketing-v2-drawer-title" className="met-marketing-v2-drawer__title met-v2-drawer-title">{drawerTitle}</h2>
+                {drawerSubtitle ? (
+                  <p className="met-marketing-v2-drawer__subtitle met-v2-drawer-subtitle">{drawerSubtitle}</p>
+                ) : null}
               </div>
-              <button type="button" className="met-marketing-v2-drawer__close" aria-label="关闭" onClick={closeDrawer}>×</button>
+              <button type="button" className="met-marketing-v2-drawer__close met-v2-drawer-close" aria-label="关闭" onClick={closeDrawer}>×</button>
             </div>
-            <div className="met-marketing-v2-drawer__body">
-              {drawerActivity ? renderActivityDrawer(drawerActivity) : null}
-              {drawerLead ? renderLeadDrawer(drawerLead) : null}
+            <div className="met-marketing-v2-drawer__body met-v2-drawer-body">
+              {drawerHasContent ? (
+                <>
+                  {drawerActivity ? renderActivityDrawer(drawerActivity) : null}
+                  {drawerLead ? renderLeadDrawer(drawerLead) : null}
+                </>
+              ) : (
+                <V2DrawerEmpty onClose={closeDrawer} />
+              )}
             </div>
           </aside>
         </>

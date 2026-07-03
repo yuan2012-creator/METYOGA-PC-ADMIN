@@ -81,11 +81,14 @@
   --met-v2-filter-height: 34px;
 
   /* 抽屉 */
-  --met-v2-drawer-width: 680px;
   --met-v2-drawer-width-sm: 580px;
   --met-v2-drawer-width-md: 640px;
+  --met-v2-drawer-width: 680px;
   --met-v2-drawer-width-lg: 720px;
   --met-v2-drawer-shadow: -12px 0 32px rgba(0, 0, 0, 0.08);
+  --met-v2-drawer-overlay: rgba(0, 0, 0, 0.38);
+  --met-v2-drawer-header-height: auto;
+  --met-v2-drawer-section-gap: 16px;
 
   /* 动画 */
   --met-v2-transition-fast: 120ms ease;
@@ -289,27 +292,321 @@
   box-shadow: var(--met-v2-drawer-shadow);
 }
 
+/* —— V2 全局抽屉 utility —— */
+.met-v2-drawer-shell {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  pointer-events: none;
+}
+
+.met-v2-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  border: none;
+  background: var(--met-v2-drawer-overlay);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.met-v2-drawer-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 201;
+  display: flex;
+  flex-direction: column;
+  width: min(var(--met-v2-drawer-width), 100vw);
+  height: 100%;
+  background: var(--met-v2-surface);
+  box-shadow: var(--met-v2-drawer-shadow);
+  pointer-events: auto;
+}
+
+.met-v2-drawer-panel--sm {
+  width: min(var(--met-v2-drawer-width-sm), 100vw);
+}
+
+.met-v2-drawer-panel--md {
+  width: min(var(--met-v2-drawer-width-md), 100vw);
+}
+
+.met-v2-drawer-panel--lg {
+  width: min(var(--met-v2-drawer-width-lg), 100vw);
+}
+
 .met-v2-drawer-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+  min-height: var(--met-v2-drawer-header-height);
   padding: 20px 24px;
   border-bottom: 1px solid var(--met-v2-border-soft);
+  background: var(--met-v2-surface);
 }
 
 .met-v2-drawer-title {
   margin: 0;
-  font-size: 18px;
+  font-size: 23px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--met-v2-text-primary);
+  letter-spacing: -0.02em;
+}
+
+.met-v2-drawer-subtitle {
+  margin: 6px 0 0;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--met-v2-text-secondary);
+  max-width: 32em;
+}
+
+.met-v2-drawer-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--met-v2-border);
+  border-radius: var(--met-v2-button-radius);
+  background: var(--met-v2-surface);
+  font-size: 20px;
+  line-height: 1;
+  color: var(--met-v2-text-secondary);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    border-color var(--met-v2-transition-fast),
+    color var(--met-v2-transition-fast),
+    background var(--met-v2-transition-fast);
+}
+
+.met-v2-drawer-close:hover {
+  border-color: var(--met-v2-brand);
+  color: var(--met-v2-brand);
+  background: var(--met-v2-brand-soft);
+}
+
+.met-v2-drawer-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--met-v2-drawer-section-gap);
+}
+
+.met-v2-drawer-section {
+  padding: 14px 16px;
+  border: 1px solid var(--met-v2-border-soft);
+  border-radius: var(--met-v2-radius-sm);
+  background: var(--met-v2-surface);
+}
+
+.met-v2-drawer-section-title {
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--met-v2-text-primary);
+  letter-spacing: -0.01em;
+}
+
+.met-v2-drawer-section-subtitle {
+  margin: -6px 0 10px;
+  font-size: 12px;
+  color: var(--met-v2-text-secondary);
+  line-height: 1.45;
+}
+
+.met-v2-drawer-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--met-v2-border-soft);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.met-v2-drawer-row:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.met-v2-drawer-label {
+  flex-shrink: 0;
+  color: var(--met-v2-text-secondary);
+  max-width: 42%;
+}
+
+.met-v2-drawer-value {
+  text-align: right;
+  color: var(--met-v2-text-primary);
+  font-weight: 500;
+}
+
+.met-v2-drawer-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.met-v2-drawer-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex-shrink: 0;
+  padding: 14px 24px 20px;
+  border-top: 1px solid var(--met-v2-border-soft);
+  background: var(--met-v2-surface-soft);
+}
+
+.met-v2-drawer-footer--inline {
+  padding: 0;
+  margin-top: 4px;
+  border-top: none;
+  background: transparent;
+}
+
+.met-v2-drawer-footer-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--met-v2-button-height-sm);
+  padding: 0 14px;
+  border: 1px solid var(--met-v2-border);
+  border-radius: var(--met-v2-button-radius);
+  background: var(--met-v2-surface);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--met-v2-text-secondary);
+  cursor: pointer;
+  transition:
+    background var(--met-v2-transition-fast),
+    border-color var(--met-v2-transition-fast),
+    color var(--met-v2-transition-fast);
+}
+
+.met-v2-drawer-footer-btn:hover {
+  background: var(--met-v2-neutral-bg);
+  border-color: var(--met-v2-border);
+  color: var(--met-v2-text-primary);
+}
+
+.met-v2-drawer-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 240px;
+  padding: 32px 24px;
+  text-align: center;
+}
+
+.met-v2-drawer-empty__title {
+  margin: 0;
+  font-size: 16px;
   font-weight: 600;
   color: var(--met-v2-text-primary);
 }
 
-.met-v2-drawer-subtitle {
-  margin: 4px 0 0;
-  font-size: 12px;
+.met-v2-drawer-empty__desc {
+  margin: 0;
+  max-width: 22em;
+  font-size: 13px;
+  line-height: 1.5;
   color: var(--met-v2-text-secondary);
 }
 
-.met-v2-drawer-section {
-  padding: 16px 24px;
-  border-bottom: 1px solid var(--met-v2-border-soft);
+/* —— 跨模块抽屉 class 映射（视觉统一）—— */
+.met-member-v2-drawer-overlay,
+.met-course-v2-drawer-overlay,
+.met-staff-v2-drawer-overlay,
+.met-finance-v2-drawer-overlay,
+.met-marketing-v2-drawer-overlay,
+.met-settings-v2-drawer-overlay {
+  background: var(--met-v2-drawer-overlay);
+}
+
+.met-member-v2-drawer,
+.met-member-v2-drawer--match,
+.met-course-v2-drawer,
+.met-staff-v2-drawer,
+.met-finance-v2-drawer,
+.met-marketing-v2-drawer,
+.met-settings-v2-drawer {
+  box-shadow: var(--met-v2-drawer-shadow);
+}
+
+.met-member-v2-drawer__head,
+.met-course-v2-drawer__head,
+.met-staff-v2-drawer__head,
+.met-finance-v2-drawer__head,
+.met-marketing-v2-drawer__head,
+.met-settings-v2-drawer__head {
+  min-height: var(--met-v2-drawer-header-height);
+}
+
+.met-member-v2-drawer__title,
+.met-course-v2-drawer__title,
+.met-staff-v2-drawer__title,
+.met-finance-v2-drawer__title,
+.met-marketing-v2-drawer__title,
+.met-settings-v2-drawer__title {
+  font-size: 23px;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.met-member-v2-drawer__subtitle,
+.met-member-v2-drawer__hero,
+.met-course-v2-drawer__subtitle,
+.met-staff-v2-drawer__subtitle,
+.met-finance-v2-drawer__subtitle,
+.met-marketing-v2-drawer__subtitle,
+.met-settings-v2-drawer__subtitle {
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.met-member-v2-drawer__body,
+.met-course-v2-drawer__body,
+.met-staff-v2-drawer__body,
+.met-finance-v2-drawer__body,
+.met-marketing-v2-drawer__body,
+.met-settings-v2-drawer__body {
+  gap: var(--met-v2-drawer-section-gap);
+}
+
+.met-member-v2-drawer__section,
+.met-course-v2-drawer__section,
+.met-staff-v2-drawer__section,
+.met-finance-v2-drawer__section,
+.met-marketing-v2-drawer__section,
+.met-settings-v2-drawer__section {
+  margin-bottom: 0;
+  border-radius: var(--met-v2-radius-sm);
+  background: var(--met-v2-surface);
+}
+
+.met-member-v2-drawer__actions,
+.met-course-v2-drawer__actions,
+.met-staff-v2-drawer__actions,
+.met-finance-v2-drawer__actions,
+.met-marketing-v2-drawer__actions,
+.met-settings-v2-drawer__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 4px;
 }
 
 .met-v2-empty {

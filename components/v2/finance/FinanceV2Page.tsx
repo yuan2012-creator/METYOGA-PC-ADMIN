@@ -27,6 +27,18 @@ type DrawerState =
   | { type: 'finance_evidence' }
   | null;
 
+function V2DrawerEmpty({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="met-v2-drawer-empty">
+      <h3 className="met-v2-drawer-empty__title">暂无详情</h3>
+      <p className="met-v2-drawer-empty__desc">当前记录缺少详情数据，请检查 mock 配置</p>
+      <button type="button" className="met-v2-drawer-footer-btn" onClick={onClose}>
+        关闭
+      </button>
+    </div>
+  );
+}
+
 const FinanceV2Page: React.FC = () => {
   const snapshot = useMemo(() => buildFinanceV2Snapshot(), []);
   const [toast, setToast] = useState<string | null>(null);
@@ -138,12 +150,12 @@ const FinanceV2Page: React.FC = () => {
           ))}
         </ul>
       </section>
-      <div className="met-finance-v2-drawer__actions">
+      <div className="met-finance-v2-drawer__actions met-v2-drawer-footer met-v2-drawer-footer--inline">
         {detail.actions.map(action => (
           <button
             key={action.label}
             type="button"
-            className="met-finance-v2-btn"
+            className="met-v2-drawer-footer-btn"
             onClick={() => showToast(action.toastMessage)}
           >
             {action.label}
@@ -227,12 +239,12 @@ const FinanceV2Page: React.FC = () => {
           ))}
         </div>
       </section>
-      <div className="met-finance-v2-drawer__actions">
+      <div className="met-finance-v2-drawer__actions met-v2-drawer-footer met-v2-drawer-footer--inline">
         {detail.actions.map(action => (
           <button
             key={action.label}
             type="button"
-            className="met-finance-v2-btn"
+            className="met-v2-drawer-footer-btn"
             onClick={() => showToast(action.toastMessage)}
           >
             {action.label}
@@ -386,8 +398,10 @@ const FinanceV2Page: React.FC = () => {
     </div>
   );
 
-  const drawerTitle = drawerAsset?.title ?? drawerFinance?.title ?? '';
-  const drawerSubtitle = drawerAsset?.subtitle ?? drawerFinance?.subtitle ?? '';
+  const drawerHasContent = Boolean(drawerAsset || drawerFinance);
+  const drawerTitle = drawerAsset?.title ?? drawerFinance?.title ?? '暂无详情';
+  const drawerSubtitle =
+    drawerAsset?.subtitle ?? drawerFinance?.subtitle ?? (drawerHasContent ? '' : '当前记录缺少详情数据');
 
   return (
     <div className="met-finance-v2">
@@ -771,18 +785,26 @@ const FinanceV2Page: React.FC = () => {
 
       {drawer ? (
         <>
-          <button type="button" className="met-finance-v2-drawer-overlay" aria-label="关闭详情" onClick={closeDrawer} />
-          <aside className="met-finance-v2-drawer" role="dialog" aria-labelledby="finance-v2-drawer-title">
-            <div className="met-finance-v2-drawer__head">
+          <button type="button" className="met-finance-v2-drawer-overlay met-v2-drawer-overlay" aria-label="关闭详情" onClick={closeDrawer} />
+          <aside className="met-finance-v2-drawer met-v2-drawer-panel met-v2-drawer-panel--md" role="dialog" aria-labelledby="finance-v2-drawer-title">
+            <div className="met-finance-v2-drawer__head met-v2-drawer-header">
               <div>
-                <h2 id="finance-v2-drawer-title" className="met-finance-v2-drawer__title">{drawerTitle}</h2>
-                <p className="met-finance-v2-drawer__subtitle">{drawerSubtitle}</p>
+                <h2 id="finance-v2-drawer-title" className="met-finance-v2-drawer__title met-v2-drawer-title">{drawerTitle}</h2>
+                {drawerSubtitle ? (
+                  <p className="met-finance-v2-drawer__subtitle met-v2-drawer-subtitle">{drawerSubtitle}</p>
+                ) : null}
               </div>
-              <button type="button" className="met-finance-v2-drawer__close" aria-label="关闭" onClick={closeDrawer}>×</button>
+              <button type="button" className="met-finance-v2-drawer__close met-v2-drawer-close" aria-label="关闭" onClick={closeDrawer}>×</button>
             </div>
-            <div className="met-finance-v2-drawer__body">
-              {drawerAsset ? renderAssetDrawer(drawerAsset) : null}
-              {drawerFinance ? renderFinanceDrawer(drawerFinance) : null}
+            <div className="met-finance-v2-drawer__body met-v2-drawer-body">
+              {drawerHasContent ? (
+                <>
+                  {drawerAsset ? renderAssetDrawer(drawerAsset) : null}
+                  {drawerFinance ? renderFinanceDrawer(drawerFinance) : null}
+                </>
+              ) : (
+                <V2DrawerEmpty onClose={closeDrawer} />
+              )}
             </div>
           </aside>
         </>

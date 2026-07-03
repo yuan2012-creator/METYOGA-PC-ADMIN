@@ -115,6 +115,18 @@ function FlowNode({
   );
 }
 
+function V2DrawerEmpty({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="met-v2-drawer-empty">
+      <h3 className="met-v2-drawer-empty__title">暂无详情</h3>
+      <p className="met-v2-drawer-empty__desc">当前记录缺少详情数据，请检查 mock 配置</p>
+      <button type="button" className="met-v2-drawer-footer-btn" onClick={onClose}>
+        关闭
+      </button>
+    </div>
+  );
+}
+
 const MemberV2Page: React.FC = () => {
   const snapshot = useMemo(() => buildMemberV2Snapshot(), []);
   const [toast, setToast] = useState<string | null>(null);
@@ -609,34 +621,40 @@ const MemberV2Page: React.FC = () => {
         </article>
       </div>
 
-      {drawerDetail ? (
+      {drawerMemberId ? (
         <>
           <button
             type="button"
-            className="met-member-v2-drawer-overlay"
+            className="met-member-v2-drawer-overlay met-v2-drawer-overlay"
             aria-label="关闭会员详情"
             onClick={closeAllDrawers}
           />
-          <aside className="met-member-v2-drawer" role="dialog" aria-labelledby="member-v2-drawer-title">
-            <div className="met-member-v2-drawer__head">
+          <aside className="met-member-v2-drawer met-v2-drawer-panel met-v2-drawer-panel--sm" role="dialog" aria-labelledby="member-v2-drawer-title">
+            <div className="met-member-v2-drawer__head met-v2-drawer-header">
               <div>
-                <h2 id="member-v2-drawer-title" className="met-member-v2-drawer__title">
+                <h2 id="member-v2-drawer-title" className="met-member-v2-drawer__title met-v2-drawer-title">
                   会员详情
                 </h2>
-                <p className="met-member-v2-drawer__hero">
-                  {drawerDetail.name} · {drawerDetail.stageLabel}
-                </p>
+                {drawerDetail ? (
+                  <p className="met-member-v2-drawer__hero met-v2-drawer-subtitle">
+                    {drawerDetail.name} · {drawerDetail.stageLabel}
+                  </p>
+                ) : (
+                  <p className="met-member-v2-drawer__hero met-v2-drawer-subtitle">当前记录缺少详情数据</p>
+                )}
               </div>
               <button
                 type="button"
-                className="met-member-v2-drawer__close"
+                className="met-member-v2-drawer__close met-v2-drawer-close"
                 aria-label="关闭"
                 onClick={closeAllDrawers}
               >
                 ×
               </button>
             </div>
-            <div className="met-member-v2-drawer__body">
+            <div className="met-member-v2-drawer__body met-v2-drawer-body">
+              {drawerDetail ? (
+                <>
               <section className="met-member-v2-drawer__section">
                 <h3 className="met-member-v2-drawer__section-title">会员概览</h3>
                 <div className="met-member-v2-drawer__row">
@@ -759,41 +777,61 @@ const MemberV2Page: React.FC = () => {
                   <span className="met-member-v2-drawer__row-value">{drawerDetail.riskHandleStatus}</span>
                 </div>
               </section>
+                </>
+              ) : (
+                <V2DrawerEmpty onClose={closeAllDrawers} />
+              )}
             </div>
+            {drawerDetail ? (
+              <div className="met-v2-drawer-footer">
+                <button type="button" className="met-v2-drawer-footer-btn" onClick={() => handleAction('记录跟进')}>
+                  记录跟进
+                </button>
+                <button type="button" className="met-v2-drawer-footer-btn" onClick={() => handleAction('分配邀约')}>
+                  分配邀约
+                </button>
+              </div>
+            ) : null}
           </aside>
         </>
       ) : null}
 
-      {matchPreview ? (
+      {matchPreviewId ? (
         <>
           <button
             type="button"
-            className="met-member-v2-drawer-overlay"
+            className="met-member-v2-drawer-overlay met-v2-drawer-overlay"
             aria-label="关闭匹配名单预览"
             onClick={closeAllDrawers}
           />
           <aside
-            className="met-member-v2-drawer met-member-v2-drawer--match"
+            className="met-member-v2-drawer met-member-v2-drawer--match met-v2-drawer-panel met-v2-drawer-panel--md"
             role="dialog"
             aria-labelledby="member-v2-match-drawer-title"
           >
-            <div className="met-member-v2-drawer__head">
+            <div className="met-member-v2-drawer__head met-v2-drawer-header">
               <div>
-                <h2 id="member-v2-match-drawer-title" className="met-member-v2-drawer__title">
-                  {matchPreview.title}
+                <h2 id="member-v2-match-drawer-title" className="met-member-v2-drawer__title met-v2-drawer-title">
+                  {matchPreview?.title ?? '暂无详情'}
                 </h2>
-                <p className="met-member-v2-drawer__subtitle">{matchPreview.subtitle}</p>
+                {matchPreview?.subtitle ? (
+                  <p className="met-member-v2-drawer__subtitle met-v2-drawer-subtitle">{matchPreview.subtitle}</p>
+                ) : (
+                  <p className="met-member-v2-drawer__subtitle met-v2-drawer-subtitle">当前记录缺少详情数据</p>
+                )}
               </div>
               <button
                 type="button"
-                className="met-member-v2-drawer__close"
+                className="met-member-v2-drawer__close met-v2-drawer-close"
                 aria-label="关闭"
                 onClick={closeAllDrawers}
               >
                 ×
               </button>
             </div>
-            <div className="met-member-v2-drawer__body">
+            <div className="met-member-v2-drawer__body met-v2-drawer-body">
+              {matchPreview ? (
+                <>
               <div className="met-member-v2-match-stats">
                 {matchPreview.stats.map(stat => (
                   <div key={stat.label} className="met-member-v2-match-stat">
@@ -873,7 +911,8 @@ const MemberV2Page: React.FC = () => {
                   </div>
                 ))}
               </section>
-              <div className="met-member-v2-excluded">
+              <section className="met-member-v2-drawer__section">
+                <h3 className="met-member-v2-drawer__section-title">已排除会员</h3>
                 <p className="met-member-v2-excluded__title">{matchPreview.excludedSummary}</p>
                 <ul className="met-member-v2-excluded__list">
                   {matchPreview.excludedReasons.map(reason => (
@@ -882,7 +921,11 @@ const MemberV2Page: React.FC = () => {
                     </li>
                   ))}
                 </ul>
-              </div>
+              </section>
+                </>
+              ) : (
+                <V2DrawerEmpty onClose={closeAllDrawers} />
+              )}
             </div>
           </aside>
         </>

@@ -1630,7 +1630,7 @@
   position: fixed;
   inset: 0;
   z-index: 200;
-  background: rgba(0, 0, 0, 0.28);
+  background: var(--met-v2-drawer-overlay);
   border: none;
   cursor: pointer;
 }
@@ -1691,16 +1691,20 @@
 
 .met-staff-v2-drawer__body {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
-  padding: 16px 24px 32px;
+  padding: 20px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--met-v2-drawer-section-gap);
 }
 
 .met-staff-v2-drawer__section {
-  margin-bottom: 14px;
+  margin-bottom: 0;
   padding: 14px 16px;
   border: 1px solid var(--met-v2-border-soft);
   border-radius: var(--met-v2-radius-sm);
-  background: var(--met-v2-surface-soft);
+  background: var(--met-v2-surface);
 }
 
 .met-staff-v2-drawer__section-title {
