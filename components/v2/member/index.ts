@@ -1,4 +1,5 @@
 export { default as MemberV2Page } from './MemberV2Page';
+export { default as MemberSecondaryMemberListPage } from './MemberSecondaryMemberListPage';
 export type {
   MemberV2Snapshot,
   MemberV2MemberDetail,
@@ -11,3 +12,8 @@ export type {
   MemberPriorityAction,
   MemberQueueSummaryItem,
 } from './memberV2.viewModel';
+export type {
+  MemberListRow,
+  MemberListSnapshot,
+  MemberListSummaryItem,
+} from './memberSecondaryMemberList.viewModel';

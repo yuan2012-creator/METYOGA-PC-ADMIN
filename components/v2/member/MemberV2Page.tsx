@@ -3,14 +3,16 @@ import { ChevronDown } from 'lucide-react';
 import {
   buildMemberV2Snapshot,
   getMemberOperationStatusClass,
-  getSecondaryEntranceLabel,
   type MemberV2AudienceMatchPreview,
   type MemberV2LifecycleStage,
   type MemberV2MemberDetail,
   type MemberV2RiskPriority,
   type MemberV2SuggestionSource,
 } from './memberV2.viewModel';
+import MemberSecondaryMemberListPage from './MemberSecondaryMemberListPage';
 import './memberV2.css';
+
+type MemberV2ViewMode = 'overview' | 'memberList';
 
 const SOURCE_TAG_CLASS: Record<MemberV2SuggestionSource, string> = {
   system_rule: 'met-member-v2-source-tag--rule',
@@ -80,6 +82,7 @@ function V2DrawerEmpty({ onClose }: { onClose: () => void }) {
 
 const MemberV2Page: React.FC = () => {
   const snapshot = useMemo(() => buildMemberV2Snapshot(), []);
+  const [viewMode, setViewMode] = useState<MemberV2ViewMode>('overview');
   const [toast, setToast] = useState<string | null>(null);
   const [drawerMemberId, setDrawerMemberId] = useState<string | null>(null);
   const [matchPreviewId, setMatchPreviewId] = useState<string | null>(null);
@@ -104,12 +107,24 @@ const MemberV2Page: React.FC = () => {
     [showToast],
   );
 
+  const openMemberList = useCallback(() => {
+    setViewMode('memberList');
+  }, []);
+
+  const backToOverview = useCallback(() => {
+    setViewMode('overview');
+  }, []);
+
   const openSecondary = useCallback(
     (key: string) => {
-      const label = getSecondaryEntranceLabel(snapshot.secondaryEntrances, key);
-      showToast(`进入 ${label} 二级页（待建设）`);
+      if (key === 'member_list' || key === 'risk_list') {
+        openMemberList();
+        return;
+      }
+      const entrance = snapshot.secondaryEntrances.find(item => item.key === key);
+      showToast(`进入 ${entrance?.label ?? key} 二级页（待建设）`);
     },
-    [showToast, snapshot.secondaryEntrances],
+    [openMemberList, showToast, snapshot.secondaryEntrances],
   );
 
   const drawerDetail: MemberV2MemberDetail | null = drawerMemberId
@@ -135,12 +150,9 @@ const MemberV2Page: React.FC = () => {
     setMatchPreviewId(packId);
   }, []);
 
-  const handleStageSelect = useCallback(
-    (stage: MemberV2LifecycleStage) => {
-      showToast(`进入 ${stage.code} ${stage.name} 会员名单 二级页（待建设）`);
-    },
-    [showToast],
-  );
+  const handleStageSelect = useCallback(() => {
+    openMemberList();
+  }, [openMemberList]);
 
   const {
     meta,
@@ -158,6 +170,13 @@ const MemberV2Page: React.FC = () => {
 
   return (
     <div className="met-member-v2">
+      {viewMode === 'memberList' ? (
+        <MemberSecondaryMemberListPage
+          onBack={backToOverview}
+          onOpenDetail={openDetail}
+          onToast={showToast}
+        />
+      ) : (
       <div className="met-member-v2__inner">
         <header className="met-member-v2__header">
           <div className="met-member-v2__header-copy">
@@ -200,7 +219,7 @@ const MemberV2Page: React.FC = () => {
             <button
               type="button"
               className="met-member-v2__filter-btn met-member-v2__filter-btn--link"
-              onClick={() => showToast('进入会员名单二级页（待建设）')}
+              onClick={openMemberList}
             >
               {meta.filters.memberListLabel}
             </button>
@@ -296,7 +315,13 @@ const MemberV2Page: React.FC = () => {
                 <button
                   type="button"
                   className="met-member-v2-btn met-member-v2-btn--ghost met-member-v2-btn--sm"
-                  onClick={() => showToast(item.ctaToast)}
+                  onClick={() => {
+                    if (item.opensMemberList) {
+                      openMemberList();
+                      return;
+                    }
+                    showToast(item.ctaToast);
+                  }}
                 >
                   {item.ctaLabel}
                 </button>
@@ -634,6 +659,7 @@ const MemberV2Page: React.FC = () => {
           </div>
         </article>
       </div>
+      )}
 
       {drawerMemberId ? (
         <>
