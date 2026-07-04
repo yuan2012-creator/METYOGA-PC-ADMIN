@@ -14,16 +14,31 @@ import {
   type AssetDetail,
   type AssetChangeQueue,
   type AssetChangeRequest,
+  type AssetChangeSummaryCard,
   type AssetRiskItem,
+  type FinanceCoreMetric,
   type FinanceDetail,
+  type FinanceDetailEntry,
+  type FinancePriorityAction,
   type StoreFinanceRow,
 } from './financeV2.viewModel';
+import FinanceSecondaryAssetChangePage from './FinanceSecondaryAssetChangePage';
+import {
+  buildAssetChangeSnapshot,
+  getAssetChangeDrawerDetail,
+  getAssetChangeEvidenceDotClass,
+  getAssetChangeStatusClass,
+  type AssetChangeDrawerDetail,
+} from './financeSecondaryAssetChange.viewModel';
 import './financeV2.css';
+
+type FinanceV2ViewMode = 'overview' | 'assetChangeRequests';
 
 type DrawerState =
   | { type: 'asset'; id: string }
   | { type: 'store'; id: string }
   | { type: 'finance_evidence' }
+  | { type: 'asset_change'; requestId: string }
   | null;
 
 function V2DrawerEmpty({ onClose }: { onClose: () => void }) {
@@ -40,6 +55,8 @@ function V2DrawerEmpty({ onClose }: { onClose: () => void }) {
 
 const FinanceV2Page: React.FC = () => {
   const snapshot = useMemo(() => buildFinanceV2Snapshot(), []);
+  const assetChangeSnapshot = useMemo(() => buildAssetChangeSnapshot(), []);
+  const [viewMode, setViewMode] = useState<FinanceV2ViewMode>('overview');
   const [toast, setToast] = useState<string | null>(null);
   const [drawer, setDrawer] = useState<DrawerState>(null);
 
@@ -75,6 +92,18 @@ const FinanceV2Page: React.FC = () => {
     setDrawer({ type: 'finance_evidence' });
   }, []);
 
+  const openAssetChangeRequests = useCallback(() => {
+    setViewMode('assetChangeRequests');
+  }, []);
+
+  const backToOverview = useCallback(() => {
+    setViewMode('overview');
+  }, []);
+
+  const openAssetChangeDrawer = useCallback((requestId: string) => {
+    setDrawer({ type: 'asset_change', requestId });
+  }, []);
+
   const closeDrawer = useCallback(() => setDrawer(null), []);
 
   const drawerAsset: AssetDetail | null =
@@ -87,21 +116,89 @@ const FinanceV2Page: React.FC = () => {
     return null;
   }, [drawer, snapshot.financeDetailMap]);
 
+  const drawerAssetChange: AssetChangeDrawerDetail | null = useMemo(() => {
+    if (drawer?.type !== 'asset_change') return null;
+    return getAssetChangeDrawerDetail(assetChangeSnapshot.rows, drawer.requestId);
+  }, [drawer, assetChangeSnapshot.rows]);
+
   const handleRiskAction = useCallback(
     (item: AssetRiskItem) => {
+      if (item.opensAssetChangeRequests) {
+        openAssetChangeRequests();
+        return;
+      }
       showToast(item.toastMessage);
       if (item.relatedAssetId) openAssetDrawer(item.relatedAssetId);
       else if (item.relatedStoreId) openStoreDrawer(item.relatedStoreId);
     },
-    [openAssetDrawer, openStoreDrawer, showToast],
+    [openAssetChangeRequests, openAssetDrawer, openStoreDrawer, showToast],
   );
 
   const handleChangeRequest = useCallback(
     (req: AssetChangeRequest) => {
-      if (req.relatedAssetId) openAssetDrawer(req.relatedAssetId);
-      else showToast(`${req.actionLabel}（待建设）`);
+      openAssetChangeRequests();
+      void req;
     },
-    [openAssetDrawer, showToast],
+    [openAssetChangeRequests],
+  );
+
+  const handleSummaryCardAction = useCallback(
+    (item: AssetChangeSummaryCard) => {
+      if (item.opensAssetChangeRequests) {
+        openAssetChangeRequests();
+        return;
+      }
+      showToast(item.ctaToast);
+    },
+    [openAssetChangeRequests, showToast],
+  );
+
+  const handleQueueAction = useCallback(
+    (queue: AssetChangeQueue) => {
+      if (queue.opensAssetChangeRequests) {
+        openAssetChangeRequests();
+        return;
+      }
+      showToast(queue.toastMessage);
+    },
+    [openAssetChangeRequests, showToast],
+  );
+
+  const handlePriorityAction = useCallback(
+    (item: FinancePriorityAction) => {
+      if (item.opensAssetChangeRequests) {
+        openAssetChangeRequests();
+        return;
+      }
+      showToast(item.ctaToast);
+    },
+    [openAssetChangeRequests, showToast],
+  );
+
+  const handleCoreMetric = useCallback(
+    (metric: FinanceCoreMetric) => {
+      if (metric.opensAssetChangeRequests) {
+        openAssetChangeRequests();
+        return;
+      }
+      showToast(metric.toastMessage);
+    },
+    [openAssetChangeRequests, showToast],
+  );
+
+  const handleDetailEntry = useCallback(
+    (entry: FinanceDetailEntry) => {
+      if (entry.opensAssetChangeRequests) {
+        openAssetChangeRequests();
+        return;
+      }
+      if (entry.label === '查看财务证据链') {
+        openFinanceEvidenceDrawer();
+        return;
+      }
+      showToast(entry.toastMessage);
+    },
+    [openAssetChangeRequests, openFinanceEvidenceDrawer, showToast],
   );
 
   const {
@@ -248,6 +345,126 @@ const FinanceV2Page: React.FC = () => {
     </>
   );
 
+  const renderAssetChangeDrawer = (detail: AssetChangeDrawerDetail) => (
+    <>
+      <section className="met-finance-v2-drawer__section">
+        <h3 className="met-finance-v2-drawer__section-title">申请概览</h3>
+        <div className="met-finance-v2-drawer__row"><span>申请单号</span><span>{detail.requestId}</span></div>
+        <div className="met-finance-v2-drawer__row"><span>申请类型</span><span>{detail.requestTypeLabel}</span></div>
+        <div className="met-finance-v2-drawer__row">
+          <span>当前状态</span>
+          <span className={getAssetChangeStatusClass(detail.approvalStatus)}>{detail.approvalStatusLabel}</span>
+        </div>
+        <div className="met-finance-v2-drawer__row"><span>当前节点</span><span>{detail.currentNode}</span></div>
+        <div className="met-finance-v2-drawer__row"><span>当前处理人</span><span>{detail.owner}</span></div>
+        <div className="met-finance-v2-drawer__row"><span>申请时间</span><span>{detail.createdAt}</span></div>
+        <div className="met-finance-v2-drawer__row"><span>更新时间</span><span>{detail.updatedAt}</span></div>
+        <div className="met-finance-v2-drawer__row"><span>申请原因</span><span>{detail.requestReason}</span></div>
+      </section>
+
+      <section className="met-finance-v2-drawer__section">
+        <h3 className="met-finance-v2-drawer__section-title">会员与卡项</h3>
+        <div className="met-finance-v2-drawer__row"><span>会员姓名</span><span>{detail.memberName}</span></div>
+        <div className="met-finance-v2-drawer__row"><span>手机</span><span>{detail.maskedPhone}</span></div>
+        <div className="met-finance-v2-drawer__row"><span>所属门店</span><span>{detail.store}</span></div>
+        <div className="met-finance-v2-drawer__row"><span>卡项名称</span><span>{detail.cardName}</span></div>
+        <div className="met-finance-v2-drawer__row"><span>剩余点数</span><span>{detail.remainingPoints}</span></div>
+        <div className="met-finance-v2-drawer__row"><span>有效期</span><span>{detail.validUntil}</span></div>
+        <div className="met-finance-v2-drawer__row"><span>是否含赠送权益</span><span>{detail.hasGiftBenefit ? '是' : '否'}</span></div>
+        <div className="met-finance-v2-drawer__row"><span>赠送权益处理</span><span>{detail.giftBenefitNote}</span></div>
+      </section>
+
+      <section className="met-finance-v2-drawer__section">
+        <h3 className="met-finance-v2-drawer__section-title">金额 / 权益估算</h3>
+        {detail.requestType === 'refund' && detail.refundFields ? (
+          <>
+            <div className="met-finance-v2-drawer__row"><span>剩余点数</span><span>{detail.remainingPoints}</span></div>
+            <div className="met-finance-v2-drawer__row"><span>剩余金额估算</span><span>{detail.amountEstimate}</span></div>
+            <div className="met-finance-v2-drawer__row"><span>估算说明</span><span className="is-warn">{detail.amountEstimateNote}</span></div>
+            <div className="met-finance-v2-drawer__row"><span>已耗课点数</span><span>{detail.refundFields.consumedPoints}</span></div>
+            <div className="met-finance-v2-drawer__row"><span>积分扣回状态</span><span>{detail.pointsDeductStatusLabel}</span></div>
+            <div className="met-finance-v2-drawer__row"><span>手续费 / 违约金</span><span>{detail.refundFields.feeRulePlaceholder}</span></div>
+            <div className="met-finance-v2-drawer__row"><span>最终金额</span><span>{detail.refundFields.finalAmountLabel}</span></div>
+          </>
+        ) : null}
+        {detail.requestType === 'freeze' && detail.freezeFields ? (
+          <>
+            <div className="met-finance-v2-drawer__row"><span>申请冻结天数</span><span>{detail.freezeFields.freezeDays}</span></div>
+            <div className="met-finance-v2-drawer__row"><span>剩余权益</span><span>{detail.freezeFields.remainingBenefits}</span></div>
+            <div className="met-finance-v2-drawer__row"><span>冻结开始时间</span><span>{detail.freezeFields.freezeStart}</span></div>
+            <div className="met-finance-v2-drawer__row"><span>冻结结束时间</span><span>{detail.freezeFields.freezeEnd}</span></div>
+            <div className="met-finance-v2-drawer__row"><span>冻结依据</span><span>{detail.freezeFields.freezeBasis}</span></div>
+            <div className="met-finance-v2-drawer__row"><span>最终结果</span><span>{detail.freezeFields.finalResultLabel}</span></div>
+          </>
+        ) : null}
+        {detail.requestType === 'transfer' && detail.transferFields ? (
+          <>
+            <div className="met-finance-v2-drawer__row"><span>转出会员</span><span>{detail.transferFields.fromMember}</span></div>
+            <div className="met-finance-v2-drawer__row"><span>接收会员</span><span>{detail.transferFields.toMember}</span></div>
+            <div className="met-finance-v2-drawer__row"><span>转卡点数</span><span>{detail.transferFields.transferPoints}</span></div>
+            <div className="met-finance-v2-drawer__row"><span>手续费估算</span><span>{detail.transferFields.feeEstimate}</span></div>
+            <div className="met-finance-v2-drawer__row"><span>合同变更状态</span><span>{detail.transferFields.contractChangeStatus}</span></div>
+            <div className="met-finance-v2-drawer__row"><span>最终结果</span><span>{detail.transferFields.finalResultLabel}</span></div>
+          </>
+        ) : null}
+        <div className="met-finance-v2-drawer__row"><span>赠送权益计入退费</span><span className="is-warn">不计入</span></div>
+      </section>
+
+      <section className="met-finance-v2-drawer__section">
+        <h3 className="met-finance-v2-drawer__section-title">证据链 · {detail.evidenceCompleteness}</h3>
+        <div className="met-finance-v2-evidence-tags">
+          {detail.evidenceItems.map(item => (
+            <span
+              key={item.key}
+              className={['met-finance-v2-evidence-tag', getAssetChangeEvidenceDotClass(item.status)].join(' ')}
+            >
+              {item.label}：{item.statusLabel}
+            </span>
+          ))}
+        </div>
+      </section>
+
+      <section className="met-finance-v2-drawer__section">
+        <h3 className="met-finance-v2-drawer__section-title">审批状态</h3>
+        <ul className="met-finance-v2-drawer__timeline">
+          {detail.approvalSteps.map(step => (
+            <li key={step.key} className={['met-finance-v2-drawer__timeline-item', `is-${step.status}`].join(' ')}>
+              <span className="met-finance-v2-drawer__timeline-label">{step.label}</span>
+              {step.time ? <span className="met-finance-v2-drawer__timeline-time">{step.time}</span> : null}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="met-finance-v2-drawer__section">
+        <h3 className="met-finance-v2-drawer__section-title">操作日志</h3>
+        <ul className="met-finance-v2-drawer__list">
+          {detail.operationLogs.map(log => (
+            <li key={log.id}>
+              {log.time} · {log.operator} · {log.action}
+              {log.note ? ` — ${log.note}` : ''}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="met-finance-v2-drawer__section">
+        <h3 className="met-finance-v2-drawer__section-title">风险提示</h3>
+        <p className="met-finance-v2-drawer__suggestion met-finance-v2-drawer__suggestion--warn">{detail.riskReminder}</p>
+      </section>
+
+      <section className="met-finance-v2-drawer__section">
+        <h3 className="met-finance-v2-drawer__section-title">建议动作</h3>
+        <p className="met-finance-v2-drawer__suggestion">{detail.suggestedAction}</p>
+      </section>
+
+      <div className="met-finance-v2-drawer__actions met-v2-drawer-footer met-v2-drawer-footer--inline">
+        <button type="button" className="met-v2-drawer-footer-btn" onClick={() => handleAction('补充证据')}>补充证据</button>
+        <button type="button" className="met-v2-drawer-footer-btn" onClick={() => handleAction('提交复核')}>提交复核</button>
+      </div>
+    </>
+  );
+
   const renderChangeQueue = (queue: AssetChangeQueue) => (
     <div key={queue.id} className={`met-finance-v2-change-col is-${queue.type}`}>
       <div className="met-finance-v2-change-col__head">
@@ -259,7 +476,7 @@ const FinanceV2Page: React.FC = () => {
         <button
           type="button"
           className="met-finance-v2-btn met-finance-v2-btn--sm"
-          onClick={() => showToast(queue.toastMessage)}
+          onClick={() => handleQueueAction(queue)}
         >
           {queue.actionLabel}
         </button>
@@ -392,13 +609,23 @@ const FinanceV2Page: React.FC = () => {
     </div>
   );
 
-  const drawerHasContent = Boolean(drawerAsset || drawerFinance);
-  const drawerTitle = drawerAsset?.title ?? drawerFinance?.title ?? '暂无详情';
+  const drawerHasContent = Boolean(drawerAsset || drawerFinance || drawerAssetChange);
+  const drawerTitle =
+    drawerAssetChange?.drawerTitle ?? drawerAsset?.title ?? drawerFinance?.title ?? '暂无详情';
   const drawerSubtitle =
-    drawerAsset?.subtitle ?? drawerFinance?.subtitle ?? (drawerHasContent ? '' : '当前记录缺少详情数据');
+    drawerAssetChange
+      ? `${drawerAssetChange.memberName} · ${drawerAssetChange.requestId}`
+      : drawerAsset?.subtitle ?? drawerFinance?.subtitle ?? (drawerHasContent ? '' : '当前记录缺少详情数据');
 
   return (
     <div className="met-finance-v2">
+      {viewMode === 'assetChangeRequests' ? (
+        <FinanceSecondaryAssetChangePage
+          onBack={backToOverview}
+          onOpenDetail={openAssetChangeDrawer}
+          onToast={showToast}
+        />
+      ) : (
       <div className="met-finance-v2__inner">
         <header className="met-finance-v2__header">
           <div className="met-finance-v2__header-copy">
@@ -461,6 +688,13 @@ const FinanceV2Page: React.FC = () => {
             >
               {filters.detailLinkLabel}
             </button>
+            <button
+              type="button"
+              className="met-finance-v2__detail-link met-finance-v2__detail-link--accent"
+              onClick={openAssetChangeRequests}
+            >
+              {filters.assetChangeListLabel}
+            </button>
           </div>
         </header>
 
@@ -492,18 +726,25 @@ const FinanceV2Page: React.FC = () => {
             </p>
             <div className="met-finance-v2-evidence-grid met-finance-v2-evidence-grid--hero">
               {financeHealthSummary.evidenceItems.map(item => (
-                <div
+                <button
                   key={item.label}
+                  type="button"
                   className={[
                     'met-finance-v2-evidence-item',
                     item.isWarning ? 'is-warning' : '',
+                    item.label.includes('退费') ? 'is-clickable' : '',
                   ]
                     .filter(Boolean)
                     .join(' ')}
+                  onClick={() => {
+                    if (item.label.includes('退费')) {
+                      openAssetChangeRequests();
+                    }
+                  }}
                 >
                   <span className="met-finance-v2-evidence-item__value">{item.value}</span>
                   <span className="met-finance-v2-evidence-item__label">{item.label}</span>
-                </div>
+                </button>
               ))}
             </div>
             <div className="met-finance-v2-hero__actions">
@@ -544,7 +785,7 @@ const FinanceV2Page: React.FC = () => {
                 <button
                   type="button"
                   className="met-finance-v2-btn met-finance-v2-btn--sm met-finance-v2-btn--ghost"
-                  onClick={() => showToast(item.ctaToast)}
+                  onClick={() => handlePriorityAction(item)}
                 >
                   {item.ctaLabel}
                 </button>
@@ -587,7 +828,7 @@ const FinanceV2Page: React.FC = () => {
                 key={metric.id}
                 type="button"
                 className={['met-finance-v2-core-metric', getMetricToneClass(metric.tone)].join(' ')}
-                onClick={() => showToast(metric.toastMessage)}
+                onClick={() => handleCoreMetric(metric)}
               >
                 <div className="met-finance-v2-core-metric__head">
                   <span className="met-finance-v2-core-metric__title">{metric.title}</span>
@@ -668,7 +909,7 @@ const FinanceV2Page: React.FC = () => {
                 <button
                   type="button"
                   className="met-finance-v2-btn met-finance-v2-btn--sm"
-                  onClick={() => showToast(item.ctaToast)}
+                  onClick={() => handleSummaryCardAction(item)}
                 >
                   {item.ctaLabel}
                 </button>
@@ -732,13 +973,7 @@ const FinanceV2Page: React.FC = () => {
                 key={entry.id}
                 type="button"
                 className="met-finance-v2-detail-entry"
-                onClick={() => {
-                  if (entry.label === '查看财务证据链') {
-                    openFinanceEvidenceDrawer();
-                    return;
-                  }
-                  showToast(entry.toastMessage);
-                }}
+                onClick={() => handleDetailEntry(entry)}
               >
                 {entry.label}
               </button>
@@ -746,6 +981,7 @@ const FinanceV2Page: React.FC = () => {
           </div>
         </article>
       </div>
+      )}
 
       {drawer ? (
         <>
@@ -763,6 +999,7 @@ const FinanceV2Page: React.FC = () => {
             <div className="met-finance-v2-drawer__body met-v2-drawer-body">
               {drawerHasContent ? (
                 <>
+                  {drawerAssetChange ? renderAssetChangeDrawer(drawerAssetChange) : null}
                   {drawerAsset ? renderAssetDrawer(drawerAsset) : null}
                   {drawerFinance ? renderFinanceDrawer(drawerFinance) : null}
                 </>

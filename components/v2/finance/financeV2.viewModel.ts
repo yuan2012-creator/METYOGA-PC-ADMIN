@@ -18,6 +18,7 @@ export interface FinanceV2Filters {
   primaryActionLabel: string;
   secondaryActionLabel: string;
   detailLinkLabel: string;
+  assetChangeListLabel: string;
 }
 
 export interface FinanceV2SectionHeader {
@@ -73,6 +74,7 @@ export interface FinancePriorityAction {
   suggestedAction: string;
   ctaLabel: string;
   ctaToast: string;
+  opensAssetChangeRequests?: boolean;
 }
 
 export interface FinancePriorityActionsSection {
@@ -107,6 +109,7 @@ export interface FinanceCoreMetric {
   explanation: string;
   sourceModule: string;
   toastMessage: string;
+  opensAssetChangeRequests?: boolean;
 }
 
 export interface FinanceCoreMetricsSection {
@@ -215,6 +218,7 @@ export interface AssetRiskItem {
   amountImpact?: string;
   assetStatus?: string;
   evidenceCompleteness?: string;
+  opensAssetChangeRequests?: boolean;
 }
 
 export interface AssetChangeSummaryCard {
@@ -227,6 +231,7 @@ export interface AssetChangeSummaryCard {
   ctaLabel: string;
   ctaToast: string;
   queueId: string;
+  opensAssetChangeRequests?: boolean;
 }
 
 export interface AssetChangeSummarySection {
@@ -243,6 +248,7 @@ export interface RevenueEvidenceSummaryItem {
   suggestedAction: string;
   ctaLabel: string;
   ctaToast: string;
+  opensAssetChangeRequests?: boolean;
 }
 
 export interface RevenueEvidenceSummarySection {
@@ -255,6 +261,7 @@ export interface FinanceDetailEntry {
   id: string;
   label: string;
   toastMessage: string;
+  opensAssetChangeRequests?: boolean;
 }
 
 export interface FinanceDetailEntriesSection {
@@ -313,6 +320,7 @@ export interface AssetChangeQueue {
   };
   actionLabel: string;
   toastMessage: string;
+  opensAssetChangeRequests?: boolean;
   requests: AssetChangeRequest[];
 }
 
@@ -682,6 +690,7 @@ export function buildFinanceV2Snapshot(): FinanceV2Snapshot {
       primaryActionLabel: '导出财务报告',
       secondaryActionLabel: '财务规则',
       detailLinkLabel: '收支明细',
+      assetChangeListLabel: '退费 / 冻结 / 转卡申请',
     },
     financeHealthSummary: {
       status: 'watch',
@@ -717,6 +726,7 @@ export function buildFinanceV2Snapshot(): FinanceV2Snapshot {
           suggestedAction: '补齐合同、支付、耗课、积分扣回和赠送权益说明',
           ctaLabel: '去复核',
           ctaToast: '进入退费证据链（待建设）',
+          opensAssetChangeRequests: true,
         },
         {
           id: 'fpa-2',
@@ -861,6 +871,7 @@ export function buildFinanceV2Snapshot(): FinanceV2Snapshot {
           explanation: '不含赠送权益，需证据链完整后处理',
           sourceModule: '财务与资产',
           toastMessage: '查看退费申请（待建设）',
+          opensAssetChangeRequests: true,
         },
         {
           id: 'cm-7',
@@ -900,6 +911,7 @@ export function buildFinanceV2Snapshot(): FinanceV2Snapshot {
           ctaLabel: '查看退费申请',
           ctaToast: '进入退费申请（待建设）',
           queueId: 'ac-refund',
+          opensAssetChangeRequests: true,
         },
         {
           id: 'acs-freeze',
@@ -911,6 +923,7 @@ export function buildFinanceV2Snapshot(): FinanceV2Snapshot {
           ctaLabel: '查看冻结申请',
           ctaToast: '进入冻结申请（待建设）',
           queueId: 'ac-freeze',
+          opensAssetChangeRequests: true,
         },
         {
           id: 'acs-transfer',
@@ -922,6 +935,7 @@ export function buildFinanceV2Snapshot(): FinanceV2Snapshot {
           ctaLabel: '查看转卡申请',
           ctaToast: '进入转卡申请（待建设）',
           queueId: 'ac-transfer',
+          opensAssetChangeRequests: true,
         },
       ],
     },
@@ -972,8 +986,9 @@ export function buildFinanceV2Snapshot(): FinanceV2Snapshot {
       items: [
         { id: 'fde-1', label: '查看收支明细', toastMessage: '进入收支明细（待建设）' },
         { id: 'fde-2', label: '查看会员资产', toastMessage: '进入会员资产（待建设）' },
-        { id: 'fde-3', label: '查看退费申请', toastMessage: '进入退费申请（待建设）' },
-        { id: 'fde-4', label: '查看冻结 / 转卡', toastMessage: '进入冻结转卡（待建设）' },
+        { id: 'fde-3', label: '查看退费申请', toastMessage: '进入退费申请（待建设）', opensAssetChangeRequests: true },
+        { id: 'fde-4', label: '查看冻结 / 转卡', toastMessage: '进入冻结转卡（待建设）', opensAssetChangeRequests: true },
+        { id: 'fde-8', label: '退费 / 冻结 / 转卡申请', toastMessage: '进入资产变更申请（待建设）', opensAssetChangeRequests: true },
         { id: 'fde-5', label: '查看收入确认', toastMessage: '进入收入确认（待建设）' },
         { id: 'fde-6', label: '查看财务证据链', toastMessage: '进入财务证据链（待建设）' },
         { id: 'fde-7', label: '查看支付与结算', toastMessage: '进入支付与结算（待建设）' },
@@ -1169,6 +1184,7 @@ export function buildFinanceV2Snapshot(): FinanceV2Snapshot {
           actionLabel: '去复核',
           toastMessage: '进入退费证据链（待建设）',
           relatedAssetId: 'asset-xuqian',
+          opensAssetChangeRequests: true,
         },
         {
           id: 'ar-4',
@@ -1203,6 +1219,7 @@ export function buildFinanceV2Snapshot(): FinanceV2Snapshot {
           suggestionAction: '补齐材料后进入审批流程',
           actionLabel: '去审核',
           toastMessage: '进入冻结审核（待建设）',
+          opensAssetChangeRequests: true,
         },
         {
           id: 'ar-6',
@@ -1269,6 +1286,7 @@ export function buildFinanceV2Snapshot(): FinanceV2Snapshot {
         },
         actionLabel: '查看退款',
         toastMessage: '进入退款队列（待建设）',
+        opensAssetChangeRequests: true,
         requests: [
           {
             id: 'rf-1', memberName: '许倩', cardName: '天选卡', remainingPoints: '96 点', reason: '搬迁外地',
@@ -1294,6 +1312,7 @@ export function buildFinanceV2Snapshot(): FinanceV2Snapshot {
         },
         actionLabel: '查看转卡',
         toastMessage: '进入转卡队列（待建设）',
+        opensAssetChangeRequests: true,
         requests: [
           {
             id: 'tf-1', memberName: '林悦', cardName: '小班卡', remainingPoints: '36 点', reason: '转赠家人',
@@ -1319,6 +1338,7 @@ export function buildFinanceV2Snapshot(): FinanceV2Snapshot {
         },
         actionLabel: '查看冻结',
         toastMessage: '进入冻结队列（待建设）',
+        opensAssetChangeRequests: true,
         requests: [
           {
             id: 'fz-1', memberName: '王芳', cardName: '年卡', remainingPoints: '58 点', reason: '孕期暂停',
