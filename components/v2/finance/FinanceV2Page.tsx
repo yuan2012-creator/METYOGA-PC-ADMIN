@@ -4,10 +4,10 @@ import {
   buildFinanceV2Snapshot,
   getCoverageToneClass,
   getEvidenceStatusClass,
-  getFlowStepToneClass,
-  getLiabilityBreakdownToneClass,
+  getFinanceHealthStatusClass,
   getMetricToneClass,
   getMonthlyChangeToneClass,
+  getPlainLanguageTagClass,
   getPriorityClass,
   getStoreStatusClass,
   getSuggestionSourceClass,
@@ -16,7 +16,6 @@ import {
   type AssetChangeRequest,
   type AssetRiskItem,
   type FinanceDetail,
-  type RevenueEvidenceTask,
   type StoreFinanceRow,
 } from './financeV2.viewModel';
 import './financeV2.css';
@@ -105,24 +104,19 @@ const FinanceV2Page: React.FC = () => {
     [openAssetDrawer, showToast],
   );
 
-  const handleEvidenceTask = useCallback(
-    (task: RevenueEvidenceTask) => {
-      showToast(task.toastMessage);
-    },
-    [showToast],
-  );
-
   const {
     meta,
     filters,
-    healthSummary,
-    cashSafety,
-    financialStructure,
-    storeFinanceHealth,
+    financeHealthSummary,
+    financePriorityActions,
+    financePlainLanguage,
+    financeCoreMetrics,
     assetRiskQueue,
-    revenueRecognition,
+    assetChangeSummary,
+    revenueEvidenceSummary,
+    storeFinanceHealth,
+    financeDetailEntries,
     assetChangeQueues,
-    paymentSettlement,
   } = snapshot;
 
   const renderFinanceDrawer = (detail: FinanceDetail) => (
@@ -470,191 +464,145 @@ const FinanceV2Page: React.FC = () => {
           </div>
         </header>
 
-        <section className="met-finance-v2-zone met-finance-v2-zone--health">
-          <header className="met-finance-v2-zone__head">
-            <h2 className="met-finance-v2-zone__title">{healthSummary.section.title}</h2>
-            <p className="met-finance-v2-zone__subtitle">{healthSummary.section.subtitle}</p>
-          </header>
-          <div className="met-finance-v2-health-layout">
-            <div className="met-finance-v2-panel met-finance-v2-panel--conclusion">
-              <h3 className="met-finance-v2-panel__title">{healthSummary.title}</h3>
-              <p className="met-finance-v2-conclusion">{healthSummary.conclusion}</p>
-              <p className="met-finance-v2-conclusion-desc">{healthSummary.description}</p>
-              <div className="met-finance-v2-tags">
-                {healthSummary.statusTags.map(tag => (
-                  <span key={tag} className="met-finance-v2-tag met-finance-v2-tag--warn">{tag}</span>
-                ))}
-                <span className={['met-finance-v2-source-tag', getSuggestionSourceClass(healthSummary.suggestionSource)].join(' ')}>
-                  {healthSummary.suggestionSourceLabel}
-                </span>
-              </div>
-              <div className="met-finance-v2-evidence-grid">
-                {healthSummary.evidence.map(ev => (
-                  <div
-                    key={ev.label}
-                    className={[
-                      'met-finance-v2-evidence-item',
-                      ev.label === '实收金额' ? 'met-finance-v2-evidence-item--cash' : '',
-                      ev.label === '确认收入' ? 'met-finance-v2-evidence-item--revenue' : '',
-                      ev.label === '预收负债' ? 'met-finance-v2-evidence-item--liability' : '',
-                      ev.label === '现金安全覆盖率' ? 'met-finance-v2-evidence-item--coverage' : '',
-                    ]
-                      .filter(Boolean)
-                      .join(' ')}
-                  >
-                    <span className="met-finance-v2-evidence-item__value">{ev.value}</span>
-                    <span className="met-finance-v2-evidence-item__label">{ev.label}</span>
-                  </div>
-                ))}
-              </div>
+        {/* 1. 财务与资产健康结论 */}
+        <section className="met-finance-v2-zone met-finance-v2-zone--hero">
+          <article className="met-finance-v2-panel met-finance-v2-panel--hero">
+            <div className="met-finance-v2-hero__head">
+              <h2 className="met-finance-v2-hero__headline">{financeHealthSummary.headline}</h2>
+              <span
+                className={[
+                  'met-finance-v2-status',
+                  getFinanceHealthStatusClass(financeHealthSummary.status),
+                ].join(' ')}
+              >
+                {financeHealthSummary.statusLabel}
+              </span>
+            </div>
+            <p className="met-finance-v2-hero__text">{financeHealthSummary.conclusion}</p>
+            <div className="met-finance-v2-hero__tags">
+              {financeHealthSummary.impactTags.map(tag => (
+                <span key={tag} className="met-finance-v2-tag met-finance-v2-tag--impact">{tag}</span>
+              ))}
+              <span className="met-finance-v2-tag met-finance-v2-tag--source">
+                {financeHealthSummary.sourceLabel}
+              </span>
+            </div>
+            <p className="met-finance-v2-hero__meta">
+              最近更新：{financeHealthSummary.updatedAt}
+            </p>
+            <div className="met-finance-v2-evidence-grid met-finance-v2-evidence-grid--hero">
+              {financeHealthSummary.evidenceItems.map(item => (
+                <div
+                  key={item.label}
+                  className={[
+                    'met-finance-v2-evidence-item',
+                    item.isWarning ? 'is-warning' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                >
+                  <span className="met-finance-v2-evidence-item__value">{item.value}</span>
+                  <span className="met-finance-v2-evidence-item__label">{item.label}</span>
+                </div>
+              ))}
+            </div>
+            <div className="met-finance-v2-hero__actions">
               <button
                 type="button"
-                className="met-finance-v2-btn"
-                onClick={openFinanceEvidenceDrawer}
+                className="met-finance-v2-btn met-finance-v2-btn--ghost"
+                onClick={() => showToast(financeHealthSummary.evidenceToastMessage)}
               >
-                {healthSummary.actionLabel}
+                {financeHealthSummary.evidenceButtonLabel}
               </button>
             </div>
+          </article>
+        </section>
 
-            <aside className="met-finance-v2-panel met-finance-v2-panel--cash">
-              <h3 className="met-finance-v2-panel__title">{cashSafety.title}</h3>
-              <div className="met-finance-v2-cash-grid">
-                {cashSafety.metrics.map(metric => (
-                  <div
-                    key={metric.id}
-                    className={['met-finance-v2-cash-card', getMetricToneClass(metric.tone)].join(' ')}
-                  >
-                    <span className="met-finance-v2-cash-card__title">{metric.title}</span>
-                    <span className="met-finance-v2-cash-card__value">{metric.value}</span>
-                    {metric.safeLine ? (
-                      <span className="met-finance-v2-cash-card__safe">{metric.safeLine}</span>
-                    ) : null}
-                    {metric.description ? (
-                      <span className="met-finance-v2-cash-card__desc">{metric.description}</span>
-                    ) : null}
-                    <span className="met-finance-v2-cash-card__status">{metric.statusLabel}</span>
-                    <button
-                      type="button"
-                      className="met-finance-v2-btn met-finance-v2-btn--sm"
-                      onClick={() => showToast(metric.toastMessage)}
-                    >
-                      {metric.actionLabel}
-                    </button>
-                  </div>
-                ))}
+        {/* 2. 本周财务优先动作 */}
+        <section className="met-finance-v2-zone met-finance-v2-zone--priority">
+          <header className="met-finance-v2-zone__head">
+            <h2 className="met-finance-v2-zone__title">{financePriorityActions.title}</h2>
+            <p className="met-finance-v2-zone__subtitle">{financePriorityActions.subtitle}</p>
+          </header>
+          <div className="met-finance-v2-action-queue">
+            {financePriorityActions.items.map(item => (
+              <div
+                key={item.id}
+                className={`met-finance-v2-action-item met-finance-v2-action-item--${item.priority.toLowerCase()}`}
+              >
+                <span className={['met-finance-v2-priority', getPriorityClass(item.priority)].join(' ')}>
+                  {item.priority}
+                </span>
+                <div className="met-finance-v2-action-item__main">
+                  <p className="met-finance-v2-action-item__title">{item.title}</p>
+                  <p className="met-finance-v2-action-item__meta">
+                    影响：{item.impact} · 负责人：{item.owner} · 来源：
+                    {item.sourceModules.join(' / ')}
+                  </p>
+                  <p className="met-finance-v2-action-item__action">建议动作：{item.suggestedAction}</p>
+                </div>
+                <button
+                  type="button"
+                  className="met-finance-v2-btn met-finance-v2-btn--sm met-finance-v2-btn--ghost"
+                  onClick={() => showToast(item.ctaToast)}
+                >
+                  {item.ctaLabel}
+                </button>
               </div>
-            </aside>
+            ))}
           </div>
         </section>
 
-        <article className="met-finance-v2-zone">
+        {/* 3. 财务口径人话解释 */}
+        <section className="met-finance-v2-zone met-finance-v2-zone--plain">
           <header className="met-finance-v2-zone__head">
-            <h2 className="met-finance-v2-zone__title">{financialStructure.title}</h2>
-            <p className="met-finance-v2-zone__subtitle">{financialStructure.subtitle}</p>
+            <h2 className="met-finance-v2-zone__title">{financePlainLanguage.title}</h2>
+            <p className="met-finance-v2-zone__subtitle">{financePlainLanguage.subtitle}</p>
           </header>
-          <div className="met-finance-v2-flow met-finance-v2-flow--v11">
-            <div className="met-finance-v2-flow__main">
-              <div className="met-finance-v2-flow__lane met-finance-v2-flow__lane--cash">
-                <div className="met-finance-v2-flow__node met-finance-v2-flow__node--cash">
-                  <span className="met-finance-v2-flow__node-badge">实收</span>
-                  <span className="met-finance-v2-flow__node-label">{financialStructure.inflow.label}</span>
-                  <span className="met-finance-v2-flow__node-value">{financialStructure.inflow.value}</span>
-                </div>
-                <div className="met-finance-v2-flow__connector" aria-hidden>
-                  <span className="met-finance-v2-flow__connector-line" />
-                  <span className="met-finance-v2-flow__connector-arrow">→</span>
-                </div>
-                <div className="met-finance-v2-flow__branch">
-                  <div className="met-finance-v2-flow__node met-finance-v2-flow__node--revenue">
-                    <span className="met-finance-v2-flow__node-badge">确认收入</span>
-                    <span className="met-finance-v2-flow__node-label">{financialStructure.outcomes[0].label}</span>
-                    <span className="met-finance-v2-flow__node-value">{financialStructure.outcomes[0].value}</span>
-                  </div>
-                  <div className="met-finance-v2-flow__node met-finance-v2-flow__node--liability-new">
-                    <span className="met-finance-v2-flow__node-badge">新增负债</span>
-                    <span className="met-finance-v2-flow__node-label">{financialStructure.outcomes[1].label}</span>
-                    <span className="met-finance-v2-flow__node-value">{financialStructure.outcomes[1].value}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="met-finance-v2-flow__lane met-finance-v2-flow__lane--profit">
-                <div className="met-finance-v2-flow__node met-finance-v2-flow__node--revenue-inline">
-                  <span className="met-finance-v2-flow__node-badge">确认收入</span>
-                  <span className="met-finance-v2-flow__node-value">{financialStructure.confirmedRevenue.value}</span>
-                </div>
-                <span className="met-finance-v2-flow__minus">扣除</span>
-                <div className="met-finance-v2-flow__costs">
-                  {financialStructure.costItems.map(cost => (
-                    <div key={cost.label} className="met-finance-v2-flow__cost">
-                      <span>{cost.label}</span>
-                      <strong>{cost.value}</strong>
-                    </div>
-                  ))}
-                </div>
-                <span className="met-finance-v2-flow__equals">等于</span>
-                <div className="met-finance-v2-flow__node met-finance-v2-flow__node--profit">
-                  <span className="met-finance-v2-flow__node-badge">经营利润</span>
-                  <span className="met-finance-v2-flow__node-label">{financialStructure.operatingProfit.label}</span>
-                  <span className="met-finance-v2-flow__node-value">{financialStructure.operatingProfit.value}</span>
-                </div>
-                <p className="met-finance-v2-flow__profit-note">经营利润从确认收入扣成本，不从实收直接计算</p>
-              </div>
-            </div>
-
-            <aside className="met-finance-v2-flow__aside met-finance-v2-liability-breakdown-card">
-              <h4 className="met-finance-v2-liability-breakdown-card__title">预收负债结构</h4>
-              <p className="met-finance-v2-liability-breakdown-card__total">{financialStructure.prepaidLiabilityStock.value}</p>
-              <p className="met-finance-v2-liability-breakdown-card__note">{financialStructure.prepaidLiabilityNote}</p>
-
-              <div className="met-finance-v2-liability-segment-bar" aria-hidden>
-                {financialStructure.prepaidLiabilityBreakdown.map(item => (
-                  <span
-                    key={item.label}
-                    className={['met-finance-v2-liability-segment-bar__seg', getLiabilityBreakdownToneClass(item.tone)].join(' ')}
-                    style={{ flex: item.amountValue }}
-                    title={`${item.label} ${item.amount}`}
-                  />
-                ))}
-              </div>
-
-              <div className="met-finance-v2-liability-breakdown-grid">
-                {financialStructure.prepaidLiabilityBreakdown.map(item => (
-                  <div
-                    key={item.label}
-                    className={['met-finance-v2-liability-breakdown-item', getLiabilityBreakdownToneClass(item.tone)].join(' ')}
-                  >
-                    <div className="met-finance-v2-liability-breakdown-item__head">
-                      <span className="met-finance-v2-liability-breakdown-item__label">{item.label}</span>
-                      <span className="met-finance-v2-liability-breakdown-item__amount">{item.amount}</span>
-                    </div>
-                    <p className="met-finance-v2-liability-breakdown-item__desc">{item.description}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="met-finance-v2-flow__legend">
-                {financialStructure.flowSteps.map(step => (
-                  <div key={step.id} className={['met-finance-v2-flow__legend-item', getFlowStepToneClass(step.tone)].join(' ')}>
-                    <span className="met-finance-v2-flow__legend-dot" />
-                    <span>{step.label}</span>
-                  </div>
-                ))}
-              </div>
-            </aside>
+          <div className="met-finance-v2-plain-grid">
+            {financePlainLanguage.cards.map(card => (
+              <article
+                key={card.id}
+                className={['met-finance-v2-plain-card', getPlainLanguageTagClass(card.tag)].join(' ')}
+              >
+                <span className="met-finance-v2-plain-card__tag">{card.title}</span>
+                <p className="met-finance-v2-plain-card__explain">{card.plainExplanation}</p>
+                <p className="met-finance-v2-plain-card__value">{card.currentValue}</p>
+                <p className="met-finance-v2-plain-card__note">{card.warningNote}</p>
+              </article>
+            ))}
           </div>
-        </article>
+          <p className="met-finance-v2-coverage-alert">{financePlainLanguage.coverageAlert}</p>
+        </section>
 
-        <article className="met-finance-v2-zone">
+        {/* 4. 核心财务指标 */}
+        <section className="met-finance-v2-zone met-finance-v2-zone--metrics">
           <header className="met-finance-v2-zone__head">
-            <h2 className="met-finance-v2-zone__title">{storeFinanceHealth.title}</h2>
-            <p className="met-finance-v2-zone__subtitle">{storeFinanceHealth.subtitle}</p>
+            <h2 className="met-finance-v2-zone__title">{financeCoreMetrics.title}</h2>
+            <p className="met-finance-v2-zone__subtitle">{financeCoreMetrics.subtitle}</p>
           </header>
-          <div className="met-finance-v2-store-matrix">
-            {storeFinanceHealth.stores.map(renderStoreRow)}
+          <div className="met-finance-v2-core-metrics">
+            {financeCoreMetrics.items.map(metric => (
+              <button
+                key={metric.id}
+                type="button"
+                className={['met-finance-v2-core-metric', getMetricToneClass(metric.tone)].join(' ')}
+                onClick={() => showToast(metric.toastMessage)}
+              >
+                <div className="met-finance-v2-core-metric__head">
+                  <span className="met-finance-v2-core-metric__title">{metric.title}</span>
+                  <span className="met-finance-v2-core-metric__status">{metric.statusLabel}</span>
+                </div>
+                <p className="met-finance-v2-core-metric__value">{metric.value}</p>
+                <p className="met-finance-v2-core-metric__change">{metric.changeLabel}</p>
+                <p className="met-finance-v2-core-metric__explain">{metric.explanation}</p>
+                <span className="met-finance-v2-core-metric__source">{metric.sourceModule}</span>
+              </button>
+            ))}
           </div>
-        </article>
+        </section>
 
+        {/* 5. 会员资产风险队列 */}
         <article className="met-finance-v2-zone">
           <header className="met-finance-v2-zone__head">
             <h2 className="met-finance-v2-zone__title">{assetRiskQueue.title}</h2>
@@ -668,10 +616,23 @@ const FinanceV2Page: React.FC = () => {
                 </span>
                 <div className="met-finance-v2-risk-row__main">
                   <p className="met-finance-v2-risk-row__title">{item.title}</p>
+                  {item.memberMasked ? (
+                    <p className="met-finance-v2-risk-row__member">{item.memberMasked}</p>
+                  ) : null}
                   <p className="met-finance-v2-risk-row__fact">{item.fact}</p>
                   <p className="met-finance-v2-risk-row__impact">
                     <span className="met-finance-v2-risk-row__impact-tag">影响：{item.impact}</span>
+                    {item.amountImpact ? (
+                      <span className="met-finance-v2-risk-row__impact-tag">金额 / 权益：{item.amountImpact}</span>
+                    ) : null}
                   </p>
+                  <div className="met-finance-v2-risk-row__meta">
+                    {item.riskType ? <span>风险类型：{item.riskType}</span> : null}
+                    {item.assetStatus ? <span>资产状态：{item.assetStatus}</span> : null}
+                    {item.evidenceCompleteness ? (
+                      <span>证据完整度：{item.evidenceCompleteness}</span>
+                    ) : null}
+                  </div>
                   <p className="met-finance-v2-risk-row__action">{item.suggestionAction}</p>
                 </div>
                 <div className="met-finance-v2-risk-row__aside">
@@ -691,95 +652,98 @@ const FinanceV2Page: React.FC = () => {
           </div>
         </article>
 
+        {/* 6. 退款 / 冻结 / 转卡处理 */}
         <article className="met-finance-v2-zone">
           <header className="met-finance-v2-zone__head">
-            <h2 className="met-finance-v2-zone__title">{revenueRecognition.title}</h2>
-            <p className="met-finance-v2-zone__subtitle">{revenueRecognition.subtitle}</p>
+            <h2 className="met-finance-v2-zone__title">{assetChangeSummary.title}</h2>
+            <p className="met-finance-v2-zone__subtitle">{assetChangeSummary.subtitle}</p>
           </header>
-          <div className="met-finance-v2-revenue-layout">
-            <div className="met-finance-v2-revenue-flow">
-              {revenueRecognition.flowSteps.map((step, i) => (
-                <React.Fragment key={step}>
-                  <span className="met-finance-v2-revenue-flow__step">{step}</span>
-                  {i < revenueRecognition.flowSteps.length - 1 ? (
-                    <span className="met-finance-v2-revenue-flow__arrow" aria-hidden>→</span>
-                  ) : null}
-                </React.Fragment>
-              ))}
-            </div>
-            <div className="met-finance-v2-revenue-metrics">
-              {revenueRecognition.metrics.map((m, i) => (
-                <div key={m.label} className="met-finance-v2-revenue-metric">
-                  <span className="met-finance-v2-revenue-metric__value">{m.value}</span>
-                  <span className="met-finance-v2-revenue-metric__label">{m.label}</span>
-                  {i === 1 ? (
-                    <span className="met-finance-v2-revenue-metric__note">按耗课确认，不等于实收</span>
-                  ) : i === 0 ? (
-                    <span className="met-finance-v2-revenue-metric__note">来自已完成课程</span>
-                  ) : null}
-                </div>
-              ))}
-            </div>
-            <div className="met-finance-v2-evidence-tasks">
-              {revenueRecognition.tasks.map(task => (
-                <div key={task.id} className="met-finance-v2-evidence-task">
-                  <p className="met-finance-v2-evidence-task__title">{task.title}</p>
-                  <p className="met-finance-v2-evidence-task__count">{task.count}</p>
-                  <p className="met-finance-v2-evidence-task__source">来源：{task.source}</p>
-                  <p className="met-finance-v2-evidence-task__impact">影响口径：{task.impactScope}</p>
-                  <span className="met-finance-v2-evidence-task__status">{task.taskStatus}</span>
-                  <button
-                    type="button"
-                    className="met-finance-v2-btn met-finance-v2-btn--sm"
-                    onClick={() => handleEvidenceTask(task)}
-                  >
-                    {task.actionLabel}
-                  </button>
-                </div>
-              ))}
-            </div>
+          <div className="met-finance-v2-change-summary">
+            {assetChangeSummary.items.map(item => (
+              <div key={item.id} className={`met-finance-v2-change-summary-card is-${item.type}`}>
+                <h4 className="met-finance-v2-change-summary-card__title">{item.typeLabel}</h4>
+                <p className="met-finance-v2-change-summary-card__pending">{item.pendingCount}</p>
+                <p className="met-finance-v2-change-summary-card__amount">{item.amountSummary}</p>
+                <p className="met-finance-v2-change-summary-card__risk">{item.riskNote}</p>
+                <button
+                  type="button"
+                  className="met-finance-v2-btn met-finance-v2-btn--sm"
+                  onClick={() => showToast(item.ctaToast)}
+                >
+                  {item.ctaLabel}
+                </button>
+              </div>
+            ))}
           </div>
-        </article>
-
-        <article className="met-finance-v2-zone">
-          <header className="met-finance-v2-zone__head">
-            <h2 className="met-finance-v2-zone__title">退款 / 转卡 / 冻结处理</h2>
-            <p className="met-finance-v2-zone__subtitle">涉及会员资产变更的申请、审核和证据链</p>
-          </header>
           <div className="met-finance-v2-change-layout">
             {assetChangeQueues.map(renderChangeQueue)}
           </div>
         </article>
 
+        {/* 7. 收入确认与耗课证据 */}
         <article className="met-finance-v2-zone">
           <header className="met-finance-v2-zone__head">
-            <h2 className="met-finance-v2-zone__title">{paymentSettlement.title}</h2>
-            <p className="met-finance-v2-zone__subtitle">{paymentSettlement.subtitle}</p>
+            <h2 className="met-finance-v2-zone__title">{revenueEvidenceSummary.title}</h2>
+            <p className="met-finance-v2-zone__subtitle">{revenueEvidenceSummary.subtitle}</p>
           </header>
-          <div className="met-finance-v2-payment-grid">
-            {paymentSettlement.cards.map(card => (
-              <div key={card.id} className={['met-finance-v2-payment-card', getMetricToneClass(card.tone)].join(' ')}>
-                <h4 className="met-finance-v2-payment-card__channel">{card.channel}</h4>
-                <p className="met-finance-v2-payment-card__received">{card.received}</p>
-                <p className="met-finance-v2-payment-card__detail">{card.detail}</p>
-                <span className="met-finance-v2-payment-card__status">{card.status}</span>
-                <span className={['met-finance-v2-payment-card__exception', card.exceptionLabel.includes('无') ? 'is-none' : 'is-alert'].join(' ')}>
-                  {card.exceptionLabel}
-                </span>
-                {card.actionLabel ? (
-                  <button
-                    type="button"
-                    className="met-finance-v2-btn met-finance-v2-btn--sm"
-                    onClick={() => card.toastMessage && showToast(card.toastMessage)}
-                  >
-                    {card.actionLabel}
-                  </button>
-                ) : null}
+          <div className="met-finance-v2-evidence-summary">
+            {revenueEvidenceSummary.items.map(item => (
+              <div key={item.id} className="met-finance-v2-evidence-summary-item">
+                <div className="met-finance-v2-evidence-summary-item__main">
+                  <p className="met-finance-v2-evidence-summary-item__type">{item.type}</p>
+                  <p className="met-finance-v2-evidence-summary-item__count">{item.count}</p>
+                  <p className="met-finance-v2-evidence-summary-item__impact">影响：{item.impact}</p>
+                  <p className="met-finance-v2-evidence-summary-item__action">{item.suggestedAction}</p>
+                </div>
+                <button
+                  type="button"
+                  className="met-finance-v2-btn met-finance-v2-btn--sm met-finance-v2-btn--ghost"
+                  onClick={() => showToast(item.ctaToast)}
+                >
+                  {item.ctaLabel}
+                </button>
               </div>
             ))}
           </div>
-          <p className="met-finance-v2-cross-store-rule">{paymentSettlement.crossStoreRule}</p>
-          <p className="met-finance-v2-settlement-alert">{paymentSettlement.settlementAlert}</p>
+        </article>
+
+        {/* 8. 门店财务健康矩阵 */}
+        <article className="met-finance-v2-zone met-finance-v2-zone--demoted">
+          <header className="met-finance-v2-zone__head">
+            <h2 className="met-finance-v2-zone__title">{storeFinanceHealth.title}</h2>
+            <p className="met-finance-v2-zone__subtitle">{storeFinanceHealth.subtitle}</p>
+          </header>
+          {storeFinanceHealth.replayNote ? (
+            <p className="met-finance-v2-replay-note">{storeFinanceHealth.replayNote}</p>
+          ) : null}
+          <div className="met-finance-v2-store-matrix">
+            {storeFinanceHealth.stores.map(renderStoreRow)}
+          </div>
+        </article>
+
+        {/* 9. 财务明细入口 */}
+        <article className="met-finance-v2-zone met-finance-v2-zone--entries">
+          <header className="met-finance-v2-zone__head">
+            <h2 className="met-finance-v2-zone__title">{financeDetailEntries.title}</h2>
+          </header>
+          <div className="met-finance-v2-detail-entries">
+            {financeDetailEntries.items.map(entry => (
+              <button
+                key={entry.id}
+                type="button"
+                className="met-finance-v2-detail-entry"
+                onClick={() => {
+                  if (entry.label === '查看财务证据链') {
+                    openFinanceEvidenceDrawer();
+                    return;
+                  }
+                  showToast(entry.toastMessage);
+                }}
+              >
+                {entry.label}
+              </button>
+            ))}
+          </div>
         </article>
       </div>
 

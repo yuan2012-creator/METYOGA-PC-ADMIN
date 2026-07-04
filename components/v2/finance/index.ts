@@ -11,4 +11,9 @@ export type {
   FinancialStructureFlow,
   EvidenceCompletenessItem,
   RevenueEvidenceTask,
+  FinanceHealthSummaryData,
+  FinancePriorityAction,
+  FinancePlainLanguageCard,
+  FinanceCoreMetric,
+  FinanceDetailEntry,
 } from './financeV2.viewModel';

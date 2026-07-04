@@ -42,6 +42,79 @@ export interface FinanceV2HealthSummary {
   actionLabel: string;
 }
 
+export type FinanceHealthStatus = 'healthy' | 'watch' | 'warning' | 'highRisk';
+
+export interface FinanceHealthEvidenceItem {
+  label: string;
+  value: string;
+  isWarning?: boolean;
+}
+
+export interface FinanceHealthSummaryData {
+  status: FinanceHealthStatus;
+  statusLabel: string;
+  headline: string;
+  conclusion: string;
+  impactTags: string[];
+  sourceLabel: string;
+  updatedAt: string;
+  evidenceItems: FinanceHealthEvidenceItem[];
+  evidenceButtonLabel: string;
+  evidenceToastMessage: string;
+}
+
+export interface FinancePriorityAction {
+  id: string;
+  priority: FinanceV2Priority;
+  title: string;
+  impact: string;
+  owner: string;
+  sourceModules: string[];
+  suggestedAction: string;
+  ctaLabel: string;
+  ctaToast: string;
+}
+
+export interface FinancePriorityActionsSection {
+  title: string;
+  subtitle: string;
+  items: FinancePriorityAction[];
+}
+
+export interface FinancePlainLanguageCard {
+  id: string;
+  title: string;
+  plainExplanation: string;
+  currentValue: string;
+  warningNote: string;
+  tag: 'cash' | 'revenue' | 'liability' | 'profit';
+}
+
+export interface FinancePlainLanguageSection {
+  title: string;
+  subtitle: string;
+  cards: FinancePlainLanguageCard[];
+  coverageAlert: string;
+}
+
+export interface FinanceCoreMetric {
+  id: string;
+  title: string;
+  value: string;
+  changeLabel: string;
+  statusLabel: string;
+  tone: FinanceV2MetricTone;
+  explanation: string;
+  sourceModule: string;
+  toastMessage: string;
+}
+
+export interface FinanceCoreMetricsSection {
+  title: string;
+  subtitle: string;
+  items: FinanceCoreMetric[];
+}
+
 export interface CashSafetyMetric {
   id: string;
   title: string;
@@ -137,6 +210,56 @@ export interface AssetRiskItem {
   toastMessage: string;
   relatedAssetId?: string;
   relatedStoreId?: string;
+  memberMasked?: string;
+  riskType?: string;
+  amountImpact?: string;
+  assetStatus?: string;
+  evidenceCompleteness?: string;
+}
+
+export interface AssetChangeSummaryCard {
+  id: string;
+  type: 'refund' | 'freeze' | 'transfer';
+  typeLabel: string;
+  pendingCount: string;
+  amountSummary: string;
+  riskNote: string;
+  ctaLabel: string;
+  ctaToast: string;
+  queueId: string;
+}
+
+export interface AssetChangeSummarySection {
+  title: string;
+  subtitle: string;
+  items: AssetChangeSummaryCard[];
+}
+
+export interface RevenueEvidenceSummaryItem {
+  id: string;
+  type: string;
+  count: string;
+  impact: string;
+  suggestedAction: string;
+  ctaLabel: string;
+  ctaToast: string;
+}
+
+export interface RevenueEvidenceSummarySection {
+  title: string;
+  subtitle: string;
+  items: RevenueEvidenceSummaryItem[];
+}
+
+export interface FinanceDetailEntry {
+  id: string;
+  label: string;
+  toastMessage: string;
+}
+
+export interface FinanceDetailEntriesSection {
+  title: string;
+  items: FinanceDetailEntry[];
 }
 
 export interface RevenueEvidenceTask {
@@ -253,19 +376,27 @@ export interface FinanceDetail {
 export interface FinanceV2Snapshot {
   meta: FinanceV2Meta;
   filters: FinanceV2Filters;
-  healthSummary: FinanceV2HealthSummary;
-  cashSafety: FinanceV2CashSafety;
-  financialStructure: FinancialStructureFlow;
-  storeFinanceHealth: {
-    title: string;
-    subtitle: string;
-    stores: StoreFinanceRow[];
-  };
+  financeHealthSummary: FinanceHealthSummaryData;
+  financePriorityActions: FinancePriorityActionsSection;
+  financePlainLanguage: FinancePlainLanguageSection;
+  financeCoreMetrics: FinanceCoreMetricsSection;
   assetRiskQueue: {
     title: string;
     subtitle: string;
     items: AssetRiskItem[];
   };
+  assetChangeSummary: AssetChangeSummarySection;
+  revenueEvidenceSummary: RevenueEvidenceSummarySection;
+  storeFinanceHealth: {
+    title: string;
+    subtitle: string;
+    replayNote?: string;
+    stores: StoreFinanceRow[];
+  };
+  financeDetailEntries: FinanceDetailEntriesSection;
+  healthSummary: FinanceV2HealthSummary;
+  cashSafety: FinanceV2CashSafety;
+  financialStructure: FinancialStructureFlow;
   revenueRecognition: RevenueRecognitionSummary;
   assetChangeQueues: AssetChangeQueue[];
   paymentSettlement: PaymentSettlementSummary;
@@ -541,7 +672,7 @@ export function buildFinanceV2Snapshot(): FinanceV2Snapshot {
   return {
     meta: {
       title: '财务与资产',
-      subtitle: '总部经营视角 · 收款、确认收入、预收负债与资产风险',
+      subtitle: '滨江馆 · 财务口径、现金安全、预收负债与会员资产风险',
     },
     filters: {
       storeLabel: '全部门店',
@@ -551,6 +682,302 @@ export function buildFinanceV2Snapshot(): FinanceV2Snapshot {
       primaryActionLabel: '导出财务报告',
       secondaryActionLabel: '财务规则',
       detailLinkLabel: '收支明细',
+    },
+    financeHealthSummary: {
+      status: 'watch',
+      statusLabel: '观察',
+      headline: '财务与资产状态：观察',
+      conclusion:
+        '本月实收金额正常，但现金安全覆盖率为 72%，低于 80% 安全线；预收负债仍处于高位，退费与高余额低耗课会员需要优先处理。当前重点不是继续看流水，而是先确认现金是否安全、负债是否可交付、退费证据链是否完整。',
+      impactTags: ['现金安全', '预收负债', '退费证据链', '会员资产'],
+      sourceLabel: '系统规则建议',
+      updatedAt: '2026-06-26 09:30',
+      evidenceItems: [
+        { label: '现金安全覆盖率', value: '72%，安全线 80%', isWarning: true },
+        { label: '本月实收', value: '¥286,000' },
+        { label: '本月确认收入', value: '¥231,000' },
+        { label: '预收负债', value: '¥418,000', isWarning: true },
+        { label: '待退费金额', value: '¥36,000', isWarning: true },
+        { label: '退费申请', value: '4 笔', isWarning: true },
+      ],
+      evidenceButtonLabel: '查看财务判断依据',
+      evidenceToastMessage: '查看财务判断依据（待建设）',
+    },
+    financePriorityActions: {
+      title: '本周财务优先动作',
+      subtitle: '优先处理会影响现金安全、退费争议、资产交付和收入确认的事项',
+      items: [
+        {
+          id: 'fpa-1',
+          priority: 'P0',
+          title: '复核 4 笔退费证据链',
+          impact: '现金安全与合同争议',
+          owner: '店长 / 财务',
+          sourceModules: ['财务与资产', '合同', '会员经营'],
+          suggestedAction: '补齐合同、支付、耗课、积分扣回和赠送权益说明',
+          ctaLabel: '去复核',
+          ctaToast: '进入退费证据链（待建设）',
+        },
+        {
+          id: 'fpa-2',
+          priority: 'P0',
+          title: '处理 12 名高余额低耗课会员',
+          impact: '预收负债与已收未交付压力',
+          owner: '店长 / 管家 / 对应老师',
+          sourceModules: ['财务与资产', '会员经营'],
+          suggestedAction: '确认会员近期约课计划，避免资产长期沉淀',
+          ctaLabel: '去处理',
+          ctaToast: '进入会员资产处理（待建设）',
+        },
+        {
+          id: 'fpa-3',
+          priority: 'P1',
+          title: '确认 2 家门店现金安全覆盖不足',
+          impact: '门店现金流与经营安全',
+          owner: '总部运营 / 财务',
+          sourceModules: ['经营总览', '财务与资产'],
+          suggestedAction: '复核预计现金余额、待退费金额和预收负债覆盖情况',
+          ctaLabel: '去确认',
+          ctaToast: '进入现金安全复核（待建设）',
+        },
+        {
+          id: 'fpa-4',
+          priority: 'P1',
+          title: '补齐 6 条收入确认证据',
+          impact: '确认收入与耗课证据链',
+          owner: '财务 / 店长',
+          sourceModules: ['课程与排课', '今日运营', '财务与资产'],
+          suggestedAction: '核对签到、耗课、扣点和课程完成记录',
+          ctaLabel: '去补齐',
+          ctaToast: '进入收入确认核对（待建设）',
+        },
+      ],
+    },
+    financePlainLanguage: {
+      title: '先看懂这几个数字',
+      subtitle: '实收、确认收入、预收负债和经营利润不能混在一起看',
+      cards: [
+        {
+          id: 'pl-1',
+          title: '实收金额',
+          plainExplanation: '这个月实际到账多少钱',
+          currentValue: '¥286,000',
+          warningNote: '不等于已经赚到的钱',
+          tag: 'cash',
+        },
+        {
+          id: 'pl-2',
+          title: '确认收入',
+          plainExplanation: '已经完成交付、可以确认为经营收入的钱',
+          currentValue: '¥231,000',
+          warningNote: '按耗课 / 履约确认，不等于实收',
+          tag: 'revenue',
+        },
+        {
+          id: 'pl-3',
+          title: '预收负债',
+          plainExplanation: '会员已经付钱，但我们还欠着没有交付的课程和权益',
+          currentValue: '¥418,000',
+          warningNote: '不是收入，是未来要交付的责任',
+          tag: 'liability',
+        },
+        {
+          id: 'pl-4',
+          title: '经营利润',
+          plainExplanation: '确认收入减去成本后的经营结果',
+          currentValue: '¥46,000',
+          warningNote: '不是实收减支出',
+          tag: 'profit',
+        },
+      ],
+      coverageAlert: '现金安全覆盖率低于 80% 时，即使本月实收正常，也不能判断为经营健康。',
+    },
+    financeCoreMetrics: {
+      title: '核心财务指标',
+      subtitle: '区分现金、履约、负债和利润，避免把收款误认为收入',
+      items: [
+        {
+          id: 'cm-1',
+          title: '本月实收',
+          value: '¥286,000',
+          changeLabel: '环比 +8%',
+          statusLabel: '正常',
+          tone: 'healthy',
+          explanation: '本月实际到账金额，不等于确认收入',
+          sourceModule: '财务与资产',
+          toastMessage: '查看实收明细（待建设）',
+        },
+        {
+          id: 'cm-2',
+          title: '本月确认收入',
+          value: '¥231,000',
+          changeLabel: '环比 +5%',
+          statusLabel: '正常',
+          tone: 'healthy',
+          explanation: '按耗课与履约确认，来自已完成交付',
+          sourceModule: '课程与排课',
+          toastMessage: '查看确认收入明细（待建设）',
+        },
+        {
+          id: 'cm-3',
+          title: '经营利润',
+          value: '¥46,000',
+          changeLabel: '同比 +12%',
+          statusLabel: '为正',
+          tone: 'healthy',
+          explanation: '确认收入扣成本，不从实收直接计算',
+          sourceModule: '财务与资产',
+          toastMessage: '查看利润口径（待建设）',
+        },
+        {
+          id: 'cm-4',
+          title: '现金安全覆盖率',
+          value: '72%',
+          changeLabel: '安全线 80%',
+          statusLabel: '观察',
+          tone: 'warning',
+          explanation: '预计现金余额对预收负债和待退费的覆盖程度',
+          sourceModule: '经营总览',
+          toastMessage: '查看现金安全详情（待建设）',
+        },
+        {
+          id: 'cm-5',
+          title: '预收负债',
+          value: '¥418,000',
+          changeLabel: '环比 +6%',
+          statusLabel: '偏高',
+          tone: 'warning',
+          explanation: '已收款未交付部分，不是收入',
+          sourceModule: '会员经营',
+          toastMessage: '查看预收负债结构（待建设）',
+        },
+        {
+          id: 'cm-6',
+          title: '待退费金额',
+          value: '¥36,000',
+          changeLabel: '4 笔申请中',
+          statusLabel: '待处理',
+          tone: 'warning',
+          explanation: '不含赠送权益，需证据链完整后处理',
+          sourceModule: '财务与资产',
+          toastMessage: '查看退费申请（待建设）',
+        },
+        {
+          id: 'cm-7',
+          title: '成本使用率',
+          value: '80%',
+          changeLabel: '较上月 +2%',
+          statusLabel: '观察',
+          tone: 'watch',
+          explanation: '运营成本占确认收入比例',
+          sourceModule: '财务与资产',
+          toastMessage: '查看成本结构（待建设）',
+        },
+        {
+          id: 'cm-8',
+          title: '资产风险会员数',
+          value: '32 人',
+          changeLabel: '较上周 +6',
+          statusLabel: '需处理',
+          tone: 'warning',
+          explanation: '高余额低耗课、临期、退费争议等风险资产',
+          sourceModule: '会员经营',
+          toastMessage: '查看资产风险名单（待建设）',
+        },
+      ],
+    },
+    assetChangeSummary: {
+      title: '退款 / 冻结 / 转卡处理',
+      subtitle: '所有资产变更必须保留合同、支付、耗课、积分和操作记录',
+      items: [
+        {
+          id: 'acs-refund',
+          type: 'refund',
+          typeLabel: '退费',
+          pendingCount: '待处理：4 笔',
+          amountSummary: '涉及金额：¥36,000',
+          riskNote: '风险：合同条款 / 积分扣回 / 赠送权益说明',
+          ctaLabel: '查看退费申请',
+          ctaToast: '进入退费申请（待建设）',
+          queueId: 'ac-refund',
+        },
+        {
+          id: 'acs-freeze',
+          type: 'freeze',
+          typeLabel: '冻结',
+          pendingCount: '待处理：3 笔',
+          amountSummary: '涉及权益：42 点',
+          riskNote: '风险：冻结时长 / 生效日期 / 审批记录',
+          ctaLabel: '查看冻结申请',
+          ctaToast: '进入冻结申请（待建设）',
+          queueId: 'ac-freeze',
+        },
+        {
+          id: 'acs-transfer',
+          type: 'transfer',
+          typeLabel: '转卡',
+          pendingCount: '待处理：2 笔',
+          amountSummary: '涉及权益：28 点',
+          riskNote: '风险：转卡手续费 / 接收人确认 / 合同补充',
+          ctaLabel: '查看转卡申请',
+          ctaToast: '进入转卡申请（待建设）',
+          queueId: 'ac-transfer',
+        },
+      ],
+    },
+    revenueEvidenceSummary: {
+      title: '收入确认与耗课证据',
+      subtitle: '确认收入必须能对应到签到、扣点、课程完成和会员资产变化',
+      items: [
+        {
+          id: 'res-1',
+          type: '待补齐证据',
+          count: '6 条',
+          impact: '影响确认收入与耗课口径',
+          suggestedAction: '补齐签到、扣点和课程完成记录',
+          ctaLabel: '去补齐',
+          ctaToast: '进入证据核对（待建设）',
+        },
+        {
+          id: 'res-2',
+          type: '待核对签到',
+          count: '4 条',
+          impact: '影响会员扣点与收入确认',
+          suggestedAction: '核对到课签到与补签记录',
+          ctaLabel: '去核对',
+          ctaToast: '进入证据核对（待建设）',
+        },
+        {
+          id: 'res-3',
+          type: '待确认扣点',
+          count: '3 条',
+          impact: '影响资产扣点与确认收入',
+          suggestedAction: '核对手动扣点与异常记录',
+          ctaLabel: '去确认',
+          ctaToast: '进入证据核对（待建设）',
+        },
+        {
+          id: 'res-4',
+          type: '课程完成但未确认收入',
+          count: '2 条',
+          impact: '影响本月确认收入口径',
+          suggestedAction: '核对课程完成与收入确认状态',
+          ctaLabel: '去核对',
+          ctaToast: '进入证据核对（待建设）',
+        },
+      ],
+    },
+    financeDetailEntries: {
+      title: '财务明细入口',
+      items: [
+        { id: 'fde-1', label: '查看收支明细', toastMessage: '进入收支明细（待建设）' },
+        { id: 'fde-2', label: '查看会员资产', toastMessage: '进入会员资产（待建设）' },
+        { id: 'fde-3', label: '查看退费申请', toastMessage: '进入退费申请（待建设）' },
+        { id: 'fde-4', label: '查看冻结 / 转卡', toastMessage: '进入冻结转卡（待建设）' },
+        { id: 'fde-5', label: '查看收入确认', toastMessage: '进入收入确认（待建设）' },
+        { id: 'fde-6', label: '查看财务证据链', toastMessage: '进入财务证据链（待建设）' },
+        { id: 'fde-7', label: '查看支付与结算', toastMessage: '进入支付与结算（待建设）' },
+      ],
     },
     healthSummary: {
       section: {
@@ -681,74 +1108,117 @@ export function buildFinanceV2Snapshot(): FinanceV2Snapshot {
     },
     storeFinanceHealth: {
       title: '门店财务健康矩阵',
-      subtitle: '按确认收入、实收、预收负债和现金安全覆盖率判断门店压力',
+      subtitle: '用于总部复盘多店现金、负债和收入确认情况，不作为店长首屏判断',
+      replayNote: '门店矩阵用于多店复盘，本周处理以优先动作队列为准。',
       stores,
     },
     assetRiskQueue: {
       title: '会员资产风险队列',
-      subtitle: '识别高余额、低耗课、临期、冻结、退款和合同风险资产',
+      subtitle: '优先处理高余额、低耗课、临期、退费和权益争议会员',
       items: [
         {
           id: 'ar-1',
           priority: 'P0',
-          title: '高余额低耗课资产增加',
-          fact: '余额 > ¥8,000 且 30 天耗课 ≤ 2 次会员新增 18 人',
-          impact: '会员续费、预收负债、现金安全覆盖',
+          title: '高余额低耗课',
+          fact: '12 人，余额偏高且近 30 天耗课不足',
+          impact: '涉及预收负债 ¥86,000',
+          memberMasked: '许倩 138****6721 等',
+          riskType: '高余额低耗课',
+          amountImpact: '预收负债 ¥86,000',
+          assetStatus: '正常 · 低频耗课',
+          evidenceCompleteness: '3/4',
           suggestionSource: 'system_rule',
           suggestionSourceLabel: '系统规则建议',
-          suggestionAction: '推送专属跟进任务至会员经营',
-          actionLabel: '生成清单',
-          toastMessage: '生成高余额低耗课清单（待建设）',
+          suggestionAction: '确认近期约课计划，必要时分配老师跟进',
+          actionLabel: '去处理',
+          toastMessage: '进入会员资产处理（待建设）',
           relatedAssetId: 'asset-xuqian',
         },
         {
           id: 'ar-2',
           priority: 'P0',
-          title: '退款申请待确认',
-          fact: '本周新增退款申请 4 笔，涉及剩余点数 186 点',
-          impact: '现金流、合同履约、会员关系',
+          title: '临期未交付',
+          fact: '8 人，剩余权益即将过期',
+          impact: '续费窗口与资产过期纠纷',
+          memberMasked: '何珊 139****2184 等',
+          riskType: '临期未交付',
+          amountImpact: '剩余权益 186 点',
+          assetStatus: '临期 · 待跟进',
+          evidenceCompleteness: '4/4',
           suggestionSource: 'system_rule',
           suggestionSourceLabel: '系统规则建议',
-          suggestionAction: '核对合同、资产、耗课和积分记录',
-          actionLabel: '处理',
-          toastMessage: '进入退款处理（待建设）',
-          relatedAssetId: 'asset-xuqian',
-        },
-        {
-          id: 'ar-3',
-          priority: 'P1',
-          title: '冻结申请待审核',
-          fact: '本周新增冻结申请 6 笔，其中 2 笔资料不完整',
-          impact: '资产有效期、会员权益、门店执行',
-          suggestionSource: 'system_rule',
-          suggestionSourceLabel: '系统规则建议',
-          suggestionAction: '补齐材料后审批',
-          actionLabel: '审核',
-          toastMessage: '进入冻结审核（待建设）',
-        },
-        {
-          id: 'ar-4',
-          priority: 'P1',
-          title: '临期资产未跟进',
-          fact: '30 天内到期且余额 > 20 点资产共 21 笔',
-          impact: '续费窗口、资产过期纠纷',
-          suggestionSource: 'system_rule',
-          suggestionSourceLabel: '系统规则建议',
-          suggestionAction: '同步会员经营续费窗口',
-          actionLabel: '跟进',
+          suggestionAction: '同步会员经营续费窗口，确认交付计划',
+          actionLabel: '去跟进',
           toastMessage: '进入临期资产跟进（待建设）',
           relatedAssetId: 'asset-xuqian',
         },
         {
+          id: 'ar-3',
+          priority: 'P0',
+          title: '退费争议',
+          fact: '4 笔，证据链待补齐',
+          impact: '待退费 ¥36,000',
+          memberMasked: '许倩、周敏 等',
+          riskType: '退费争议',
+          amountImpact: '¥36,000',
+          assetStatus: '待核对',
+          evidenceCompleteness: '2/4',
+          suggestionSource: 'system_rule',
+          suggestionSourceLabel: '系统规则建议',
+          suggestionAction: '补齐合同、支付、耗课和积分扣回记录',
+          actionLabel: '去复核',
+          toastMessage: '进入退费证据链（待建设）',
+          relatedAssetId: 'asset-xuqian',
+        },
+        {
+          id: 'ar-4',
+          priority: 'P1',
+          title: '积分扣回异常',
+          fact: '6 条，退费时积分处理需确认',
+          impact: '退费口径与会员权益',
+          memberMasked: '多名会员',
+          riskType: '积分扣回异常',
+          amountImpact: '涉及积分 1,240 分',
+          assetStatus: '待确认',
+          evidenceCompleteness: '2/4',
+          suggestionSource: 'system_rule',
+          suggestionSourceLabel: '系统规则建议',
+          suggestionAction: '核对退费时积分扣回与赠送权益说明',
+          actionLabel: '去确认',
+          toastMessage: '进入积分扣回核对（待建设）',
+        },
+        {
           id: 'ar-5',
+          priority: 'P1',
+          title: '冻结申请待审核',
+          fact: '3 笔，其中 1 笔资料不完整',
+          impact: '资产有效期与会员权益',
+          memberMasked: '王芳 137****9053 等',
+          riskType: '冻结待审',
+          amountImpact: '涉及权益 42 点',
+          assetStatus: '资料待补',
+          evidenceCompleteness: '3/4',
+          suggestionSource: 'system_rule',
+          suggestionSourceLabel: '系统规则建议',
+          suggestionAction: '补齐材料后进入审批流程',
+          actionLabel: '去审核',
+          toastMessage: '进入冻结审核（待建设）',
+        },
+        {
+          id: 'ar-6',
           priority: 'P2',
           title: '合同资料不完整',
-          fact: '本月新增 5 笔订单缺少身份证 / 重点条款确认记录',
-          impact: '退费争议、证据链完整性',
+          fact: '5 笔订单缺少重点条款确认',
+          impact: '退费争议与证据链完整性',
+          memberMasked: '多名会员',
+          riskType: '合同资料',
+          amountImpact: '涉及订单 5 笔',
+          assetStatus: '待补齐',
+          evidenceCompleteness: '1/4',
           suggestionSource: 'pending_config',
           suggestionSourceLabel: '待配置规则',
-          suggestionAction: '补齐合同资料',
-          actionLabel: '补齐',
+          suggestionAction: '补齐合同与身份确认记录',
+          actionLabel: '去补齐',
           toastMessage: '进入合同资料补齐（待建设）',
         },
       ],
@@ -793,9 +1263,9 @@ export function buildFinanceV2Snapshot(): FinanceV2Snapshot {
         typeLabel: '退款',
         summary: {
           pending: '待处理：4 笔',
-          detail1: '涉及剩余点数：186 点',
-          detail2: '涉及金额预估：¥23.2万',
-          detail3: '高风险：2 笔',
+          detail1: '涉及金额：¥36,000',
+          detail2: '涉及剩余点数：186 点',
+          detail3: '证据待补齐：2 笔',
         },
         actionLabel: '查看退款',
         toastMessage: '进入退款队列（待建设）',
@@ -817,8 +1287,8 @@ export function buildFinanceV2Snapshot(): FinanceV2Snapshot {
         type: 'transfer',
         typeLabel: '转卡',
         summary: {
-          pending: '待处理：3 笔',
-          detail1: '涉及点数：96 点',
+          pending: '待处理：2 笔',
+          detail1: '涉及权益：28 点',
           detail2: '手续费预估：¥1,200',
           detail3: '异常：1 笔',
         },
@@ -842,10 +1312,10 @@ export function buildFinanceV2Snapshot(): FinanceV2Snapshot {
         type: 'freeze',
         typeLabel: '冻结',
         summary: {
-          pending: '待审核：6 笔',
-          detail1: '资料不完整：2 笔',
-          detail2: '影响有效期：126 天',
-          detail3: '异常：2 笔',
+          pending: '待处理：3 笔',
+          detail1: '涉及权益：42 点',
+          detail2: '资料不完整：1 笔',
+          detail3: '影响有效期：126 天',
         },
         actionLabel: '查看冻结',
         toastMessage: '进入冻结队列（待建设）',
@@ -878,6 +1348,31 @@ export function buildFinanceV2Snapshot(): FinanceV2Snapshot {
     financeDetailMap,
     assetDetailMap,
   };
+}
+
+export function getFinanceHealthStatusClass(status: FinanceHealthStatus): string {
+  switch (status) {
+    case 'healthy':
+      return 'met-finance-v2-status--healthy';
+    case 'watch':
+      return 'met-finance-v2-status--watch';
+    case 'warning':
+      return 'met-finance-v2-status--warning';
+    case 'highRisk':
+      return 'met-finance-v2-status--high-risk';
+    default:
+      return 'met-finance-v2-status--watch';
+  }
+}
+
+export function getPlainLanguageTagClass(tag: FinancePlainLanguageCard['tag']): string {
+  const map: Record<FinancePlainLanguageCard['tag'], string> = {
+    cash: 'is-cash',
+    revenue: 'is-revenue',
+    liability: 'is-liability',
+    profit: 'is-profit',
+  };
+  return map[tag];
 }
 
 export function getStoreStatusClass(level: FinanceV2StoreStatusLevel): string {
