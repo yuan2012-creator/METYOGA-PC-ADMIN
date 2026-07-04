@@ -42,7 +42,71 @@ export interface MemberV2LifecycleStage {
 export interface MemberV2LifecycleFlow {
   title: string;
   subtitle: string;
+  riskFocusNote?: string;
   stages: MemberV2LifecycleStage[];
+}
+
+export type MemberOperationStatus = 'healthy' | 'watch' | 'warning' | 'highRisk';
+
+export interface MemberOperationEvidenceItem {
+  label: string;
+  value: string;
+  isWarning?: boolean;
+}
+
+export interface MemberOperationSummary {
+  status: MemberOperationStatus;
+  statusLabel: string;
+  headline: string;
+  conclusion: string;
+  impactTags: string[];
+  sourceLabel: string;
+  updatedAt: string;
+  evidenceItems: MemberOperationEvidenceItem[];
+  evidenceButtonLabel: string;
+  evidenceToastMessage: string;
+}
+
+export interface MemberPriorityAction {
+  id: string;
+  priority: MemberV2RiskPriority;
+  title: string;
+  impact: string;
+  owner: string;
+  sourceModules: string[];
+  suggestedAction: string;
+  ctaLabel: string;
+  ctaToast: string;
+}
+
+export interface MemberPriorityActionsSection {
+  title: string;
+  subtitle: string;
+  items: MemberPriorityAction[];
+}
+
+export interface MemberQueueSummaryItem {
+  id: string;
+  priority: MemberV2RiskPriority;
+  title: string;
+  count: number;
+  representativeMembers: string;
+  suggestedAction: string;
+  ctaLabel: string;
+  ctaToast: string;
+}
+
+export interface MemberServiceSalesQueuesSection {
+  title: string;
+  subtitle: string;
+  serviceTitle: string;
+  salesTitle: string;
+  serviceItems: MemberQueueSummaryItem[];
+  salesItems: MemberQueueSummaryItem[];
+  serviceViewAllLabel: string;
+  serviceViewAllKey: string;
+  salesViewAllLabel: string;
+  salesViewAllKey: string;
 }
 
 export interface MemberV2AttentionHighlight {
@@ -189,6 +253,7 @@ export interface MemberV2RiskGraphItem {
 export interface MemberV2RiskGraphSection {
   title: string;
   subtitle: string;
+  replayNote?: string;
   items: MemberV2RiskGraphItem[];
 }
 
@@ -247,6 +312,9 @@ export interface MemberV2MemberDetail {
 
 export interface MemberV2Snapshot {
   meta: MemberV2PageMeta;
+  memberOperationSummary: MemberOperationSummary;
+  memberPriorityActions: MemberPriorityActionsSection;
+  serviceSalesQueues: MemberServiceSalesQueuesSection;
   lifecycleFlow: MemberV2LifecycleFlow;
   attentionHighlights: MemberV2AttentionHighlights;
   serviceQueue: MemberV2ServiceQueueSection;
@@ -683,11 +751,26 @@ const MATCH_PREVIEWS: Record<string, MemberV2AudienceMatchPreview> = {
   },
 };
 
+export function getMemberOperationStatusClass(status: MemberOperationStatus): string {
+  switch (status) {
+    case 'healthy':
+      return 'met-member-v2-status--healthy';
+    case 'watch':
+      return 'met-member-v2-status--watch';
+    case 'warning':
+      return 'met-member-v2-status--warning';
+    case 'highRisk':
+      return 'met-member-v2-status--high-risk';
+    default:
+      return 'met-member-v2-status--watch';
+  }
+}
+
 export function buildMemberV2Snapshot(): MemberV2Snapshot {
   return {
     meta: {
       title: '会员经营',
-      subtitle: '滨江馆 · 会员资产与生命周期管理',
+      subtitle: '滨江馆 · 会员生命周期、服务待办、销售跟进与风险经营',
       filters: {
         storeLabel: '滨江馆',
         stageLabel: '全部阶段',
@@ -697,9 +780,153 @@ export function buildMemberV2Snapshot(): MemberV2Snapshot {
         memberListLabel: '会员列表',
       },
     },
+    memberOperationSummary: {
+      status: 'watch',
+      statusLabel: '观察',
+      headline: '会员经营状态：观察',
+      conclusion:
+        '本月会员总量稳定，但新成交激活偏慢，高余额低耗课会员增加，续费窗口会员未及时跟进。今天应优先处理高余额低耗课、新成交未预约和续费窗口会员。',
+      impactTags: ['会员资产', '耗课交付', '续费窗口', '老师名下会员'],
+      sourceLabel: '系统规则建议',
+      updatedAt: '2026-06-21 09:30',
+      evidenceItems: [
+        { label: '高余额低耗课会员', value: '12 人', isWarning: true },
+        { label: '新成交未预约', value: '8 人', isWarning: true },
+        { label: '续费窗口会员', value: '28 人', isWarning: true },
+        { label: '低频风险会员', value: '42 人' },
+        { label: '沉睡流失会员', value: '31 人' },
+      ],
+      evidenceButtonLabel: '查看判断依据',
+      evidenceToastMessage: '查看会员经营判断依据（待建设）',
+    },
+    memberPriorityActions: {
+      title: '今日会员优先动作',
+      subtitle: '优先处理会影响耗课、续费、流失和会员体验的会员',
+      items: [
+        {
+          id: 'mpa-1',
+          priority: 'P0',
+          title: '跟进 12 名高余额低耗课会员',
+          impact: '预收负债与耗课交付',
+          owner: '管家 / 对应老师',
+          sourceModules: ['会员经营', '财务与资产'],
+          suggestedAction: '点对点沟通近期约课计划，必要时分配老师跟进',
+          ctaLabel: '去处理',
+          ctaToast: '进入会员经营处理（待建设）',
+        },
+        {
+          id: 'mpa-2',
+          priority: 'P1',
+          title: '激活 8 名新成交未预约会员',
+          impact: '新会员体验和首次到店',
+          owner: '管家',
+          sourceModules: ['会员经营', '今日运营'],
+          suggestedAction: '确认首次预约时间，降低成交后沉默风险',
+          ctaLabel: '去激活',
+          ctaToast: '进入新成交激活（待建设）',
+        },
+        {
+          id: 'mpa-3',
+          priority: 'P1',
+          title: '跟进 28 名续费窗口会员',
+          impact: '续费转化和会员留存',
+          owner: '管家 / 店长',
+          sourceModules: ['会员经营'],
+          suggestedAction: '按剩余权益、到期时间和练习频率分层跟进',
+          ctaLabel: '去跟进',
+          ctaToast: '进入续费窗口跟进（待建设）',
+        },
+        {
+          id: 'mpa-4',
+          priority: 'P2',
+          title: '唤醒 31 名沉睡流失会员',
+          impact: '会员流失和复购机会',
+          owner: '运营 / 管家',
+          sourceModules: ['会员经营', '活动与获客'],
+          suggestedAction: '结合课程偏好做点对点召回，不做群发',
+          ctaLabel: '去唤醒',
+          ctaToast: '进入沉睡会员唤醒（待建设）',
+        },
+      ],
+    },
+    serviceSalesQueues: {
+      title: '服务与销售队列',
+      subtitle: '服务问题先稳住体验，销售跟进再承接续费和转化',
+      serviceTitle: '服务待办',
+      salesTitle: '销售跟进',
+      serviceItems: [
+        {
+          id: 'sqs-1',
+          priority: 'P0',
+          title: '新成交未预约',
+          count: 8,
+          representativeMembers: '林可、周宁 等',
+          suggestedAction: '确认首次预约时间，避免成交后沉默',
+          ctaLabel: '去激活',
+          ctaToast: '进入新成交激活（待建设）',
+        },
+        {
+          id: 'sqs-2',
+          priority: 'P0',
+          title: '高余额低耗课',
+          count: 12,
+          representativeMembers: '许倩、赵宁 等',
+          suggestedAction: '点对点沟通约课计划，必要时分配老师跟进',
+          ctaLabel: '去处理',
+          ctaToast: '进入会员经营处理（待建设）',
+        },
+        {
+          id: 'sqs-3',
+          priority: 'P1',
+          title: '低频风险',
+          count: 42,
+          representativeMembers: '何珊、李曼 等',
+          suggestedAction: '结合偏好做召回触达，优先处理近 30 天未到店',
+          ctaLabel: '去召回',
+          ctaToast: '进入低频风险召回（待建设）',
+        },
+      ],
+      salesItems: [
+        {
+          id: 'sls-1',
+          priority: 'P1',
+          title: '续费窗口',
+          count: 28,
+          representativeMembers: '何珊、陈雨 等',
+          suggestedAction: '按剩余权益和练习频率分层沟通续费方案',
+          ctaLabel: '去跟进',
+          ctaToast: '进入续费窗口跟进（待建设）',
+        },
+        {
+          id: 'sls-2',
+          priority: 'P1',
+          title: '体验未转化',
+          count: 6,
+          representativeMembers: '陈雨、李曼 等',
+          suggestedAction: '48h 内回访体验感受，确认下一步练习计划',
+          ctaLabel: '去跟进',
+          ctaToast: '进入体验转化跟进（待建设）',
+        },
+        {
+          id: 'sls-3',
+          priority: 'P2',
+          title: '高意向复购',
+          count: 9,
+          representativeMembers: '王静怡、周航 等',
+          suggestedAction: '结合练习偏好推荐合适卡项，不做催促式推销',
+          ctaLabel: '去沟通',
+          ctaToast: '进入高意向复购沟通（待建设）',
+        },
+      ],
+      serviceViewAllLabel: '查看全部服务任务',
+      serviceViewAllKey: 'service_tasks',
+      salesViewAllLabel: '查看全部销售跟进',
+      salesViewAllKey: 'sales_followups',
+    },
     lifecycleFlow: {
-      title: '会员生命周期流转图',
-      subtitle: '从线索到活跃，再到风险与沉睡的经营链路',
+      title: '会员生命周期分布',
+      subtitle: '从新线索到稳定练习、续费窗口和沉睡流失，判断会员经营结构是否健康',
+      riskFocusNote: '当前风险集中在 S4 低频风险、S5 续费窗口和 S6 沉睡流失。',
       stages: [
         {
           id: 'ls-s0',
@@ -745,7 +972,7 @@ export function buildMemberV2Snapshot(): MemberV2Snapshot {
           id: 'ls-s4',
           code: 'S4',
           name: '低频风险',
-          count: 36,
+          count: 42,
           weeklyChange: '+8',
           weeklyChangeUp: true,
           coreAction: '召回触达',
@@ -756,7 +983,7 @@ export function buildMemberV2Snapshot(): MemberV2Snapshot {
           id: 'ls-s5',
           code: 'S5',
           name: '续费窗口',
-          count: 24,
+          count: 28,
           weeklyChange: '+6',
           weeklyChangeUp: true,
           coreAction: '续费跟进',
@@ -767,7 +994,7 @@ export function buildMemberV2Snapshot(): MemberV2Snapshot {
           id: 'ls-s6',
           code: 'S6',
           name: '沉睡流失',
-          count: 42,
+          count: 31,
           weeklyChange: '+3',
           weeklyChangeUp: true,
           coreAction: '唤醒 / 归档',
@@ -913,7 +1140,7 @@ export function buildMemberV2Snapshot(): MemberV2Snapshot {
     },
     audienceMatchPacks: {
       title: '精准人群匹配',
-      subtitle: '按课程偏好、时间习惯、资产状态和触达疲劳生成可执行人群',
+      subtitle: '只做点对点邀约，不做群发',
       packs: [
         {
           id: 'am-1',
@@ -998,7 +1225,8 @@ export function buildMemberV2Snapshot(): MemberV2Snapshot {
     audienceMatchPreviews: MATCH_PREVIEWS,
     riskGraph: {
       title: '会员风险图谱',
-      subtitle: '按资产、行为和触达状态识别风险会员',
+      subtitle: '用于复盘低频、续费、资产和流失风险，不代替今日优先动作',
+      replayNote: '风险图谱用于判断结构性问题，今日处理以优先动作队列为准。',
       items: [
         {
           id: 'mr-1',
@@ -1048,7 +1276,7 @@ export function buildMemberV2Snapshot(): MemberV2Snapshot {
     },
     keyMemberEntrances: {
       title: '重点会员',
-      subtitle: '用于快速进入详情、跟进和证据链',
+      subtitle: '查看需要单独跟进的会员档案、资产、偏好和证据链',
       members: [
         {
           id: 'km-1',

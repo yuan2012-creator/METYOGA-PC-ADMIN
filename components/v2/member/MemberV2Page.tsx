@@ -2,11 +2,10 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import {
   buildMemberV2Snapshot,
+  getMemberOperationStatusClass,
   getSecondaryEntranceLabel,
   type MemberV2AudienceMatchPreview,
   type MemberV2LifecycleStage,
-  type MemberV2MatchDimension,
-  type MemberV2MatchLevel,
   type MemberV2MemberDetail,
   type MemberV2RiskPriority,
   type MemberV2SuggestionSource,
@@ -29,54 +28,6 @@ const RISK_BUBBLE_CLASS: Record<MemberV2RiskPriority, string> = {
   P1: 'is-p1',
   P2: 'is-p2',
 };
-
-const MATCH_LEVEL_LABEL: Record<MemberV2MatchLevel, string> = {
-  high: '高',
-  medium: '中',
-  low: '低',
-};
-
-const MATCH_DOT_COUNT: Record<MemberV2MatchLevel, number> = {
-  high: 3,
-  medium: 2,
-  low: 1,
-};
-
-function MatchDimensionDots({ dimension }: { dimension: MemberV2MatchDimension }) {
-  const filled = MATCH_DOT_COUNT[dimension.level];
-  const isPositive = dimension.tone === 'positive';
-
-  return (
-    <div className="met-member-v2-dim-dots">
-      <span className="met-member-v2-dim-dots__label">{dimension.label}</span>
-      <span className="met-member-v2-dim-dots__matrix">
-        {[1, 2, 3].map(dot => (
-          <span
-            key={dot}
-            className={[
-              'met-member-v2-dim-dots__dot',
-              dot <= filled ? 'is-filled' : '',
-              dot <= filled && isPositive ? 'is-positive' : '',
-            ]
-              .filter(Boolean)
-              .join(' ')}
-          />
-        ))}
-      </span>
-      <span
-        className={[
-          'met-member-v2-dim-dots__level',
-          dimension.level === 'high' ? 'is-high' : '',
-          isPositive ? 'is-positive' : '',
-        ]
-          .filter(Boolean)
-          .join(' ')}
-      >
-        {MATCH_LEVEL_LABEL[dimension.level]}
-      </span>
-    </div>
-  );
-}
 
 function FlowNode({
   stage,
@@ -193,10 +144,10 @@ const MemberV2Page: React.FC = () => {
 
   const {
     meta,
+    memberOperationSummary,
+    memberPriorityActions,
+    serviceSalesQueues,
     lifecycleFlow,
-    attentionHighlights,
-    serviceQueue,
-    salesQueue,
     audienceMatchPacks,
     riskGraph,
     keyMemberEntrances,
@@ -263,12 +214,200 @@ const MemberV2Page: React.FC = () => {
           </div>
         </header>
 
-        <section className="met-member-v2__row-top">
+        {/* 1. 会员经营结论 */}
+        <section className="met-member-v2__zone met-member-v2__zone--hero">
+          <article className="met-member-v2-card met-member-v2-card--conclusion">
+            <div className="met-member-v2-conclusion__head">
+              <h2 className="met-member-v2-conclusion__headline">{memberOperationSummary.headline}</h2>
+              <span
+                className={[
+                  'met-member-v2-status',
+                  getMemberOperationStatusClass(memberOperationSummary.status),
+                ].join(' ')}
+              >
+                {memberOperationSummary.statusLabel}
+              </span>
+            </div>
+            <p className="met-member-v2-conclusion__text">{memberOperationSummary.conclusion}</p>
+            <div className="met-member-v2-conclusion__tags">
+              {memberOperationSummary.impactTags.map(tag => (
+                <span key={tag} className="met-member-v2-conclusion__tag met-member-v2-conclusion__tag--impact">
+                  {tag}
+                </span>
+              ))}
+              <span className="met-member-v2-conclusion__tag met-member-v2-conclusion__tag--source">
+                {memberOperationSummary.sourceLabel}
+              </span>
+            </div>
+            <p className="met-member-v2-conclusion__meta">
+              最近更新：{memberOperationSummary.updatedAt}
+            </p>
+            <div className="met-member-v2-evidence-grid">
+              {memberOperationSummary.evidenceItems.map(item => (
+                <div
+                  key={item.label}
+                  className={[
+                    'met-member-v2-evidence-item',
+                    item.isWarning ? 'is-warning' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                >
+                  <span className="met-member-v2-evidence-item__value">{item.value}</span>
+                  <span className="met-member-v2-evidence-item__label">{item.label}</span>
+                </div>
+              ))}
+            </div>
+            <div className="met-member-v2-conclusion__actions">
+              <button
+                type="button"
+                className="met-member-v2-btn met-member-v2-btn--ghost"
+                onClick={() => showToast(memberOperationSummary.evidenceToastMessage)}
+              >
+                {memberOperationSummary.evidenceButtonLabel}
+              </button>
+            </div>
+          </article>
+        </section>
+
+        {/* 2. 今日会员优先动作 */}
+        <section className="met-member-v2__zone met-member-v2__zone--priority">
+          <header className="met-member-v2-zone__head">
+            <h2 className="met-member-v2-zone__title">{memberPriorityActions.title}</h2>
+            <p className="met-member-v2-zone__subtitle">{memberPriorityActions.subtitle}</p>
+          </header>
+          <div className="met-member-v2-action-queue">
+            {memberPriorityActions.items.map(item => (
+              <div
+                key={item.id}
+                className={`met-member-v2-action-item met-member-v2-action-item--${item.priority.toLowerCase()}`}
+              >
+                <span className={['met-member-v2-priority', PRIORITY_CLASS[item.priority]].join(' ')}>
+                  {item.priority}
+                </span>
+                <div className="met-member-v2-action-item__main">
+                  <p className="met-member-v2-action-item__title">{item.title}</p>
+                  <p className="met-member-v2-action-item__meta">
+                    影响：{item.impact} · 负责人：{item.owner} · 来源：
+                    {item.sourceModules.join(' / ')}
+                  </p>
+                  <p className="met-member-v2-action-item__action">建议动作：{item.suggestedAction}</p>
+                </div>
+                <button
+                  type="button"
+                  className="met-member-v2-btn met-member-v2-btn--ghost met-member-v2-btn--sm"
+                  onClick={() => showToast(item.ctaToast)}
+                >
+                  {item.ctaLabel}
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* 3. 服务与销售队列 */}
+        <section className="met-member-v2__zone met-member-v2__zone--queues">
+          <header className="met-member-v2-zone__head">
+            <h2 className="met-member-v2-zone__title">{serviceSalesQueues.title}</h2>
+            <p className="met-member-v2-zone__subtitle">{serviceSalesQueues.subtitle}</p>
+          </header>
+          <div className="met-member-v2__row-queues">
+            <article className="met-member-v2-card met-member-v2-card--queue met-member-v2-card--queue-service">
+              <h3 className="met-member-v2-card__title met-member-v2-card__title--sub">{serviceSalesQueues.serviceTitle}</h3>
+              <div className="met-member-v2-queue-summary">
+                {serviceSalesQueues.serviceItems.map(item => (
+                  <div
+                    key={item.id}
+                    className={`met-member-v2-queue-item met-member-v2-queue-item--${item.priority.toLowerCase()}`}
+                  >
+                    <div className="met-member-v2-queue-item__main">
+                      <div className="met-member-v2-queue-item__head">
+                        <span className={['met-member-v2-priority', PRIORITY_CLASS[item.priority]].join(' ')}>
+                          {item.priority}
+                        </span>
+                        <span className="met-member-v2-queue-item__title">{item.title}</span>
+                        <span className="met-member-v2-queue-item__count">{item.count} 人</span>
+                      </div>
+                      <p className="met-member-v2-queue-item__members">
+                        代表会员：{item.representativeMembers}
+                      </p>
+                      <p className="met-member-v2-queue-item__action">{item.suggestedAction}</p>
+                    </div>
+                    <button
+                      type="button"
+                      className="met-member-v2-btn met-member-v2-btn--ghost met-member-v2-btn--sm"
+                      onClick={() => showToast(item.ctaToast)}
+                    >
+                      {item.ctaLabel}
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className="met-member-v2-card__footer-link">
+                <button
+                  type="button"
+                  className="met-member-v2-link-btn"
+                  onClick={() => openSecondary(serviceSalesQueues.serviceViewAllKey)}
+                >
+                  {serviceSalesQueues.serviceViewAllLabel}
+                </button>
+              </div>
+            </article>
+
+            <article className="met-member-v2-card met-member-v2-card--queue met-member-v2-card--queue-sales">
+              <h3 className="met-member-v2-card__title met-member-v2-card__title--sub">{serviceSalesQueues.salesTitle}</h3>
+              <div className="met-member-v2-queue-summary">
+                {serviceSalesQueues.salesItems.map(item => (
+                  <div
+                    key={item.id}
+                    className={`met-member-v2-queue-item met-member-v2-queue-item--${item.priority.toLowerCase()}`}
+                  >
+                    <div className="met-member-v2-queue-item__main">
+                      <div className="met-member-v2-queue-item__head">
+                        <span className={['met-member-v2-priority', PRIORITY_CLASS[item.priority]].join(' ')}>
+                          {item.priority}
+                        </span>
+                        <span className="met-member-v2-queue-item__title">{item.title}</span>
+                        <span className="met-member-v2-queue-item__count">{item.count} 人</span>
+                      </div>
+                      <p className="met-member-v2-queue-item__members">
+                        代表会员：{item.representativeMembers}
+                      </p>
+                      <p className="met-member-v2-queue-item__action">{item.suggestedAction}</p>
+                    </div>
+                    <button
+                      type="button"
+                      className="met-member-v2-btn met-member-v2-btn--ghost met-member-v2-btn--sm"
+                      onClick={() => showToast(item.ctaToast)}
+                    >
+                      {item.ctaLabel}
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div className="met-member-v2-card__footer-link">
+                <button
+                  type="button"
+                  className="met-member-v2-link-btn"
+                  onClick={() => openSecondary(serviceSalesQueues.salesViewAllKey)}
+                >
+                  {serviceSalesQueues.salesViewAllLabel}
+                </button>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        {/* 4. 会员生命周期分布 */}
+        <section className="met-member-v2__zone met-member-v2__zone--lifecycle">
           <article className="met-member-v2-card met-member-v2-card--flow">
             <h2 className="met-member-v2-card__title">{lifecycleFlow.title}</h2>
             <p className="met-member-v2-card__subtitle met-member-v2-card__subtitle--compact">
               {lifecycleFlow.subtitle}
             </p>
+            {lifecycleFlow.riskFocusNote ? (
+              <p className="met-member-v2-lifecycle-note">{lifecycleFlow.riskFocusNote}</p>
+            ) : null}
             <div className="met-member-v2-flow-wrap">
               <div className="met-member-v2-flow-zone met-member-v2-flow-zone--growth">
                 <span className="met-member-v2-flow-zone__label">成长链路 S0 → S3</span>
@@ -307,137 +446,9 @@ const MemberV2Page: React.FC = () => {
               </div>
             </div>
           </article>
-
-          <aside className="met-member-v2-card met-member-v2-card--attention">
-            <h2 className="met-member-v2-card__title">{attentionHighlights.title}</h2>
-            <p className="met-member-v2-card__subtitle met-member-v2-card__subtitle--compact">
-              {attentionHighlights.subtitle}
-            </p>
-            <div className="met-member-v2-attention-grid">
-              {attentionHighlights.items.map(item => (
-                <div
-                  key={item.id}
-                  className={`met-member-v2-attention-bubble is-${item.tone}`}
-                >
-                  <span className="met-member-v2-attention-bubble__type">{item.typeLabel}</span>
-                  <div className="met-member-v2-attention-bubble__ring">{item.count}</div>
-                  <p className="met-member-v2-attention-bubble__label">{item.label}</p>
-                  <p className="met-member-v2-attention-bubble__note">{item.note}</p>
-                  <button
-                    type="button"
-                    className="met-member-v2-btn met-member-v2-btn--ghost met-member-v2-btn--sm"
-                    onClick={() => {
-                      if (item.matchPreviewPackId && item.actionLabel === '匹配') {
-                        openMatchPreview(item.matchPreviewPackId);
-                        return;
-                      }
-                      openSecondary(item.secondaryKey);
-                    }}
-                  >
-                    {item.actionLabel}
-                  </button>
-                </div>
-              ))}
-            </div>
-          </aside>
         </section>
 
-        <section className="met-member-v2__row-queues">
-          <article className="met-member-v2-card met-member-v2-card--queue met-member-v2-card--queue-service">
-            <h2 className="met-member-v2-card__title">{serviceQueue.title}</h2>
-            <p className="met-member-v2-card__subtitle met-member-v2-card__subtitle--compact">
-              {serviceQueue.subtitle}
-            </p>
-            <div className="met-member-v2-summary-strip">
-              {serviceQueue.summary.map(stat => (
-                <span key={stat.label} className="met-member-v2-summary-pill">
-                  {stat.label} <strong>{stat.value}</strong>
-                </span>
-              ))}
-            </div>
-            <div className="met-member-v2-top-list">
-              {serviceQueue.topTasks.map(task => (
-                <div key={task.id} className="met-member-v2-top-row met-member-v2-top-row--service">
-                  <div className="met-member-v2-top-row__main">
-                    <div className="met-member-v2-top-row__head">
-                      <span className="met-member-v2-top-row__name">{task.memberName}</span>
-                      <span className="met-member-v2-top-row__stage">{task.stageCode}</span>
-                      <span className="met-member-v2-top-row__tag">{task.mainTag}</span>
-                    </div>
-                    <p className="met-member-v2-top-row__fact">{task.triggerReason}</p>
-                    <p className="met-member-v2-top-row__meta">
-                      {task.owner} · 截止 {task.deadline}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    className="met-member-v2-btn met-member-v2-btn--ghost met-member-v2-btn--sm"
-                    onClick={() => handleAction(task.actionLabel)}
-                  >
-                    {task.actionLabel}
-                  </button>
-                </div>
-              ))}
-            </div>
-            <div className="met-member-v2-card__footer-link">
-              <button
-                type="button"
-                className="met-member-v2-link-btn"
-                onClick={() => openSecondary(serviceQueue.viewAllKey)}
-              >
-                {serviceQueue.viewAllLabel}
-              </button>
-            </div>
-          </article>
-
-          <article className="met-member-v2-card met-member-v2-card--queue met-member-v2-card--queue-sales">
-            <h2 className="met-member-v2-card__title">{salesQueue.title}</h2>
-            <p className="met-member-v2-card__subtitle met-member-v2-card__subtitle--compact">
-              {salesQueue.subtitle}
-            </p>
-            <div className="met-member-v2-summary-strip">
-              {salesQueue.summary.map(stat => (
-                <span key={stat.label} className="met-member-v2-summary-pill">
-                  {stat.label} <strong>{stat.value}</strong>
-                </span>
-              ))}
-            </div>
-            <div className="met-member-v2-top-list">
-              {salesQueue.topTasks.map(task => (
-                <div key={task.id} className="met-member-v2-top-row met-member-v2-top-row--sales">
-                  <div className="met-member-v2-top-row__main">
-                    <div className="met-member-v2-top-row__head">
-                      <span className="met-member-v2-top-row__name">{task.name}</span>
-                      <span className="met-member-v2-top-row__stage">{task.stageCode}</span>
-                      <span className="met-member-v2-top-row__tag">{task.mainTag}</span>
-                    </div>
-                    <p className="met-member-v2-top-row__fact">{task.triggerReason}</p>
-                    <p className="met-member-v2-top-row__meta">
-                      {task.owner} · 截止 {task.deadline}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    className="met-member-v2-btn met-member-v2-btn--ghost met-member-v2-btn--sm"
-                    onClick={() => handleAction(task.actionLabel)}
-                  >
-                    {task.actionLabel}
-                  </button>
-                </div>
-              ))}
-            </div>
-            <div className="met-member-v2-card__footer-link">
-              <button
-                type="button"
-                className="met-member-v2-link-btn"
-                onClick={() => openSecondary(salesQueue.viewAllKey)}
-              >
-                {salesQueue.viewAllLabel}
-              </button>
-            </div>
-          </article>
-        </section>
-
+        {/* 5. 精准人群匹配 */}
         <article className="met-member-v2-card met-member-v2-card--audience">
           <div className="met-member-v2-card__head-row">
             <div>
@@ -467,17 +478,15 @@ const MemberV2Page: React.FC = () => {
                     <span className="met-member-v2-pack__count-num">{pack.recommendedCount}</span>
                     <span className="met-member-v2-pack__count-label">匹配人数</span>
                   </div>
-                  <div className="met-member-v2-pack__count-block">
-                    <span className="met-member-v2-pack__count-num">{pack.highMatchCount}</span>
-                    <span className="met-member-v2-pack__count-label">高匹配</span>
+                </div>
+                <div className="met-member-v2-pack__fields">
+                  <div className="met-member-v2-pack__field">
+                    <span>适合动作</span>
+                    <strong>{pack.scene}</strong>
                   </div>
                 </div>
-                <div className="met-member-v2-pack__dims">
-                  {pack.dimensions.map(dim => (
-                    <MatchDimensionDots key={dim.key} dimension={dim} />
-                  ))}
-                </div>
                 <div className="met-member-v2-pack__excludes">
+                  <span className="met-member-v2-pack__exclude-label">排除规则</span>
                   {pack.excludeTags.map(tag => (
                     <span key={tag} className="met-member-v2-tag">
                       {tag}
@@ -515,11 +524,15 @@ const MemberV2Page: React.FC = () => {
           </div>
         </article>
 
+        {/* 6. 会员风险图谱 */}
         <article className="met-member-v2-card met-member-v2-card--risk-graph">
           <h2 className="met-member-v2-card__title">{riskGraph.title}</h2>
           <p className="met-member-v2-card__subtitle met-member-v2-card__subtitle--compact">
             {riskGraph.subtitle}
           </p>
+          {riskGraph.replayNote ? (
+            <p className="met-member-v2-risk-replay-note">{riskGraph.replayNote}</p>
+          ) : null}
           <div className="met-member-v2-risk-graph">
             {riskGraph.items.map(item => (
               <div
@@ -575,6 +588,7 @@ const MemberV2Page: React.FC = () => {
           </div>
         </article>
 
+        {/* 7. 重点会员 */}
         <article className="met-member-v2-card met-member-v2-card--key">
           <h2 className="met-member-v2-card__title">{keyMemberEntrances.title}</h2>
           <p className="met-member-v2-card__subtitle met-member-v2-card__subtitle--compact">

@@ -7,4 +7,7 @@ export type {
   MemberV2AudienceMatchPreview,
   MemberV2AudienceCandidate,
   MemberV2KeyMemberEntrance,
+  MemberOperationSummary,
+  MemberPriorityAction,
+  MemberQueueSummaryItem,
 } from './memberV2.viewModel';

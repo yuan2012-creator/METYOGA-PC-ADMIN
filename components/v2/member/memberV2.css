@@ -275,6 +275,311 @@
   color: var(--met-v2-p2);
 }
 
+/* —— 引导式分区 —— */
+.met-member-v2__zone {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.met-member-v2-zone__head {
+  margin-bottom: 2px;
+}
+
+.met-member-v2-zone__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.met-member-v2-zone__subtitle {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: var(--met-v2-text-secondary);
+  line-height: 1.45;
+}
+
+/* —— 会员经营结论 hero —— */
+.met-member-v2-card--conclusion {
+  padding: 22px 24px 20px;
+  border-color: #d4e8dc;
+  background: linear-gradient(180deg, var(--met-v2-brand-soft) 0%, var(--met-v2-surface) 42%);
+  box-shadow: var(--met-v2-card-shadow);
+}
+
+.met-member-v2-conclusion__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.met-member-v2-conclusion__headline {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.35;
+  flex: 1;
+}
+
+.met-member-v2-status {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.met-member-v2-status--healthy {
+  background: #e8f5ee;
+  color: var(--met-v2-brand);
+}
+
+.met-member-v2-status--watch {
+  background: #fff4e5;
+  color: #b45309;
+}
+
+.met-member-v2-status--warning {
+  background: #fff4e5;
+  color: #b45309;
+}
+
+.met-member-v2-status--high-risk {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.met-member-v2-conclusion__text {
+  margin: 12px 0 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--met-v2-text-primary);
+}
+
+.met-member-v2-conclusion__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.met-member-v2-conclusion__tag {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.met-member-v2-conclusion__tag--impact {
+  background: var(--met-v2-neutral-bg);
+  color: var(--met-v2-text-secondary);
+}
+
+.met-member-v2-conclusion__tag--source {
+  background: #e8f5ee;
+  color: var(--met-v2-brand);
+}
+
+.met-member-v2-conclusion__meta {
+  margin: 10px 0 0;
+  font-size: 11px;
+  color: var(--met-v2-text-tertiary);
+}
+
+.met-member-v2-evidence-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--met-v2-border-soft);
+}
+
+.met-member-v2-evidence-item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.met-member-v2-evidence-item.is-warning .met-member-v2-evidence-item__value {
+  color: #b45309;
+}
+
+.met-member-v2-evidence-item__value {
+  font-size: 16px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.met-member-v2-evidence-item__label {
+  font-size: 10px;
+  color: var(--met-v2-text-tertiary);
+  line-height: 1.35;
+}
+
+.met-member-v2-conclusion__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* —— 今日优先动作队列 —— */
+.met-member-v2-action-queue {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.met-member-v2-action-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 11px 14px;
+  border: 1px solid var(--met-v2-border-soft);
+  border-radius: var(--met-v2-radius-md);
+  background: var(--met-v2-surface);
+}
+
+.met-member-v2-action-item--p0 {
+  border-left: 3px solid #d97706;
+}
+
+.met-member-v2-action-item--p1 {
+  border-left: 3px solid var(--met-v2-p1);
+}
+
+.met-member-v2-action-item--p2 {
+  border-left: 3px solid var(--met-v2-p2);
+}
+
+.met-member-v2-action-item__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--met-v2-text-primary);
+}
+
+.met-member-v2-action-item__meta,
+.met-member-v2-action-item__action {
+  margin: 3px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--met-v2-text-secondary);
+}
+
+/* —— 服务 / 销售队列摘要 —— */
+.met-member-v2-card__title--sub {
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.met-member-v2-queue-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.met-member-v2-queue-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid var(--met-v2-border-soft);
+  border-radius: var(--met-v2-radius-sm);
+  background: var(--met-v2-surface-soft);
+}
+
+.met-member-v2-queue-item--p0 {
+  border-left: 3px solid #d97706;
+}
+
+.met-member-v2-queue-item--p1 {
+  border-left: 3px solid var(--met-v2-p1);
+}
+
+.met-member-v2-queue-item--p2 {
+  border-left: 3px solid var(--met-v2-p2);
+}
+
+.met-member-v2-queue-item__head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.met-member-v2-queue-item__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--met-v2-text-primary);
+}
+
+.met-member-v2-queue-item__count {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--met-v2-text-secondary);
+}
+
+.met-member-v2-queue-item__members,
+.met-member-v2-queue-item__action {
+  margin: 4px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--met-v2-text-secondary);
+}
+
+.met-member-v2-lifecycle-note,
+.met-member-v2-risk-replay-note {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border-radius: var(--met-v2-radius-sm);
+  background: var(--met-v2-neutral-bg);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--met-v2-text-secondary);
+}
+
+.met-member-v2-pack__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.met-member-v2-pack__field {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--met-v2-text-secondary);
+}
+
+.met-member-v2-pack__field strong {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--met-v2-text-primary);
+}
+
+.met-member-v2-pack__exclude-label {
+  display: block;
+  width: 100%;
+  margin-bottom: 4px;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--met-v2-text-tertiary);
+}
+
 /* —— 第一行：生命周期 + 重点关注 —— */
 .met-member-v2__row-top {
   display: grid;
@@ -1437,8 +1742,8 @@
 }
 
 @media (max-width: 1200px) {
-  .met-member-v2__row-top {
-    grid-template-columns: 1fr;
+  .met-member-v2-evidence-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .met-member-v2__row-queues {
@@ -1461,6 +1766,15 @@
 @media (max-width: 768px) {
   .met-member-v2 {
     padding: 20px 16px;
+  }
+
+  .met-member-v2-evidence-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .met-member-v2-action-item,
+  .met-member-v2-queue-item {
+    grid-template-columns: 1fr;
   }
 
   .met-member-v2-attention-grid {
