@@ -109,6 +109,16 @@
   color: var(--met-v2-text-secondary);
 }
 
+.met-staff-v2__detail-link {
+  color: var(--met-v2-brand);
+}
+
+.met-staff-v2__detail-link:hover {
+  color: var(--met-v2-brand);
+  border-color: var(--met-v2-brand-soft);
+  background: var(--met-v2-brand-soft);
+}
+
 .met-staff-v2__filter-btn--ghost:hover {
   background: var(--met-v2-neutral-bg);
   color: var(--met-v2-text-primary);

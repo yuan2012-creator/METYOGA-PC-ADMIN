@@ -1,4 +1,5 @@
 export { default as StaffV2Page } from './StaffV2Page';
+export { default as StaffSecondaryTeacherApplicationsPage } from './StaffSecondaryTeacherApplicationsPage';
 export type {
   StaffV2Snapshot,
   StaffV2TeacherDetail,
@@ -19,3 +20,9 @@ export type {
   TeacherRequestStabilityItem,
   TeacherGrowthSummarySection,
 } from './staffV2.viewModel';
+export type { TeacherApplicationsInitialTab } from './StaffSecondaryTeacherApplicationsPage';
+export type {
+  TeacherApplicationSnapshot,
+  TeacherApplicationRow,
+  TeacherApplicationDrawerDetail,
+} from './staffSecondaryTeacherApplications.viewModel';

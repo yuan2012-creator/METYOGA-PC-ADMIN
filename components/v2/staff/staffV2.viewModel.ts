@@ -38,6 +38,7 @@ export interface StaffV2Filters {
   primaryActionLabel: string;
   secondaryActionLabel: string;
   archiveLinkLabel: string;
+  teacherApplicationsListLabel: string;
 }
 
 export interface StaffV2SectionHeader {
@@ -93,6 +94,8 @@ export interface StaffPriorityAction {
   suggestedAction: string;
   ctaLabel: string;
   ctaToast: string;
+  opensTeacherApplications?: boolean;
+  applicationTab?: 'all' | 'leave' | 'substitute' | 'reschedule' | 'credential' | 'coursePermission' | 'growth';
 }
 
 export interface StaffPriorityActionsSection {
@@ -113,6 +116,8 @@ export interface TeacherRequestStabilityItem {
   ctaLabel: string;
   ctaToast: string;
   relatedTeacherId?: string;
+  opensTeacherApplications?: boolean;
+  applicationTab?: 'all' | 'leave' | 'substitute' | 'reschedule' | 'credential' | 'coursePermission' | 'growth';
 }
 
 export interface TeacherRequestStabilitySection {
@@ -337,6 +342,8 @@ export interface StaffV2IssueItem {
   actionLabel: string;
   relatedTeacherId?: string;
   toastMessage?: string;
+  opensTeacherApplications?: boolean;
+  applicationTab?: 'all' | 'leave' | 'substitute' | 'reschedule' | 'credential' | 'coursePermission' | 'growth';
 }
 
 export interface StaffV2IssueQueue {
@@ -1069,6 +1076,7 @@ export function buildStaffV2Snapshot(): StaffV2Snapshot {
       primaryActionLabel: '新增老师',
       secondaryActionLabel: '成长规则',
       archiveLinkLabel: '师资档案',
+      teacherApplicationsListLabel: '老师端申请审批',
     },
     staffSupplySummary: {
       status: 'watch',
@@ -1104,6 +1112,7 @@ export function buildStaffV2Snapshot(): StaffV2Snapshot {
           suggestedAction: '确认代课老师与课程名单，避免临时取消课程',
           ctaLabel: '去处理',
           ctaToast: '进入老师申请处理（待建设）',
+          opensTeacherApplications: true,
         },
         {
           id: 'spa-2',
@@ -1137,6 +1146,8 @@ export function buildStaffV2Snapshot(): StaffV2Snapshot {
           suggestedAction: '安排听课、复盘和课程反馈',
           ctaLabel: '去安排',
           ctaToast: '进入成长带教安排（待建设）',
+          opensTeacherApplications: true,
+          applicationTab: 'growth',
         },
       ],
     },
@@ -1156,6 +1167,8 @@ export function buildStaffV2Snapshot(): StaffV2Snapshot {
           ctaLabel: '处理申请',
           ctaToast: '进入老师申请处理（待建设）',
           relatedTeacherId: 'teacher-nora',
+          opensTeacherApplications: true,
+          applicationTab: 'leave',
         },
         {
           id: 'trs-2',
@@ -1169,6 +1182,8 @@ export function buildStaffV2Snapshot(): StaffV2Snapshot {
           ctaLabel: '确认代课',
           ctaToast: '进入老师申请处理（待建设）',
           relatedTeacherId: 'teacher-anna',
+          opensTeacherApplications: true,
+          applicationTab: 'substitute',
         },
         {
           id: 'trs-3',
@@ -1182,6 +1197,8 @@ export function buildStaffV2Snapshot(): StaffV2Snapshot {
           ctaLabel: '审核资料',
           ctaToast: '进入老师申请处理（待建设）',
           relatedTeacherId: 'teacher-chen',
+          opensTeacherApplications: true,
+          applicationTab: 'credential',
         },
         {
           id: 'trs-4',
@@ -1195,6 +1212,8 @@ export function buildStaffV2Snapshot(): StaffV2Snapshot {
           ctaLabel: '处理申请',
           ctaToast: '进入老师申请处理（待建设）',
           relatedTeacherId: 'teacher-mia',
+          opensTeacherApplications: true,
+          applicationTab: 'reschedule',
         },
       ],
     },
@@ -1365,6 +1384,8 @@ export function buildStaffV2Snapshot(): StaffV2Snapshot {
           actionLabel: '审核资料',
           toastMessage: '进入老师申请处理（待建设）',
           relatedTeacherId: 'teacher-chen',
+          opensTeacherApplications: true,
+          applicationTab: 'credential',
         },
         {
           id: 'sir-5',
@@ -1380,6 +1401,8 @@ export function buildStaffV2Snapshot(): StaffV2Snapshot {
           suggestionAction: '同步跨店代课规则与老师端说明',
           actionLabel: '去同步',
           toastMessage: '进入师资规则配置（待建设）',
+          opensTeacherApplications: true,
+          applicationTab: 'substitute',
         },
       ],
     },

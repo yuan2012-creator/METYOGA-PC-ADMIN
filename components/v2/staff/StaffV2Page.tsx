@@ -5,6 +5,7 @@ import {
   getIssueOriginClass,
   getStaffSupplyStatusClass,
   getSuggestionSourceClass,
+  type StaffPriorityAction,
   type StaffV2IssueItem,
   type StaffV2Priority,
   type StaffV2SuggestionSource,
@@ -12,7 +13,177 @@ import {
   type TeacherOwnedMemberRisk,
   type TeacherRequestStabilityItem,
 } from './staffV2.viewModel';
+import StaffSecondaryTeacherApplicationsPage, {
+  type TeacherApplicationsInitialTab,
+} from './StaffSecondaryTeacherApplicationsPage';
+import {
+  buildTeacherApplicationsSnapshot,
+  getTeacherApplicationDrawerDetail,
+  type TeacherApplicationDrawerDetail,
+} from './staffSecondaryTeacherApplications.viewModel';
 import './staffV2.css';
+import './staffSecondaryTeacherApplications.css';
+
+type StaffV2PageViewMode = 'overview' | 'teacherApplications';
+
+function ApplicationDetailDrawer({
+  detail,
+  onClose,
+  onToast,
+}: {
+  detail: TeacherApplicationDrawerDetail;
+  onClose: () => void;
+  onToast: (message: string) => void;
+}) {
+  const isCourseRelated = ['leave', 'substitute', 'reschedule'].includes(detail.applicationType);
+
+  return (
+    <>
+      <button
+        type="button"
+        className="met-staff-v2-drawer-overlay met-v2-drawer-overlay"
+        aria-label="关闭申请详情"
+        onClick={onClose}
+      />
+      <aside
+        className="met-staff-v2-drawer met-v2-drawer-panel met-v2-drawer-panel--md"
+        role="dialog"
+        aria-labelledby="teacher-app-drawer-title"
+      >
+        <div className="met-staff-v2-drawer__head met-v2-drawer-header">
+          <div>
+            <h2 id="teacher-app-drawer-title" className="met-staff-v2-drawer__title met-v2-drawer-title">
+              {detail.drawerTitle}
+            </h2>
+            <p className="met-staff-v2-drawer__subtitle met-v2-drawer-subtitle">
+              {detail.applicationId} · {detail.approvalStatusLabel}
+            </p>
+          </div>
+          <button
+            type="button"
+            className="met-staff-v2-drawer__close met-v2-drawer-close"
+            aria-label="关闭"
+            onClick={onClose}
+          >
+            ×
+          </button>
+        </div>
+        <div className="met-staff-v2-drawer__body met-v2-drawer-body">
+          <section className="met-staff-v2-drawer__section">
+            <h3 className="met-staff-v2-drawer__section-title">申请概览</h3>
+            <div className="met-staff-v2-drawer__row"><span>申请单号</span><span>{detail.applicationId}</span></div>
+            <div className="met-staff-v2-drawer__row"><span>申请类型</span><span>{detail.applicationTypeLabel}</span></div>
+            <div className="met-staff-v2-drawer__row"><span>当前状态</span><span>{detail.approvalStatusLabel}</span></div>
+            <div className="met-staff-v2-drawer__row"><span>当前审批人</span><span>{detail.currentApprover}</span></div>
+            <div className="met-staff-v2-drawer__row"><span>提交时间</span><span>{detail.submittedAt}</span></div>
+            <div className="met-staff-v2-drawer__row"><span>更新时间</span><span>{detail.updatedAt}</span></div>
+            <div className="met-staff-v2-drawer__row"><span>申请原因</span><span>{detail.reason}</span></div>
+          </section>
+
+          <section className="met-staff-v2-drawer__section">
+            <h3 className="met-staff-v2-drawer__section-title">老师信息</h3>
+            <div className="met-staff-v2-drawer__row"><span>老师姓名</span><span>{detail.teacherName}</span></div>
+            <div className="met-staff-v2-drawer__row"><span>老师等级</span><span>{detail.teacherLevel}</span></div>
+            <div className="met-staff-v2-drawer__row"><span>所属门店</span><span>{detail.store}</span></div>
+            <div className="met-staff-v2-drawer__row"><span>可授课程</span><span>{detail.teachableCourses}</span></div>
+            <div className="met-staff-v2-drawer__row"><span>本周课量</span><span>{detail.weeklySessions}</span></div>
+            <div className="met-staff-v2-drawer__row"><span>当前负载状态</span><span>{detail.loadStatus}</span></div>
+          </section>
+
+          <section className="met-staff-v2-drawer__section">
+            <h3 className="met-staff-v2-drawer__section-title">涉及课程 / 影响范围</h3>
+            {isCourseRelated ? (
+              <>
+                <div className="met-staff-v2-drawer__row"><span>涉及课程</span><span>{detail.relatedCourse}</span></div>
+                <div className="met-staff-v2-drawer__row"><span>涉及时间</span><span>{detail.relatedTime}</span></div>
+                <div className="met-staff-v2-drawer__row"><span>已预约人数</span><span>{detail.bookedCount} 人</span></div>
+                <div className="met-staff-v2-drawer__row"><span>候补人数</span><span>{detail.waitlistCount} 人</span></div>
+                <div className="met-staff-v2-drawer__row"><span>教室</span><span>{detail.room}</span></div>
+                <div className="met-staff-v2-drawer__row"><span>影响本周课程</span><span>{detail.affectsThisWeek ? '是' : '否'}</span></div>
+                <div className="met-staff-v2-drawer__row"><span>是否需要会员通知</span><span>{detail.needsMemberNotification ? '是' : '否'}</span></div>
+                <div className="met-staff-v2-drawer__row"><span>推荐代课老师</span><span>{detail.substituteTeacher}</span></div>
+                <div className="met-staff-v2-drawer__row"><span>冲突状态</span><span>{detail.conflictStatus}</span></div>
+              </>
+            ) : (
+              <>
+                <div className="met-staff-v2-drawer__row"><span>材料类型</span><span>{detail.materialType}</span></div>
+                <div className="met-staff-v2-drawer__row"><span>附件数量</span><span>{detail.attachmentCount} 份</span></div>
+                <div className="met-staff-v2-drawer__row"><span>资料完整度</span><span>{detail.materialCompleteness}</span></div>
+                <div className="met-staff-v2-drawer__row"><span>审核要点</span><span>{detail.reviewPoints}</span></div>
+                <div className="met-staff-v2-drawer__row"><span>影响范围</span><span>{detail.impactScope}</span></div>
+                <div className="met-staff-v2-drawer__row"><span>影响排课权限</span><span>{detail.affectsSchedulingPermission ? '是' : '否'}</span></div>
+              </>
+            )}
+          </section>
+
+          <section className="met-staff-v2-drawer__section">
+            <h3 className="met-staff-v2-drawer__section-title">申请内容与材料</h3>
+            <div className="met-staff-v2-drawer__row"><span>申请说明</span><span>{detail.applicationNote}</span></div>
+            <div className="met-staff-v2-drawer__row"><span>材料状态</span><span>{detail.materialStatusLabel}</span></div>
+            <div className="met-teacher-app-drawer__evidence">
+              {detail.evidenceFiles.map(file => (
+                <div key={file.id} className="met-teacher-app-drawer__evidence-item">
+                  <span>{file.label}</span>
+                  <span>{file.statusLabel}</span>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="met-staff-v2-drawer__section">
+            <h3 className="met-staff-v2-drawer__section-title">审批状态</h3>
+            <ul className="met-teacher-app-drawer__timeline">
+              {detail.timeline.map(step => (
+                <li
+                  key={step.key}
+                  className={['met-teacher-app-drawer__timeline-item', `is-${step.status}`].join(' ')}
+                >
+                  <span>{step.label}</span>
+                  {step.time ? <span>{step.time}</span> : null}
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section className="met-staff-v2-drawer__section">
+            <h3 className="met-staff-v2-drawer__section-title">操作日志</h3>
+            <div className="met-teacher-app-drawer__log">
+              {detail.operationLogs.map(log => (
+                <div key={log.id} className="met-teacher-app-drawer__log-item">
+                  <strong>{log.operator}</strong> · {log.time} · {log.action}
+                  <br />
+                  {log.note}
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="met-staff-v2-drawer__section">
+            <h3 className="met-staff-v2-drawer__section-title">风险提示</h3>
+            <p className="met-teacher-app-drawer__risk">{detail.riskReminder}</p>
+          </section>
+
+          <section className="met-staff-v2-drawer__section">
+            <h3 className="met-staff-v2-drawer__section-title">建议动作</h3>
+            <p className="met-staff-v2-drawer__privacy-note">{detail.suggestedAction}</p>
+          </section>
+
+          <div className="met-staff-v2-drawer__actions met-v2-drawer-footer met-v2-drawer-footer--inline">
+            <button type="button" className="met-v2-drawer-footer-btn" onClick={() => onToast('通过申请（待建设）')}>
+              通过 mock
+            </button>
+            <button type="button" className="met-v2-drawer-footer-btn" onClick={() => onToast('驳回申请（待建设）')}>
+              驳回 mock
+            </button>
+            <button type="button" className="met-v2-drawer-footer-btn" onClick={() => onToast('要求补充材料（待建设）')}>
+              要求补充材料
+            </button>
+          </div>
+        </div>
+      </aside>
+    </>
+  );
+}
 
 function V2DrawerEmpty({ onClose }: { onClose: () => void }) {
   return (
@@ -47,8 +218,12 @@ const PRIORITY_CLASS: Record<StaffV2Priority, string> = {
 
 const StaffV2Page: React.FC = () => {
   const snapshot = useMemo(() => buildStaffV2Snapshot(), []);
+  const applicationsSnapshot = useMemo(() => buildTeacherApplicationsSnapshot(), []);
+  const [pageView, setPageView] = useState<StaffV2PageViewMode>('overview');
+  const [applicationsTab, setApplicationsTab] = useState<TeacherApplicationsInitialTab>('all');
   const [toast, setToast] = useState<string | null>(null);
   const [drawerTeacherId, setDrawerTeacherId] = useState<string | null>(null);
+  const [applicationDrawerId, setApplicationDrawerId] = useState<string | null>(null);
 
   const showToast = useCallback((message: string) => {
     console.log('[StaffV2]', message);
@@ -57,6 +232,29 @@ const StaffV2Page: React.FC = () => {
       () => setToast(current => (current === message ? null : current)),
       2400,
     );
+  }, []);
+
+  const openTeacherApplications = useCallback(
+    (tab: TeacherApplicationsInitialTab = 'all') => {
+      setApplicationsTab(tab);
+      setPageView('teacherApplications');
+    },
+    [],
+  );
+
+  const backToOverview = useCallback(() => {
+    setPageView('overview');
+    setApplicationsTab('all');
+    setApplicationDrawerId(null);
+  }, []);
+
+  const openApplicationDrawer = useCallback((applicationId: string) => {
+    setDrawerTeacherId(null);
+    setApplicationDrawerId(applicationId);
+  }, []);
+
+  const closeApplicationDrawer = useCallback(() => {
+    setApplicationDrawerId(null);
   }, []);
 
   const handleAction = useCallback(
@@ -71,6 +269,7 @@ const StaffV2Page: React.FC = () => {
   );
 
   const openDrawer = useCallback((teacherId: string) => {
+    setApplicationDrawerId(null);
     setDrawerTeacherId(teacherId);
   }, []);
 
@@ -80,20 +279,47 @@ const StaffV2Page: React.FC = () => {
     ? snapshot.teacherDetailMap[drawerTeacherId] ?? null
     : null;
 
+  const applicationDrawerDetail = useMemo(() => {
+    if (!applicationDrawerId) return null;
+    return getTeacherApplicationDrawerDetail(
+      applicationsSnapshot.rows,
+      applicationDrawerId,
+    );
+  }, [applicationDrawerId, applicationsSnapshot.rows]);
+
+  const handlePriorityAction = useCallback(
+    (item: StaffPriorityAction) => {
+      if (item.opensTeacherApplications) {
+        openTeacherApplications(item.applicationTab ?? 'all');
+        return;
+      }
+      showToast(item.ctaToast);
+    },
+    [openTeacherApplications, showToast],
+  );
+
   const handleIssueAction = useCallback(
     (item: StaffV2IssueItem) => {
+      if (item.opensTeacherApplications) {
+        openTeacherApplications(item.applicationTab ?? 'all');
+        return;
+      }
       if (item.toastMessage) showToast(item.toastMessage);
       if (item.relatedTeacherId) openDrawer(item.relatedTeacherId);
     },
-    [openDrawer, showToast],
+    [openDrawer, openTeacherApplications, showToast],
   );
 
   const handleRequestAction = useCallback(
     (item: TeacherRequestStabilityItem) => {
+      if (item.opensTeacherApplications) {
+        openTeacherApplications(item.applicationTab ?? 'all');
+        return;
+      }
       showToast(item.ctaToast);
       if (item.relatedTeacherId) openDrawer(item.relatedTeacherId);
     },
-    [openDrawer, showToast],
+    [openDrawer, openTeacherApplications, showToast],
   );
 
   const handleOwnedMemberRisk = useCallback(
@@ -117,6 +343,14 @@ const StaffV2Page: React.FC = () => {
 
   return (
     <div className="met-staff-v2">
+      {pageView === 'teacherApplications' ? (
+        <StaffSecondaryTeacherApplicationsPage
+          initialTab={applicationsTab}
+          onBack={backToOverview}
+          onOpenDetail={openApplicationDrawer}
+          onToast={showToast}
+        />
+      ) : (
       <div className="met-staff-v2__inner">
         <header className="met-staff-v2__header">
           <div className="met-staff-v2__header-copy">
@@ -164,6 +398,13 @@ const StaffV2Page: React.FC = () => {
               >
                 状态：{filters.statusLabel}
                 <ChevronDown size={14} aria-hidden />
+              </button>
+              <button
+                type="button"
+                className="met-staff-v2__filter-btn met-staff-v2__filter-btn--ghost met-staff-v2__detail-link"
+                onClick={() => openTeacherApplications()}
+              >
+                {filters.teacherApplicationsListLabel}
               </button>
               <button
                 type="button"
@@ -270,7 +511,7 @@ const StaffV2Page: React.FC = () => {
                 <button
                   type="button"
                   className="met-staff-v2-btn met-staff-v2-btn--sm met-staff-v2-btn--ghost"
-                  onClick={() => showToast(item.ctaToast)}
+                  onClick={() => handlePriorityAction(item)}
                 >
                   {item.ctaLabel}
                 </button>
@@ -489,8 +730,9 @@ const StaffV2Page: React.FC = () => {
           </div>
         </section>
       </div>
+      )}
 
-            {drawerTeacherId ? (
+      {drawerTeacherId ? (
         <>
           <button type="button" className="met-staff-v2-drawer-overlay met-v2-drawer-overlay" aria-label="关闭老师详情" onClick={closeDrawer} />
           <aside className="met-staff-v2-drawer met-v2-drawer-panel" role="dialog" aria-labelledby="staff-v2-drawer-title">
@@ -689,6 +931,30 @@ const StaffV2Page: React.FC = () => {
             </div>
           </aside>
         </>
+      ) : null}
+
+      {applicationDrawerId ? (
+        applicationDrawerDetail ? (
+          <ApplicationDetailDrawer
+            detail={applicationDrawerDetail}
+            onClose={closeApplicationDrawer}
+            onToast={showToast}
+          />
+        ) : (
+          <>
+            <button
+              type="button"
+              className="met-staff-v2-drawer-overlay met-v2-drawer-overlay"
+              aria-label="关闭申请详情"
+              onClick={closeApplicationDrawer}
+            />
+            <aside className="met-staff-v2-drawer met-v2-drawer-panel met-v2-drawer-panel--md" role="dialog">
+              <div className="met-staff-v2-drawer__body met-v2-drawer-body">
+                <V2DrawerEmpty onClose={closeApplicationDrawer} />
+              </div>
+            </aside>
+          </>
+        )
       ) : null}
 
       {toast ? <div className="met-staff-v2-toast">{toast}</div> : null}
