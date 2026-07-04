@@ -62,6 +62,149 @@ export interface StaffV2SupplySummary {
   actionLabel: string;
 }
 
+export type StaffSupplyStatus = 'healthy' | 'watch' | 'warning' | 'highRisk';
+
+export interface StaffSupplyEvidenceItem {
+  label: string;
+  value: string;
+  isWarning?: boolean;
+}
+
+export interface StaffSupplySummaryData {
+  status: StaffSupplyStatus;
+  statusLabel: string;
+  headline: string;
+  conclusion: string;
+  impactTags: string[];
+  sourceLabel: string;
+  updatedAt: string;
+  evidenceItems: StaffSupplyEvidenceItem[];
+  evidenceButtonLabel: string;
+  evidenceToastMessage: string;
+}
+
+export interface StaffPriorityAction {
+  id: string;
+  priority: StaffV2Priority;
+  title: string;
+  impact: string;
+  owner: string;
+  sourceModules: string[];
+  suggestedAction: string;
+  ctaLabel: string;
+  ctaToast: string;
+}
+
+export interface StaffPriorityActionsSection {
+  title: string;
+  subtitle: string;
+  items: StaffPriorityAction[];
+}
+
+export interface TeacherRequestStabilityItem {
+  id: string;
+  priority: StaffV2Priority;
+  typeLabel: string;
+  teacher: string;
+  involvedCourse: string;
+  impact: string;
+  status: string;
+  suggestedAction: string;
+  ctaLabel: string;
+  ctaToast: string;
+  relatedTeacherId?: string;
+}
+
+export interface TeacherRequestStabilitySection {
+  title: string;
+  subtitle: string;
+  items: TeacherRequestStabilityItem[];
+}
+
+export interface TeacherWorkloadRepresentative {
+  name: string;
+  note: string;
+}
+
+export interface TeacherWorkloadSummaryBlock {
+  highLoadCount: string;
+  normalLoadCount: string;
+  fillableCount: string;
+  substituteCount: string;
+  representativeTeachers: TeacherWorkloadRepresentative[];
+}
+
+export interface CourseCoverageSummaryItem {
+  id: string;
+  courseType: string;
+  statusLabel: string;
+  availableTeachers: string;
+  riskNote: string;
+  suggestedAction: string;
+}
+
+export interface SubstituteResourceBlock {
+  fillableSlots: string;
+  substituteTeachers: string;
+  recommendedCourses: string;
+  ctaLabel: string;
+  ctaToast: string;
+}
+
+export interface TeacherSupplyCoverageSummary {
+  title: string;
+  subtitle: string;
+  workload: TeacherWorkloadSummaryBlock;
+  courseCoverage: CourseCoverageSummaryItem[];
+  substituteResource: SubstituteResourceBlock;
+}
+
+export interface TeacherOwnedMemberRisk {
+  teacherId: string;
+  teacherName: string;
+  ownedMembers: number;
+  riskMembers: number;
+  newMemberActivationRisk?: number;
+  lowFrequencyRisk?: number;
+  renewalWindowRisk?: number;
+  lastFollowUp: string;
+  suggestedAction: string;
+  ctaLabel: string;
+}
+
+export interface TeacherOwnedMemberRisksSection {
+  title: string;
+  subtitle: string;
+  teachers: TeacherOwnedMemberRisk[];
+}
+
+export interface TeacherContributionSummaryItem {
+  id: string;
+  name: string;
+  statusLabel: string;
+  contributionNote: string;
+  qualityNote: string;
+  riskNote?: string;
+}
+
+export interface TeacherGrowthSummarySection {
+  title: string;
+  subtitle: string;
+  contribution: {
+    title: string;
+    items: TeacherContributionSummaryItem[];
+  };
+  growth: {
+    title: string;
+    pendingReviewTeachers: string;
+    pendingMaterials: string;
+    pendingObservations: string;
+    promotionWatch: string;
+    ctaLabel: string;
+    ctaToast: string;
+  };
+}
+
 export interface StaffV2AttentionHighlight {
   id: string;
   title: string;
@@ -187,6 +330,7 @@ export interface StaffV2IssueItem {
   originLabel: string;
   fact: string;
   impact: string;
+  owner?: string;
   suggestionSource: StaffV2SuggestionSource;
   suggestionSourceLabel: string;
   suggestionAction: string;
@@ -414,6 +558,13 @@ export interface StaffV2TeacherDetail {
 export interface StaffV2Snapshot {
   meta: StaffV2Meta;
   filters: StaffV2Filters;
+  staffSupplySummary: StaffSupplySummaryData;
+  staffPriorityActions: StaffPriorityActionsSection;
+  teacherRequestStability: TeacherRequestStabilitySection;
+  teacherSupplyCoverageSummary: TeacherSupplyCoverageSummary;
+  teacherOwnedMemberRisks: TeacherOwnedMemberRisksSection;
+  staffIssueReviewQueue: StaffV2IssueQueue;
+  teacherGrowthSummary: TeacherGrowthSummarySection;
   warroom: StaffV2Warroom;
   teacherApplications: StaffV2TeacherApplications;
   workloadHeatmap: StaffV2WorkloadHeatmap;
@@ -908,7 +1059,7 @@ export function buildStaffV2Snapshot(): StaffV2Snapshot {
   });
 
   return {
-    meta: { title: '师资与团队', subtitle: '滨江馆 · 师资供给、负载与成长管理' },
+    meta: { title: '师资与团队', subtitle: '滨江馆 · 师资供给、老师负载、申请处理与成长带教' },
     filters: {
       storeLabel: '滨江馆',
       roleLabel: '全部老师',
@@ -918,6 +1069,359 @@ export function buildStaffV2Snapshot(): StaffV2Snapshot {
       primaryActionLabel: '新增老师',
       secondaryActionLabel: '成长规则',
       archiveLinkLabel: '师资档案',
+    },
+    staffSupplySummary: {
+      status: 'watch',
+      statusLabel: '观察',
+      headline: '师资供给状态：观察',
+      conclusion:
+        '本周整体师资供给基本可承接排课，但晚间普拉提和周末小班存在供给压力，2 位老师负载偏高，1 位老师可补排。当前应优先处理代课 / 请假申请、晚间课程补排和老师名下会员风险。',
+      impactTags: ['课程供给', '老师负载', '代课申请', '名下会员'],
+      sourceLabel: '系统规则建议',
+      updatedAt: '2026-06-26 09:30',
+      evidenceItems: [
+        { label: '可用老师', value: '12 人' },
+        { label: '负载偏高', value: '2 人', isWarning: true },
+        { label: '可代课老师', value: '4 人' },
+        { label: '老师端待处理申请', value: '5 条', isWarning: true },
+        { label: '老师名下会员风险', value: '9 人', isWarning: true },
+        { label: '课程覆盖风险', value: '晚间普拉提 / 周末小班', isWarning: true },
+      ],
+      evidenceButtonLabel: '查看师资判断依据',
+      evidenceToastMessage: '查看师资判断依据（待建设）',
+    },
+    staffPriorityActions: {
+      title: '本周师资优先动作',
+      subtitle: '优先处理会影响排课、代课、会员承接和教学稳定性的事项',
+      items: [
+        {
+          id: 'spa-1',
+          priority: 'P0',
+          title: '处理 3 条代课 / 请假申请',
+          impact: '本周课程稳定性',
+          owner: '店长 / 教学负责人',
+          sourceModules: ['老师端申请', '课程与排课'],
+          suggestedAction: '确认代课老师与课程名单，避免临时取消课程',
+          ctaLabel: '去处理',
+          ctaToast: '进入老师申请处理（待建设）',
+        },
+        {
+          id: 'spa-2',
+          priority: 'P1',
+          title: '补充晚间普拉提小班老师',
+          impact: '耗课目标与会员预约体验',
+          owner: '教学负责人',
+          sourceModules: ['课程与排课', '师资与团队'],
+          suggestedAction: '优先协调可代课老师或调整老师空闲时间',
+          ctaLabel: '去协调',
+          ctaToast: '进入师资协调（待建设）',
+        },
+        {
+          id: 'spa-3',
+          priority: 'P1',
+          title: '跟进 9 名老师名下风险会员',
+          impact: '会员低频、续费和老师承接质量',
+          owner: '对应老师 / 管家',
+          sourceModules: ['师资与团队', '会员经营'],
+          suggestedAction: '让老师补充课后反馈或安排下一节课',
+          ctaLabel: '去跟进',
+          ctaToast: '进入名下会员跟进（待建设）',
+        },
+        {
+          id: 'spa-4',
+          priority: 'P2',
+          title: '安排 2 位新老师带教复盘',
+          impact: '教学质量与成长稳定性',
+          owner: '教学负责人 / 导师',
+          sourceModules: ['成长与带教'],
+          suggestedAction: '安排听课、复盘和课程反馈',
+          ctaLabel: '去安排',
+          ctaToast: '进入成长带教安排（待建设）',
+        },
+      ],
+    },
+    teacherRequestStability: {
+      title: '老师端申请与排课稳定',
+      subtitle: '请假、代课、调课和资料申请会直接影响课程交付',
+      items: [
+        {
+          id: 'trs-1',
+          priority: 'P0',
+          typeLabel: '请假',
+          teacher: 'Nora',
+          involvedCourse: '周三 19:30 普拉提小班',
+          impact: '已预约 5 人，需要代课',
+          status: '待店长审核',
+          suggestedAction: '安排 Mia 代课或调整课程',
+          ctaLabel: '处理申请',
+          ctaToast: '进入老师申请处理（待建设）',
+          relatedTeacherId: 'teacher-nora',
+        },
+        {
+          id: 'trs-2',
+          priority: 'P1',
+          typeLabel: '代课',
+          teacher: 'Anna',
+          involvedCourse: '周六上午瑜伽小班',
+          impact: '课程可正常开课，但需确认会员通知',
+          status: '待教务确认',
+          suggestedAction: '确认代课老师与通知记录',
+          ctaLabel: '确认代课',
+          ctaToast: '进入老师申请处理（待建设）',
+          relatedTeacherId: 'teacher-anna',
+        },
+        {
+          id: 'trs-3',
+          priority: 'P1',
+          typeLabel: '资料审核',
+          teacher: '陈悦',
+          involvedCourse: '证书 / 课程视频',
+          impact: '可授课程配置未完成',
+          status: '待教学负责人审核',
+          suggestedAction: '教学负责人审核后开放课程类型',
+          ctaLabel: '审核资料',
+          ctaToast: '进入老师申请处理（待建设）',
+          relatedTeacherId: 'teacher-chen',
+        },
+        {
+          id: 'trs-4',
+          priority: 'P2',
+          typeLabel: '调课',
+          teacher: 'Mia',
+          involvedCourse: '周五 19:30 普拉提小班',
+          impact: '晚高峰课程需重新协调',
+          status: '待确认',
+          suggestedAction: '评估代课老师与会员通知',
+          ctaLabel: '处理申请',
+          ctaToast: '进入老师申请处理（待建设）',
+          relatedTeacherId: 'teacher-mia',
+        },
+      ],
+    },
+    teacherSupplyCoverageSummary: {
+      title: '师资供给与课程覆盖',
+      subtitle: '判断哪些老师过载、哪些课程缺老师、哪些时段可以补排',
+      workload: {
+        highLoadCount: '2 人',
+        normalLoadCount: '8 人',
+        fillableCount: '1 人',
+        substituteCount: '4 人',
+        representativeTeachers: [
+          { name: 'Mia', note: '负载偏高，晚间课较多' },
+          { name: 'Anna', note: '正常，可承接周末小班' },
+          { name: 'Nora', note: '本周请假，需代课安排' },
+          { name: '陈悦', note: '可补排，适合基础瑜伽' },
+        ],
+      },
+      courseCoverage: [
+        {
+          id: 'ccs-1',
+          courseType: '普拉提小班',
+          statusLabel: '观察',
+          availableTeachers: '3 人',
+          riskNote: '晚间供给不足',
+          suggestedAction: '协调 Nora / Anna 承接晚高峰',
+        },
+        {
+          id: 'ccs-2',
+          courseType: '瑜伽小班',
+          statusLabel: '正常',
+          availableTeachers: '4 人',
+          riskNote: '周末时段稳定',
+          suggestedAction: '保持现有排课结构',
+        },
+        {
+          id: 'ccs-3',
+          courseType: '团课',
+          statusLabel: '正常',
+          availableTeachers: '5 人',
+          riskNote: '覆盖充足',
+          suggestedAction: '关注满课率与候补释放',
+        },
+        {
+          id: 'ccs-4',
+          courseType: '私教',
+          statusLabel: '观察',
+          availableTeachers: '3 人',
+          riskNote: 'T4/T5 老师时段紧张',
+          suggestedAction: '控制私教与小班冲突',
+        },
+        {
+          id: 'ccs-5',
+          courseType: '教培 / 内训',
+          statusLabel: '待安排',
+          availableTeachers: '2 人',
+          riskNote: '需提前锁定导师档期',
+          suggestedAction: '教学负责人安排内训计划',
+        },
+      ],
+      substituteResource: {
+        fillableSlots: '6 个',
+        substituteTeachers: '4 人',
+        recommendedCourses: '周六上午普拉提小班 / 周三晚间基础小班',
+        ctaLabel: '查看可补排资源',
+        ctaToast: '进入可补排资源（待建设）',
+      },
+    },
+    teacherOwnedMemberRisks: {
+      title: '老师名下会员风险',
+      subtitle: '老师名下会员的低频、续费和新成交激活，会影响会员经营与老师承接质量',
+      teachers: [
+        {
+          teacherId: 'teacher-mia',
+          teacherName: 'Mia',
+          ownedMembers: 36,
+          riskMembers: 4,
+          lowFrequencyRisk: 2,
+          renewalWindowRisk: 2,
+          lastFollowUp: '3 天前',
+          suggestedAction: '补充课后反馈，安排下一节私教',
+          ctaLabel: '查看名下会员',
+        },
+        {
+          teacherId: 'teacher-anna',
+          teacherName: 'Anna',
+          ownedMembers: 28,
+          riskMembers: 3,
+          newMemberActivationRisk: 2,
+          lastFollowUp: '2 天前',
+          suggestedAction: '安排首次课后反馈',
+          ctaLabel: '查看名下会员',
+        },
+        {
+          teacherId: 'teacher-nora',
+          teacherName: 'Nora',
+          ownedMembers: 22,
+          riskMembers: 2,
+          renewalWindowRisk: 1,
+          lastFollowUp: '5 天前',
+          suggestedAction: '与管家同步续费窗口会员情况',
+          ctaLabel: '查看名下会员',
+        },
+      ],
+    },
+    staffIssueReviewQueue: {
+      title: '师资问题队列',
+      subtitle: '用于复盘供给、覆盖、申请、成长和名下会员风险',
+      items: [
+        {
+          id: 'sir-1',
+          priority: 'P1',
+          title: '周末小班师资覆盖不足',
+          origin: 'course_link',
+          originLabel: '课程与排课',
+          fact: '周六上午 2 节小班仅 1 位主授老师',
+          impact: '周末耗课与会员预约体验',
+          owner: '教学负责人',
+          suggestionSource: 'system_rule',
+          suggestionSourceLabel: '系统规则建议',
+          suggestionAction: '评估 Anna / Nora 补排周末小班',
+          actionLabel: '去协调',
+          toastMessage: '进入师资协调（待建设）',
+        },
+        {
+          id: 'sir-2',
+          priority: 'P1',
+          title: '教培 / 内训待安排',
+          origin: 'growth_review',
+          originLabel: '成长与带教',
+          fact: '本月内训计划尚未锁定导师档期',
+          impact: '新老师成长与教学质量',
+          owner: '教学负责人',
+          suggestionSource: 'pending_config',
+          suggestionSourceLabel: '待配置规则',
+          suggestionAction: '提前安排导师与听课计划',
+          actionLabel: '去安排',
+          toastMessage: '进入成长带教安排（待建设）',
+        },
+        {
+          id: 'sir-3',
+          priority: 'P1',
+          title: 'T4/T5 私教时段紧张',
+          origin: 'system',
+          originLabel: '系统判断',
+          fact: 'Leo / Mia 晚间私教档期接近上限',
+          impact: '高价值会员预约体验',
+          owner: '店长',
+          suggestionSource: 'system_rule',
+          suggestionSourceLabel: '系统规则建议',
+          suggestionAction: '控制私教与小班冲突，必要时调整排课',
+          actionLabel: '查看档期',
+          toastMessage: '进入课程与排课（待建设）',
+          relatedTeacherId: 'teacher-leo',
+        },
+        {
+          id: 'sir-4',
+          priority: 'P2',
+          title: '新老师独立授课资格待确认',
+          origin: 'material_review',
+          originLabel: '资料审核',
+          fact: '陈悦基础流过课视频已提交，普拉提小班仍不可独立',
+          impact: '课程供给与带教安排',
+          owner: '教学负责人',
+          suggestionSource: 'system_rule',
+          suggestionSourceLabel: '系统规则建议',
+          suggestionAction: '完成资料审核后再开放课程类型',
+          actionLabel: '审核资料',
+          toastMessage: '进入老师申请处理（待建设）',
+          relatedTeacherId: 'teacher-chen',
+        },
+        {
+          id: 'sir-5',
+          priority: 'P2',
+          title: '跨店代课规则待同步',
+          origin: 'teacher_app',
+          originLabel: '老师端申请',
+          fact: '2 位老师提交跨店代课意向，规则说明未同步',
+          impact: '代课安排与会员通知',
+          owner: '教务',
+          suggestionSource: 'pending_config',
+          suggestionSourceLabel: '待配置规则',
+          suggestionAction: '同步跨店代课规则与老师端说明',
+          actionLabel: '去同步',
+          toastMessage: '进入师资规则配置（待建设）',
+        },
+      ],
+    },
+    teacherGrowthSummary: {
+      title: '老师贡献与成长带教',
+      subtitle: '关注教学稳定性、成长路径和带教安排，不展示工资或课时费明细',
+      contribution: {
+        title: '老师贡献与稳定性摘要',
+        items: [
+          {
+            id: 'tcs-1',
+            name: 'Mia',
+            statusLabel: '稳定授课',
+            contributionNote: '普拉提小班主力，本周 18 节',
+            qualityNote: '会员评分 4.8，满课率 86%',
+            riskNote: '晚高峰集中，需分担',
+          },
+          {
+            id: 'tcs-2',
+            name: 'Anna',
+            statusLabel: '稳定授课',
+            contributionNote: '阴瑜伽 / 肩颈舒缓覆盖稳定',
+            qualityNote: '会员承接质量良好',
+          },
+          {
+            id: 'tcs-3',
+            name: 'Nora',
+            statusLabel: '可承接加课',
+            contributionNote: '流瑜伽 / 内观流贡献稳定',
+            qualityNote: '适合周末小班补排',
+          },
+        ],
+      },
+      growth: {
+        title: '成长与带教入口',
+        pendingReviewTeachers: '2 人',
+        pendingMaterials: '3 份',
+        pendingObservations: '2 次',
+        promotionWatch: '1 人',
+        ctaLabel: '查看成长与带教',
+        ctaToast: '进入成长带教安排（待建设）',
+      },
     },
     warroom: {
       section: {
@@ -1219,6 +1723,21 @@ export function buildStaffV2Snapshot(): StaffV2Snapshot {
     },
     teacherDetailMap,
   };
+}
+
+export function getStaffSupplyStatusClass(status: StaffSupplyStatus): string {
+  switch (status) {
+    case 'healthy':
+      return 'met-staff-v2-status--healthy';
+    case 'watch':
+      return 'met-staff-v2-status--watch';
+    case 'warning':
+      return 'met-staff-v2-status--warning';
+    case 'highRisk':
+      return 'met-staff-v2-status--high-risk';
+    default:
+      return 'met-staff-v2-status--watch';
+  }
 }
 
 export function getWorkloadToneClass(tone: StaffV2WorkloadTone): string {

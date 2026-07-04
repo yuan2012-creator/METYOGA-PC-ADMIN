@@ -13,4 +13,9 @@ export type {
   StaffV2WorkloadCell,
   StaffV2CourseCoverageItem,
   StaffV2TeacherContributionItem,
+  StaffSupplySummaryData,
+  StaffPriorityAction,
+  TeacherOwnedMemberRisk,
+  TeacherRequestStabilityItem,
+  TeacherGrowthSummarySection,
 } from './staffV2.viewModel';
