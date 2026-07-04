@@ -22,6 +22,7 @@ export interface MemberV2PageMeta {
     riskLabel: string;
     primaryActionLabel: string;
     memberListLabel: string;
+    highBalanceListLabel: string;
   };
 }
 
@@ -78,6 +79,7 @@ export interface MemberPriorityAction {
   ctaLabel: string;
   ctaToast: string;
   opensMemberList?: boolean;
+  opensHighBalance?: boolean;
 }
 
 export interface MemberPriorityActionsSection {
@@ -95,6 +97,7 @@ export interface MemberQueueSummaryItem {
   suggestedAction: string;
   ctaLabel: string;
   ctaToast: string;
+  opensHighBalance?: boolean;
 }
 
 export interface MemberServiceSalesQueuesSection {
@@ -249,6 +252,7 @@ export interface MemberV2RiskGraphItem {
   suggestionSource: MemberV2SuggestionSource;
   suggestionSourceLabel: string;
   bubbleScale: number;
+  opensHighBalance?: boolean;
 }
 
 export interface MemberV2RiskGraphSection {
@@ -282,6 +286,16 @@ export interface MemberV2SecondaryEntrance {
   label: string;
 }
 
+export interface MemberV2EvidenceChain {
+  purchaseSummary: string;
+  consumptionSummary: string;
+  checkinSummary: string;
+  contractNote: string;
+  pointsFlowSummary: string;
+  communicationSummary: string;
+  amountEstimateNote: string;
+}
+
 export interface MemberV2MemberDetail {
   id: string;
   name: string;
@@ -309,6 +323,7 @@ export interface MemberV2MemberDetail {
   riskFact: string;
   riskSourceLabel: string;
   riskHandleStatus: string;
+  evidenceChain?: MemberV2EvidenceChain;
 }
 
 export interface MemberV2Snapshot {
@@ -384,6 +399,15 @@ const DRAWER_DETAILS: Record<string, MemberV2MemberDetail> = {
     riskFact: '剩余 96 点，近 30 天耗课 ≤ 2 次',
     riskSourceLabel: '系统规则建议',
     riskHandleStatus: '跟进中',
+    evidenceChain: {
+      purchaseSummary: '2025-11-08 购买天选卡 120 点',
+      consumptionSummary: '近 30 天耗课 2 次，低于门店均值',
+      checkinSummary: '最近到店 2026-06-05，21 天未到店',
+      contractNote: '已签署，赠送权益不计入可退金额',
+      pointsFlowSummary: '420 分，积分不等同现金',
+      communicationSummary: '2026-06-17 微信未回复',
+      amountEstimateNote: '剩余约 ¥9,600 为经营估算，不代表可退金额',
+    },
   },
   'km-3': {
     id: 'km-3',
@@ -468,6 +492,15 @@ const DRAWER_DETAILS: Record<string, MemberV2MemberDetail> = {
     riskFact: '近 30 天未到店，剩余 36 点',
     riskSourceLabel: '系统规则建议',
     riskHandleStatus: '跟进中',
+    evidenceChain: {
+      purchaseSummary: '2025-08-12 购买锦鲤卡 60 点',
+      consumptionSummary: '近 30 天耗课 1 次',
+      checkinSummary: '最近到店 2026-05-28，29 天未到店',
+      contractNote: '已签署，无赠送权益计入退费',
+      pointsFlowSummary: '320 分，积分不等同现金',
+      communicationSummary: '2026-06-18 已发送课程推荐，待回复',
+      amountEstimateNote: '剩余约 ¥3,600 为经营估算，不代表可退金额',
+    },
   },
   'ml-5': {
     id: 'ml-5',
@@ -524,6 +557,15 @@ const DRAWER_DETAILS: Record<string, MemberV2MemberDetail> = {
     riskFact: '75 天未到店，近期表达退费意向',
     riskSourceLabel: '系统规则建议',
     riskHandleStatus: '待处理',
+    evidenceChain: {
+      purchaseSummary: '2025-06-15 购买锦鲤卡 80 点',
+      consumptionSummary: '近 90 天耗课 3 次，明显偏低',
+      checkinSummary: '最近到店 2026-04-12，75 天未到店',
+      contractNote: '已签署，赠送小班 1 节不计入可退金额',
+      pointsFlowSummary: '180 分，积分不等同现金',
+      communicationSummary: '2026-06-20 表达退费意向，需店长介入',
+      amountEstimateNote: '剩余约 ¥6,800 为经营估算，不代表可退金额',
+    },
   },
   'ml-8': {
     id: 'ml-8',
@@ -580,6 +622,15 @@ const DRAWER_DETAILS: Record<string, MemberV2MemberDetail> = {
     riskFact: '剩余 72 点，42 天未到店',
     riskSourceLabel: '系统规则建议',
     riskHandleStatus: '跟进中',
+    evidenceChain: {
+      purchaseSummary: '2025-10-05 购买天选卡 96 点',
+      consumptionSummary: '近 60 天耗课 4 次，新私教包未充分激活',
+      checkinSummary: '最近到店 2026-05-15，42 天未到店',
+      contractNote: '已签署，无赠送权益计入退费',
+      pointsFlowSummary: '560 分，积分不等同现金',
+      communicationSummary: '2026-06-10 已沟通周末上午偏好',
+      amountEstimateNote: '剩余约 ¥7,200 为经营估算，不代表可退金额',
+    },
   },
   'ml-10': {
     id: 'ml-10',
@@ -664,6 +715,228 @@ const DRAWER_DETAILS: Record<string, MemberV2MemberDetail> = {
     riskFact: '剩余 8 点，7 天内到期',
     riskSourceLabel: '系统规则建议',
     riskHandleStatus: '待处理',
+  },
+  'hb-1': {
+    id: 'hb-1',
+    name: '钱敏',
+    phoneMasked: '139****1180',
+    stageLabel: 'S4 续费窗口',
+    owner: '周航',
+    frequentStore: '滨江馆',
+    tagSummary: ['临期', '高余额低耗课', '62 天未到店'],
+    mainCard: '天选卡',
+    remaining: '92 点',
+    validUntil: '2026-07-15',
+    bonusBenefits: '无',
+    pointsBalance: '380 分',
+    contractStatus: '已签署',
+    favoriteCourses: '普拉提小班、流瑜伽',
+    favoriteTeachers: 'Mia',
+    favoriteTimes: '工作日傍晚',
+    intensityPreference: '中强度',
+    bodyNotes: '无',
+    lastFollowUp: '2026-06-18 未回复',
+    followUpOwner: '管家 · 周航',
+    followUpResult: '未回复',
+    nextPlan: '店长先确认风险，管家点对点沟通续练计划',
+    riskTrigger: '高余额低耗课',
+    riskFact: '剩余 92 点，62 天未到店，卡项临期',
+    riskSourceLabel: '系统规则建议',
+    riskHandleStatus: '待处理',
+    evidenceChain: {
+      purchaseSummary: '2025-05-10 购买天选卡 120 点',
+      consumptionSummary: '近 60 天耗课 2 次',
+      checkinSummary: '最近到店 2026-04-25，62 天未到店',
+      contractNote: '已签署，赠送权益不计入可退金额',
+      pointsFlowSummary: '380 分，积分不等同现金',
+      communicationSummary: '2026-06-18 微信未回复',
+      amountEstimateNote: '剩余约 ¥9,200 为经营估算，不代表可退金额',
+    },
+  },
+  'hb-3': {
+    id: 'hb-3',
+    name: '唐悦',
+    phoneMasked: '137****6623',
+    stageLabel: 'S4 低频风险',
+    owner: '林敏',
+    frequentStore: '滨江馆',
+    tagSummary: ['沟通异常', '高余额低耗课', '72 天未到店'],
+    mainCard: '天选卡',
+    remaining: '85 点',
+    validUntil: '2027-02-20',
+    bonusBenefits: '无',
+    pointsBalance: '290 分',
+    contractStatus: '已签署',
+    favoriteCourses: '流瑜伽',
+    favoriteTeachers: 'Mia',
+    favoriteTimes: '周末上午',
+    intensityPreference: '低中强度',
+    bodyNotes: '无',
+    lastFollowUp: '2026-06-05 微信未回复',
+    followUpOwner: '销售 · 林敏',
+    followUpResult: '未回复',
+    nextPlan: '先核对最近沟通记录，再安排适合课程体验',
+    riskTrigger: '高余额低耗课',
+    riskFact: '剩余 85 点，72 天未到店，沟通记录异常',
+    riskSourceLabel: '系统规则建议',
+    riskHandleStatus: '跟进中',
+    evidenceChain: {
+      purchaseSummary: '2025-07-01 购买天选卡 100 点',
+      consumptionSummary: '近 90 天耗课 1 次，证据待补充',
+      checkinSummary: '最近到店 2026-04-15，签到记录部分缺失',
+      contractNote: '已签署，赠送权益不计入可退金额',
+      pointsFlowSummary: '290 分，积分不等同现金',
+      communicationSummary: '2026-06-05 微信未回复，沟通记录异常',
+      amountEstimateNote: '剩余约 ¥8,500 为经营估算，不代表可退金额',
+    },
+  },
+  'hb-5': {
+    id: 'hb-5',
+    name: '郭晨',
+    phoneMasked: '136****7702',
+    stageLabel: 'S2 稳定练习',
+    owner: '林敏',
+    frequentStore: '滨江馆',
+    tagSummary: ['私教未激活', '高余额低耗课'],
+    mainCard: '私教包',
+    remaining: '54 点',
+    validUntil: '2026-12-30',
+    bonusBenefits: '无',
+    pointsBalance: '150 分',
+    contractStatus: '已签署',
+    favoriteCourses: '私教课',
+    favoriteTeachers: 'Mia',
+    favoriteTimes: '工作日中午',
+    intensityPreference: '中高强度',
+    bodyNotes: '无',
+    lastFollowUp: '2026-06-12 待确认时段',
+    followUpOwner: '销售 · 林敏',
+    followUpResult: '待确认',
+    nextPlan: '确认私教时段偏好，安排首次稳定预约',
+    riskTrigger: '高余额低耗课',
+    riskFact: '私教包余额 54 点，新私教未激活',
+    riskSourceLabel: '系统规则建议',
+    riskHandleStatus: '待处理',
+    evidenceChain: {
+      purchaseSummary: '2026-03-01 购买私教包 60 点',
+      consumptionSummary: '近 45 天私教耗课 2 次',
+      checkinSummary: '最近到店 2026-05-22，35 天未到店',
+      contractNote: '已签署，私教包按合同约定履约',
+      pointsFlowSummary: '150 分，积分不等同现金',
+      communicationSummary: '2026-06-12 待确认私教时段',
+      amountEstimateNote: '剩余约 ¥10,800 为经营估算，不代表可退金额',
+    },
+  },
+  'hb-6': {
+    id: 'hb-6',
+    name: '沈岚',
+    phoneMasked: '135****4418',
+    stageLabel: 'S3 高活跃',
+    owner: '小乔',
+    frequentStore: '滨江馆',
+    tagSummary: ['老师更换', '高余额低耗课'],
+    mainCard: '锦鲤卡',
+    remaining: '78 点',
+    validUntil: '2027-04-10',
+    bonusBenefits: '无',
+    pointsBalance: '640 分',
+    contractStatus: '已签署',
+    favoriteCourses: '阴瑜伽、流瑜伽',
+    favoriteTeachers: 'Nora',
+    favoriteTimes: '周三晚课',
+    intensityPreference: '低中强度',
+    bodyNotes: '无',
+    lastFollowUp: '2026-06-08 已说明老师调整',
+    followUpOwner: '前台 · 小乔',
+    followUpResult: '已告知',
+    nextPlan: '匹配新老师时段，恢复练习节奏',
+    riskTrigger: '高余额低耗课',
+    riskFact: '老师更换后断课，余额仍偏高',
+    riskSourceLabel: '系统规则建议',
+    riskHandleStatus: '跟进中',
+    evidenceChain: {
+      purchaseSummary: '2025-02-18 购买锦鲤卡 96 点',
+      consumptionSummary: '老师更换后近 40 天耗课 3 次',
+      checkinSummary: '最近到店 2026-05-18，39 天未到店',
+      contractNote: '已签署，赠送权益不计入可退金额',
+      pointsFlowSummary: '640 分，积分不等同现金',
+      communicationSummary: '2026-06-08 已说明老师调整安排',
+      amountEstimateNote: '剩余约 ¥7,800 为经营估算，不代表可退金额',
+    },
+  },
+  'hb-8': {
+    id: 'hb-8',
+    name: '韩露',
+    phoneMasked: '138****3371',
+    stageLabel: 'S3 高活跃',
+    owner: '林敏',
+    frequentStore: '滨江馆',
+    tagSummary: ['偏好不匹配', '低频', '积分较高'],
+    mainCard: '初遇卡',
+    remaining: '44 点',
+    validUntil: '2027-03-01',
+    bonusBenefits: '无',
+    pointsBalance: '1,280 分',
+    contractStatus: '已签署',
+    favoriteCourses: '阴瑜伽',
+    favoriteTeachers: 'Anna',
+    favoriteTimes: '周末上午',
+    intensityPreference: '低强度',
+    bodyNotes: '无',
+    lastFollowUp: '2026-06-15 已了解课程偏好',
+    followUpOwner: '销售 · 林敏',
+    followUpResult: '已记录偏好',
+    nextPlan: '推荐更匹配的低强度课程，不做催促式推销',
+    riskTrigger: '高余额低耗课',
+    riskFact: '课程偏好不匹配，练习频率偏低',
+    riskSourceLabel: '系统规则建议',
+    riskHandleStatus: '跟进中',
+    evidenceChain: {
+      purchaseSummary: '2025-12-01 购买初遇卡 48 点',
+      consumptionSummary: '近 30 天耗课 2 次，偏好阴瑜伽',
+      checkinSummary: '最近到店 2026-06-08，18 天未到店',
+      contractNote: '已签署，积分较高但不等同现金',
+      pointsFlowSummary: '1,280 分，积分不等同现金，不可折算退费',
+      communicationSummary: '2026-06-15 已了解课程偏好',
+      amountEstimateNote: '剩余约 ¥4,400 为经营估算，不代表可退金额',
+    },
+  },
+  'hb-10': {
+    id: 'hb-10',
+    name: '叶青',
+    phoneMasked: '133****9055',
+    stageLabel: 'S4 续费窗口',
+    owner: '陈悦',
+    frequentStore: '滨江馆',
+    tagSummary: ['跨店低频', '高余额低耗课'],
+    mainCard: '锦鲤卡',
+    remaining: '62 点',
+    validUntil: '2027-01-20',
+    bonusBenefits: '无',
+    pointsBalance: '310 分',
+    contractStatus: '已签署',
+    favoriteCourses: '流瑜伽',
+    favoriteTeachers: 'Anna',
+    favoriteTimes: '工作日傍晚',
+    intensityPreference: '中强度',
+    bodyNotes: '无',
+    lastFollowUp: '2026-06-14 已确认门店偏好',
+    followUpOwner: '管家 · 陈悦',
+    followUpResult: '已确认滨江馆',
+    nextPlan: '确认滨江馆练习时段，恢复稳定预约',
+    riskTrigger: '高余额低耗课',
+    riskFact: '跨店后练习频率下降，余额仍偏高',
+    riskSourceLabel: '系统规则建议',
+    riskHandleStatus: '跟进中',
+    evidenceChain: {
+      purchaseSummary: '2025-09-20 购买锦鲤卡 80 点',
+      consumptionSummary: '跨店后近 45 天耗课 3 次',
+      checkinSummary: '最近到店 2026-05-24，33 天未到店',
+      contractNote: '已签署，跨店练习需确认门店归属',
+      pointsFlowSummary: '310 分，积分不等同现金',
+      communicationSummary: '2026-06-14 已确认门店偏好为滨江馆',
+      amountEstimateNote: '剩余约 ¥6,200 为经营估算，不代表可退金额',
+    },
   },
 };
 
@@ -1003,6 +1276,7 @@ export function buildMemberV2Snapshot(): MemberV2Snapshot {
         riskLabel: '全部风险',
         primaryActionLabel: '新增线索',
         memberListLabel: '会员列表',
+        highBalanceListLabel: '高余额低耗课名单',
       },
     },
     memberOperationSummary: {
@@ -1037,8 +1311,8 @@ export function buildMemberV2Snapshot(): MemberV2Snapshot {
           sourceModules: ['会员经营', '财务与资产'],
           suggestedAction: '点对点沟通近期约课计划，必要时分配老师跟进',
           ctaLabel: '去处理',
-          ctaToast: '进入会员经营处理（待建设）',
-          opensMemberList: true,
+          ctaToast: '进入高余额低耗课名单（待建设）',
+          opensHighBalance: true,
         },
         {
           id: 'mpa-2',
@@ -1102,7 +1376,8 @@ export function buildMemberV2Snapshot(): MemberV2Snapshot {
           representativeMembers: '许倩、赵宁 等',
           suggestedAction: '点对点沟通约课计划，必要时分配老师跟进',
           ctaLabel: '去处理',
-          ctaToast: '进入会员经营处理（待建设）',
+          ctaToast: '进入高余额低耗课名单（待建设）',
+          opensHighBalance: true,
         },
         {
           id: 'sqs-3',
@@ -1264,7 +1539,7 @@ export function buildMemberV2Snapshot(): MemberV2Snapshot {
           typeLabel: '风险',
           actionLabel: '名单',
           tone: 'recall',
-          secondaryKey: 'risk_list',
+          secondaryKey: 'high_balance_list',
         },
         {
           id: 'ah-4',
@@ -1467,6 +1742,7 @@ export function buildMemberV2Snapshot(): MemberV2Snapshot {
           suggestionSource: 'system_rule',
           suggestionSourceLabel: '系统规则建议',
           bubbleScale: 1,
+          opensHighBalance: true,
         },
         {
           id: 'mr-2',
@@ -1553,6 +1829,7 @@ export function buildMemberV2Snapshot(): MemberV2Snapshot {
     },
     secondaryEntrances: [
       { key: 'member_list', label: '会员列表' },
+      { key: 'high_balance_list', label: '高余额低耗课名单' },
       { key: 'service_tasks', label: '服务任务' },
       { key: 'sales_followups', label: '销售跟进' },
       { key: 'match_list', label: '匹配名单' },

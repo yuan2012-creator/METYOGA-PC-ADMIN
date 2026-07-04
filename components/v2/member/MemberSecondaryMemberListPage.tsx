@@ -14,6 +14,7 @@ import './memberSecondaryMemberList.css';
 export interface MemberSecondaryMemberListPageProps {
   onBack: () => void;
   onOpenDetail: (memberId: string) => void;
+  onOpenHighBalance: () => void;
   onToast: (message: string) => void;
 }
 
@@ -180,6 +181,7 @@ function MemberListRowCard({
 const MemberSecondaryMemberListPage: React.FC<MemberSecondaryMemberListPageProps> = ({
   onBack,
   onOpenDetail,
+  onOpenHighBalance,
   onToast,
 }) => {
   const snapshot = useMemo(() => buildMemberListSnapshot(), []);
@@ -197,9 +199,25 @@ const MemberSecondaryMemberListPage: React.FC<MemberSecondaryMemberListPageProps
     return map;
   }, [snapshot.filterOptions]);
 
-  const toggleFilter = useCallback((group: FilterGroupKey, value: string) => {
-    setFilters(prev => ({ ...prev, [group]: value }));
-  }, []);
+  const handleSummaryClick = useCallback(
+    (itemId: string) => {
+      if (itemId === 'sum-hblc') {
+        onOpenHighBalance();
+      }
+    },
+    [onOpenHighBalance],
+  );
+
+  const toggleFilter = useCallback(
+    (group: FilterGroupKey, value: string) => {
+      if (group === 'active' && value === 'highBalanceLowConsumption') {
+        onOpenHighBalance();
+        return;
+      }
+      setFilters(prev => ({ ...prev, [group]: value }));
+    },
+    [onOpenHighBalance],
+  );
 
   const resetFilters = useCallback(() => {
     setFilters(DEFAULT_FILTERS);
@@ -270,23 +288,33 @@ const MemberSecondaryMemberListPage: React.FC<MemberSecondaryMemberListPageProps
           <p className="met-member-list__subtitle">{snapshot.meta.subtitle}</p>
           <p className="met-member-list__scope">{snapshot.meta.scopeLabel}</p>
           <p className="met-member-list__desc">{snapshot.meta.description}</p>
+          <button
+            type="button"
+            className="met-member-list__btn met-member-list__btn--ghost met-member-list__btn--sm met-member-list__hblc-entry"
+            onClick={onOpenHighBalance}
+          >
+            查看高余额低耗课名单
+          </button>
         </header>
 
         <section className="met-member-list__summary">
           {snapshot.summaryItems.map(item => (
-            <div
+            <button
               key={item.id}
+              type="button"
               className={[
                 'met-member-list__summary-card',
                 item.isWarning ? 'is-warning' : '',
                 item.isDanger ? 'is-danger' : '',
+                item.id === 'sum-hblc' ? 'is-clickable' : '',
               ]
                 .filter(Boolean)
                 .join(' ')}
+              onClick={() => handleSummaryClick(item.id)}
             >
               <span className="met-member-list__summary-value">{item.value}</span>
               <span className="met-member-list__summary-label">{item.label}</span>
-            </div>
+            </button>
           ))}
         </section>
 

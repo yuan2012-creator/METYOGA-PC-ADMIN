@@ -408,6 +408,20 @@
   gap: 5px;
 }
 
+.met-member-v2-evidence-item.is-clickable {
+  padding: 0;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  border-radius: var(--met-v2-radius-sm);
+  transition: background 0.15s ease;
+}
+
+.met-member-v2-evidence-item.is-clickable:hover {
+  background: var(--met-v2-surface-muted);
+}
+
 .met-member-v2-evidence-item.is-warning .met-member-v2-evidence-item__value {
   color: #b45309;
 }
@@ -1558,6 +1572,11 @@
   color: var(--met-v2-text-primary);
   line-height: 1.45;
   max-width: 62%;
+}
+
+.met-member-v2-drawer__row-value--note {
+  color: #b45309;
+  font-size: 11px;
 }
 
 .met-member-v2-drawer__section:first-of-type .met-member-v2-drawer__row:nth-child(3) .met-member-v2-drawer__row-value {

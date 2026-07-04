@@ -10,9 +10,10 @@ import {
   type MemberV2SuggestionSource,
 } from './memberV2.viewModel';
 import MemberSecondaryMemberListPage from './MemberSecondaryMemberListPage';
+import MemberSecondaryHighBalancePage from './MemberSecondaryHighBalancePage';
 import './memberV2.css';
 
-type MemberV2ViewMode = 'overview' | 'memberList';
+type MemberV2ViewMode = 'overview' | 'memberList' | 'highBalance';
 
 const SOURCE_TAG_CLASS: Record<MemberV2SuggestionSource, string> = {
   system_rule: 'met-member-v2-source-tag--rule',
@@ -111,6 +112,10 @@ const MemberV2Page: React.FC = () => {
     setViewMode('memberList');
   }, []);
 
+  const openHighBalance = useCallback(() => {
+    setViewMode('highBalance');
+  }, []);
+
   const backToOverview = useCallback(() => {
     setViewMode('overview');
   }, []);
@@ -121,10 +126,14 @@ const MemberV2Page: React.FC = () => {
         openMemberList();
         return;
       }
+      if (key === 'high_balance_list') {
+        openHighBalance();
+        return;
+      }
       const entrance = snapshot.secondaryEntrances.find(item => item.key === key);
       showToast(`进入 ${entrance?.label ?? key} 二级页（待建设）`);
     },
-    [openMemberList, showToast, snapshot.secondaryEntrances],
+    [openHighBalance, openMemberList, showToast, snapshot.secondaryEntrances],
   );
 
   const drawerDetail: MemberV2MemberDetail | null = drawerMemberId
@@ -173,6 +182,14 @@ const MemberV2Page: React.FC = () => {
       {viewMode === 'memberList' ? (
         <MemberSecondaryMemberListPage
           onBack={backToOverview}
+          onOpenDetail={openDetail}
+          onOpenHighBalance={openHighBalance}
+          onToast={showToast}
+        />
+      ) : viewMode === 'highBalance' ? (
+        <MemberSecondaryHighBalancePage
+          onBackToOverview={backToOverview}
+          onBackToMemberList={openMemberList}
           onOpenDetail={openDetail}
           onToast={showToast}
         />
@@ -225,6 +242,13 @@ const MemberV2Page: React.FC = () => {
             </button>
             <button
               type="button"
+              className="met-member-v2__filter-btn met-member-v2__filter-btn--link"
+              onClick={openHighBalance}
+            >
+              {meta.filters.highBalanceListLabel}
+            </button>
+            <button
+              type="button"
               className="met-member-v2__filter-btn met-member-v2__filter-btn--primary"
               onClick={() => handleAction('新增线索')}
             >
@@ -263,18 +287,25 @@ const MemberV2Page: React.FC = () => {
             </p>
             <div className="met-member-v2-evidence-grid">
               {memberOperationSummary.evidenceItems.map(item => (
-                <div
+                <button
                   key={item.label}
+                  type="button"
                   className={[
                     'met-member-v2-evidence-item',
                     item.isWarning ? 'is-warning' : '',
+                    item.label.includes('高余额低耗课') ? 'is-clickable' : '',
                   ]
                     .filter(Boolean)
                     .join(' ')}
+                  onClick={() => {
+                    if (item.label.includes('高余额低耗课')) {
+                      openHighBalance();
+                    }
+                  }}
                 >
                   <span className="met-member-v2-evidence-item__value">{item.value}</span>
                   <span className="met-member-v2-evidence-item__label">{item.label}</span>
-                </div>
+                </button>
               ))}
             </div>
             <div className="met-member-v2-conclusion__actions">
@@ -316,6 +347,10 @@ const MemberV2Page: React.FC = () => {
                   type="button"
                   className="met-member-v2-btn met-member-v2-btn--ghost met-member-v2-btn--sm"
                   onClick={() => {
+                    if (item.opensHighBalance) {
+                      openHighBalance();
+                      return;
+                    }
                     if (item.opensMemberList) {
                       openMemberList();
                       return;
@@ -361,7 +396,13 @@ const MemberV2Page: React.FC = () => {
                     <button
                       type="button"
                       className="met-member-v2-btn met-member-v2-btn--ghost met-member-v2-btn--sm"
-                      onClick={() => showToast(item.ctaToast)}
+                      onClick={() => {
+                        if (item.opensHighBalance) {
+                          openHighBalance();
+                          return;
+                        }
+                        showToast(item.ctaToast);
+                      }}
                     >
                       {item.ctaLabel}
                     </button>
@@ -403,7 +444,13 @@ const MemberV2Page: React.FC = () => {
                     <button
                       type="button"
                       className="met-member-v2-btn met-member-v2-btn--ghost met-member-v2-btn--sm"
-                      onClick={() => showToast(item.ctaToast)}
+                      onClick={() => {
+                        if (item.opensHighBalance) {
+                          openHighBalance();
+                          return;
+                        }
+                        showToast(item.ctaToast);
+                      }}
                     >
                       {item.ctaLabel}
                     </button>
@@ -598,11 +645,15 @@ const MemberV2Page: React.FC = () => {
                     type="button"
                     className="met-member-v2-btn met-member-v2-btn--ghost met-member-v2-btn--sm"
                     onClick={() => {
+                      if (item.opensHighBalance) {
+                        openHighBalance();
+                        return;
+                      }
                       if (item.actionLabel === '查看名单') {
                         openSecondary('risk_list');
-                      } else {
-                        showToast(`${item.actionLabel}（待建设）`);
+                        return;
                       }
+                      showToast(`${item.actionLabel}（待建设）`);
                     }}
                   >
                     {item.actionLabel}
@@ -816,6 +867,56 @@ const MemberV2Page: React.FC = () => {
                   <span className="met-member-v2-drawer__row-label">处理状态</span>
                   <span className="met-member-v2-drawer__row-value">{drawerDetail.riskHandleStatus}</span>
                 </div>
+                {drawerDetail.evidenceChain ? (
+                  <>
+                    <div className="met-member-v2-drawer__row">
+                      <span className="met-member-v2-drawer__row-label">购买记录</span>
+                      <span className="met-member-v2-drawer__row-value">
+                        {drawerDetail.evidenceChain.purchaseSummary}
+                      </span>
+                    </div>
+                    <div className="met-member-v2-drawer__row">
+                      <span className="met-member-v2-drawer__row-label">耗课记录</span>
+                      <span className="met-member-v2-drawer__row-value">
+                        {drawerDetail.evidenceChain.consumptionSummary}
+                      </span>
+                    </div>
+                    <div className="met-member-v2-drawer__row">
+                      <span className="met-member-v2-drawer__row-label">签到记录</span>
+                      <span className="met-member-v2-drawer__row-value">
+                        {drawerDetail.evidenceChain.checkinSummary}
+                      </span>
+                    </div>
+                    <div className="met-member-v2-drawer__row">
+                      <span className="met-member-v2-drawer__row-label">合同与赠送权益</span>
+                      <span className="met-member-v2-drawer__row-value">
+                        {drawerDetail.evidenceChain.contractNote}
+                      </span>
+                    </div>
+                    <div className="met-member-v2-drawer__row">
+                      <span className="met-member-v2-drawer__row-label">积分流水</span>
+                      <span className="met-member-v2-drawer__row-value">
+                        {drawerDetail.evidenceChain.pointsFlowSummary}
+                      </span>
+                    </div>
+                    <div className="met-member-v2-drawer__row">
+                      <span className="met-member-v2-drawer__row-label">最近沟通</span>
+                      <span className="met-member-v2-drawer__row-value">
+                        {drawerDetail.evidenceChain.communicationSummary}
+                      </span>
+                    </div>
+                    <div className="met-member-v2-drawer__row">
+                      <span className="met-member-v2-drawer__row-label">金额估算说明</span>
+                      <span className="met-member-v2-drawer__row-value met-member-v2-drawer__row-value--note">
+                        {drawerDetail.evidenceChain.amountEstimateNote}
+                      </span>
+                    </div>
+                    <div className="met-member-v2-drawer__row">
+                      <span className="met-member-v2-drawer__row-label">建议下一动作</span>
+                      <span className="met-member-v2-drawer__row-value">{drawerDetail.nextPlan}</span>
+                    </div>
+                  </>
+                ) : null}
               </section>
                 </>
               ) : (
