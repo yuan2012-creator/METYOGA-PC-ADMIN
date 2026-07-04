@@ -29,6 +29,134 @@ export interface CourseV2PageMeta {
   subtitle: string;
 }
 
+export type CourseSupplyStatus = 'healthy' | 'watch' | 'warning' | 'highRisk';
+
+export interface CourseSupplyEvidenceItem {
+  label: string;
+  value: string;
+  isWarning?: boolean;
+}
+
+export interface CourseSupplySummaryData {
+  status: CourseSupplyStatus;
+  statusLabel: string;
+  headline: string;
+  conclusion: string;
+  impactTags: string[];
+  sourceLabel: string;
+  updatedAt: string;
+  evidenceItems: CourseSupplyEvidenceItem[];
+  evidenceButtonLabel: string;
+  evidenceToastMessage: string;
+}
+
+export interface CoursePriorityAction {
+  id: string;
+  priority: CourseV2Priority;
+  title: string;
+  impact: string;
+  owner: string;
+  sourceModules: string[];
+  suggestedAction: string;
+  ctaLabel: string;
+  ctaToast: string;
+}
+
+export interface CoursePriorityActionsSection {
+  title: string;
+  subtitle: string;
+  items: CoursePriorityAction[];
+}
+
+export interface ConsumptionSupplyMetric {
+  label: string;
+  value: string;
+}
+
+export interface ConsumptionSupplyCard {
+  id: string;
+  title: string;
+  metrics: ConsumptionSupplyMetric[];
+  conclusion: string;
+  status?: 'healthy' | 'watch' | 'warning' | 'opportunity';
+}
+
+export interface ConsumptionSupplySection {
+  title: string;
+  subtitle: string;
+  cards: ConsumptionSupplyCard[];
+}
+
+export interface CourseIssueCategory {
+  id: string;
+  title: string;
+  statusLabel: string;
+  representativeIssue: string;
+  suggestedAction: string;
+  entryLabel: string;
+  entryToast: string;
+}
+
+export interface CourseIssueCategoriesSection {
+  title: string;
+  subtitle: string;
+  items: CourseIssueCategory[];
+}
+
+export interface WeeklyScheduleSummary {
+  title: string;
+  subtitle: string;
+  days: CourseV2Day[];
+  viewAllLabel: string;
+  viewAllToast: string;
+}
+
+export interface TeacherSupplyLinkItem {
+  id: string;
+  name: string;
+  statusLabel: string;
+  teachableCourses: string;
+  riskOrNote: string;
+  suggestedAction: string;
+}
+
+export interface TeacherSupplyLinksSection {
+  title: string;
+  subtitle: string;
+  teachers: TeacherSupplyLinkItem[];
+  ctaLabel: string;
+  ctaToast: string;
+}
+
+export interface CourseTypePerformanceSummaryItem {
+  id: string;
+  courseType: string;
+  weeklySessions: string;
+  fillRate: string;
+  consumptionContribution: string;
+  issue: string;
+  suggestedAction: string;
+  fillMemberLabel: string;
+  fillMemberToast: string;
+}
+
+export interface CourseTypePerformanceSummarySection {
+  title: string;
+  subtitle: string;
+  items: CourseTypePerformanceSummaryItem[];
+}
+
+export interface CourseDetailEntry {
+  id: string;
+  label: string;
+  toastMessage: string;
+}
+
+export interface CourseDetailEntriesSection {
+  title: string;
+  items: CourseDetailEntry[];
+}
+
 export interface CourseV2Filters {
   storeLabel: string;
   periodLabel: string;
@@ -331,6 +459,14 @@ export interface CourseV2Snapshot {
   meta: CourseV2PageMeta;
   filters: CourseV2Filters;
   viewTabs: CourseV2ViewTab[];
+  courseSupplySummary: CourseSupplySummaryData;
+  coursePriorityActions: CoursePriorityActionsSection;
+  consumptionSupply: ConsumptionSupplySection;
+  courseIssueCategories: CourseIssueCategoriesSection;
+  weeklyScheduleSummary: WeeklyScheduleSummary;
+  teacherSupplyLinks: TeacherSupplyLinksSection;
+  courseTypePerformanceSummary: CourseTypePerformanceSummarySection;
+  courseDetailEntries: CourseDetailEntriesSection;
   warroomSection: CourseV2SectionHeader;
   supplyFocus: CourseV2SupplyFocus;
   weeklyForecast: CourseV2WeeklyConsumptionForecast;
@@ -680,7 +816,7 @@ export function buildCourseV2Snapshot(): CourseV2Snapshot {
   });
 
   return {
-    meta: { title: '课程与排课', subtitle: '滨江馆 · 本周课程供给与排班效率' },
+    meta: { title: '课程与排课', subtitle: '滨江馆 · 课程供给、耗课目标与排课决策' },
     filters: {
       storeLabel: '滨江馆',
       periodLabel: '本周',
@@ -694,6 +830,302 @@ export function buildCourseV2Snapshot(): CourseV2Snapshot {
       { id: 'today', label: '今日待处理' },
       { id: 'teacher', label: '老师供给' },
     ],
+    courseSupplySummary: {
+      status: 'warning',
+      statusLabel: '预警',
+      headline: '课程供给状态：预警',
+      conclusion:
+        '本周整体课程供给可以覆盖基础预约，但晚间普拉提小班供给不足，周三上午存在低满班课程，耗课目标完成率落后时间进度。当前应优先补排高需求课程、调整低满班课程，并协调可补排老师。',
+      impactTags: ['耗课目标', '满班率', '会员预约', '老师供给'],
+      sourceLabel: '系统规则建议',
+      updatedAt: '2026-06-26 09:30',
+      evidenceItems: [
+        { label: '本月耗课目标', value: '520 点' },
+        { label: '已完成耗课', value: '354 点' },
+        { label: '耗课完成率', value: '68%', isWarning: true },
+        { label: '落后时间进度', value: '9%', isWarning: true },
+        { label: '低满班课程', value: '6 节', isWarning: true },
+        { label: '可补耗课程', value: '7 节' },
+        { label: '推荐补排', value: '周六上午普拉提小班 / 周三晚间基础小班', isWarning: true },
+      ],
+      evidenceButtonLabel: '查看排课判断依据',
+      evidenceToastMessage: '查看排课判断依据（待建设）',
+    },
+    coursePriorityActions: {
+      title: '本周排课优先动作',
+      subtitle: '优先处理会影响耗课目标、会员预约体验和老师供给的课程问题',
+      items: [
+        {
+          id: 'cpa-1',
+          priority: 'P0',
+          title: '补排 2 节高需求普拉提小班',
+          impact: '耗课目标与晚间预约体验',
+          owner: '店长 / 教学负责人',
+          sourceModules: ['课程与排课', '师资与团队'],
+          suggestedAction: '优先补排周六上午和周三晚间普拉提小班',
+          ctaLabel: '去补排',
+          ctaToast: '进入新增排课（待建设）',
+        },
+        {
+          id: 'cpa-2',
+          priority: 'P1',
+          title: '调整 6 节低满班课程',
+          impact: '老师资源利用和课程效率',
+          owner: '教学负责人',
+          sourceModules: ['课程热力', '排课明细'],
+          suggestedAction: '复核课程时间、课程类型和老师匹配度',
+          ctaLabel: '去调整',
+          ctaToast: '进入课程调整（待建设）',
+        },
+        {
+          id: 'cpa-3',
+          priority: 'P1',
+          title: '协调 4 位可代课老师',
+          impact: '本周课程稳定性',
+          owner: '教学负责人 / 店长',
+          sourceModules: ['师资与团队'],
+          suggestedAction: '确认可代课老师时段，避免临时取消课程',
+          ctaLabel: '去协调',
+          ctaToast: '进入老师协调（待建设）',
+        },
+        {
+          id: 'cpa-4',
+          priority: 'P2',
+          title: '为 18 名候补 / 低频会员生成补员名单',
+          impact: '满班率与会员到店频率',
+          owner: '管家 / 运营',
+          sourceModules: ['会员经营', '课程与排课'],
+          suggestedAction: '按课程偏好做点对点邀约，不做群发',
+          ctaLabel: '去补员',
+          ctaToast: '进入补员名单（待建设）',
+        },
+      ],
+    },
+    consumptionSupply: {
+      title: '耗课目标与课程供给',
+      subtitle: '先判断本周课程能不能支撑本月耗课目标',
+      cards: [
+        {
+          id: 'csc-1',
+          title: '耗课目标进度',
+          status: 'warning',
+          metrics: [
+            { label: '本月目标', value: '520 点' },
+            { label: '已完成', value: '354 点' },
+            { label: '完成率', value: '68%' },
+            { label: '时间进度', value: '77%' },
+          ],
+          conclusion: '落后时间进度 9%',
+        },
+        {
+          id: 'csc-2',
+          title: '课程供给能力',
+          status: 'watch',
+          metrics: [
+            { label: '本周已排课程', value: '42 节' },
+            { label: '可承接耗课', value: '约 118 点' },
+            { label: '低满班课程', value: '6 节' },
+          ],
+          conclusion: '供给够，但结构不均衡',
+        },
+        {
+          id: 'csc-3',
+          title: '补排机会',
+          status: 'opportunity',
+          metrics: [
+            { label: '可补耗课程', value: '7 节' },
+            { label: '推荐补排', value: '周六上午普拉提小班 / 周三晚间基础小班' },
+            { label: '可补排老师', value: '4 人' },
+          ],
+          conclusion: '有补排空间',
+        },
+        {
+          id: 'csc-4',
+          title: '满班率风险',
+          status: 'warning',
+          metrics: [
+            { label: '平均满班率', value: '76%' },
+            { label: '低于预警线课程', value: '6 节' },
+            { label: '候补未承接', value: '18 人' },
+          ],
+          conclusion: '需要补员与课程调整',
+        },
+      ],
+    },
+    courseIssueCategories: {
+      title: '课程问题分类',
+      subtitle: '按供给不足、满班率低、补排机会、老师资源和会员补员拆开处理',
+      items: [
+        {
+          id: 'cic-1',
+          title: '供给不足',
+          statusLabel: '预警',
+          representativeIssue: '晚间普拉提小班预约需求高，但可排课程不足',
+          suggestedAction: '补排晚间 / 周末高需求课程',
+          entryLabel: '新增排课',
+          entryToast: '进入新增排课（待建设）',
+        },
+        {
+          id: 'cic-2',
+          title: '满班率低',
+          statusLabel: '观察',
+          representativeIssue: '周三上午基础小班预约不足',
+          suggestedAction: '调整时间、课程主题或老师匹配',
+          entryLabel: '课程调整',
+          entryToast: '进入课程调整（待建设）',
+        },
+        {
+          id: 'cic-3',
+          title: '补排机会',
+          statusLabel: '可处理',
+          representativeIssue: '本周仍有 7 节可补耗课程',
+          suggestedAction: '优先安排高需求课程',
+          entryLabel: '可补排资源',
+          entryToast: '进入可补排资源（待建设）',
+        },
+        {
+          id: 'cic-4',
+          title: '老师资源',
+          statusLabel: '观察',
+          representativeIssue: '2 位老师负载偏高，4 位老师可代课',
+          suggestedAction: '协调老师空闲时间',
+          entryLabel: '师资与团队',
+          entryToast: '进入师资与团队（待建设）',
+        },
+        {
+          id: 'cic-5',
+          title: '会员补员',
+          statusLabel: '可处理',
+          representativeIssue: '18 名候补 / 低频会员适合点对点邀约',
+          suggestedAction: '生成补员名单，禁止群发',
+          entryLabel: '会员经营',
+          entryToast: '进入补员名单（待建设）',
+        },
+      ],
+    },
+    weeklyScheduleSummary: {
+      title: '本周排课摘要',
+      subtitle: '用于查看本周课程分布和场次证据，完整排课明细后续进入二级页',
+      days: weekDays.map(day => ({
+        ...day,
+        sessions: pickKeySessionsForSummary(day.sessions, 3),
+      })),
+      viewAllLabel: '查看完整周排课',
+      viewAllToast: '查看完整周排课（待建设）',
+    },
+    teacherSupplyLinks: {
+      title: '老师供给联动',
+      subtitle: '排课调整需要同步考虑老师负载、可代课和可补排时段',
+      teachers: [
+        {
+          id: 'tsl-1',
+          name: 'Mia',
+          statusLabel: '负载偏高',
+          teachableCourses: '普拉提 / 私教',
+          riskOrNote: '晚间课程集中',
+          suggestedAction: '避免继续加晚间课',
+        },
+        {
+          id: 'tsl-2',
+          name: 'Anna',
+          statusLabel: '可补排',
+          teachableCourses: '瑜伽小班 / 基础课',
+          riskOrNote: '周末上午有空档',
+          suggestedAction: '可安排周末上午小班',
+        },
+        {
+          id: 'tsl-3',
+          name: 'Nora',
+          statusLabel: '请假 / 需代课',
+          teachableCourses: '流瑜伽 / 内观流',
+          riskOrNote: '周三晚间课程受影响',
+          suggestedAction: '安排代课老师',
+        },
+        {
+          id: 'tsl-4',
+          name: 'Lily',
+          statusLabel: '可代课',
+          teachableCourses: '基础瑜伽',
+          riskOrNote: '适合承接调整课程',
+          suggestedAction: '承接低满班课程调整',
+        },
+      ],
+      ctaLabel: '进入师资与团队',
+      ctaToast: '进入师资与团队（待建设）',
+    },
+    courseTypePerformanceSummary: {
+      title: '课程类型表现与补员入口',
+      subtitle: '用于复盘不同课程类型的预约、满班和补员机会',
+      items: [
+        {
+          id: 'ctp-1',
+          courseType: '普拉提小班',
+          weeklySessions: '18 节',
+          fillRate: '82%',
+          consumptionContribution: '预计 96 点',
+          issue: '晚间供给不足',
+          suggestedAction: '补排周末与晚间高需求时段',
+          fillMemberLabel: '补员',
+          fillMemberToast: '进入补员名单（待建设）',
+        },
+        {
+          id: 'ctp-2',
+          courseType: '瑜伽小班',
+          weeklySessions: '12 节',
+          fillRate: '88%',
+          consumptionContribution: '预计 72 点',
+          issue: '周三上午偏低',
+          suggestedAction: '调整时段或课程主题',
+          fillMemberLabel: '补员',
+          fillMemberToast: '进入补员名单（待建设）',
+        },
+        {
+          id: 'ctp-3',
+          courseType: '团课',
+          weeklySessions: '14 节',
+          fillRate: '79%',
+          consumptionContribution: '预计 54 点',
+          issue: '候补释放不及时',
+          suggestedAction: '优化候补承接流程',
+          fillMemberLabel: '补员',
+          fillMemberToast: '进入补员名单（待建设）',
+        },
+        {
+          id: 'ctp-4',
+          courseType: '私教',
+          weeklySessions: '16 节',
+          fillRate: '稳定',
+          consumptionContribution: '预计 128 点',
+          issue: 'T4/T5 时段紧张',
+          suggestedAction: '控制与小班冲突',
+          fillMemberLabel: '补员',
+          fillMemberToast: '进入补员名单（待建设）',
+        },
+        {
+          id: 'ctp-5',
+          courseType: '教培 / 内训',
+          weeklySessions: '2 节',
+          fillRate: '—',
+          consumptionContribution: '预计 8 点',
+          issue: '待安排导师档期',
+          suggestedAction: '提前锁定内训计划',
+          fillMemberLabel: '补员',
+          fillMemberToast: '进入补员名单（待建设）',
+        },
+      ],
+    },
+    courseDetailEntries: {
+      title: '排课明细入口',
+      items: [
+        { id: 'cde-1', label: '查看完整周排课', toastMessage: '查看完整周排课（待建设）' },
+        { id: 'cde-2', label: '新增排课', toastMessage: '进入新增排课（待建设）' },
+        { id: 'cde-3', label: '查看低满班课程', toastMessage: '查看低满班课程（待建设）' },
+        { id: 'cde-4', label: '查看补员名单', toastMessage: '进入补员名单（待建设）' },
+        { id: 'cde-5', label: '查看老师供给', toastMessage: '进入师资与团队（待建设）' },
+        { id: 'cde-6', label: '查看课程详情记录', toastMessage: '查看课程详情记录（待建设）' },
+        { id: 'cde-7', label: '查看排课规则', toastMessage: '打开排课规则配置（待建设）' },
+      ],
+    },
     warroomSection: {
       title: '本周排课判断',
       subtitle: '结合耗课预测、供给焦点和排课诊断判断本周课程是否需要调整',
@@ -952,6 +1384,60 @@ export function buildCourseV2Snapshot(): CourseV2Snapshot {
     },
     courseDetailMap,
   };
+}
+
+function isKeySummarySession(sess: CourseV2Session): boolean {
+  return (
+    sess.status === 'low_booking' ||
+    sess.status === 'waitlist' ||
+    sess.contributionTone === 'high_demand' ||
+    sess.contributionTone === 'p0'
+  );
+}
+
+function pickKeySessionsForSummary(sessions: CourseV2Session[], limit: number): CourseV2Session[] {
+  const prioritized = sessions.filter(isKeySummarySession);
+  const remainder = sessions.filter(sess => !isKeySummarySession(sess));
+  return [...prioritized, ...remainder].slice(0, limit);
+}
+
+export function getCourseSupplyStatusClass(status: CourseSupplyStatus): string {
+  switch (status) {
+    case 'healthy':
+      return 'met-course-v2-status-pill--healthy';
+    case 'watch':
+      return 'met-course-v2-status-pill--watch';
+    case 'warning':
+      return 'met-course-v2-status-pill--warning';
+    case 'highRisk':
+      return 'met-course-v2-status-pill--high-risk';
+    default:
+      return 'met-course-v2-status-pill--watch';
+  }
+}
+
+export function getConsumptionCardStatusClass(
+  status?: ConsumptionSupplyCard['status'],
+): string {
+  switch (status) {
+    case 'healthy':
+      return 'met-course-v2-consumption-card--healthy';
+    case 'watch':
+      return 'met-course-v2-consumption-card--watch';
+    case 'warning':
+      return 'met-course-v2-consumption-card--warning';
+    case 'opportunity':
+      return 'met-course-v2-consumption-card--opportunity';
+    default:
+      return '';
+  }
+}
+
+export function getIssueCategoryStatusClass(statusLabel: string): string {
+  if (statusLabel === '预警') return 'met-course-v2-issue-cat__status--warning';
+  if (statusLabel === '观察') return 'met-course-v2-issue-cat__status--watch';
+  if (statusLabel === '可处理') return 'met-course-v2-issue-cat__status--ready';
+  return 'met-course-v2-issue-cat__status--watch';
 }
 
 export function getCourseStatusClass(status: CourseV2Status): string {

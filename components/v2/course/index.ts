@@ -10,4 +10,12 @@ export type {
   CourseV2SupplyFocusItem,
   CourseV2CourseTypeInsightCard,
   CourseV2ExceptionSummary,
+  CourseSupplySummaryData,
+  CoursePriorityAction,
+  ConsumptionSupplyCard,
+  CourseIssueCategory,
+  WeeklyScheduleSummary,
+  TeacherSupplyLinkItem,
+  CourseTypePerformanceSummaryItem,
+  CourseDetailEntry,
 } from './courseV2.viewModel';
