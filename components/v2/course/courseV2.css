@@ -871,6 +871,21 @@
   border-color: var(--met-v2-border);
 }
 
+.met-course-v2-entry-card--accent {
+  border-color: var(--met-v2-brand-soft);
+  color: var(--met-v2-brand);
+}
+
+.met-course-v2__detail-link {
+  color: var(--met-v2-brand);
+}
+
+.met-course-v2__detail-link:hover {
+  color: var(--met-v2-brand);
+  border-color: var(--met-v2-brand-soft);
+  background: var(--met-v2-brand-soft);
+}
+
 
 .met-course-v2-zone__body {
   margin-top: 4px;

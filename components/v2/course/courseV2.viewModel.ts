@@ -1,3 +1,9 @@
+import {
+  buildWeekScheduleSnapshot,
+  type WeekScheduleSessionCard,
+  type WeekScheduleStatus,
+} from './courseSecondaryWeekSchedule.viewModel';
+
 export type CourseV2SuggestionSource = 'system_rule' | 'pending_config';
 
 export type CourseV2Priority = 'P0' | 'P1' | 'P2';
@@ -60,6 +66,8 @@ export interface CoursePriorityAction {
   suggestedAction: string;
   ctaLabel: string;
   ctaToast: string;
+  opensWeekSchedule?: boolean;
+  openNewSchedule?: boolean;
 }
 
 export interface CoursePriorityActionsSection {
@@ -109,6 +117,7 @@ export interface WeeklyScheduleSummary {
   days: CourseV2Day[];
   viewAllLabel: string;
   viewAllToast: string;
+  opensWeekSchedule?: boolean;
 }
 
 export interface TeacherSupplyLinkItem {
@@ -150,6 +159,8 @@ export interface CourseDetailEntry {
   id: string;
   label: string;
   toastMessage: string;
+  opensWeekSchedule?: boolean;
+  openNewSchedule?: boolean;
 }
 
 export interface CourseDetailEntriesSection {
@@ -164,6 +175,7 @@ export interface CourseV2Filters {
   teacherLabel: string;
   primaryActionLabel: string;
   secondaryActionLabel: string;
+  weekScheduleListLabel: string;
 }
 
 export interface CourseV2ViewTab {
@@ -739,6 +751,61 @@ function buildGenericDetail(sess: CourseV2Session, dayLabel: string): CourseV2De
   };
 }
 
+function weekStatusToCourseStatus(status: WeekScheduleStatus): CourseV2Status {
+  switch (status) {
+    case 'lowAttendance':
+      return 'low_booking';
+    case 'waitlist':
+    case 'full':
+      return 'waitlist';
+    case 'completed':
+      return 'completed';
+    case 'teacherLeaveRisk':
+    case 'conflictWarning':
+      return 'pending_confirm';
+    default:
+      return 'normal';
+  }
+}
+
+function buildDetailFromWeekSession(
+  sess: WeekScheduleSessionCard,
+  dayLabel: string,
+): CourseV2Detail {
+  const courseStatus = weekStatusToCourseStatus(sess.status);
+  const fakeSession = session({
+    id: sess.detailKey,
+    time: sess.startTime,
+    courseName: sess.courseName,
+    teacher: sess.teacherName,
+    booked: sess.bookedCount,
+    capacity: sess.capacity,
+    waitlistCount: sess.waitlistCount,
+    status: courseStatus,
+    actionLabel: '查看',
+    pointPerPerson: sess.pointCost,
+    statusLabel: sess.statusLabel,
+  });
+  const detail = buildGenericDetail(fakeSession, dayLabel);
+  return {
+    ...detail,
+    room: sess.room,
+    timeRange: `${sess.startTime}–${sess.endTime}`,
+    statusLabel: sess.statusLabel,
+    exceptionSummary: sess.attendanceRisk
+      ? {
+          reason: sess.riskTags.join(' / ') || sess.statusLabel,
+          currentConsumption: `约 ${sess.bookedCount * sess.pointCost} 点`,
+          fillableSpace: `约 ${(sess.capacity - sess.bookedCount) * sess.pointCost} 点`,
+          suggestionAction: sess.suggestedAction,
+          suggestionSource: '系统规则建议',
+          owner: '教学负责人',
+          status: '待处理 mock',
+        }
+      : detail.exceptionSummary,
+  };
+}
+
 export function buildCourseV2Snapshot(): CourseV2Snapshot {
   const weekDays: CourseV2Day[] = [
     {
@@ -815,6 +882,18 @@ export function buildCourseV2Snapshot(): CourseV2Snapshot {
     });
   });
 
+  const weekScheduleSnap = buildWeekScheduleSnapshot();
+  weekScheduleSnap.days.forEach(day => {
+    day.sessions.forEach(sess => {
+      if (!courseDetailMap[sess.detailKey]) {
+        courseDetailMap[sess.detailKey] = buildDetailFromWeekSession(
+          sess,
+          `2026年6月${day.dateLabel.replace('/', '月')}日`,
+        );
+      }
+    });
+  });
+
   return {
     meta: { title: '课程与排课', subtitle: '滨江馆 · 课程供给、耗课目标与排课决策' },
     filters: {
@@ -824,6 +903,7 @@ export function buildCourseV2Snapshot(): CourseV2Snapshot {
       teacherLabel: '全部老师',
       primaryActionLabel: '新增排课',
       secondaryActionLabel: '排课规则',
+      weekScheduleListLabel: '完整周排课',
     },
     viewTabs: [
       { id: 'week', label: '周视图' },
@@ -865,6 +945,8 @@ export function buildCourseV2Snapshot(): CourseV2Snapshot {
           suggestedAction: '优先补排周六上午和周三晚间普拉提小班',
           ctaLabel: '去补排',
           ctaToast: '进入新增排课（待建设）',
+          opensWeekSchedule: true,
+          openNewSchedule: true,
         },
         {
           id: 'cpa-2',
@@ -876,6 +958,7 @@ export function buildCourseV2Snapshot(): CourseV2Snapshot {
           suggestedAction: '复核课程时间、课程类型和老师匹配度',
           ctaLabel: '去调整',
           ctaToast: '进入课程调整（待建设）',
+          opensWeekSchedule: true,
         },
         {
           id: 'cpa-3',
@@ -887,6 +970,7 @@ export function buildCourseV2Snapshot(): CourseV2Snapshot {
           suggestedAction: '确认可代课老师时段，避免临时取消课程',
           ctaLabel: '去协调',
           ctaToast: '进入老师协调（待建设）',
+          opensWeekSchedule: true,
         },
         {
           id: 'cpa-4',
@@ -1012,6 +1096,7 @@ export function buildCourseV2Snapshot(): CourseV2Snapshot {
       })),
       viewAllLabel: '查看完整周排课',
       viewAllToast: '查看完整周排课（待建设）',
+      opensWeekSchedule: true,
     },
     teacherSupplyLinks: {
       title: '老师供给联动',
@@ -1117,9 +1202,9 @@ export function buildCourseV2Snapshot(): CourseV2Snapshot {
     courseDetailEntries: {
       title: '排课明细入口',
       items: [
-        { id: 'cde-1', label: '查看完整周排课', toastMessage: '查看完整周排课（待建设）' },
-        { id: 'cde-2', label: '新增排课', toastMessage: '进入新增排课（待建设）' },
-        { id: 'cde-3', label: '查看低满班课程', toastMessage: '查看低满班课程（待建设）' },
+        { id: 'cde-1', label: '查看完整周排课', toastMessage: '查看完整周排课（待建设）', opensWeekSchedule: true },
+        { id: 'cde-2', label: '新增排课', toastMessage: '进入新增排课（待建设）', opensWeekSchedule: true, openNewSchedule: true },
+        { id: 'cde-3', label: '查看低满班课程', toastMessage: '查看低满班课程（待建设）', opensWeekSchedule: true },
         { id: 'cde-4', label: '查看补员名单', toastMessage: '进入补员名单（待建设）' },
         { id: 'cde-5', label: '查看老师供给', toastMessage: '进入师资与团队（待建设）' },
         { id: 'cde-6', label: '查看课程详情记录', toastMessage: '查看课程详情记录（待建设）' },

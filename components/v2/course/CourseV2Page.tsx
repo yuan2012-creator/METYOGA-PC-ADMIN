@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import {
   buildCourseV2Snapshot,
@@ -10,8 +10,233 @@ import {
   type CourseV2Priority,
   type CourseV2Session,
   type CourseV2ViewMode,
+  type CourseDetailEntry,
+  type CoursePriorityAction,
 } from './courseV2.viewModel';
+import CourseSecondaryWeekSchedulePage, {
+  type WeekScheduleInitialMode,
+} from './CourseSecondaryWeekSchedulePage';
+import {
+  buildWeekScheduleSnapshot,
+  type NewScheduleDraft,
+} from './courseSecondaryWeekSchedule.viewModel';
 import './courseV2.css';
+import './courseSecondaryWeekSchedule.css';
+
+type CourseV2PageViewMode = 'overview' | 'weekSchedule';
+
+const NEW_SCHEDULE_STEPS = [
+  '选择门店',
+  '选择课程类型',
+  '选择老师',
+  '选择日期与时段',
+  '冲突检查',
+  '设置预约规则',
+  '会员端预览',
+  '提交 mock',
+] as const;
+
+function resolveWeekScheduleMode(
+  sourceId: string,
+): WeekScheduleInitialMode {
+  if (sourceId === 'cpa-2' || sourceId === 'cde-3') return 'lowAttendance';
+  if (sourceId === 'cpa-3') return 'teacherConflict';
+  return 'default';
+}
+
+function NewScheduleDrawer({
+  draft,
+  disclaimer,
+  submitToast,
+  saveDraftToast,
+  onClose,
+  onToast,
+}: {
+  draft: NewScheduleDraft;
+  disclaimer: string;
+  submitToast: string;
+  saveDraftToast: string;
+  onClose: () => void;
+  onToast: (message: string) => void;
+}) {
+  const [activeStep, setActiveStep] = useState(0);
+  const showTeacherWarn = draft.teacher === 'Mia';
+
+  return (
+    <>
+      <button
+        type="button"
+        className="met-course-v2-drawer-overlay met-v2-drawer-overlay"
+        aria-label="关闭新增排课"
+        onClick={onClose}
+      />
+      <aside
+        className="met-course-v2-drawer met-v2-drawer-panel met-v2-drawer-panel--md"
+        role="dialog"
+        aria-labelledby="new-schedule-drawer-title"
+      >
+        <div className="met-course-v2-drawer__head met-v2-drawer-header">
+          <div>
+            <h2 id="new-schedule-drawer-title" className="met-course-v2-drawer__title met-v2-drawer-title">
+              新增排课
+            </h2>
+            <p className="met-new-schedule-drawer__disclaimer">{disclaimer}</p>
+          </div>
+          <button
+            type="button"
+            className="met-course-v2-drawer__close met-v2-drawer-close"
+            aria-label="关闭"
+            onClick={onClose}
+          >
+            ×
+          </button>
+        </div>
+        <div className="met-course-v2-drawer__body met-v2-drawer-body">
+          <div className="met-new-schedule-drawer__steps">
+            {NEW_SCHEDULE_STEPS.map((label, index) => (
+              <button
+                key={label}
+                type="button"
+                className={[
+                  'met-new-schedule-drawer__step',
+                  index === activeStep ? 'is-active' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                onClick={() => setActiveStep(index)}
+              >
+                {index + 1}. {label}
+              </button>
+            ))}
+          </div>
+
+          {activeStep === 0 ? (
+            <section className="met-new-schedule-drawer__section">
+              <h3 className="met-new-schedule-drawer__section-title">步骤 1：选择门店</h3>
+              <div className="met-new-schedule-drawer__row"><span>门店</span><span>{draft.store}</span></div>
+              <div className="met-new-schedule-drawer__row"><span>教室</span><span>{draft.room}</span></div>
+            </section>
+          ) : null}
+
+          {activeStep === 1 ? (
+            <section className="met-new-schedule-drawer__section">
+              <h3 className="met-new-schedule-drawer__section-title">步骤 2：选择课程类型</h3>
+              <div className="met-new-schedule-drawer__row"><span>课程类型</span><span>{draft.courseType}</span></div>
+              <div className="met-new-schedule-drawer__row"><span>课程名称</span><span>{draft.courseName}</span></div>
+              <div className="met-new-schedule-drawer__row"><span>扣点数</span><span>{draft.pointCost} 点</span></div>
+              <div className="met-new-schedule-drawer__row"><span>容量</span><span>{draft.capacity} 人</span></div>
+            </section>
+          ) : null}
+
+          {activeStep === 2 ? (
+            <section className="met-new-schedule-drawer__section">
+              <h3 className="met-new-schedule-drawer__section-title">步骤 3：选择老师</h3>
+              <div className="met-new-schedule-drawer__row"><span>老师</span><span>{draft.teacher}</span></div>
+              <div className="met-new-schedule-drawer__row"><span>可授课程</span><span>{draft.teachableCourses}</span></div>
+              <div className="met-new-schedule-drawer__row"><span>老师负载</span><span>{draft.teacherLoad}</span></div>
+              <div className="met-new-schedule-drawer__row"><span>可用状态</span><span>{draft.teacherAvailability}</span></div>
+              {showTeacherWarn ? (
+                <p className="met-new-schedule-drawer__warn">
+                  该老师本周晚间负载偏高，建议优先选择可补排老师。
+                </p>
+              ) : null}
+            </section>
+          ) : null}
+
+          {activeStep === 3 ? (
+            <section className="met-new-schedule-drawer__section">
+              <h3 className="met-new-schedule-drawer__section-title">步骤 4：选择日期与时段</h3>
+              <div className="met-new-schedule-drawer__row"><span>日期</span><span>{draft.date}</span></div>
+              <div className="met-new-schedule-drawer__row"><span>开始时间</span><span>{draft.startTime}</span></div>
+              <div className="met-new-schedule-drawer__row"><span>结束时间</span><span>{draft.endTime}</span></div>
+              <div className="met-new-schedule-drawer__row"><span>时长</span><span>{draft.duration}</span></div>
+            </section>
+          ) : null}
+
+          {activeStep === 4 ? (
+            <section className="met-new-schedule-drawer__section">
+              <h3 className="met-new-schedule-drawer__section-title">步骤 5：冲突检查</h3>
+              <div className="met-new-schedule-drawer__row">
+                <span>老师冲突</span>
+                <span className={draft.teacherConflict === '通过' ? 'met-new-schedule-drawer__check-ok' : 'met-new-schedule-drawer__check-warn'}>
+                  {draft.teacherConflict}
+                </span>
+              </div>
+              <div className="met-new-schedule-drawer__row">
+                <span>教室冲突</span>
+                <span className={draft.roomConflict === '通过' ? 'met-new-schedule-drawer__check-ok' : 'met-new-schedule-drawer__check-warn'}>
+                  {draft.roomConflict}
+                </span>
+              </div>
+            </section>
+          ) : null}
+
+          {activeStep === 5 ? (
+            <section className="met-new-schedule-drawer__section">
+              <h3 className="met-new-schedule-drawer__section-title">步骤 6：设置预约规则</h3>
+              <div className="met-new-schedule-drawer__row"><span>开放预约时间</span><span>{draft.openBookingTime}</span></div>
+              <div className="met-new-schedule-drawer__row"><span>取消规则</span><span>{draft.cancelRule}</span></div>
+              <div className="met-new-schedule-drawer__row"><span>候补规则</span><span>{draft.waitlistRule}</span></div>
+              <div className="met-new-schedule-drawer__row"><span>最低开班人数</span><span>{draft.minStudents} 人</span></div>
+              <div className="met-new-schedule-drawer__row"><span>满班人数</span><span>{draft.maxStudents} 人</span></div>
+              <p className="met-new-schedule-drawer__disclaimer">
+                实际规则后续来自「产品与权益 / 排课规则配置」。
+              </p>
+            </section>
+          ) : null}
+
+          {activeStep === 6 ? (
+            <section className="met-new-schedule-drawer__section">
+              <h3 className="met-new-schedule-drawer__section-title">步骤 7：会员端预览</h3>
+              <div className="met-new-schedule-drawer__preview">
+                <p className="met-new-schedule-drawer__preview-title">只读预览</p>
+                <div className="met-new-schedule-drawer__row"><span>课程名称</span><span>{draft.courseName}</span></div>
+                <div className="met-new-schedule-drawer__row"><span>老师</span><span>{draft.teacher}</span></div>
+                <div className="met-new-schedule-drawer__row"><span>时间</span><span>{draft.date} {draft.startTime}–{draft.endTime}</span></div>
+                <div className="met-new-schedule-drawer__row"><span>教室</span><span>{draft.room}</span></div>
+                <div className="met-new-schedule-drawer__row"><span>扣点</span><span>{draft.pointCost} 点</span></div>
+                <div className="met-new-schedule-drawer__row"><span>可预约人数</span><span>{draft.capacity} 人</span></div>
+                <div className="met-new-schedule-drawer__row"><span>预约窗口</span><span>{draft.openBookingTime}</span></div>
+              </div>
+            </section>
+          ) : null}
+
+          {activeStep === 7 ? (
+            <section className="met-new-schedule-drawer__section">
+              <h3 className="met-new-schedule-drawer__section-title">步骤 8：提交 mock</h3>
+              <p className="met-new-schedule-drawer__disclaimer">
+                提交后仅进入审核 mock 流程，不会真实发布课程，也不会通知会员。
+              </p>
+            </section>
+          ) : null}
+
+          <div className="met-course-v2-drawer__actions met-v2-drawer-footer met-v2-drawer-footer--inline">
+            <button type="button" className="met-v2-drawer-footer-btn" onClick={onClose}>
+              取消
+            </button>
+            <button
+              type="button"
+              className="met-v2-drawer-footer-btn"
+              onClick={() => onToast(saveDraftToast)}
+            >
+              保存草稿（待建设）
+            </button>
+            <button
+              type="button"
+              className="met-v2-drawer-footer-btn met-course-v2-btn--primary"
+              onClick={() => {
+                onToast(submitToast);
+                onClose();
+              }}
+            >
+              提交审核（待建设）
+            </button>
+          </div>
+        </div>
+      </aside>
+    </>
+  );
+}
 
 const PRIORITY_CLASS: Record<CourseV2Priority, string> = {
   P0: 'met-course-v2-priority--p0',
@@ -102,8 +327,13 @@ function SessionCard({
 
 const CourseV2Page: React.FC = () => {
   const snapshot = useMemo(() => buildCourseV2Snapshot(), []);
+  const weekScheduleSnapshot = useMemo(() => buildWeekScheduleSnapshot(), []);
+  const [pageView, setPageView] = useState<CourseV2PageViewMode>('overview');
+  const [weekScheduleMode, setWeekScheduleMode] = useState<WeekScheduleInitialMode>('default');
+  const [pendingNewSchedule, setPendingNewSchedule] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [drawerSessionId, setDrawerSessionId] = useState<string | null>(null);
+  const [newScheduleOpen, setNewScheduleOpen] = useState(false);
 
   const showToast = useCallback((message: string) => {
     console.log('[CourseV2]', message);
@@ -113,6 +343,64 @@ const CourseV2Page: React.FC = () => {
       2400,
     );
   }, []);
+
+  const openWeekSchedule = useCallback(
+    (mode: WeekScheduleInitialMode = 'default', openNewSchedule = false) => {
+      setWeekScheduleMode(mode);
+      setPendingNewSchedule(openNewSchedule);
+      setPageView('weekSchedule');
+    },
+    [],
+  );
+
+  const backToOverview = useCallback(() => {
+    setPageView('overview');
+    setWeekScheduleMode('default');
+    setPendingNewSchedule(false);
+  }, []);
+
+  const openNewScheduleDrawer = useCallback(() => {
+    setNewScheduleOpen(true);
+  }, []);
+
+  const closeNewScheduleDrawer = useCallback(() => {
+    setNewScheduleOpen(false);
+  }, []);
+
+  useEffect(() => {
+    if (pageView === 'weekSchedule' && pendingNewSchedule) {
+      setNewScheduleOpen(true);
+      setPendingNewSchedule(false);
+    }
+  }, [pageView, pendingNewSchedule]);
+
+  const handlePriorityAction = useCallback(
+    (item: CoursePriorityAction) => {
+      if (item.opensWeekSchedule) {
+        openWeekSchedule(
+          resolveWeekScheduleMode(item.id),
+          Boolean(item.openNewSchedule),
+        );
+        return;
+      }
+      showToast(item.ctaToast);
+    },
+    [openWeekSchedule, showToast],
+  );
+
+  const handleDetailEntry = useCallback(
+    (entry: CourseDetailEntry) => {
+      if (entry.opensWeekSchedule) {
+        openWeekSchedule(
+          resolveWeekScheduleMode(entry.id),
+          Boolean(entry.openNewSchedule),
+        );
+        return;
+      }
+      showToast(entry.toastMessage);
+    },
+    [openWeekSchedule, showToast],
+  );
 
   const handleAction = useCallback(
     (label: string) => {
@@ -162,6 +450,15 @@ const CourseV2Page: React.FC = () => {
 
   return (
     <div className="met-course-v2">
+      {pageView === 'weekSchedule' ? (
+        <CourseSecondaryWeekSchedulePage
+          initialMode={weekScheduleMode}
+          onBack={backToOverview}
+          onOpenDetail={openDrawer}
+          onOpenNewSchedule={openNewScheduleDrawer}
+          onToast={showToast}
+        />
+      ) : (
       <div className="met-course-v2__inner">
         <header className="met-course-v2__header">
           <div className="met-course-v2__header-copy">
@@ -204,6 +501,13 @@ const CourseV2Page: React.FC = () => {
               </button>
               <button
                 type="button"
+                className="met-course-v2__filter-btn met-course-v2__filter-btn--ghost met-course-v2__detail-link"
+                onClick={() => openWeekSchedule()}
+              >
+                {filters.weekScheduleListLabel}
+              </button>
+              <button
+                type="button"
                 className="met-course-v2__filter-btn met-course-v2__filter-btn--ghost"
                 onClick={() => showToast('打开排课规则配置（待建设）')}
               >
@@ -212,7 +516,7 @@ const CourseV2Page: React.FC = () => {
               <button
                 type="button"
                 className="met-course-v2__filter-btn met-course-v2__filter-btn--primary"
-                onClick={() => handleAction('新增排课')}
+                onClick={() => openWeekSchedule('default', true)}
               >
                 {filters.primaryActionLabel}
               </button>
@@ -332,7 +636,7 @@ const CourseV2Page: React.FC = () => {
                 <button
                   type="button"
                   className="met-course-v2-btn met-course-v2-btn--sm met-course-v2-btn--ghost"
-                  onClick={() => showToast(item.ctaToast)}
+                  onClick={() => handlePriorityAction(item)}
                 >
                   {item.ctaLabel}
                 </button>
@@ -450,8 +754,8 @@ const CourseV2Page: React.FC = () => {
           <div className="met-course-v2-zone__foot">
             <button
               type="button"
-              className="met-course-v2-btn met-course-v2-btn--ghost"
-              onClick={() => showToast(weeklyScheduleSummary.viewAllToast)}
+              className="met-course-v2-btn met-course-v2-btn--ghost met-course-v2__detail-link"
+              onClick={() => openWeekSchedule()}
             >
               {weeklyScheduleSummary.viewAllLabel}
             </button>
@@ -535,8 +839,13 @@ const CourseV2Page: React.FC = () => {
               <button
                 key={entry.id}
                 type="button"
-                className="met-course-v2-entry-card"
-                onClick={() => showToast(entry.toastMessage)}
+                className={[
+                  'met-course-v2-entry-card',
+                  entry.opensWeekSchedule ? 'met-course-v2-entry-card--accent' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                onClick={() => handleDetailEntry(entry)}
               >
                 {entry.label}
               </button>
@@ -544,6 +853,7 @@ const CourseV2Page: React.FC = () => {
           </div>
         </section>
       </div>
+      )}
 
       {drawerSessionId ? (
         <>
@@ -823,6 +1133,17 @@ const CourseV2Page: React.FC = () => {
             </div>
           </aside>
         </>
+      ) : null}
+
+      {newScheduleOpen ? (
+        <NewScheduleDrawer
+          draft={weekScheduleSnapshot.newScheduleDraft}
+          disclaimer={weekScheduleSnapshot.meta.newScheduleDisclaimer}
+          submitToast={weekScheduleSnapshot.meta.submitToast}
+          saveDraftToast={weekScheduleSnapshot.meta.saveDraftToast}
+          onClose={closeNewScheduleDrawer}
+          onToast={showToast}
+        />
       ) : null}
 
       {toast ? <div className="met-course-v2-toast">{toast}</div> : null}

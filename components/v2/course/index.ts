@@ -1,4 +1,5 @@
 export { default as CourseV2Page } from './CourseV2Page';
+export { default as CourseSecondaryWeekSchedulePage } from './CourseSecondaryWeekSchedulePage';
 export type {
   CourseV2Snapshot,
   CourseV2Detail,
@@ -19,3 +20,9 @@ export type {
   CourseTypePerformanceSummaryItem,
   CourseDetailEntry,
 } from './courseV2.viewModel';
+export type { WeekScheduleInitialMode } from './CourseSecondaryWeekSchedulePage';
+export type {
+  WeekScheduleSnapshot,
+  WeekScheduleSessionCard,
+  NewScheduleDraft,
+} from './courseSecondaryWeekSchedule.viewModel';
