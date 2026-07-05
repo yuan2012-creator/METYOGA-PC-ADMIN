@@ -35,6 +35,88 @@
   color: var(--met-v2-text-secondary);
 }
 
+.met-product-rights-v2__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.met-product-rights-v2__detail-link {
+  color: var(--met-v2-brand);
+}
+
+.met-product-rights-v2__detail-link:hover {
+  border-color: var(--met-v2-brand-soft);
+  background: var(--met-v2-brand-soft);
+}
+
+.met-product-rights-v2-zone__foot {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.met-product-rights-v2-card--clickable {
+  cursor: pointer;
+  transition: border-color var(--met-v2-transition-fast);
+}
+
+.met-product-rights-v2-card--clickable:hover {
+  border-color: var(--met-v2-brand-soft);
+}
+
+.met-product-rights-v2-detail-entry--accent {
+  border-color: var(--met-v2-brand-soft);
+  color: var(--met-v2-brand);
+}
+
+.met-product-rights-v2-guardrail-link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--met-v2-brand);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.met-product-rights-v2-guardrail-link:hover {
+  text-decoration: underline;
+}
+
+.met-product-rights-v2-drawer-section {
+  margin-bottom: 18px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--met-v2-border-soft);
+}
+
+.met-product-rights-v2-drawer-section h3 {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.met-product-rights-v2-drawer-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  font-size: 12px;
+  border-bottom: 1px solid var(--met-v2-border-soft);
+}
+
+.met-product-rights-v2-drawer-row span:first-child {
+  color: var(--met-v2-text-tertiary);
+  flex-shrink: 0;
+}
+
+.met-product-rights-v2-drawer-row span:last-child {
+  text-align: right;
+  line-height: 1.45;
+  max-width: 62%;
+}
+
 /* —— 区块层级 —— */
 .met-product-rights-v2-zone--hero {
   margin-bottom: 4px;

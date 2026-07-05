@@ -31,6 +31,9 @@ export interface ProductRightsHealthSummary {
   evidenceToastMessage: string;
   primaryActionLabel: string;
   primaryActionToastMessage: string;
+  cardConfigListLabel: string;
+  opensCardConfigOnPrimary?: boolean;
+  openNewCardOnPrimary?: boolean;
 }
 
 export interface ProductRightsPriorityAction {
@@ -43,6 +46,7 @@ export interface ProductRightsPriorityAction {
   source: string;
   buttonLabel: string;
   actionToast: string;
+  opensCardConfig?: boolean;
 }
 
 export interface ProductRightsConfigDomain {
@@ -56,6 +60,7 @@ export interface ProductRightsConfigDomain {
   featured?: boolean;
   actionLabel: string;
   actionToast: string;
+  opensCardConfig?: boolean;
 }
 
 export interface ProductCardSummary {
@@ -106,6 +111,7 @@ export interface ProductRightsDetailEntry {
   id: string;
   label: string;
   actionToast: string;
+  opensCardConfig?: boolean;
 }
 
 export interface ProductRightsSnapshot {
@@ -114,6 +120,7 @@ export interface ProductRightsSnapshot {
   priorityActions: ProductRightsPriorityAction[];
   configDomains: ProductRightsConfigDomain[];
   cardProducts: ProductCardSummary[];
+  cardProductsViewAllLabel: string;
   pointsMallSummary: PointsMallSummary;
   mallProducts: MallProductSummary[];
   rightsGuardrails: string[];
@@ -166,6 +173,9 @@ export function buildProductRightsV2Snapshot(): ProductRightsSnapshot {
       evidenceToastMessage: '查看配置证据链（待建设）',
       primaryActionLabel: '新增卡项',
       primaryActionToastMessage: '新增卡项（待建设）',
+      cardConfigListLabel: '卡项配置',
+      opensCardConfigOnPrimary: true,
+      openNewCardOnPrimary: true,
     },
     priorityActions: [
       {
@@ -178,6 +188,7 @@ export function buildProductRightsV2Snapshot(): ProductRightsSnapshot {
         source: '合同与条款绑定',
         buttonLabel: '去处理',
         actionToast: '查看合同绑定（待建设）',
+        opensCardConfig: true,
       },
       {
         id: 'pa-2',
@@ -225,6 +236,7 @@ export function buildProductRightsV2Snapshot(): ProductRightsSnapshot {
         featured: true,
         actionLabel: '查看卡项配置',
         actionToast: '进入卡项配置（待建设）',
+        opensCardConfig: true,
       },
       {
         id: 'cd-points',
@@ -293,8 +305,10 @@ export function buildProductRightsV2Snapshot(): ProductRightsSnapshot {
         featured: true,
         actionLabel: '查看合同绑定',
         actionToast: '进入合同与条款绑定（待建设）',
+        opensCardConfig: true,
       },
     ],
+    cardProductsViewAllLabel: '查看全部卡项 / 配置卡项',
     cardProducts: [
       {
         cardTypeId: 'card-chuyu',
@@ -413,7 +427,7 @@ export function buildProductRightsV2Snapshot(): ProductRightsSnapshot {
       { role: '老师', summary: '仅查看课程消耗相关必要信息' },
     ],
     detailEntries: [
-      { id: 'de-cards', label: '进入卡项配置', actionToast: '进入卡项配置（待建设）' },
+      { id: 'de-cards', label: '进入卡项配置', actionToast: '进入卡项配置（待建设）', opensCardConfig: true },
       { id: 'de-mall', label: '进入积分商城', actionToast: '进入积分商城（待建设）' },
       { id: 'de-points', label: '进入积分规则', actionToast: '进入积分规则（待建设）' },
       { id: 'de-contract', label: '进入合同绑定', actionToast: '进入合同绑定（待建设）' },
