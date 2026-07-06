@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
-import { SecondaryPageHeader } from '../shared';
+import { SecondaryPageHeader, SummaryMetricGrid, type SummaryMetricItem } from '../shared';
 import {
   buildHighBalanceSnapshot,
   getHighBalanceEvidenceClass,
@@ -9,6 +9,7 @@ import {
   getHighBalanceRiskClass,
   type HighBalanceFilterOption,
   type HighBalanceMemberRow,
+  type HighBalanceSummaryItem,
 } from './memberSecondaryHighBalance.viewModel';
 import './memberSecondaryHighBalance.css';
 
@@ -17,6 +18,16 @@ export interface MemberSecondaryHighBalancePageProps {
   onBackToMemberList: () => void;
   onOpenDetail: (memberId: string) => void;
   onToast: (message: string) => void;
+}
+
+function mapHighBalanceSummaryToMetrics(items: HighBalanceSummaryItem[]): SummaryMetricItem[] {
+  return items.map(item => ({
+    id: item.id,
+    label: item.label,
+    value: item.value,
+    hint: item.note ? `（${item.note}）` : undefined,
+    status: item.isDanger ? 'danger' : item.isWarning ? 'warning' : 'normal',
+  }));
 }
 
 type FilterGroupKey = 'store' | 'risk' | 'days' | 'points' | 'card' | 'owner' | 'follow';
@@ -206,6 +217,10 @@ const MemberSecondaryHighBalancePage: React.FC<MemberSecondaryHighBalancePagePro
   onToast,
 }) => {
   const snapshot = useMemo(() => buildHighBalanceSnapshot(), []);
+  const summaryMetrics = useMemo(
+    () => mapHighBalanceSummaryToMetrics(snapshot.summaryItems),
+    [snapshot.summaryItems],
+  );
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [keyword, setKeyword] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -295,26 +310,11 @@ const MemberSecondaryHighBalancePage: React.FC<MemberSecondaryHighBalancePagePro
           disclaimer={snapshot.meta.disclaimer}
         />
 
-        <section className="met-hblc__summary">
-          {snapshot.summaryItems.map(item => (
-            <div
-              key={item.id}
-              className={[
-                'met-hblc__summary-card',
-                item.isWarning ? 'is-warning' : '',
-                item.isDanger ? 'is-danger' : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-            >
-              <span className="met-hblc__summary-value">{item.value}</span>
-              <span className="met-hblc__summary-label">
-                {item.label}
-                {item.note ? <em>（{item.note}）</em> : null}
-              </span>
-            </div>
-          ))}
-        </section>
+        <SummaryMetricGrid
+          items={summaryMetrics}
+          className="met-hblc__summary-grid"
+          columns={7}
+        />
 
         <div className="met-hblc__layout">
           <div className="met-hblc__main">

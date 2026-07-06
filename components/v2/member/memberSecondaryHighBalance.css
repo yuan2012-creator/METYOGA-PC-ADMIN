@@ -93,6 +93,42 @@
   color: #92400e;
 }
 
+/* Phase 1.3.1: summary cards migrated to SummaryMetricGrid — legacy classes retained below */
+
+.met-hblc__summary-grid.met-v2-summary-grid {
+  gap: 8px;
+  margin: 0;
+}
+
+.met-hblc__summary-grid .met-v2-summary-card {
+  padding: 12px 14px;
+}
+
+.met-hblc__summary-grid .met-v2-summary-card--danger {
+  border-color: #f5c4c4;
+  background: #fffafa;
+}
+
+.met-hblc__summary-grid .met-v2-summary-card__label,
+.met-hblc__summary-grid .met-v2-summary-card__hint {
+  display: inline;
+  margin-top: 0;
+  font-size: 11px;
+}
+
+.met-hblc__summary-grid .met-v2-summary-card__label {
+  color: var(--met-v2-text-secondary);
+}
+
+.met-hblc__summary-grid .met-v2-summary-card__hint {
+  color: var(--met-v2-text-tertiary);
+}
+
+.met-hblc__summary-grid .met-v2-summary-card__value {
+  display: block;
+  margin-bottom: 2px;
+}
+
 .met-hblc__summary {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));

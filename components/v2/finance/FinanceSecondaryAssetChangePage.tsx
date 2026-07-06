@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
-import { SecondaryPageHeader } from '../shared';
+import { SecondaryPageHeader, SummaryMetricGrid, type SummaryMetricItem } from '../shared';
 import {
   buildAssetChangeSnapshot,
   getAssetChangeEvidenceClass,
@@ -9,6 +9,7 @@ import {
   getAssetChangeTypeClass,
   type AssetChangeFilterOption,
   type AssetChangeRequestRow,
+  type AssetChangeSummaryItem,
 } from './financeSecondaryAssetChange.viewModel';
 import './financeSecondaryAssetChange.css';
 
@@ -16,6 +17,15 @@ export interface FinanceSecondaryAssetChangePageProps {
   onBack: () => void;
   onOpenDetail: (requestId: string) => void;
   onToast: (message: string) => void;
+}
+
+function mapAssetChangeSummaryToMetrics(items: AssetChangeSummaryItem[]): SummaryMetricItem[] {
+  return items.map(item => ({
+    id: item.id,
+    label: item.label,
+    value: item.value,
+    status: item.isWarning ? 'warning' : 'normal',
+  }));
 }
 
 type FilterGroupKey = 'store' | 'status' | 'evidence' | 'node' | 'owner' | 'time';
@@ -192,6 +202,10 @@ const FinanceSecondaryAssetChangePage: React.FC<FinanceSecondaryAssetChangePageP
   onToast,
 }) => {
   const snapshot = useMemo(() => buildAssetChangeSnapshot(), []);
+  const summaryMetrics = useMemo(
+    () => mapAssetChangeSummaryToMetrics(snapshot.summaryItems),
+    [snapshot.summaryItems],
+  );
   const [activeTab, setActiveTab] = useState<TypeTabValue>('all');
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [keyword, setKeyword] = useState('');
@@ -279,22 +293,11 @@ const FinanceSecondaryAssetChangePage: React.FC<FinanceSecondaryAssetChangePageP
           disclaimer={snapshot.meta.disclaimer}
         />
 
-        <section className="met-asset-change__summary">
-          {snapshot.summaryItems.map(item => (
-            <div
-              key={item.id}
-              className={[
-                'met-asset-change__summary-card',
-                item.isWarning ? 'is-warning' : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-            >
-              <span className="met-asset-change__summary-value">{item.value}</span>
-              <span className="met-asset-change__summary-label">{item.label}</span>
-            </div>
-          ))}
-        </section>
+        <SummaryMetricGrid
+          items={summaryMetrics}
+          className="met-asset-change__summary-grid"
+          columns={7}
+        />
 
         <section className="met-asset-change__tabs">
           <div className="met-asset-change__tab-list">

@@ -28,6 +28,22 @@
 .met-week-schedule__subtitle, .met-week-schedule__desc { margin: 6px 0 0; font-size: 13px; line-height: 1.5; color: var(--met-v2-text-secondary); }
 .met-week-schedule__scope { margin: 8px 0 0; font-size: 12px; font-weight: 500; color: var(--met-v2-text-secondary); }
 
+/* Phase 1.3.1: summary cards migrated to SummaryMetricGrid — legacy classes retained below */
+
+.met-week-schedule__summary-grid.met-v2-summary-grid {
+  gap: 8px;
+  margin: 0;
+}
+
+.met-week-schedule__summary-grid .met-v2-summary-card {
+  padding: 12px 14px;
+}
+
+.met-week-schedule__summary-grid .met-v2-summary-card__label {
+  margin-top: 2px;
+  color: var(--met-v2-text-tertiary);
+}
+
 .met-week-schedule__summary { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
 .met-week-schedule__summary-card { padding: 12px 14px; border: 1px solid var(--met-v2-border-soft); border-radius: var(--met-v2-radius-md); background: var(--met-v2-surface); }
 .met-week-schedule__summary-card.is-warning { border-color: #f5d9a8; background: #fffbf5; }

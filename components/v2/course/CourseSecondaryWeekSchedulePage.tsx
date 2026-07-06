@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
-import { SecondaryPageHeader } from '../shared';
+import { SecondaryPageHeader, SummaryMetricGrid, type SummaryMetricItem } from '../shared';
 import {
   buildWeekScheduleSnapshot,
   getWeekScheduleStatusClass,
@@ -8,6 +8,7 @@ import {
   type WeekScheduleFilterOption,
   type WeekScheduleRiskType,
   type WeekScheduleSessionCard,
+  type WeekScheduleSummaryItem,
 } from './courseSecondaryWeekSchedule.viewModel';
 import './courseSecondaryWeekSchedule.css';
 
@@ -23,6 +24,15 @@ export interface CourseSecondaryWeekSchedulePageProps {
 
 const WEEK_SCHEDULE_DISCLAIMER =
   '当前为 mock 排课页，新增排课、调整课程、通知会员等操作不会真实发布，不会开放预约，也不会同步老师端或会员端。';
+
+function mapWeekScheduleSummaryToMetrics(items: WeekScheduleSummaryItem[]): SummaryMetricItem[] {
+  return items.map(item => ({
+    id: item.id,
+    label: item.label,
+    value: item.value,
+    status: item.isWarning ? 'warning' : 'normal',
+  }));
+}
 
 type FilterGroupKey = 'store' | 'type' | 'teacher' | 'room' | 'status' | 'risk';
 
@@ -111,6 +121,10 @@ const CourseSecondaryWeekSchedulePage: React.FC<CourseSecondaryWeekSchedulePageP
   onToast,
 }) => {
   const snapshot = useMemo(() => buildWeekScheduleSnapshot(), []);
+  const summaryMetrics = useMemo(
+    () => mapWeekScheduleSummaryToMetrics(snapshot.summaryItems),
+    [snapshot.summaryItems],
+  );
   const [period, setPeriod] = useState('current');
   const [filters, setFilters] = useState<Record<FilterGroupKey, string>>(() => ({
     ...DEFAULT_FILTERS,
@@ -218,14 +232,11 @@ const CourseSecondaryWeekSchedulePage: React.FC<CourseSecondaryWeekSchedulePageP
           }
         />
 
-        <section className="met-week-schedule__summary">
-          {snapshot.summaryItems.map(item => (
-            <div key={item.id} className={['met-week-schedule__summary-card', item.isWarning ? 'is-warning' : ''].filter(Boolean).join(' ')}>
-              <span className="met-week-schedule__summary-value">{item.value}</span>
-              <span className="met-week-schedule__summary-label">{item.label}</span>
-            </div>
-          ))}
-        </section>
+        <SummaryMetricGrid
+          items={summaryMetrics}
+          className="met-week-schedule__summary-grid"
+          columns={7}
+        />
 
         <section className="met-week-schedule__filters">
           <div className="met-week-schedule__filter-groups">

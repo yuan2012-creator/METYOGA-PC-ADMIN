@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
-import { SecondaryPageHeader } from '../shared';
+import { SecondaryPageHeader, SummaryMetricGrid, type SummaryMetricItem } from '../shared';
 import {
   buildMemberListSnapshot,
   getMemberListActiveStatusClass,
@@ -9,6 +9,7 @@ import {
   getMemberListStageClass,
   type MemberListFilterOption,
   type MemberListRow,
+  type MemberListSummaryItem,
 } from './memberSecondaryMemberList.viewModel';
 import './memberSecondaryMemberList.css';
 
@@ -21,6 +22,19 @@ export interface MemberSecondaryMemberListPageProps {
 
 const MEMBER_LIST_DISCLAIMER =
   '当前为 mock 会员名单，跟进、约课、标记处理等操作不会真实保存；会员手机号已脱敏，不展示身份证、住址、银行卡等敏感信息。';
+
+function mapMemberListSummaryToMetrics(
+  items: MemberListSummaryItem[],
+  onHblcClick: () => void,
+): SummaryMetricItem[] {
+  return items.map(item => ({
+    id: item.id,
+    label: item.label,
+    value: item.value,
+    status: item.isDanger ? 'danger' : item.isWarning ? 'warning' : 'normal',
+    onClick: item.id === 'sum-hblc' ? onHblcClick : undefined,
+  }));
+}
 
 type FilterGroupKey = 'store' | 'stage' | 'active' | 'risk' | 'owner' | 'card';
 
@@ -189,6 +203,10 @@ const MemberSecondaryMemberListPage: React.FC<MemberSecondaryMemberListPageProps
   onToast,
 }) => {
   const snapshot = useMemo(() => buildMemberListSnapshot(), []);
+  const summaryMetrics = useMemo(
+    () => mapMemberListSummaryToMetrics(snapshot.summaryItems, onOpenHighBalance),
+    [snapshot.summaryItems, onOpenHighBalance],
+  );
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [keyword, setKeyword] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -202,15 +220,6 @@ const MemberSecondaryMemberListPage: React.FC<MemberSecondaryMemberListPageProps
     });
     return map;
   }, [snapshot.filterOptions]);
-
-  const handleSummaryClick = useCallback(
-    (itemId: string) => {
-      if (itemId === 'sum-hblc') {
-        onOpenHighBalance();
-      }
-    },
-    [onOpenHighBalance],
-  );
 
   const toggleFilter = useCallback(
     (group: FilterGroupKey, value: string) => {
@@ -292,26 +301,11 @@ const MemberSecondaryMemberListPage: React.FC<MemberSecondaryMemberListPageProps
           查看高余额低耗课名单
         </button>
 
-        <section className="met-member-list__summary">
-          {snapshot.summaryItems.map(item => (
-            <button
-              key={item.id}
-              type="button"
-              className={[
-                'met-member-list__summary-card',
-                item.isWarning ? 'is-warning' : '',
-                item.isDanger ? 'is-danger' : '',
-                item.id === 'sum-hblc' ? 'is-clickable' : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-              onClick={() => handleSummaryClick(item.id)}
-            >
-              <span className="met-member-list__summary-value">{item.value}</span>
-              <span className="met-member-list__summary-label">{item.label}</span>
-            </button>
-          ))}
-        </section>
+        <SummaryMetricGrid
+          items={summaryMetrics}
+          className="met-member-list__summary-grid"
+          columns={7}
+        />
 
         <section className="met-member-list__filters">
           <div className="met-member-list__filter-groups">

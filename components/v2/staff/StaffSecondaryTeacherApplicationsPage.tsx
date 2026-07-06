@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
-import { SecondaryPageHeader } from '../shared';
+import { SecondaryPageHeader, SummaryMetricGrid, type SummaryMetricItem } from '../shared';
 import {
   buildTeacherApplicationsSnapshot,
   getTeacherApplicationImpactClass,
@@ -10,6 +10,7 @@ import {
   type TeacherApplicationFilterOption,
   type TeacherApplicationRow,
   type TeacherApplicationType,
+  type TeacherApplicationSummaryItem,
 } from './staffSecondaryTeacherApplications.viewModel';
 import './staffSecondaryTeacherApplications.css';
 
@@ -22,6 +23,17 @@ export interface StaffSecondaryTeacherApplicationsPageProps {
   onBack: () => void;
   onOpenDetail: (applicationId: string) => void;
   onToast: (message: string) => void;
+}
+
+function mapTeacherApplicationSummaryToMetrics(
+  items: TeacherApplicationSummaryItem[],
+): SummaryMetricItem[] {
+  return items.map(item => ({
+    id: item.id,
+    label: item.label,
+    value: item.value,
+    status: item.isWarning ? 'warning' : 'normal',
+  }));
 }
 
 type FilterGroupKey =
@@ -207,6 +219,10 @@ const StaffSecondaryTeacherApplicationsPage: React.FC<
   StaffSecondaryTeacherApplicationsPageProps
 > = ({ initialTab = 'all', onBack, onOpenDetail, onToast }) => {
   const snapshot = useMemo(() => buildTeacherApplicationsSnapshot(), []);
+  const summaryMetrics = useMemo(
+    () => mapTeacherApplicationSummaryToMetrics(snapshot.summaryItems),
+    [snapshot.summaryItems],
+  );
   const [activeTab, setActiveTab] = useState<TeacherApplicationsInitialTab>(initialTab);
   const [filters, setFilters] = useState<Record<FilterGroupKey, string>>(DEFAULT_FILTERS);
   const [keyword, setKeyword] = useState('');
@@ -297,22 +313,11 @@ const StaffSecondaryTeacherApplicationsPage: React.FC<
           disclaimer={snapshot.meta.disclaimer}
         />
 
-        <section className="met-teacher-app__summary">
-          {snapshot.summaryItems.map(item => (
-            <div
-              key={item.id}
-              className={[
-                'met-teacher-app__summary-card',
-                item.isWarning ? 'is-warning' : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-            >
-              <span className="met-teacher-app__summary-value">{item.value}</span>
-              <span className="met-teacher-app__summary-label">{item.label}</span>
-            </div>
-          ))}
-        </section>
+        <SummaryMetricGrid
+          items={summaryMetrics}
+          className="met-teacher-app__summary-grid"
+          compact
+        />
 
         <section>
           <div className="met-teacher-app__type-tabs">
