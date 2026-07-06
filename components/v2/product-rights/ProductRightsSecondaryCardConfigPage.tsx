@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
-import { SecondaryPageHeader } from '../shared';
+import { SecondaryPageHeader, SummaryMetricGrid, type SummaryMetricItem } from '../shared';
 import {
   buildCardConfigSnapshot,
   getCardConfigCategoryClass,
@@ -10,10 +10,20 @@ import {
   type CardConfigFilterOption,
   type CardConfigRow,
   type CardConfigStatus,
+  type CardConfigSummaryItem,
 } from './productRightsSecondaryCardConfig.viewModel';
 import './productRightsSecondaryCardConfig.css';
 
 export type CardConfigInitialTab = 'all' | CardConfigCategory | 'inactive';
+
+function mapCardConfigSummaryToMetrics(items: CardConfigSummaryItem[]): SummaryMetricItem[] {
+  return items.map(item => ({
+    id: item.id,
+    label: item.label,
+    value: item.value,
+    status: item.isWarning ? 'warning' : 'normal',
+  }));
+}
 
 export interface ProductRightsSecondaryCardConfigPageProps {
   initialTab?: CardConfigInitialTab;
@@ -132,6 +142,10 @@ const ProductRightsSecondaryCardConfigPage: React.FC<ProductRightsSecondaryCardC
   onToast,
 }) => {
   const snapshot = useMemo(() => buildCardConfigSnapshot(), []);
+  const summaryMetrics = useMemo(
+    () => mapCardConfigSummaryToMetrics(snapshot.summaryItems),
+    [snapshot.summaryItems],
+  );
   const [activeTab, setActiveTab] = useState<CardConfigInitialTab>(initialTab);
   const [filters, setFilters] = useState<Record<FilterGroupKey, string>>(DEFAULT_FILTERS);
   const [keyword, setKeyword] = useState('');
@@ -214,17 +228,11 @@ const ProductRightsSecondaryCardConfigPage: React.FC<ProductRightsSecondaryCardC
           disclaimer={snapshot.meta.disclaimer}
         />
 
-        <section className="met-card-config__summary">
-          {snapshot.summaryItems.map(item => (
-            <div
-              key={item.id}
-              className={['met-card-config__summary-card', item.isWarning ? 'is-warning' : ''].filter(Boolean).join(' ')}
-            >
-              <span className="met-card-config__summary-value">{item.value}</span>
-              <span className="met-card-config__summary-label">{item.label}</span>
-            </div>
-          ))}
-        </section>
+        <SummaryMetricGrid
+          items={summaryMetrics}
+          className="met-card-config__summary-grid"
+          compact
+        />
 
         <section>
           <div className="met-card-config__tabs">

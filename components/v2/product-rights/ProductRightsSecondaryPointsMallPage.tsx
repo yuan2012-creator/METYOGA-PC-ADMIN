@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
-import { SecondaryPageHeader } from '../shared';
+import { SecondaryPageHeader, SummaryMetricGrid, type SummaryMetricItem } from '../shared';
 import {
   buildPointsMallSnapshot,
   getPointsMallShelfClass,
@@ -12,10 +12,20 @@ import {
   type PointsMallShelfStatus,
   type PointsMallStockStatus,
   type PointsMallVisibilityStatus,
+  type PointsMallSummaryItem,
 } from './productRightsSecondaryPointsMall.viewModel';
 import './productRightsSecondaryPointsMall.css';
 
 export type PointsMallInitialTab = 'all' | PointsMallProductType | 'inactive';
+
+function mapPointsMallSummaryToMetrics(items: PointsMallSummaryItem[]): SummaryMetricItem[] {
+  return items.map(item => ({
+    id: item.id,
+    label: item.label,
+    value: item.value,
+    status: item.isWarning ? 'warning' : 'normal',
+  }));
+}
 
 export interface ProductRightsSecondaryPointsMallPageProps {
   initialTab?: PointsMallInitialTab;
@@ -146,6 +156,10 @@ const ProductRightsSecondaryPointsMallPage: React.FC<ProductRightsSecondaryPoint
   onToast,
 }) => {
   const snapshot = useMemo(() => buildPointsMallSnapshot(), []);
+  const summaryMetrics = useMemo(
+    () => mapPointsMallSummaryToMetrics(snapshot.summaryItems),
+    [snapshot.summaryItems],
+  );
   const [activeTab, setActiveTab] = useState<PointsMallInitialTab>(initialTab);
   const [filters, setFilters] = useState<Record<FilterGroupKey, string>>(DEFAULT_FILTERS);
   const [keyword, setKeyword] = useState('');
@@ -235,17 +249,7 @@ const ProductRightsSecondaryPointsMallPage: React.FC<ProductRightsSecondaryPoint
           disclaimer={snapshot.meta.disclaimer}
         />
 
-        <section className="met-points-mall__summary">
-          {snapshot.summaryItems.map(item => (
-            <div
-              key={item.id}
-              className={['met-points-mall__summary-card', item.isWarning ? 'is-warning' : ''].filter(Boolean).join(' ')}
-            >
-              <span className="met-points-mall__summary-value">{item.value}</span>
-              <span className="met-points-mall__summary-label">{item.label}</span>
-            </div>
-          ))}
-        </section>
+        <SummaryMetricGrid items={summaryMetrics} />
 
         <section>
           <div className="met-points-mall__tabs">
