@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { ArrowLeft, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
+import { SecondaryPageHeader } from '../shared';
 import {
   buildTeacherApplicationsSnapshot,
   getTeacherApplicationImpactClass,
@@ -282,31 +283,19 @@ const StaffSecondaryTeacherApplicationsPage: React.FC<
   return (
     <div className="met-teacher-app">
       <div className="met-teacher-app__inner">
-        <header className="met-teacher-app__header">
-          <div className="met-teacher-app__header-top">
-            <button type="button" className="met-teacher-app__back" onClick={onBack}>
-              <ArrowLeft size={16} aria-hidden />
-              返回师资与团队
-            </button>
-            <div className="met-teacher-app__header-actions">
-              <button
-                type="button"
-                className="met-teacher-app__btn met-teacher-app__btn--ghost"
-                onClick={() => onToast(snapshot.meta.rulesToast)}
-              >
-                审批规则（待建设）
-              </button>
-            </div>
-          </div>
-          <p className="met-teacher-app__breadcrumb">
-            {snapshot.meta.breadcrumbParent} / {snapshot.meta.breadcrumbCurrent}
-          </p>
-          <h1 className="met-teacher-app__title">{snapshot.meta.title}</h1>
-          <p className="met-teacher-app__subtitle">{snapshot.meta.subtitle}</p>
-          <p className="met-teacher-app__scope">{snapshot.meta.scopeLabel}</p>
-          <p className="met-teacher-app__desc">{snapshot.meta.description}</p>
-          <p className="met-teacher-app__disclaimer">{snapshot.meta.disclaimer}</p>
-        </header>
+        <SecondaryPageHeader
+          backLabel="返回师资与团队"
+          onBack={onBack}
+          breadcrumb={`${snapshot.meta.breadcrumbParent} / ${snapshot.meta.breadcrumbCurrent}`}
+          title={snapshot.meta.title}
+          subtitle={snapshot.meta.subtitle}
+          scope={snapshot.meta.scopeLabel}
+          description={snapshot.meta.description}
+          primaryActionLabel="审批规则（待建设）"
+          onPrimaryAction={() => onToast(snapshot.meta.rulesToast)}
+          primaryActionVariant="ghost"
+          disclaimer={snapshot.meta.disclaimer}
+        />
 
         <section className="met-teacher-app__summary">
           {snapshot.summaryItems.map(item => (

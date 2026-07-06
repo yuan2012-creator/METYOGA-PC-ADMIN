@@ -9,6 +9,7 @@
   padding: 20px 24px 40px;
 }
 
+/* Header: migrated to SecondaryPageHeader (components/v2/shared). Styles below kept for reference. */
 .met-teacher-app__header-top {
   display: flex;
   align-items: center;

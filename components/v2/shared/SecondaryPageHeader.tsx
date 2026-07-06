@@ -12,6 +12,7 @@ export interface SecondaryPageHeaderProps {
   onBack: () => void;
   primaryActionLabel?: string;
   onPrimaryAction?: () => void;
+  primaryActionVariant?: 'primary' | 'ghost';
   disclaimer?: string;
   roleView?: string;
   updatedAt?: string;
@@ -28,6 +29,7 @@ export const SecondaryPageHeader: React.FC<SecondaryPageHeaderProps> = ({
   onBack,
   primaryActionLabel,
   onPrimaryAction,
+  primaryActionVariant = 'primary',
   disclaimer,
   roleView,
   updatedAt,
@@ -41,7 +43,16 @@ export const SecondaryPageHeader: React.FC<SecondaryPageHeaderProps> = ({
       </button>
       {primaryActionLabel && onPrimaryAction ? (
         <div className="met-v2-secondary-header__actions">
-          <button type="button" className="met-v2-secondary-header__primary" onClick={onPrimaryAction}>
+          <button
+            type="button"
+            className={[
+              'met-v2-secondary-header__primary',
+              primaryActionVariant === 'ghost' ? 'met-v2-secondary-header__primary--ghost' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+            onClick={onPrimaryAction}
+          >
             {primaryActionLabel}
           </button>
         </div>

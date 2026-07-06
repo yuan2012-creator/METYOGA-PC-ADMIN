@@ -85,6 +85,18 @@
   filter: brightness(0.95);
 }
 
+.met-v2-secondary-header__primary--ghost {
+  background: transparent;
+  border-color: var(--met-v2-border-soft);
+  color: var(--met-v2-text-secondary);
+}
+
+.met-v2-secondary-header__primary--ghost:hover {
+  filter: none;
+  border-color: var(--met-v2-border);
+  color: var(--met-v2-text-primary);
+}
+
 .met-v2-secondary-header__disclaimer {
   margin: 12px 0 0;
   padding: 10px 12px;
