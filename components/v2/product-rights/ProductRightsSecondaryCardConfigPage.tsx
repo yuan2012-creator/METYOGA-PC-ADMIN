@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { ArrowLeft, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
+import { SecondaryPageHeader } from '../shared';
 import {
   buildCardConfigSnapshot,
   getCardConfigCategoryClass,
@@ -200,25 +201,18 @@ const ProductRightsSecondaryCardConfigPage: React.FC<ProductRightsSecondaryCardC
   return (
     <div className="met-card-config">
       <div className="met-card-config__inner">
-        <header>
-          <div className="met-card-config__header-top">
-            <button type="button" className="met-card-config__back" onClick={onBack}>
-              <ArrowLeft size={16} aria-hidden />
-              返回产品与权益
-            </button>
-            <button type="button" className="met-card-config__btn met-card-config__btn--primary" onClick={onOpenNewCard}>
-              新增卡项（待建设）
-            </button>
-          </div>
-          <p className="met-card-config__breadcrumb">
-            {snapshot.meta.breadcrumbParent} / {snapshot.meta.breadcrumbCurrent}
-          </p>
-          <h1 className="met-card-config__title">{snapshot.meta.title}</h1>
-          <p className="met-card-config__subtitle">{snapshot.meta.subtitle}</p>
-          <p className="met-card-config__scope">{snapshot.meta.scopeLabel}</p>
-          <p className="met-card-config__desc">{snapshot.meta.description}</p>
-          <p className="met-card-config__disclaimer">{snapshot.meta.disclaimer}</p>
-        </header>
+        <SecondaryPageHeader
+          backLabel="返回产品与权益"
+          onBack={onBack}
+          breadcrumb={`${snapshot.meta.breadcrumbParent} / ${snapshot.meta.breadcrumbCurrent}`}
+          title={snapshot.meta.title}
+          subtitle={snapshot.meta.subtitle}
+          scope={snapshot.meta.scopeLabel}
+          description={snapshot.meta.description}
+          primaryActionLabel="新增卡项（待建设）"
+          onPrimaryAction={onOpenNewCard}
+          disclaimer={snapshot.meta.disclaimer}
+        />
 
         <section className="met-card-config__summary">
           {snapshot.summaryItems.map(item => (
