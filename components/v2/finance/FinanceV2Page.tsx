@@ -30,6 +30,7 @@ import {
   getAssetChangeStatusClass,
   type AssetChangeDrawerDetail,
 } from './financeSecondaryAssetChange.viewModel';
+import { DrawerEmptyState } from '../shared';
 import './financeV2.css';
 
 type FinanceV2ViewMode = 'overview' | 'assetChangeRequests';
@@ -40,18 +41,6 @@ type DrawerState =
   | { type: 'finance_evidence' }
   | { type: 'asset_change'; requestId: string }
   | null;
-
-function V2DrawerEmpty({ onClose }: { onClose: () => void }) {
-  return (
-    <div className="met-v2-drawer-empty">
-      <h3 className="met-v2-drawer-empty__title">暂无详情</h3>
-      <p className="met-v2-drawer-empty__desc">当前记录缺少详情数据，请检查 mock 配置</p>
-      <button type="button" className="met-v2-drawer-footer-btn" onClick={onClose}>
-        关闭
-      </button>
-    </div>
-  );
-}
 
 const FinanceV2Page: React.FC = () => {
   const snapshot = useMemo(() => buildFinanceV2Snapshot(), []);
@@ -1004,7 +993,10 @@ const FinanceV2Page: React.FC = () => {
                   {drawerFinance ? renderFinanceDrawer(drawerFinance) : null}
                 </>
               ) : (
-                <V2DrawerEmpty onClose={closeDrawer} />
+                <DrawerEmptyState
+                  description="当前记录缺少详情数据，请检查 mock 配置"
+                  onClose={closeDrawer}
+                />
               )}
             </div>
           </aside>

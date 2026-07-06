@@ -11,6 +11,7 @@ import {
 } from './memberV2.viewModel';
 import MemberSecondaryMemberListPage from './MemberSecondaryMemberListPage';
 import MemberSecondaryHighBalancePage from './MemberSecondaryHighBalancePage';
+import { DrawerEmptyState } from '../shared';
 import './memberV2.css';
 
 type MemberV2ViewMode = 'overview' | 'memberList' | 'highBalance';
@@ -66,18 +67,6 @@ function FlowNode({
       </span>
       <span className="met-member-v2-flow-node__action">{stage.coreAction}</span>
     </button>
-  );
-}
-
-function V2DrawerEmpty({ onClose }: { onClose: () => void }) {
-  return (
-    <div className="met-v2-drawer-empty">
-      <h3 className="met-v2-drawer-empty__title">暂无详情</h3>
-      <p className="met-v2-drawer-empty__desc">当前记录缺少详情数据，请检查 mock 配置</p>
-      <button type="button" className="met-v2-drawer-footer-btn" onClick={onClose}>
-        关闭
-      </button>
-    </div>
   );
 }
 
@@ -920,7 +909,10 @@ const MemberV2Page: React.FC = () => {
               </section>
                 </>
               ) : (
-                <V2DrawerEmpty onClose={closeAllDrawers} />
+                <DrawerEmptyState
+                  description="当前记录缺少详情数据，请检查 mock 配置"
+                  onClose={closeAllDrawers}
+                />
               )}
             </div>
             {drawerDetail ? (
@@ -1065,7 +1057,10 @@ const MemberV2Page: React.FC = () => {
               </section>
                 </>
               ) : (
-                <V2DrawerEmpty onClose={closeAllDrawers} />
+                <DrawerEmptyState
+                  description="当前记录缺少详情数据，请检查 mock 配置"
+                  onClose={closeAllDrawers}
+                />
               )}
             </div>
           </aside>

@@ -23,6 +23,7 @@ import {
   type PointsMallProductDrawerDetail,
   type NewPointsMallProductDraft,
 } from './productRightsSecondaryPointsMall.viewModel';
+import { DrawerEmptyState } from '../shared';
 import './productRightsV2.css';
 import './productRightsSecondaryCardConfig.css';
 import './productRightsSecondaryPointsMall.css';
@@ -47,18 +48,6 @@ const NEW_POINTS_MALL_STEPS = [
   '会员端预览',
   '提交 mock',
 ] as const;
-
-function V2DrawerEmpty({ onClose }: { onClose: () => void }) {
-  return (
-    <div className="met-v2-drawer-empty">
-      <h3 className="met-v2-drawer-empty__title">暂无详情</h3>
-      <p className="met-v2-drawer-empty__desc">当前记录缺少详情数据，请检查 mock 配置</p>
-      <button type="button" className="met-v2-drawer-footer-btn" onClick={onClose}>
-        关闭
-      </button>
-    </div>
-  );
-}
 
 function CardDetailDrawer({
   detail,
@@ -1041,7 +1030,7 @@ const ProductRightsV2Page: React.FC = () => {
         ) : (
           <>
             <button type="button" className="met-v2-drawer-overlay" onClick={closeCardDrawer} />
-            <aside className="met-v2-drawer-panel met-v2-drawer-panel--md"><div className="met-v2-drawer-body"><V2DrawerEmpty onClose={closeCardDrawer} /></div></aside>
+            <aside className="met-v2-drawer-panel met-v2-drawer-panel--md"><div className="met-v2-drawer-body"><DrawerEmptyState description="当前记录缺少详情数据，请检查 mock 配置" onClose={closeCardDrawer} /></div></aside>
           </>
         )
       ) : null}
@@ -1063,7 +1052,7 @@ const ProductRightsV2Page: React.FC = () => {
         ) : (
           <>
             <button type="button" className="met-v2-drawer-overlay" onClick={closeMallDrawer} />
-            <aside className="met-v2-drawer-panel met-v2-drawer-panel--md"><div className="met-v2-drawer-body"><V2DrawerEmpty onClose={closeMallDrawer} /></div></aside>
+            <aside className="met-v2-drawer-panel met-v2-drawer-panel--md"><div className="met-v2-drawer-body"><DrawerEmptyState description="当前记录缺少详情数据，请检查 mock 配置" onClose={closeMallDrawer} /></div></aside>
           </>
         )
       ) : null}

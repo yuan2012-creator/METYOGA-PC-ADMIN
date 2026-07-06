@@ -21,6 +21,7 @@ import {
   getTeacherApplicationDrawerDetail,
   type TeacherApplicationDrawerDetail,
 } from './staffSecondaryTeacherApplications.viewModel';
+import { DrawerEmptyState } from '../shared';
 import './staffV2.css';
 import './staffSecondaryTeacherApplications.css';
 
@@ -182,18 +183,6 @@ function ApplicationDetailDrawer({
         </div>
       </aside>
     </>
-  );
-}
-
-function V2DrawerEmpty({ onClose }: { onClose: () => void }) {
-  return (
-    <div className="met-v2-drawer-empty">
-      <h3 className="met-v2-drawer-empty__title">暂无详情</h3>
-      <p className="met-v2-drawer-empty__desc">当前记录缺少详情数据，请检查 mock 配置</p>
-      <button type="button" className="met-v2-drawer-footer-btn" onClick={onClose}>
-        关闭
-      </button>
-    </div>
   );
 }
 
@@ -926,7 +915,10 @@ const StaffV2Page: React.FC = () => {
               </div>
                 </>
               ) : (
-                <V2DrawerEmpty onClose={closeDrawer} />
+                <DrawerEmptyState
+                  description="当前记录缺少详情数据，请检查 mock 配置"
+                  onClose={closeDrawer}
+                />
               )}
             </div>
           </aside>
@@ -950,7 +942,10 @@ const StaffV2Page: React.FC = () => {
             />
             <aside className="met-staff-v2-drawer met-v2-drawer-panel met-v2-drawer-panel--md" role="dialog">
               <div className="met-staff-v2-drawer__body met-v2-drawer-body">
-                <V2DrawerEmpty onClose={closeApplicationDrawer} />
+                <DrawerEmptyState
+                  description="当前记录缺少详情数据，请检查 mock 配置"
+                  onClose={closeApplicationDrawer}
+                />
               </div>
             </aside>
           </>
