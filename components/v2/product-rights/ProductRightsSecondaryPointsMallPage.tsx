@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { ArrowLeft, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
+import { SecondaryPageHeader } from '../shared';
 import {
   buildPointsMallSnapshot,
   getPointsMallShelfClass,
@@ -221,25 +222,18 @@ const ProductRightsSecondaryPointsMallPage: React.FC<ProductRightsSecondaryPoint
   return (
     <div className="met-points-mall">
       <div className="met-points-mall__inner">
-        <header>
-          <div className="met-points-mall__header-top">
-            <button type="button" className="met-points-mall__back" onClick={onBack}>
-              <ArrowLeft size={16} aria-hidden />
-              返回产品与权益
-            </button>
-            <button type="button" className="met-points-mall__btn met-points-mall__btn--primary" onClick={onOpenNewProduct}>
-              新增商品（待建设）
-            </button>
-          </div>
-          <p className="met-points-mall__breadcrumb">
-            {snapshot.meta.breadcrumbParent} / {snapshot.meta.breadcrumbCurrent}
-          </p>
-          <h1 className="met-points-mall__title">{snapshot.meta.title}</h1>
-          <p className="met-points-mall__subtitle">{snapshot.meta.subtitle}</p>
-          <p className="met-points-mall__scope">{snapshot.meta.scopeLabel}</p>
-          <p className="met-points-mall__desc">{snapshot.meta.description}</p>
-          <p className="met-points-mall__disclaimer">{snapshot.meta.disclaimer}</p>
-        </header>
+        <SecondaryPageHeader
+          backLabel="返回产品与权益"
+          onBack={onBack}
+          breadcrumb={`${snapshot.meta.breadcrumbParent} / ${snapshot.meta.breadcrumbCurrent}`}
+          title={snapshot.meta.title}
+          subtitle={snapshot.meta.subtitle}
+          scope={snapshot.meta.scopeLabel}
+          description={snapshot.meta.description}
+          primaryActionLabel="新增商品（待建设）"
+          onPrimaryAction={onOpenNewProduct}
+          disclaimer={snapshot.meta.disclaimer}
+        />
 
         <section className="met-points-mall__summary">
           {snapshot.summaryItems.map(item => (
