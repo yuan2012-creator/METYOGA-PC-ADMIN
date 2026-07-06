@@ -10,16 +10,24 @@ import {
   type MallProductSummary,
 } from './productRightsV2.viewModel';
 import ProductRightsSecondaryCardConfigPage from './ProductRightsSecondaryCardConfigPage';
+import ProductRightsSecondaryPointsMallPage from './ProductRightsSecondaryPointsMallPage';
 import {
   buildCardConfigSnapshot,
   getCardConfigDrawerDetail,
   type CardConfigDrawerDetail,
   type NewCardConfigDraft,
 } from './productRightsSecondaryCardConfig.viewModel';
+import {
+  buildPointsMallSnapshot,
+  getPointsMallDrawerDetail,
+  type PointsMallProductDrawerDetail,
+  type NewPointsMallProductDraft,
+} from './productRightsSecondaryPointsMall.viewModel';
 import './productRightsV2.css';
 import './productRightsSecondaryCardConfig.css';
+import './productRightsSecondaryPointsMall.css';
 
-type ProductRightsPageViewMode = 'overview' | 'cardConfig';
+type ProductRightsPageViewMode = 'overview' | 'cardConfig' | 'pointsMall';
 
 const NEW_CARD_STEPS = [
   '基础信息',
@@ -27,6 +35,15 @@ const NEW_CARD_STEPS = [
   '预约规则',
   '退费 / 冻结 / 转卡',
   '合同绑定',
+  '会员端预览',
+  '提交 mock',
+] as const;
+
+const NEW_POINTS_MALL_STEPS = [
+  '基础信息',
+  '积分与库存',
+  '兑换规则',
+  '领取 / 核销规则',
   '会员端预览',
   '提交 mock',
 ] as const;
@@ -313,14 +330,272 @@ function NewCardDrawer({
   );
 }
 
+function PointsMallProductDetailDrawer({
+  detail,
+  onClose,
+  onToast,
+  onEdit,
+}: {
+  detail: PointsMallProductDrawerDetail;
+  onClose: () => void;
+  onToast: (message: string) => void;
+  onEdit: () => void;
+}) {
+  return (
+    <>
+      <button type="button" className="met-v2-drawer-overlay" aria-label="关闭积分商品详情" onClick={onClose} />
+      <aside className="met-v2-drawer-panel met-v2-drawer-panel--md" role="dialog">
+        <div className="met-v2-drawer-header">
+          <div>
+            <h2 className="met-v2-drawer-title">{detail.drawerTitle}</h2>
+            <p className="met-v2-drawer-subtitle">{detail.productName} · {detail.shelfStatusLabel}</p>
+          </div>
+          <button type="button" className="met-v2-drawer-close" aria-label="关闭" onClick={onClose}>×</button>
+        </div>
+        <div className="met-v2-drawer-body">
+          <section className="met-product-rights-v2-drawer-section">
+            <h3>商品概览</h3>
+            <div className="met-product-rights-v2-drawer-row"><span>商品 ID</span><span>{detail.productId}</span></div>
+            <div className="met-product-rights-v2-drawer-row"><span>商品名称</span><span>{detail.productName}</span></div>
+            <div className="met-product-rights-v2-drawer-row"><span>商品类型</span><span>{detail.productTypeLabel}</span></div>
+            <div className="met-product-rights-v2-drawer-row"><span>当前状态</span><span>{detail.shelfStatusLabel}</span></div>
+            <div className="met-product-rights-v2-drawer-row"><span>所需积分</span><span>{detail.pointsPrice}</span></div>
+            <div className="met-product-rights-v2-drawer-row"><span>当前库存</span><span>{detail.stock}</span></div>
+            <div className="met-product-rights-v2-drawer-row"><span>适用门店</span><span>{detail.applicableStores}</span></div>
+            <div className="met-product-rights-v2-drawer-row"><span>领取方式</span><span>{detail.deliveryMethod}</span></div>
+            <div className="met-product-rights-v2-drawer-row"><span>会员端是否展示</span><span>{detail.visibleOnMemberApp ? '展示' : '隐藏'}</span></div>
+            <div className="met-product-rights-v2-drawer-row"><span>创建人</span><span>{detail.createdBy}</span></div>
+            <div className="met-product-rights-v2-drawer-row"><span>更新时间</span><span>{detail.updatedAt}</span></div>
+          </section>
+
+          <section className="met-product-rights-v2-drawer-section">
+            <h3>积分与库存规则</h3>
+            <div className="met-product-rights-v2-drawer-row"><span>兑换所需积分</span><span>{detail.pointsPrice}</span></div>
+            <div className="met-product-rights-v2-drawer-row"><span>库存数量</span><span>{detail.stock}</span></div>
+            <div className="met-product-rights-v2-drawer-row"><span>库存预警线</span><span>{detail.stockWarningLine}</span></div>
+            <div className="met-product-rights-v2-drawer-row"><span>每人限兑</span><span>{detail.redeemLimit}</span></div>
+            <div className="met-product-rights-v2-drawer-row"><span>每月限兑</span><span>{detail.monthlyRedeemLimit}</span></div>
+            <div className="met-product-rights-v2-drawer-row"><span>是否允许重复兑换</span><span>{detail.allowRepeatRedeem ? '是' : '否'}</span></div>
+            <div className="met-product-rights-v2-drawer-row"><span>积分扣减方式</span><span>{detail.pointsDeductionMethod}</span></div>
+            <div className="met-product-rights-v2-drawer-row"><span>积分退回规则</span><span>{detail.pointsRefundRule}</span></div>
+          </section>
+
+          <section className="met-product-rights-v2-drawer-section">
+            <h3>兑换规则</h3>
+            <div className="met-product-rights-v2-drawer-row"><span>适用会员</span><span>{detail.applicableMembers}</span></div>
+            <div className="met-product-rights-v2-drawer-row"><span>兑换有效期</span><span>{detail.redeemValidity}</span></div>
+            <div className="met-product-rights-v2-drawer-row"><span>是否需要审批</span><span>{detail.redeemApprovalRequired ? '是' : '否'}</span></div>
+            <div className="met-product-rights-v2-drawer-row"><span>是否需要到店领取</span><span>{detail.requiresPickup ? '是' : '否'}</span></div>
+            <div className="met-product-rights-v2-drawer-row"><span>是否需要预约</span><span>{detail.requiresReservation ? '是' : '否'}</span></div>
+            <div className="met-product-rights-v2-drawer-row"><span>兑换后核销方式</span><span>{detail.redeemMethod}</span></div>
+            <div className="met-product-rights-v2-drawer-row"><span>过期处理</span><span>{detail.expiryHandling}</span></div>
+          </section>
+
+          <section className="met-product-rights-v2-drawer-section">
+            <h3>适用门店与领取方式</h3>
+            <div className="met-product-rights-v2-drawer-row"><span>适用门店</span><span>{detail.applicableStores}</span></div>
+            <div className="met-product-rights-v2-drawer-row"><span>领取门店</span><span>{detail.pickupStores}</span></div>
+            <div className="met-product-rights-v2-drawer-row"><span>领取方式</span><span>{detail.deliveryMethod}</span></div>
+            <div className="met-product-rights-v2-drawer-row"><span>是否支持跨店领取</span><span>{detail.crossStorePickup ? '是' : '否'}</span></div>
+            <div className="met-product-rights-v2-drawer-row"><span>领取说明</span><span>{detail.pickupNote}</span></div>
+          </section>
+
+          <section className="met-product-rights-v2-drawer-section">
+            <h3>审批与核销</h3>
+            <div className="met-product-rights-v2-drawer-row"><span>是否需审批</span><span>{detail.redeemApprovalRequired ? '是' : '否'}</span></div>
+            <div className="met-product-rights-v2-drawer-row"><span>审批人</span><span>{detail.approver}</span></div>
+            <div className="met-product-rights-v2-drawer-row"><span>核销人</span><span>{detail.writeOffBy}</span></div>
+            <div className="met-product-rights-v2-drawer-row"><span>核销方式</span><span>{detail.writeOffMethod}</span></div>
+            <div className="met-product-rights-v2-drawer-row"><span>核销记录</span><span>{detail.writeOffRecordSummary}</span></div>
+            <p className="met-card-config-drawer__risk">{detail.approvalRiskNote}</p>
+          </section>
+
+          <section className="met-product-rights-v2-drawer-section">
+            <h3>会员端展示预览</h3>
+            <div className="met-card-config-drawer__preview">
+              <p className="met-card-config-drawer__preview-title">只读预览</p>
+              <div className="met-product-rights-v2-drawer-row"><span>商品名称</span><span>{detail.previewName}</span></div>
+              <div className="met-product-rights-v2-drawer-row"><span>所需积分</span><span>{detail.previewPoints}</span></div>
+              <div className="met-product-rights-v2-drawer-row"><span>商品说明</span><span>{detail.previewDescription}</span></div>
+              <div className="met-product-rights-v2-drawer-row"><span>库存状态</span><span>{detail.previewStockStatus}</span></div>
+              <div className="met-product-rights-v2-drawer-row"><span>兑换限制</span><span>{detail.previewRedeemLimit}</span></div>
+              <div className="met-product-rights-v2-drawer-row"><span>适用门店</span><span>{detail.previewStores}</span></div>
+              <div className="met-product-rights-v2-drawer-row"><span>领取方式</span><span>{detail.previewDelivery}</span></div>
+              <div className="met-product-rights-v2-drawer-row"><span>重要提示</span><span>{detail.previewImportantNote}</span></div>
+              <div className="met-product-rights-v2-drawer-row"><span>是否展示在会员端</span><span>{detail.visibleOnMemberApp ? '展示' : '隐藏'}</span></div>
+            </div>
+          </section>
+
+          <section className="met-product-rights-v2-drawer-section">
+            <h3>兑换记录摘要</h3>
+            <div className="met-product-rights-v2-drawer-row"><span>累计兑换数</span><span>{detail.totalExchangeCount}</span></div>
+            <div className="met-product-rights-v2-drawer-row"><span>本月兑换数</span><span>{detail.monthlyExchangeCount}</span></div>
+            <div className="met-product-rights-v2-drawer-row"><span>待核销数</span><span>{detail.pendingWriteOffCount}</span></div>
+            <div className="met-product-rights-v2-drawer-row"><span>已核销数</span><span>{detail.writtenOffCount}</span></div>
+            <div className="met-product-rights-v2-drawer-row"><span>异常兑换数</span><span>{detail.abnormalExchangeCount}</span></div>
+            <button type="button" className="met-v2-drawer-footer-btn" onClick={() => onToast('查看兑换记录（待建设）')}>查看兑换记录</button>
+          </section>
+
+          <section className="met-product-rights-v2-drawer-section">
+            <h3>操作日志</h3>
+            {detail.operationLogs.map(log => (
+              <div key={log.id} className="met-card-config-drawer__log-item">
+                <strong>{log.operator}</strong> · {log.time} · {log.action}
+                <br />
+                {log.note}
+              </div>
+            ))}
+          </section>
+
+          <section className="met-product-rights-v2-drawer-section">
+            <h3>风险提示</h3>
+            <p className="met-card-config-drawer__risk">{detail.riskReminder}</p>
+          </section>
+
+          <section className="met-product-rights-v2-drawer-section">
+            <h3>建议动作</h3>
+            <p>{detail.suggestedAction}</p>
+          </section>
+
+          <div className="met-v2-drawer-footer met-v2-drawer-footer--inline">
+            <button type="button" className="met-v2-drawer-footer-btn" onClick={() => onToast('编辑积分商品配置（待建设）')}>编辑配置</button>
+            <button type="button" className="met-v2-drawer-footer-btn" onClick={() => onToast('补库存（待建设）')}>补库存</button>
+            <button type="button" className="met-v2-drawer-footer-btn" onClick={onEdit}>新增 / 编辑 mock</button>
+            <button type="button" className="met-v2-drawer-footer-btn" onClick={() => onToast('上下架操作（待建设）')}>上架 / 下架 mock</button>
+          </div>
+        </div>
+      </aside>
+    </>
+  );
+}
+
+function NewPointsMallProductDrawer({
+  draft,
+  disclaimer,
+  submitToast,
+  saveDraftToast,
+  onClose,
+  onToast,
+}: {
+  draft: NewPointsMallProductDraft;
+  disclaimer: string;
+  submitToast: string;
+  saveDraftToast: string;
+  onClose: () => void;
+  onToast: (message: string) => void;
+}) {
+  const [step, setStep] = useState(0);
+
+  return (
+    <>
+      <button type="button" className="met-v2-drawer-overlay" aria-label="关闭新增积分商品" onClick={onClose} />
+      <aside className="met-v2-drawer-panel met-v2-drawer-panel--md" role="dialog">
+        <div className="met-v2-drawer-header">
+          <div>
+            <h2 className="met-v2-drawer-title">新增 / 编辑积分商品</h2>
+            <p className="met-new-points-mall-drawer__disclaimer">{disclaimer}</p>
+          </div>
+          <button type="button" className="met-v2-drawer-close" onClick={onClose}>×</button>
+        </div>
+        <div className="met-v2-drawer-body">
+          <div className="met-new-points-mall-drawer__steps">
+            {NEW_POINTS_MALL_STEPS.map((label, i) => (
+              <button key={label} type="button" className={['met-new-points-mall-drawer__step', step === i ? 'is-active' : ''].join(' ')} onClick={() => setStep(i)}>
+                {i + 1}. {label}
+              </button>
+            ))}
+          </div>
+
+          {step === 0 ? (
+            <section>
+              <h3 className="met-new-points-mall-drawer__section-title">步骤 1：基础信息</h3>
+              <div className="met-product-rights-v2-drawer-row"><span>商品名称</span><span>{draft.productName}</span></div>
+              <div className="met-product-rights-v2-drawer-row"><span>商品类型</span><span>{draft.productType}</span></div>
+              <div className="met-product-rights-v2-drawer-row"><span>商品说明</span><span>{draft.description}</span></div>
+              <div className="met-product-rights-v2-drawer-row"><span>适用门店</span><span>{draft.applicableStores}</span></div>
+              <div className="met-product-rights-v2-drawer-row"><span>是否会员端展示</span><span>{draft.visibleOnMemberApp ? '展示' : '隐藏'}</span></div>
+            </section>
+          ) : null}
+
+          {step === 1 ? (
+            <section>
+              <h3 className="met-new-points-mall-drawer__section-title">步骤 2：积分与库存</h3>
+              <div className="met-product-rights-v2-drawer-row"><span>所需积分</span><span>{draft.pointsPrice}</span></div>
+              <div className="met-product-rights-v2-drawer-row"><span>库存数量</span><span>{draft.stock}</span></div>
+              <div className="met-product-rights-v2-drawer-row"><span>库存预警线</span><span>{draft.stockWarningLine}</span></div>
+              <div className="met-product-rights-v2-drawer-row"><span>每人限兑</span><span>{draft.redeemLimit}</span></div>
+              <div className="met-product-rights-v2-drawer-row"><span>每月限兑</span><span>{draft.monthlyRedeemLimit}</span></div>
+              <div className="met-product-rights-v2-drawer-row"><span>是否允许重复兑换</span><span>{draft.allowRepeatRedeem ? '是' : '否'}</span></div>
+            </section>
+          ) : null}
+
+          {step === 2 ? (
+            <section>
+              <h3 className="met-new-points-mall-drawer__section-title">步骤 3：兑换规则</h3>
+              <div className="met-product-rights-v2-drawer-row"><span>适用会员范围</span><span>{draft.applicableMembers}</span></div>
+              <div className="met-product-rights-v2-drawer-row"><span>兑换有效期</span><span>{draft.redeemValidity}</span></div>
+              <div className="met-product-rights-v2-drawer-row"><span>是否需要审批</span><span>{draft.approvalRequired ? '是' : '否'}</span></div>
+              <div className="met-product-rights-v2-drawer-row"><span>是否需要预约</span><span>{draft.requiresReservation ? '是' : '否'}</span></div>
+              <div className="met-product-rights-v2-drawer-row"><span>是否需要到店领取</span><span>{draft.requiresPickup ? '是' : '否'}</span></div>
+              <div className="met-product-rights-v2-drawer-row"><span>过期处理</span><span>{draft.expiryHandling}</span></div>
+            </section>
+          ) : null}
+
+          {step === 3 ? (
+            <section>
+              <h3 className="met-new-points-mall-drawer__section-title">步骤 4：领取 / 核销规则</h3>
+              <div className="met-product-rights-v2-drawer-row"><span>领取方式</span><span>{draft.deliveryMethod}</span></div>
+              <div className="met-product-rights-v2-drawer-row"><span>核销方式</span><span>{draft.writeOffMethod}</span></div>
+              <div className="met-product-rights-v2-drawer-row"><span>核销人</span><span>{draft.writeOffBy}</span></div>
+              <div className="met-product-rights-v2-drawer-row"><span>是否支持跨店领取</span><span>{draft.crossStorePickup ? '是' : '否'}</span></div>
+              <div className="met-product-rights-v2-drawer-row"><span>领取说明</span><span>{draft.pickupNote}</span></div>
+            </section>
+          ) : null}
+
+          {step === 4 ? (
+            <section>
+              <h3 className="met-new-points-mall-drawer__section-title">步骤 5：会员端预览</h3>
+              <div className="met-new-points-mall-drawer__preview">
+                <strong>{draft.productName}</strong>
+                <p>{draft.pointsPrice} · {draft.productType}</p>
+                <p>{draft.description}</p>
+                <p>库存：{draft.stock} · 限兑：{draft.redeemLimit}</p>
+                <p>{draft.pickupNote}</p>
+                <p>积分不可折现 · 兑换后不退积分</p>
+              </div>
+            </section>
+          ) : null}
+
+          {step === 5 ? (
+            <section>
+              <h3 className="met-new-points-mall-drawer__section-title">步骤 6：提交 mock</h3>
+              <p className="met-new-points-mall-drawer__disclaimer">提交后仅进入审核 mock 流程，不会真实创建商品，也不会发布到会员端。</p>
+            </section>
+          ) : null}
+
+          <div className="met-v2-drawer-footer met-v2-drawer-footer--inline">
+            <button type="button" className="met-v2-drawer-footer-btn" onClick={onClose}>取消</button>
+            <button type="button" className="met-v2-drawer-footer-btn" onClick={() => onToast(saveDraftToast)}>保存草稿（待建设）</button>
+            <button type="button" className="met-v2-drawer-footer-btn" onClick={() => { onToast(submitToast); onClose(); }}>提交审核（待建设）</button>
+          </div>
+        </div>
+      </aside>
+    </>
+  );
+}
+
 const ProductRightsV2Page: React.FC = () => {
   const snapshot = useMemo(() => buildProductRightsV2Snapshot(), []);
   const cardConfigSnapshot = useMemo(() => buildCardConfigSnapshot(), []);
+  const pointsMallSnapshot = useMemo(() => buildPointsMallSnapshot(), []);
   const [pageView, setPageView] = useState<ProductRightsPageViewMode>('overview');
   const [pendingNewCard, setPendingNewCard] = useState(false);
+  const [pendingNewProduct, setPendingNewProduct] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [cardDrawerId, setCardDrawerId] = useState<string | null>(null);
+  const [mallDrawerId, setMallDrawerId] = useState<string | null>(null);
   const [newCardOpen, setNewCardOpen] = useState(false);
+  const [newProductOpen, setNewProductOpen] = useState(false);
 
   const showToast = useCallback((message: string) => {
     console.log('[ProductRightsV2]', message);
@@ -333,11 +608,19 @@ const ProductRightsV2Page: React.FC = () => {
     setPageView('cardConfig');
   }, []);
 
+  const openPointsMall = useCallback((openNewProduct = false) => {
+    setPendingNewProduct(openNewProduct);
+    setPageView('pointsMall');
+  }, []);
+
   const backToOverview = useCallback(() => {
     setPageView('overview');
     setPendingNewCard(false);
+    setPendingNewProduct(false);
     setCardDrawerId(null);
+    setMallDrawerId(null);
     setNewCardOpen(false);
+    setNewProductOpen(false);
   }, []);
 
   const openCardDrawer = useCallback((cardTypeId: string) => {
@@ -354,6 +637,20 @@ const ProductRightsV2Page: React.FC = () => {
 
   const closeNewCardDrawer = useCallback(() => setNewCardOpen(false), []);
 
+  const openMallDrawer = useCallback((productId: string) => {
+    setNewProductOpen(false);
+    setMallDrawerId(productId);
+  }, []);
+
+  const closeMallDrawer = useCallback(() => setMallDrawerId(null), []);
+
+  const openNewProductDrawer = useCallback(() => {
+    setMallDrawerId(null);
+    setNewProductOpen(true);
+  }, []);
+
+  const closeNewProductDrawer = useCallback(() => setNewProductOpen(false), []);
+
   useEffect(() => {
     if (pageView === 'cardConfig' && pendingNewCard) {
       setNewCardOpen(true);
@@ -361,10 +658,22 @@ const ProductRightsV2Page: React.FC = () => {
     }
   }, [pageView, pendingNewCard]);
 
+  useEffect(() => {
+    if (pageView === 'pointsMall' && pendingNewProduct) {
+      setNewProductOpen(true);
+      setPendingNewProduct(false);
+    }
+  }, [pageView, pendingNewProduct]);
+
   const cardDrawerDetail = useMemo(() => {
     if (!cardDrawerId) return null;
     return getCardConfigDrawerDetail(cardConfigSnapshot.rows, cardDrawerId);
   }, [cardDrawerId, cardConfigSnapshot.rows]);
+
+  const mallDrawerDetail = useMemo(() => {
+    if (!mallDrawerId) return null;
+    return getPointsMallDrawerDetail(pointsMallSnapshot.rows, mallDrawerId);
+  }, [mallDrawerId, pointsMallSnapshot.rows]);
 
   const handlePriorityAction = useCallback(
     (item: ProductRightsPriorityAction) => {
@@ -372,9 +681,13 @@ const ProductRightsV2Page: React.FC = () => {
         openCardConfig();
         return;
       }
+      if (item.opensPointsMall) {
+        openPointsMall();
+        return;
+      }
       showToast(item.actionToast);
     },
-    [openCardConfig, showToast],
+    [openCardConfig, openPointsMall, showToast],
   );
 
   const handleConfigDomain = useCallback(
@@ -383,9 +696,13 @@ const ProductRightsV2Page: React.FC = () => {
         openCardConfig();
         return;
       }
+      if (domain.opensPointsMall) {
+        openPointsMall();
+        return;
+      }
       showToast(domain.actionToast);
     },
-    [openCardConfig, showToast],
+    [openCardConfig, openPointsMall, showToast],
   );
 
   const handleDetailEntry = useCallback(
@@ -394,9 +711,13 @@ const ProductRightsV2Page: React.FC = () => {
         openCardConfig();
         return;
       }
+      if (entry.opensPointsMall) {
+        openPointsMall();
+        return;
+      }
       showToast(entry.actionToast);
     },
-    [openCardConfig, showToast],
+    [openCardConfig, openPointsMall, showToast],
   );
 
   const {
@@ -406,6 +727,7 @@ const ProductRightsV2Page: React.FC = () => {
     configDomains,
     cardProducts,
     cardProductsViewAllLabel,
+    pointsMallViewAllLabel,
     pointsMallSummary,
     mallProducts,
     rightsGuardrails,
@@ -468,8 +790,13 @@ const ProductRightsV2Page: React.FC = () => {
       className={[
         'met-product-rights-v2-card',
         'met-product-rights-v2-card--mall',
+        'met-product-rights-v2-card--clickable',
         product.shelfStatus === 'soldOut' ? 'is-sold-out' : '',
       ].join(' ')}
+      role="button"
+      tabIndex={0}
+      onClick={() => openPointsMall()}
+      onKeyDown={e => { if (e.key === 'Enter') openPointsMall(); }}
     >
       <div className="met-product-rights-v2-card__head">
         <h3 className="met-product-rights-v2-card__title">{product.productName}</h3>
@@ -501,6 +828,13 @@ const ProductRightsV2Page: React.FC = () => {
           onOpenNewCard={openNewCardDrawer}
           onToast={showToast}
         />
+      ) : pageView === 'pointsMall' ? (
+        <ProductRightsSecondaryPointsMallPage
+          onBack={backToOverview}
+          onOpenDetail={openMallDrawer}
+          onOpenNewProduct={openNewProductDrawer}
+          onToast={showToast}
+        />
       ) : (
       <div className="met-product-rights-v2__inner">
         <header className="met-product-rights-v2__header">
@@ -515,6 +849,13 @@ const ProductRightsV2Page: React.FC = () => {
               onClick={() => openCardConfig()}
             >
               {healthSummary.cardConfigListLabel}
+            </button>
+            <button
+              type="button"
+              className="met-product-rights-v2-btn met-product-rights-v2-btn--ghost met-product-rights-v2__detail-link"
+              onClick={() => openPointsMall()}
+            >
+              {healthSummary.pointsMallConfigListLabel}
             </button>
           </div>
         </header>
@@ -633,6 +974,11 @@ const ProductRightsV2Page: React.FC = () => {
           <div className="met-product-rights-v2-product-grid met-product-rights-v2-product-grid--mall">
             {mallProducts.map(renderMallProduct)}
           </div>
+          <div className="met-product-rights-v2-zone__foot">
+            <button type="button" className="met-product-rights-v2-btn met-product-rights-v2-btn--ghost met-product-rights-v2__detail-link" onClick={() => openPointsMall()}>
+              {pointsMallViewAllLabel}
+            </button>
+          </div>
         </section>
 
         <section className="met-product-rights-v2-zone met-product-rights-v2-zone--split">
@@ -643,6 +989,10 @@ const ProductRightsV2Page: React.FC = () => {
                 <li key={rule}>
                   {rule.includes('卡项') ? (
                     <button type="button" className="met-product-rights-v2-guardrail-link" onClick={() => openCardConfig()}>
+                      {rule}
+                    </button>
+                  ) : rule.includes('积分') || rule.includes('赠送权益') ? (
+                    <button type="button" className="met-product-rights-v2-guardrail-link" onClick={() => openPointsMall()}>
                       {rule}
                     </button>
                   ) : (
@@ -674,7 +1024,7 @@ const ProductRightsV2Page: React.FC = () => {
               <button
                 key={entry.id}
                 type="button"
-                className={['met-product-rights-v2-detail-entry', entry.opensCardConfig ? 'met-product-rights-v2-detail-entry--accent' : ''].filter(Boolean).join(' ')}
+                className={['met-product-rights-v2-detail-entry', entry.opensCardConfig || entry.opensPointsMall ? 'met-product-rights-v2-detail-entry--accent' : ''].filter(Boolean).join(' ')}
                 onClick={() => handleDetailEntry(entry)}
               >
                 {entry.label}
@@ -703,6 +1053,28 @@ const ProductRightsV2Page: React.FC = () => {
           submitToast={cardConfigSnapshot.meta.submitToast}
           saveDraftToast={cardConfigSnapshot.meta.saveDraftToast}
           onClose={closeNewCardDrawer}
+          onToast={showToast}
+        />
+      ) : null}
+
+      {mallDrawerId ? (
+        mallDrawerDetail ? (
+          <PointsMallProductDetailDrawer detail={mallDrawerDetail} onClose={closeMallDrawer} onToast={showToast} onEdit={openNewProductDrawer} />
+        ) : (
+          <>
+            <button type="button" className="met-v2-drawer-overlay" onClick={closeMallDrawer} />
+            <aside className="met-v2-drawer-panel met-v2-drawer-panel--md"><div className="met-v2-drawer-body"><V2DrawerEmpty onClose={closeMallDrawer} /></div></aside>
+          </>
+        )
+      ) : null}
+
+      {newProductOpen ? (
+        <NewPointsMallProductDrawer
+          draft={pointsMallSnapshot.newProductDraft}
+          disclaimer={pointsMallSnapshot.meta.newProductDisclaimer}
+          submitToast={pointsMallSnapshot.meta.submitToast}
+          saveDraftToast={pointsMallSnapshot.meta.saveDraftToast}
+          onClose={closeNewProductDrawer}
           onToast={showToast}
         />
       ) : null}

@@ -32,6 +32,7 @@ export interface ProductRightsHealthSummary {
   primaryActionLabel: string;
   primaryActionToastMessage: string;
   cardConfigListLabel: string;
+  pointsMallConfigListLabel: string;
   opensCardConfigOnPrimary?: boolean;
   openNewCardOnPrimary?: boolean;
 }
@@ -47,6 +48,7 @@ export interface ProductRightsPriorityAction {
   buttonLabel: string;
   actionToast: string;
   opensCardConfig?: boolean;
+  opensPointsMall?: boolean;
 }
 
 export interface ProductRightsConfigDomain {
@@ -61,6 +63,7 @@ export interface ProductRightsConfigDomain {
   actionLabel: string;
   actionToast: string;
   opensCardConfig?: boolean;
+  opensPointsMall?: boolean;
 }
 
 export interface ProductCardSummary {
@@ -112,6 +115,7 @@ export interface ProductRightsDetailEntry {
   label: string;
   actionToast: string;
   opensCardConfig?: boolean;
+  opensPointsMall?: boolean;
 }
 
 export interface ProductRightsSnapshot {
@@ -121,6 +125,7 @@ export interface ProductRightsSnapshot {
   configDomains: ProductRightsConfigDomain[];
   cardProducts: ProductCardSummary[];
   cardProductsViewAllLabel: string;
+  pointsMallViewAllLabel: string;
   pointsMallSummary: PointsMallSummary;
   mallProducts: MallProductSummary[];
   rightsGuardrails: string[];
@@ -174,6 +179,7 @@ export function buildProductRightsV2Snapshot(): ProductRightsSnapshot {
       primaryActionLabel: '新增卡项',
       primaryActionToastMessage: '新增卡项（待建设）',
       cardConfigListLabel: '卡项配置',
+      pointsMallConfigListLabel: '积分商城配置',
       opensCardConfigOnPrimary: true,
       openNewCardOnPrimary: true,
     },
@@ -200,6 +206,7 @@ export function buildProductRightsV2Snapshot(): ProductRightsSnapshot {
         source: '积分规则 / 赠送权益配置',
         buttonLabel: '去确认',
         actionToast: '查看积分规则（待建设）',
+        opensPointsMall: true,
       },
       {
         id: 'pa-3',
@@ -211,6 +218,7 @@ export function buildProductRightsV2Snapshot(): ProductRightsSnapshot {
         source: '积分商城配置',
         buttonLabel: '去处理',
         actionToast: '查看积分商城（待建设）',
+        opensPointsMall: true,
       },
       {
         id: 'pa-4',
@@ -282,6 +290,7 @@ export function buildProductRightsV2Snapshot(): ProductRightsSnapshot {
         impactModules: '会员端 / 积分规则',
         actionLabel: '查看积分商城',
         actionToast: '进入积分商城配置（待建设）',
+        opensPointsMall: true,
       },
       {
         id: 'cd-gift',
@@ -309,6 +318,7 @@ export function buildProductRightsV2Snapshot(): ProductRightsSnapshot {
       },
     ],
     cardProductsViewAllLabel: '查看全部卡项 / 配置卡项',
+    pointsMallViewAllLabel: '查看全部商品 / 配置积分商城',
     cardProducts: [
       {
         cardTypeId: 'card-chuyu',
@@ -428,7 +438,7 @@ export function buildProductRightsV2Snapshot(): ProductRightsSnapshot {
     ],
     detailEntries: [
       { id: 'de-cards', label: '进入卡项配置', actionToast: '进入卡项配置（待建设）', opensCardConfig: true },
-      { id: 'de-mall', label: '进入积分商城', actionToast: '进入积分商城（待建设）' },
+      { id: 'de-mall', label: '积分商城配置', actionToast: '进入积分商城（待建设）', opensPointsMall: true },
       { id: 'de-points', label: '进入积分规则', actionToast: '进入积分规则（待建设）' },
       { id: 'de-contract', label: '进入合同绑定', actionToast: '进入合同绑定（待建设）' },
       { id: 'de-log', label: '查看操作日志', actionToast: '查看操作日志（待建设）' },
