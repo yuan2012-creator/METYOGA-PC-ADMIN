@@ -24,6 +24,7 @@
   margin: 0 auto;
 }
 
+/* Header: migrated to SecondaryPageHeader (components/v2/shared). Styles below kept for reference. */
 .met-member-list__header-top {
   display: flex;
   align-items: center;

@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { ArrowLeft, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
+import { SecondaryPageHeader } from '../shared';
 import {
   buildWeekScheduleSnapshot,
   getWeekScheduleStatusClass,
@@ -19,6 +20,9 @@ export interface CourseSecondaryWeekSchedulePageProps {
   onOpenNewSchedule: () => void;
   onToast: (message: string) => void;
 }
+
+const WEEK_SCHEDULE_DISCLAIMER =
+  '当前为 mock 排课页，新增排课、调整课程、通知会员等操作不会真实发布，不会开放预约，也不会同步老师端或会员端。';
 
 type FilterGroupKey = 'store' | 'type' | 'teacher' | 'room' | 'status' | 'risk';
 
@@ -180,13 +184,18 @@ const CourseSecondaryWeekSchedulePage: React.FC<CourseSecondaryWeekSchedulePageP
   return (
     <div className="met-week-schedule">
       <div className="met-week-schedule__inner">
-        <header className="met-week-schedule__header">
-          <div className="met-week-schedule__header-top">
-            <button type="button" className="met-week-schedule__back" onClick={onBack}>
-              <ArrowLeft size={16} aria-hidden />
-              返回课程与排课
-            </button>
-            <div className="met-week-schedule__header-actions">
+        <SecondaryPageHeader
+          backLabel="返回课程与排课"
+          onBack={onBack}
+          backVariant="link"
+          breadcrumb={`${snapshot.meta.breadcrumbParent} / ${snapshot.meta.breadcrumbCurrent}`}
+          title={snapshot.meta.title}
+          subtitle={snapshot.meta.subtitle}
+          scope={snapshot.meta.scopeLabel}
+          description={snapshot.meta.description}
+          disclaimer={WEEK_SCHEDULE_DISCLAIMER}
+          headerActions={
+            <>
               <div className="met-week-schedule__period-tabs">
                 {snapshot.periodTabs.map(tab => (
                   <button
@@ -205,14 +214,9 @@ const CourseSecondaryWeekSchedulePage: React.FC<CourseSecondaryWeekSchedulePageP
               <button type="button" className="met-week-schedule__btn met-week-schedule__btn--primary" onClick={onOpenNewSchedule}>
                 新增排课
               </button>
-            </div>
-          </div>
-          <p className="met-week-schedule__breadcrumb">{snapshot.meta.breadcrumbParent} / {snapshot.meta.breadcrumbCurrent}</p>
-          <h1 className="met-week-schedule__title">{snapshot.meta.title}</h1>
-          <p className="met-week-schedule__subtitle">{snapshot.meta.subtitle}</p>
-          <p className="met-week-schedule__scope">{snapshot.meta.scopeLabel}</p>
-          <p className="met-week-schedule__desc">{snapshot.meta.description}</p>
-        </header>
+            </>
+          }
+        />
 
         <section className="met-week-schedule__summary">
           {snapshot.summaryItems.map(item => (

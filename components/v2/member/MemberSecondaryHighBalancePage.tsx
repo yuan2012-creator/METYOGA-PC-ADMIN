@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { ArrowLeft, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
+import { SecondaryPageHeader } from '../shared';
 import {
   buildHighBalanceSnapshot,
   getHighBalanceEvidenceClass,
@@ -277,32 +278,22 @@ const MemberSecondaryHighBalancePage: React.FC<MemberSecondaryHighBalancePagePro
   return (
     <div className="met-hblc">
       <div className="met-hblc__inner">
-        <header className="met-hblc__header">
-          <div className="met-hblc__header-nav">
-            <button type="button" className="met-hblc__back" onClick={onBackToOverview}>
-              <ArrowLeft size={16} aria-hidden />
-              返回会员经营
-            </button>
-            <button type="button" className="met-hblc__back met-hblc__back--secondary" onClick={onBackToMemberList}>
-              返回会员名单
-            </button>
-            <button
-              type="button"
-              className="met-hblc__btn met-hblc__btn--ghost"
-              onClick={() => onToast(snapshot.meta.batchAssignToast)}
-            >
-              批量分配跟进
-            </button>
-          </div>
-          <p className="met-hblc__breadcrumb">
-            {snapshot.meta.breadcrumbParent} / {snapshot.meta.breadcrumbCurrent}
-          </p>
-          <h1 className="met-hblc__title">{snapshot.meta.title}</h1>
-          <p className="met-hblc__subtitle">{snapshot.meta.subtitle}</p>
-          <p className="met-hblc__scope">{snapshot.meta.scopeLabel}</p>
-          <p className="met-hblc__desc">{snapshot.meta.description}</p>
-          <p className="met-hblc__disclaimer">{snapshot.meta.disclaimer}</p>
-        </header>
+        <SecondaryPageHeader
+          backLabel="返回会员经营"
+          onBack={onBackToOverview}
+          backVariant="link"
+          secondaryBackLabel="返回会员名单"
+          onSecondaryBack={onBackToMemberList}
+          breadcrumb={`${snapshot.meta.breadcrumbParent} / ${snapshot.meta.breadcrumbCurrent}`}
+          title={snapshot.meta.title}
+          subtitle={snapshot.meta.subtitle}
+          scope={snapshot.meta.scopeLabel}
+          description={snapshot.meta.description}
+          primaryActionLabel="批量分配跟进"
+          onPrimaryAction={() => onToast(snapshot.meta.batchAssignToast)}
+          primaryActionVariant="ghost"
+          disclaimer={snapshot.meta.disclaimer}
+        />
 
         <section className="met-hblc__summary">
           {snapshot.summaryItems.map(item => (

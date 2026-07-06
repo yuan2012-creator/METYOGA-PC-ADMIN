@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { ArrowLeft, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
+import { SecondaryPageHeader } from '../shared';
 import {
   buildAssetChangeSnapshot,
   getAssetChangeEvidenceClass,
@@ -265,29 +266,18 @@ const FinanceSecondaryAssetChangePage: React.FC<FinanceSecondaryAssetChangePageP
   return (
     <div className="met-asset-change">
       <div className="met-asset-change__inner">
-        <header className="met-asset-change__header">
-          <div className="met-asset-change__header-top">
-            <button type="button" className="met-asset-change__back" onClick={onBack}>
-              <ArrowLeft size={16} aria-hidden />
-              返回财务与资产
-            </button>
-            <button
-              type="button"
-              className="met-asset-change__btn met-asset-change__btn--primary"
-              onClick={() => onToast(snapshot.meta.createToast)}
-            >
-              新增申请
-            </button>
-          </div>
-          <p className="met-asset-change__breadcrumb">
-            {snapshot.meta.breadcrumbParent} / {snapshot.meta.breadcrumbCurrent}
-          </p>
-          <h1 className="met-asset-change__title">{snapshot.meta.title}</h1>
-          <p className="met-asset-change__subtitle">{snapshot.meta.subtitle}</p>
-          <p className="met-asset-change__scope">{snapshot.meta.scopeLabel}</p>
-          <p className="met-asset-change__desc">{snapshot.meta.description}</p>
-          <p className="met-asset-change__disclaimer">{snapshot.meta.disclaimer}</p>
-        </header>
+        <SecondaryPageHeader
+          backLabel="返回财务与资产"
+          onBack={onBack}
+          breadcrumb={`${snapshot.meta.breadcrumbParent} / ${snapshot.meta.breadcrumbCurrent}`}
+          title={snapshot.meta.title}
+          subtitle={snapshot.meta.subtitle}
+          scope={snapshot.meta.scopeLabel}
+          description={snapshot.meta.description}
+          primaryActionLabel="新增申请"
+          onPrimaryAction={() => onToast(snapshot.meta.createToast)}
+          disclaimer={snapshot.meta.disclaimer}
+        />
 
         <section className="met-asset-change__summary">
           {snapshot.summaryItems.map(item => (

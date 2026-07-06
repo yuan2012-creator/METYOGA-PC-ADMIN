@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { ArrowLeft, Search } from 'lucide-react';
+import { Search } from 'lucide-react';
+import { SecondaryPageHeader } from '../shared';
 import {
   buildMemberListSnapshot,
   getMemberListActiveStatusClass,
@@ -17,6 +18,9 @@ export interface MemberSecondaryMemberListPageProps {
   onOpenHighBalance: () => void;
   onToast: (message: string) => void;
 }
+
+const MEMBER_LIST_DISCLAIMER =
+  '当前为 mock 会员名单，跟进、约课、标记处理等操作不会真实保存；会员手机号已脱敏，不展示身份证、住址、银行卡等敏感信息。';
 
 type FilterGroupKey = 'store' | 'stage' | 'active' | 'risk' | 'owner' | 'card';
 
@@ -267,35 +271,26 @@ const MemberSecondaryMemberListPage: React.FC<MemberSecondaryMemberListPageProps
   return (
     <div className="met-member-list">
       <div className="met-member-list__inner">
-        <header className="met-member-list__header">
-          <div className="met-member-list__header-top">
-            <button type="button" className="met-member-list__back" onClick={onBack}>
-              <ArrowLeft size={16} aria-hidden />
-              返回会员经营
-            </button>
-            <button
-              type="button"
-              className="met-member-list__btn met-member-list__btn--ghost"
-              onClick={() => onToast(snapshot.meta.exportToast)}
-            >
-              导出名单
-            </button>
-          </div>
-          <p className="met-member-list__breadcrumb">
-            {snapshot.meta.breadcrumbParent} / {snapshot.meta.breadcrumbCurrent}
-          </p>
-          <h1 className="met-member-list__title">{snapshot.meta.title}</h1>
-          <p className="met-member-list__subtitle">{snapshot.meta.subtitle}</p>
-          <p className="met-member-list__scope">{snapshot.meta.scopeLabel}</p>
-          <p className="met-member-list__desc">{snapshot.meta.description}</p>
-          <button
-            type="button"
-            className="met-member-list__btn met-member-list__btn--ghost met-member-list__btn--sm met-member-list__hblc-entry"
-            onClick={onOpenHighBalance}
-          >
-            查看高余额低耗课名单
-          </button>
-        </header>
+        <SecondaryPageHeader
+          backLabel="返回会员经营"
+          onBack={onBack}
+          breadcrumb={`${snapshot.meta.breadcrumbParent} / ${snapshot.meta.breadcrumbCurrent}`}
+          title={snapshot.meta.title}
+          subtitle={snapshot.meta.subtitle}
+          scope={snapshot.meta.scopeLabel}
+          description={snapshot.meta.description}
+          primaryActionLabel="导出名单"
+          onPrimaryAction={() => onToast(snapshot.meta.exportToast)}
+          primaryActionVariant="ghost"
+          disclaimer={MEMBER_LIST_DISCLAIMER}
+        />
+        <button
+          type="button"
+          className="met-member-list__btn met-member-list__btn--ghost met-member-list__btn--sm met-member-list__hblc-entry"
+          onClick={onOpenHighBalance}
+        >
+          查看高余额低耗课名单
+        </button>
 
         <section className="met-member-list__summary">
           {snapshot.summaryItems.map(item => (

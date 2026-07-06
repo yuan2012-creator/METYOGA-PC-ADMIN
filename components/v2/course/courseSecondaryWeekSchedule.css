@@ -12,6 +12,7 @@
 
 .met-week-schedule__inner { display: flex; flex-direction: column; gap: 16px; width: min(100%, 1600px); margin: 0 auto; }
 
+/* Header: migrated to SecondaryPageHeader (components/v2/shared). Styles below kept for reference. */
 .met-week-schedule__header-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .met-week-schedule__header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
