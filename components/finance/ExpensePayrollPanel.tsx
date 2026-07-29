@@ -16,7 +16,7 @@ const ExpensePayrollPanel: React.FC<ExpensePayrollPanelProps> = ({
         <h3 className="font-bold text-lg text-gray-900">教练/员工薪酬核算</h3>
         <div className="flex gap-2">
           <button className="border border-gray-200 text-gray-600 text-xs px-3 py-1.5 rounded-lg font-bold hover:bg-gray-50 transition">重新计算</button>
-          <button className="bg-black text-white text-xs px-3 py-1.5 rounded-lg font-bold hover:opacity-80 transition">一键发放</button>
+          <button type="button" className="bg-black text-white text-xs px-3 py-1.5 rounded-lg font-bold hover:opacity-80 transition">一键发放（仅演示）</button>
         </div>
       </div>
       <table className="w-full text-sm text-left">
@@ -34,7 +34,7 @@ const ExpensePayrollPanel: React.FC<ExpensePayrollPanelProps> = ({
               <td className="p-3 font-mono text-gray-600">¥{row.baseSalary.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
               <td className="p-3 font-mono text-blue-600 font-bold">
                 ¥{row.classFee.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                <span className="text-[10px] text-gray-400 block font-normal">FinanceLedgerEntry / fallback</span>
+                <span className="text-[10px] text-gray-400 block font-normal">模块内估算；待生成正式分录</span>
               </td>
               <td className="p-3 font-mono text-gray-600">¥{row.commission.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
               <td className="p-3 font-mono text-red-500">-¥{row.deduction.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>

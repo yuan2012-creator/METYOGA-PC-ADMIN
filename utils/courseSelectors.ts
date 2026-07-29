@@ -3,6 +3,7 @@ import type {
   Booking,
   Course,
   CourseSession,
+  CourseSessionStatus,
 } from '../types';
 
 export type CourseSubTab = 'schedule' | 'library';
@@ -26,8 +27,18 @@ export type ScheduleEvent = CourseSession & {
   color: string;
 };
 
+/** 抽屉与场次操作：用多种 id 别名匹配同一排课事件 */
+export const scheduleEventMatchesSessionId = (ev: ScheduleEvent, sid: string): boolean => {
+  if (!sid) return false;
+  if (ev.id === sid) return true;
+  const ext = ev as ScheduleEvent & { sessionId?: string; courseSessionId?: string; originalSessionId?: string };
+  return ext.sessionId === sid || ext.courseSessionId === sid || ext.originalSessionId === sid;
+};
+
 export type OpsScheduleItem = {
   id: string;
+  courseId: string;
+  courseSessionStatus: CourseSessionStatus;
   time: string;
   name: string;
   type: string;
@@ -40,6 +51,8 @@ export type OpsScheduleItem = {
   state: 'finished' | 'ongoing' | 'upcoming';
   abnormal: boolean;
   abnormalReason: string;
+  startAt: string;
+  endAt: string;
 };
 
 export type OpsFilter = 'all' | 'group' | 'private';
@@ -260,16 +273,40 @@ export const isEventFull = (
   (event.bookedCount ?? 0) >= event.capacity
 );
 
-export const getScheduleEventColor = (
-  course?: Pick<CourseLibraryItem, 'colorTag'>
-): string => (
-  course?.colorTag.replace('text-', 'border-').replace('700', '800')
-  ?? 'bg-gray-100 text-gray-800 border-gray-200'
-);
+const DEFAULT_SCHEDULE_EVENT_COLOR = 'bg-gray-100 text-gray-800 border-gray-200';
 
+export const getScheduleEventColor = (
+  course?: Pick<CourseLibraryItem, 'colorTag'> | null,
+): string => {
+  const raw = course?.colorTag;
+  if (typeof raw !== 'string' || !raw.trim()) {
+    return DEFAULT_SCHEDULE_EVENT_COLOR;
+  }
+  try {
+    return raw.replace('text-', 'border-').replace('700', '800');
+  } catch {
+    return DEFAULT_SCHEDULE_EVENT_COLOR;
+  }
+};
+
+/** 活跃可执行场次（不含已取消），用于需要「仍在执行流」的筛选 */
 export const getActiveScheduleEvents = (events: ScheduleEvent[]): ScheduleEvent[] => (
   events.filter(event => event.status !== 'cancelled')
 );
+
+/**
+ * 今日运营与排课日历可见场次（含已取消，便于追溯；不做「删除」语义过滤）。
+ * 后续若需按门店营业日收紧范围，可在此集中扩展。
+ */
+export const getTodayOperationScheduleEvents = (events: ScheduleEvent[]): ScheduleEvent[] => [...events];
+
+const extractCancelDetailFromNotes = (notes?: string): string | null => {
+  if (!notes?.trim()) return null;
+  const hit = notes.split('；').map(s => s.trim()).find(s => s.startsWith('【取消】'));
+  if (!hit) return null;
+  const body = hit.slice('【取消】'.length).trim();
+  return body || null;
+};
 
 export const getCalendarEventStyle = (
   startTime: string,
@@ -294,7 +331,7 @@ export const toScheduleEvent = (
   return {
     ...session,
     name: session.title ?? course?.name ?? '自定义课程',
-    teacher: getTeacherName(session.teacherId),
+    teacher: session.teacherName?.trim() || getTeacherName(session.teacherId),
     dayIndex: getDayIndexFromIso(session.startAt),
     startTime: getTimeFromIso(session.startAt),
     duration: getDurationMinutes(session.startAt, session.endAt),
@@ -596,7 +633,7 @@ export const completeDemoAttendanceForSession = (
     },
     bookings,
     attendances: updatedAttendances,
-    message: `${event.name} 已完成签到并生成消课记录`,
+    message: `${event.name} 演示：已完成签到并生成消课记录（未写入后端，正式以服务端为准）`,
   };
 };
 
@@ -616,14 +653,25 @@ export const toOpsScheduleItem = (
   const lateCancelledCount = bookings.filter(booking => (
     booking.courseSessionId === session.id && booking.status === 'late_cancelled'
   )).length;
+  const cancelDetail = extractCancelDetailFromNotes(session.notes);
+  const cancelTraceLine = session.status === 'cancelled'
+    ? (cancelDetail ?? '本场次已标记取消')
+    : '';
+  const lateReason = lateCancelledCount > 0 ? `${lateCancelledCount} 个迟取消预约` : '';
+  const abnormalReasonCombined = [lateReason, cancelTraceLine].filter(Boolean).join('；');
+  const abnormal = lateCancelledCount > 0 || (session.status === 'cancelled' && !!cancelTraceLine);
   const state: OpsScheduleItem['state'] = session.status === 'completed'
     ? 'finished'
     : session.status === 'in_progress'
       ? 'ongoing'
-      : 'upcoming';
+      : session.status === 'cancelled'
+        ? 'finished'
+        : 'upcoming';
 
   return {
     id: session.id,
+    courseId: session.courseId,
+    courseSessionStatus: session.status,
     time: formatSessionTimeRange(session),
     name: session.title ?? course?.name ?? '自定义课程',
     type: course ? COURSE_TYPE_LABELS[course.type] : '课程',
@@ -634,8 +682,10 @@ export const toOpsScheduleItem = (
     status: signed >= enrolled && enrolled > 0 ? 'checked_in' : isEventFull(session) ? 'full' : 'upcoming',
     signed,
     state,
-    abnormal: lateCancelledCount > 0,
-    abnormalReason: lateCancelledCount > 0 ? `${lateCancelledCount} 个迟取消预约` : '',
+    abnormal,
+    abnormalReason: abnormalReasonCombined,
+    startAt: session.startAt,
+    endAt: session.endAt,
   };
 };
 

@@ -47,7 +47,7 @@ const MallCards: React.FC<MallCardsProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
            {cards.map(card => (
               <div key={card.id} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition group relative overflow-hidden flex flex-col h-[280px]">
-                  <div className={`absolute top-0 right-0 px-3 py-1 text-[10px] font-bold rounded-bl-xl ${card.status === 'active' ? 'bg-black text-white' : 'bg-gray-100 text-gray-400'}`}>
+                  <div className={`absolute top-0 right-0 px-3 py-1 text-[10px] font-bold rounded-bl-xl ${card.status === 'active' ? 'bg-[var(--met-accent)] text-white' : 'bg-gray-100 text-gray-400'}`}>
                       {card.status === 'active' ? '上架中' : '已下架'}
                   </div>
                   <div className="mb-auto">
@@ -99,13 +99,13 @@ const MallCards: React.FC<MallCardsProps> = ({
                   <div className="p-8 space-y-8">
                       {/* Mode Selection */}
                       <div className="p-1 bg-gray-100 rounded-xl inline-flex">
-                          <button onClick={() => { setEditCardCategory('stored_value'); setEditingCard({ type: 'stored_value' }); }} className={`px-4 py-1.5 text-xs font-bold rounded-lg transition ${isStored ? 'bg-white shadow text-black' : 'text-gray-500'}`}>储值模式 (Stored)</button>
-                          <button onClick={() => { setEditCardCategory('term'); setEditingCard({ type: 'term' }); }} className={`px-4 py-1.5 text-xs font-bold rounded-lg transition ${!isStored ? 'bg-white shadow text-black' : 'text-gray-500'}`}>期限/次卡模式 (Term)</button>
+                          <button onClick={() => { setEditCardCategory('stored_value'); setEditingCard({ type: 'stored_value' }); }} className={`px-4 py-1.5 text-xs font-bold rounded-lg transition ${isStored ? 'bg-white shadow text-black' : 'text-gray-500'}`}>储值模式</button>
+                          <button onClick={() => { setEditCardCategory('term'); setEditingCard({ type: 'term' }); }} className={`px-4 py-1.5 text-xs font-bold rounded-lg transition ${!isStored ? 'bg-white shadow text-black' : 'text-gray-500'}`}>期限 / 次卡模式</button>
                       </div>
                       
                       {/* Marketing Info */}
                       <div className="space-y-4">
-                          <h4 className="text-sm font-bold text-gray-900 border-l-4 border-black pl-3">营销展示 (Marketing)</h4>
+                          <h4 className="text-sm font-bold text-gray-900 border-l-4 border-black pl-3">销售配置</h4>
                           <div className="grid grid-cols-2 gap-6">
                               <div className="col-span-1"><label className="text-xs font-bold text-gray-500 mb-1 block">卡项名称</label><input type="text" defaultValue={editingCard.name} onBlur={e => setEditingCard({name: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-black transition" /></div>
                               <div className="col-span-1"><label className="text-xs font-bold text-gray-500 mb-1 block">Slogan (副标题)</label><input type="text" defaultValue={editingCard.slogan} onBlur={e => setEditingCard({slogan: e.target.value})} className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-black transition" /></div>
@@ -115,7 +115,7 @@ const MallCards: React.FC<MallCardsProps> = ({
 
                       {/* Pricing */}
                       <div className="space-y-4">
-                          <h4 className="text-sm font-bold text-gray-900 border-l-4 border-black pl-3">价格与价值 (Pricing)</h4>
+                          <h4 className="text-sm font-bold text-gray-900 border-l-4 border-black pl-3">价格配置</h4>
                           <div className="grid grid-cols-3 gap-6">
                               <div><label className="text-xs font-bold text-gray-500 mb-1 block">售卖价格 (¥)</label><input type="number" defaultValue={editingCard.price} onBlur={e => setEditingCard({price: Number(e.target.value)})} className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm outline-none focus:border-black transition font-mono" /></div>
                               <div className="relative">
@@ -282,7 +282,7 @@ const MallCards: React.FC<MallCardsProps> = ({
                                       <label className="block text-[10px] font-bold text-gray-500 uppercase mb-2">课程类型</label>
                                       <div className="flex flex-wrap gap-2">
                                           {['团课', '小班', '私教', '教培工作坊'].map(fn => (
-                                              <label key={fn} className={`flex items-center gap-1 cursor-pointer px-3 py-1.5 rounded-lg border text-xs font-medium transition ${editingCard.functionScope?.includes(fn) ? 'bg-black text-white border-black' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'}`}>
+                                              <label key={fn} className={`flex items-center gap-1 cursor-pointer px-3 py-1.5 rounded-lg border text-xs font-medium transition ${editingCard.functionScope?.includes(fn) ? 'bg-[var(--met-accent)] text-white border-[var(--met-accent)]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'}`}>
                                                   <input 
                                                       type="checkbox" 
                                                       checked={editingCard.functionScope?.includes(fn)} 
@@ -304,7 +304,7 @@ const MallCards: React.FC<MallCardsProps> = ({
                                       <label className="block text-[10px] font-bold text-gray-500 uppercase mb-2">课程流派</label>
                                       <div className="flex flex-wrap gap-2">
                                           {['瑜伽', '普拉提'].map(genre => (
-                                              <label key={genre} className={`flex items-center gap-1 cursor-pointer px-3 py-1.5 rounded-lg border text-xs font-medium transition ${editingCard.genreScope?.includes(genre) ? 'bg-black text-white border-black' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'}`}>
+                                              <label key={genre} className={`flex items-center gap-1 cursor-pointer px-3 py-1.5 rounded-lg border text-xs font-medium transition ${editingCard.genreScope?.includes(genre) ? 'bg-[var(--met-accent)] text-white border-[var(--met-accent)]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'}`}>
                                                   <input 
                                                       type="checkbox" 
                                                       checked={editingCard.genreScope?.includes(genre)} 
@@ -330,7 +330,7 @@ const MallCards: React.FC<MallCardsProps> = ({
                                   <div className="p-6 bg-gray-50 rounded-xl border border-gray-200">
                                       <div className="flex flex-wrap gap-2">
                                           {['城西馆', '万象馆', '西湖馆', '滨江馆'].map(venue => (
-                                              <label key={venue} className={`flex items-center gap-1 cursor-pointer px-3 py-1.5 rounded-lg border text-xs font-medium transition ${editingCard.listingVenues?.includes(venue) ? 'bg-black text-white border-black' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'}`}>
+                                              <label key={venue} className={`flex items-center gap-1 cursor-pointer px-3 py-1.5 rounded-lg border text-xs font-medium transition ${editingCard.listingVenues?.includes(venue) ? 'bg-[var(--met-accent)] text-white border-[var(--met-accent)]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'}`}>
                                                   <input 
                                                       type="checkbox" 
                                                       checked={editingCard.listingVenues?.includes(venue)} 
@@ -360,7 +360,7 @@ const MallCards: React.FC<MallCardsProps> = ({
                           }
                           setSelectedItem(null);
                           handleBack();
-                      }} className="flex-1 bg-black text-white py-3 rounded-xl font-bold hover:opacity-90 shadow-lg">保存配置</button>
+                      }} className="flex-1 bg-[var(--met-accent)] border border-[var(--met-accent)] text-white py-3 rounded-xl font-bold hover:opacity-90 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">保存配置</button>
                   </div>
               </div>
               <div className="w-[360px] bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col">

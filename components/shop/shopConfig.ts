@@ -1,4 +1,5 @@
 import type { Holiday, Room, StoreInfo } from '../../types';
+import { MOCK_STORE_INFO_PRIMARY, MOCK_STORE_SELECT_OPTIONS } from '../../constants/mockStoresCatalog';
 
 export type ShopSubTab = 'setup' | 'rooms';
 
@@ -22,17 +23,11 @@ export const SHOP_SUB_TABS: Array<{ id: ShopSubTab; label: string }> = [
   { id: 'rooms', label: '教室配置' },
 ];
 
-export const DEFAULT_STORE_OPTIONS: StoreOption[] = [
-  { id: 1, name: 'MetYoga 西湖馆' },
-  { id: 2, name: '万象城馆' },
-  { id: 3, name: '城西银泰馆' },
-];
-
 export const DEMO_STORE_IMAGE_URL = 'https://images.unsplash.com/photo-1571019613454-1cb2f57a69d7?auto=format&fit=crop&q=80&w=400';
 
-export const buildInitialShopConfig = (store: StoreInfo): ShopConfigDraft => ({
-  store,
-  storeOptions: DEFAULT_STORE_OPTIONS,
+export const buildInitialShopConfig = (primary?: StoreInfo, options?: StoreOption[]): ShopConfigDraft => ({
+  store: primary ?? MOCK_STORE_INFO_PRIMARY,
+  storeOptions: options ?? MOCK_STORE_SELECT_OPTIONS,
   isStoreMenuOpen: false,
 });
 

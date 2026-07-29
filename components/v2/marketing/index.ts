@@ -1,0 +1,21 @@
+export { default as MarketingV2Page } from './MarketingV2Page';
+export type {
+  MarketingV2Snapshot,
+  MarketingWarroom,
+  FunnelMainBreakpoint,
+  TodayActionItem,
+  ChannelQuadrant,
+  ChannelPill,
+  ChannelQuadrants,
+  HeroCampaign,
+  SupportCampaignCard,
+  CampaignBattle,
+  LeadActionItem,
+  HandoffFlow,
+  HandoffFlowNode,
+  HandoffBreakpoint,
+  ActivityDetail,
+  LeadDetail,
+  ActivityTimeline,
+  ConversionFunnelStage,
+} from './marketingV2.viewModel';

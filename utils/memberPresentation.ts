@@ -91,7 +91,7 @@ export const getPrimaryMemberAssetSummary = (member: Member): MemberAssetSummary
 
     return {
       text: `${asset.name} (${balance})`,
-      sourceLabel: 'Assets',
+      sourceLabel: '会员资产',
       isLegacy: false,
     };
   }
@@ -101,14 +101,14 @@ export const getPrimaryMemberAssetSummary = (member: Member): MemberAssetSummary
 
   return {
     text: `${card.name} (${card.balance})`,
-    sourceLabel: 'Legacy cards',
+    sourceLabel: '历史卡项',
     isLegacy: true,
   };
 };
 
 export const getMemberAssetSourceLabel = (member: Member): string => {
   const primaryAsset = getPrimaryMemberAssetSummary(member);
-  return primaryAsset?.sourceLabel ?? 'No assets';
+  return primaryAsset?.sourceLabel ?? '暂无会员资产';
 };
 
 export const getMemberRiskPresentation = (member: Member): MemberRiskPresentation | null => {
@@ -124,8 +124,8 @@ export const getMemberListBusinessSummary = (
   const riskView = getMemberRiskPresentation(member);
 
   return {
-    assetText: assetSummary?.text ?? '无有效资产',
-    assetSourceLabel: assetSummary?.sourceLabel ?? 'No assets',
+    assetText: assetSummary?.text ?? '暂无会员资产',
+    assetSourceLabel: assetSummary?.sourceLabel ?? '暂无会员资产',
     courseText: recordSummary.courseRecordText,
     courseSourceLabel: recordSummary.courseSourceLabel,
     consumptionText: recordSummary.consumptionRecordText,

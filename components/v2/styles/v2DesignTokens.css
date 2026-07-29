@@ -1,0 +1,688 @@
+/**
+ * MET YOGA PC 后台 V2 — 统一设计令牌 v1
+ * 全局 :root token + 8 模块共享别名 + 基础 utility class
+ */
+
+:root {
+  /* 页面背景 */
+  --met-v2-page-bg: #f1f1f1;
+  --met-v2-surface: #ffffff;
+  --met-v2-surface-soft: #fafaf8;
+  --met-v2-border: #e5e5e5;
+  --met-v2-border-soft: #efefef;
+
+  /* 文本 */
+  --met-v2-text-primary: #171717;
+  --met-v2-text-secondary: #666666;
+  --met-v2-text-tertiary: #999999;
+  --met-v2-text-inverse: #ffffff;
+
+  /* 品牌主色 */
+  --met-v2-brand: #006b42;
+  --met-v2-brand-dark: #005436;
+  --met-v2-brand-soft: #eaf4ef;
+
+  /* 状态色 */
+  --met-v2-success: #16734a;
+  --met-v2-success-bg: #eaf5ef;
+
+  --met-v2-warning: #a86d00;
+  --met-v2-warning-bg: #fff6e3;
+
+  --met-v2-danger: #b84640;
+  --met-v2-danger-bg: #fdecea;
+
+  --met-v2-neutral: #777777;
+  --met-v2-neutral-bg: #f5f5f3;
+
+  /* P 级状态 */
+  --met-v2-p0: #d6453d;
+  --met-v2-p0-bg: #fdecea;
+
+  --met-v2-p1: #b87900;
+  --met-v2-p1-bg: #fff3d6;
+
+  --met-v2-p2: #777777;
+  --met-v2-p2-bg: #f2f2f0;
+
+  /* 业务状态：健康 / 观察 / 待完善 / 建议来源 */
+  --met-v2-watch-bg: #eef5f0;
+  --met-v2-watch-text: #16734a;
+
+  --met-v2-status-pending-bg: #fff8e8;
+  --met-v2-status-pending-text: #a86d00;
+
+  --met-v2-rule-bg: var(--met-v2-brand-soft);
+  --met-v2-rule-text: var(--met-v2-brand);
+
+  --met-v2-pending-bg: var(--met-v2-neutral-bg);
+  --met-v2-pending-text: var(--met-v2-text-secondary);
+
+  /* 字体层级（基础默认；密度 class 可覆盖） */
+  --met-v2-font-page-title: 28px;
+  --met-v2-weight-page-title: 700;
+  --met-v2-lh-page-title: 1.25;
+
+  --met-v2-font-page-subtitle: 13px;
+  --met-v2-weight-page-subtitle: 400;
+  --met-v2-lh-page-subtitle: 1.5;
+
+  --met-v2-font-secondary-title: 24px;
+  --met-v2-font-card-title: 18px;
+  --met-v2-lh-card-title: 1.35;
+  --met-v2-font-side-title: 15px;
+
+  --met-v2-font-section-title: 16px;
+  --met-v2-font-drawer-title: 18px;
+
+  --met-v2-font-body: 13px;
+  --met-v2-lh-body: 1.45;
+
+  --met-v2-font-caption: 12px;
+  --met-v2-lh-caption: 1.4;
+
+  --met-v2-font-metric: 26px;
+
+  /* 卡片 */
+  --met-v2-radius-lg: 14px;
+  --met-v2-radius-md: 12px;
+  --met-v2-radius-sm: 10px;
+  --met-v2-card-padding: 20px;
+  --met-v2-card-padding-md: 18px;
+  --met-v2-card-padding-compact: 14px;
+  --met-v2-card-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+
+  /* 页面间距 */
+  --met-v2-page-padding: 28px;
+  --met-v2-section-gap: 20px;
+  --met-v2-card-gap: 14px;
+  --met-v2-inline-gap: 8px;
+  --met-v2-content-max: 1480px;
+
+  /* 按钮 */
+  --met-v2-button-height: 36px;
+  --met-v2-button-height-sm: 32px;
+  --met-v2-button-radius: 10px;
+  --met-v2-button-radius-pill: 999px;
+
+  /* 筛选器 / Tabs / 表单 */
+  --met-v2-filter-height: 32px;
+  --met-v2-tab-height: 32px;
+  --met-v2-input-height: 36px;
+
+  /* 表格密度 */
+  --met-v2-table-cell-padding-y: 10px;
+  --met-v2-table-cell-padding-x: 10px;
+  --met-v2-table-row-min-height: 48px;
+  --met-v2-table-font: 13px;
+  --met-v2-table-lh: 1.4;
+
+  /* 抽屉 */
+  --met-v2-drawer-width-sm: 580px;
+  --met-v2-drawer-width-md: 640px;
+  --met-v2-drawer-width: 680px;
+  --met-v2-drawer-width-lg: 720px;
+  --met-v2-drawer-shadow: -12px 0 32px rgba(0, 0, 0, 0.08);
+  --met-v2-drawer-overlay: rgba(0, 0, 0, 0.38);
+  --met-v2-drawer-header-height: auto;
+  --met-v2-drawer-section-gap: 16px;
+
+  /* 动画 */
+  --met-v2-transition-fast: 120ms ease;
+  --met-v2-transition-base: 180ms ease;
+}
+
+/* —— 8 模块共享局部别名（兼容既有 --v2-* 引用）—— */
+.met-dashboard-v2,
+.met-today-v2,
+.met-member-v2,
+.met-course-v2,
+.met-staff-v2,
+.met-finance-v2,
+.met-marketing-v2,
+.met-settings-v2,
+.met-product-rights-v2,
+.met-rc-v2 {
+  --v2-bg-page: var(--met-v2-page-bg);
+  --v2-bg-card: var(--met-v2-surface);
+  --v2-green: var(--met-v2-brand);
+  --v2-green-soft: var(--met-v2-brand-soft);
+  --v2-text-title: var(--met-v2-text-primary);
+  --v2-text-body: var(--met-v2-text-primary);
+  --v2-text-secondary: var(--met-v2-text-secondary);
+  --v2-text-muted: var(--met-v2-text-tertiary);
+  --v2-text-faint: var(--met-v2-text-tertiary);
+  --v2-border: var(--met-v2-border);
+  --v2-border-light: var(--met-v2-border-soft);
+  --v2-shadow: var(--met-v2-card-shadow);
+  --v2-radius-card: var(--met-v2-radius-lg);
+  --v2-padding-page: var(--met-v2-page-padding);
+  --v2-gap-card: var(--met-v2-section-gap);
+  --v2-gap-inner: var(--met-v2-card-gap);
+  --v2-warn: var(--met-v2-p1);
+  --v2-warn-bg: var(--met-v2-p1-bg);
+  --v2-risk: var(--met-v2-p0);
+  --v2-risk-bg: var(--met-v2-p0-bg);
+  --v2-p2: var(--met-v2-p2);
+  --v2-p2-bg: var(--met-v2-p2-bg);
+  --v2-success: var(--met-v2-success);
+  --v2-success-bg: var(--met-v2-success-bg);
+  --v2-neutral-bg: var(--met-v2-neutral-bg);
+  --v2-rule-bg: var(--met-v2-rule-bg);
+  --v2-rule-text: var(--met-v2-rule-text);
+  --v2-pending-bg: var(--met-v2-pending-bg);
+  --v2-pending-text: var(--met-v2-pending-text);
+  --v2-watch-bg: var(--met-v2-watch-bg);
+  --v2-watch-text: var(--met-v2-watch-text);
+}
+
+/* —— 基础 utility —— */
+.met-v2-card {
+  background: var(--met-v2-surface);
+  border: 1px solid var(--met-v2-border);
+  border-radius: var(--met-v2-radius-lg);
+  box-shadow: var(--met-v2-card-shadow);
+}
+
+.met-v2-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--met-v2-button-height);
+  padding: 0 16px;
+  border: 1px solid var(--met-v2-brand);
+  border-radius: var(--met-v2-button-radius);
+  background: var(--met-v2-brand);
+  color: var(--met-v2-text-inverse);
+  font-size: var(--met-v2-font-body);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--met-v2-transition-fast), border-color var(--met-v2-transition-fast);
+}
+
+.met-v2-btn-primary:hover {
+  background: var(--met-v2-brand-dark);
+  border-color: var(--met-v2-brand-dark);
+}
+
+.met-v2-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--met-v2-button-height-sm);
+  padding: 0 14px;
+  border: 1px solid var(--met-v2-border);
+  border-radius: var(--met-v2-button-radius);
+  background: var(--met-v2-surface);
+  color: var(--met-v2-text-primary);
+  font-size: var(--met-v2-font-caption);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--met-v2-transition-fast), border-color var(--met-v2-transition-fast);
+}
+
+.met-v2-btn-ghost:hover {
+  background: var(--met-v2-neutral-bg);
+}
+
+.met-v2-filter-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--met-v2-filter-height);
+  padding: 0 14px;
+  border: 1px solid var(--met-v2-border);
+  border-radius: var(--met-v2-button-radius);
+  background: var(--met-v2-surface);
+  color: var(--met-v2-text-primary);
+  font-size: var(--met-v2-font-caption);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--met-v2-transition-fast), border-color var(--met-v2-transition-fast);
+}
+
+.met-v2-filter-button:hover {
+  background: var(--met-v2-neutral-bg);
+}
+
+.met-v2-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 3px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.met-v2-pill--p0 {
+  background: var(--met-v2-p0-bg);
+  color: var(--met-v2-p0);
+}
+
+.met-v2-pill--p1 {
+  background: var(--met-v2-p1-bg);
+  color: var(--met-v2-p1);
+}
+
+.met-v2-pill--p2 {
+  background: var(--met-v2-p2-bg);
+  color: var(--met-v2-p2);
+}
+
+.met-v2-pill--success {
+  background: var(--met-v2-success-bg);
+  color: var(--met-v2-success);
+}
+
+.met-v2-pill--warning {
+  background: var(--met-v2-warning-bg);
+  color: var(--met-v2-warning);
+}
+
+.met-v2-pill--danger {
+  background: var(--met-v2-danger-bg);
+  color: var(--met-v2-danger);
+}
+
+.met-v2-pill--neutral {
+  background: var(--met-v2-neutral-bg);
+  color: var(--met-v2-neutral);
+}
+
+.met-v2-pill--watch {
+  background: var(--met-v2-watch-bg);
+  color: var(--met-v2-watch-text);
+}
+
+.met-v2-pill--rule {
+  background: var(--met-v2-rule-bg);
+  color: var(--met-v2-rule-text);
+}
+
+.met-v2-pill--pending-config {
+  background: var(--met-v2-pending-bg);
+  color: var(--met-v2-pending-text);
+}
+
+/* P 级命名兼容：--p0 / .is-p0 / --p0 后缀 */
+[class*='priority--p0'],
+[class*='priority'].is-p0,
+[class*='-priority--p0'] {
+  background: var(--met-v2-p0-bg) !important;
+  color: var(--met-v2-p0) !important;
+}
+
+[class*='priority--p1'],
+[class*='priority'].is-p1,
+[class*='-priority--p1'] {
+  background: var(--met-v2-p1-bg) !important;
+  color: var(--met-v2-p1) !important;
+}
+
+[class*='priority--p2'],
+[class*='priority'].is-p2,
+[class*='-priority--p2'] {
+  background: var(--met-v2-p2-bg) !important;
+  color: var(--met-v2-p2) !important;
+}
+
+.met-v2-drawer {
+  width: var(--met-v2-drawer-width);
+  background: var(--met-v2-surface);
+  box-shadow: var(--met-v2-drawer-shadow);
+}
+
+/* —— V2 全局抽屉 utility —— */
+.met-v2-drawer-shell {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  pointer-events: none;
+}
+
+.met-v2-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  border: none;
+  background: var(--met-v2-drawer-overlay);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.met-v2-drawer-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 201;
+  display: flex;
+  flex-direction: column;
+  width: min(var(--met-v2-drawer-width), 100vw);
+  height: 100%;
+  background: var(--met-v2-surface);
+  box-shadow: var(--met-v2-drawer-shadow);
+  pointer-events: auto;
+}
+
+.met-v2-drawer-panel--sm {
+  width: min(var(--met-v2-drawer-width-sm), 100vw);
+}
+
+.met-v2-drawer-panel--md {
+  width: min(var(--met-v2-drawer-width-md), 100vw);
+}
+
+.met-v2-drawer-panel--lg {
+  width: min(var(--met-v2-drawer-width-lg), 100vw);
+}
+
+.met-v2-drawer-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-shrink: 0;
+  min-height: var(--met-v2-drawer-header-height);
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--met-v2-border-soft);
+  background: var(--met-v2-surface);
+}
+
+.met-v2-drawer-title {
+  margin: 0;
+  font-size: var(--met-v2-font-drawer-title);
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--met-v2-text-primary);
+  letter-spacing: -0.02em;
+}
+
+.met-v2-drawer-subtitle {
+  margin: 6px 0 0;
+  font-size: var(--met-v2-font-body);
+  font-weight: 400;
+  line-height: var(--met-v2-lh-body);
+  color: var(--met-v2-text-secondary);
+  max-width: 32em;
+}
+
+.met-v2-drawer-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--met-v2-border);
+  border-radius: var(--met-v2-button-radius);
+  background: var(--met-v2-surface);
+  font-size: 20px;
+  line-height: 1;
+  color: var(--met-v2-text-secondary);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition:
+    border-color var(--met-v2-transition-fast),
+    color var(--met-v2-transition-fast),
+    background var(--met-v2-transition-fast);
+}
+
+.met-v2-drawer-close:hover {
+  border-color: var(--met-v2-brand);
+  color: var(--met-v2-brand);
+  background: var(--met-v2-brand-soft);
+}
+
+.met-v2-drawer-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--met-v2-drawer-section-gap);
+}
+
+.met-v2-drawer-section {
+  padding: 14px 16px;
+  border: 1px solid var(--met-v2-border-soft);
+  border-radius: var(--met-v2-radius-sm);
+  background: var(--met-v2-surface);
+}
+
+.met-v2-drawer-section-title {
+  margin: 0 0 12px;
+  font-size: var(--met-v2-font-section-title);
+  font-weight: 600;
+  line-height: var(--met-v2-lh-card-title);
+  color: var(--met-v2-text-primary);
+  letter-spacing: -0.01em;
+}
+
+.met-v2-drawer-section-subtitle {
+  margin: -6px 0 10px;
+  font-size: 12px;
+  color: var(--met-v2-text-secondary);
+  line-height: 1.45;
+}
+
+.met-v2-drawer-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--met-v2-border-soft);
+  font-size: var(--met-v2-font-body);
+  line-height: var(--met-v2-lh-body);
+}
+
+.met-v2-drawer-row:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.met-v2-drawer-label {
+  flex-shrink: 0;
+  color: var(--met-v2-text-secondary);
+  max-width: 42%;
+}
+
+.met-v2-drawer-value {
+  text-align: right;
+  color: var(--met-v2-text-primary);
+  font-weight: 500;
+}
+
+.met-v2-drawer-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.met-v2-drawer-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex-shrink: 0;
+  padding: 14px 24px 20px;
+  border-top: 1px solid var(--met-v2-border-soft);
+  background: var(--met-v2-surface-soft);
+}
+
+.met-v2-drawer-footer--inline {
+  padding: 0;
+  margin-top: 4px;
+  border-top: none;
+  background: transparent;
+}
+
+.met-v2-drawer-footer-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--met-v2-button-height);
+  padding: 0 16px;
+  border: 1px solid var(--met-v2-border);
+  border-radius: var(--met-v2-button-radius);
+  background: var(--met-v2-surface);
+  font-size: var(--met-v2-font-body);
+  font-weight: 500;
+  color: var(--met-v2-text-secondary);
+  cursor: pointer;
+  transition:
+    background var(--met-v2-transition-fast),
+    border-color var(--met-v2-transition-fast),
+    color var(--met-v2-transition-fast);
+}
+
+.met-v2-drawer-footer-btn--primary {
+  background: var(--met-v2-brand);
+  border-color: var(--met-v2-brand);
+  color: var(--met-v2-text-inverse);
+}
+
+.met-v2-drawer-footer-btn--primary:hover {
+  background: var(--met-v2-brand-dark);
+  border-color: var(--met-v2-brand-dark);
+  color: var(--met-v2-text-inverse);
+}
+
+.met-v2-drawer-footer-btn--danger {
+  border-color: var(--met-v2-danger);
+  color: var(--met-v2-danger);
+}
+
+.met-v2-drawer-footer-btn:hover {
+  background: var(--met-v2-neutral-bg);
+  border-color: var(--met-v2-border);
+  color: var(--met-v2-text-primary);
+}
+
+.met-v2-drawer-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 240px;
+  padding: 32px 24px;
+  text-align: center;
+}
+
+.met-v2-drawer-empty__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--met-v2-text-primary);
+}
+
+.met-v2-drawer-empty__desc {
+  margin: 0;
+  max-width: 22em;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--met-v2-text-secondary);
+}
+
+/* —— 跨模块抽屉 class 映射（视觉统一）—— */
+.met-member-v2-drawer-overlay,
+.met-course-v2-drawer-overlay,
+.met-staff-v2-drawer-overlay,
+.met-finance-v2-drawer-overlay,
+.met-marketing-v2-drawer-overlay,
+.met-settings-v2-drawer-overlay {
+  background: var(--met-v2-drawer-overlay);
+}
+
+.met-member-v2-drawer,
+.met-member-v2-drawer--match,
+.met-course-v2-drawer,
+.met-staff-v2-drawer,
+.met-finance-v2-drawer,
+.met-marketing-v2-drawer,
+.met-settings-v2-drawer {
+  box-shadow: var(--met-v2-drawer-shadow);
+}
+
+.met-member-v2-drawer__head,
+.met-course-v2-drawer__head,
+.met-staff-v2-drawer__head,
+.met-finance-v2-drawer__head,
+.met-marketing-v2-drawer__head,
+.met-settings-v2-drawer__head {
+  min-height: var(--met-v2-drawer-header-height);
+}
+
+.met-member-v2-drawer__title,
+.met-course-v2-drawer__title,
+.met-staff-v2-drawer__title,
+.met-finance-v2-drawer__title,
+.met-marketing-v2-drawer__title,
+.met-settings-v2-drawer__title {
+  font-size: var(--met-v2-font-drawer-title);
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.met-member-v2-drawer__subtitle,
+.met-member-v2-drawer__hero,
+.met-course-v2-drawer__subtitle,
+.met-staff-v2-drawer__subtitle,
+.met-finance-v2-drawer__subtitle,
+.met-marketing-v2-drawer__subtitle,
+.met-settings-v2-drawer__subtitle {
+  font-size: var(--met-v2-font-body);
+  line-height: var(--met-v2-lh-body);
+  font-weight: 400;
+}
+
+.met-member-v2-drawer__body,
+.met-course-v2-drawer__body,
+.met-staff-v2-drawer__body,
+.met-finance-v2-drawer__body,
+.met-marketing-v2-drawer__body,
+.met-settings-v2-drawer__body {
+  gap: var(--met-v2-drawer-section-gap);
+}
+
+.met-member-v2-drawer__section,
+.met-course-v2-drawer__section,
+.met-staff-v2-drawer__section,
+.met-finance-v2-drawer__section,
+.met-marketing-v2-drawer__section,
+.met-settings-v2-drawer__section {
+  margin-bottom: 0;
+  border-radius: var(--met-v2-radius-sm);
+  background: var(--met-v2-surface);
+}
+
+.met-member-v2-drawer__actions,
+.met-course-v2-drawer__actions,
+.met-staff-v2-drawer__actions,
+.met-finance-v2-drawer__actions,
+.met-marketing-v2-drawer__actions,
+.met-settings-v2-drawer__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+.met-v2-empty {
+  padding: 24px;
+  border: 1px dashed var(--met-v2-border);
+  border-radius: var(--met-v2-radius-md);
+  background: var(--met-v2-surface-soft);
+  color: var(--met-v2-text-tertiary);
+  font-size: 13px;
+  text-align: center;
+}
+
+.met-v2-placeholder {
+  padding: 16px;
+  border-radius: var(--met-v2-radius-md);
+  background: var(--met-v2-neutral-bg);
+  color: var(--met-v2-text-secondary);
+  font-size: 12px;
+}

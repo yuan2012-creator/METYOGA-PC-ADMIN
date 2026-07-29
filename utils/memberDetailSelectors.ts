@@ -138,7 +138,7 @@ const toBookingTimeline = (
     occurredAt: booking.cancelledAt ?? booking.bookedAt,
     content: isCancelled
       ? `预约状态：${booking.status}${booking.cancelReason ? `，原因：${booking.cancelReason}` : ''}。`
-      : `预约来源：${booking.source ?? 'unknown'}，状态：${booking.status}。`,
+      : `预约来源：${booking.source ?? '暂未记录'}，状态：${booking.status}。`,
     sourceType: 'booking',
     sourceId: booking.id,
   };
@@ -247,14 +247,14 @@ export const buildMemberBusinessRecordSummary = ({
       ? `${completedAttendances.length} 到课 / ${memberBookings.length} 预约`
       : `${member.totalClasses} 累计课程`,
     courseSourceLabel: hasCourseDomainData
-      ? 'Booking / Attendance'
-      : 'Fallback: member.totalClasses',
+      ? '预约记录 / 到课记录'
+      : '估算口径：会员累计课程字段',
     consumptionRecordText: hasConsumptionDomainData
       ? `¥${paidTotal.toLocaleString()} / ${memberOrders.length} 单`
       : `¥${member.totalLTV.toLocaleString()} LTV`,
     consumptionSourceLabel: hasConsumptionDomainData
-      ? (refundTotal > 0 ? `Refund ¥${refundTotal.toLocaleString()}` : `Ledger ¥${recognizedCourseIncome.toLocaleString()}`)
-      : 'Fallback: member.totalLTV',
+      ? (refundTotal > 0 ? `退款记录 ¥${refundTotal.toLocaleString()}` : `财务记录 ¥${recognizedCourseIncome.toLocaleString()}`)
+      : '估算口径：会员 LTV 与积分字段',
     completedClassCount: completedAttendances.length,
     bookingCount: memberBookings.length,
     orderCount: memberOrders.length,
@@ -277,8 +277,8 @@ export const buildMemberDetailBusinessRecordSlots = (
       id: 'course',
       title: '课程记录',
       description: summary.hasCourseDomainData
-        ? '来自 Booking / Attendance / CourseSession'
-        : 'Fallback：当前会员累计课程字段',
+        ? '来自预约记录、到课记录与课程场次'
+        : '估算口径：当前会员累计课程字段',
       iconClass: 'fa-solid fa-calendar-check',
       toneClass: 'bg-gray-900 text-white',
       metrics: [
@@ -290,13 +290,13 @@ export const buildMemberDetailBusinessRecordSlots = (
       id: 'consumption',
       title: '消费记录',
       description: summary.hasConsumptionDomainData
-        ? '来自 Order / Payment / Refund / Ledger'
-        : 'Fallback：当前会员 LTV 与积分字段',
+        ? '来自订单、支付、退款记录与财务记录'
+        : '估算口径：当前会员 LTV 与积分字段',
       iconClass: 'fa-solid fa-receipt',
       toneClass: 'bg-white text-gray-900 border border-gray-200',
       metrics: [
         { label: summary.hasConsumptionDomainData ? '实收金额' : '累计消费', value: `¥${(summary.hasConsumptionDomainData ? summary.paidTotal : member.totalLTV).toLocaleString()}` },
-        { label: summary.refundTotal > 0 ? '退款/确认收入' : '订单/确认收入', value: summary.refundTotal > 0 ? `¥${summary.refundTotal.toLocaleString()} / ¥${summary.recognizedCourseIncome.toLocaleString()}` : `${summary.orderCount} 单 / ¥${summary.recognizedCourseIncome.toLocaleString()}` },
+        { label: summary.refundTotal > 0 ? '退款/待确认收入（测算）' : '订单/待确认收入（测算）', value: summary.refundTotal > 0 ? `¥${summary.refundTotal.toLocaleString()} / ¥${summary.recognizedCourseIncome.toLocaleString()}` : `${summary.orderCount} 单 / ¥${summary.recognizedCourseIncome.toLocaleString()}` },
       ],
     },
   ];
@@ -305,15 +305,15 @@ export const buildMemberDetailBusinessRecordSlots = (
 export const getMemberDetailTimelineSourceLabel = (sourceType: MemberDetailTimelineSourceType): string => {
   switch (sourceType) {
     case 'legacy_timeline':
-      return 'Legacy timeline fallback';
+      return '历史时间线估算';
     case 'order':
-      return '订单';
+      return '购买记录';
     case 'booking':
-      return '预约';
+      return '预约记录';
     case 'attendance':
-      return '签到/到课';
+      return '到课记录';
     case 'refund':
-      return '退款';
+      return '退款记录';
     default:
       return '业务记录';
   }

@@ -1,0 +1,1016 @@
+import React, { useCallback, useMemo, useState } from 'react';
+import { ChevronDown } from 'lucide-react';
+import {
+  buildFinanceV2Snapshot,
+  getCoverageToneClass,
+  getEvidenceStatusClass,
+  getFinanceHealthStatusClass,
+  getMetricToneClass,
+  getMonthlyChangeToneClass,
+  getPlainLanguageTagClass,
+  getPriorityClass,
+  getStoreStatusClass,
+  getSuggestionSourceClass,
+  type AssetDetail,
+  type AssetChangeQueue,
+  type AssetChangeRequest,
+  type AssetChangeSummaryCard,
+  type AssetRiskItem,
+  type FinanceCoreMetric,
+  type FinanceDetail,
+  type FinanceDetailEntry,
+  type FinancePriorityAction,
+  type StoreFinanceRow,
+} from './financeV2.viewModel';
+import FinanceSecondaryAssetChangePage from './FinanceSecondaryAssetChangePage';
+import {
+  buildAssetChangeSnapshot,
+  getAssetChangeDrawerDetail,
+  getAssetChangeEvidenceDotClass,
+  getAssetChangeStatusClass,
+  type AssetChangeDrawerDetail,
+} from './financeSecondaryAssetChange.viewModel';
+import { DrawerEmptyState } from '../shared';
+import './financeV2.css';
+
+type FinanceV2ViewMode = 'overview' | 'assetChangeRequests';
+
+type DrawerState =
+  | { type: 'asset'; id: string }
+  | { type: 'store'; id: string }
+  | { type: 'finance_evidence' }
+  | { type: 'asset_change'; requestId: string }
+  | null;
+
+const FinanceV2Page: React.FC = () => {
+  const snapshot = useMemo(() => buildFinanceV2Snapshot(), []);
+  const assetChangeSnapshot = useMemo(() => buildAssetChangeSnapshot(), []);
+  const [viewMode, setViewMode] = useState<FinanceV2ViewMode>('overview');
+  const [toast, setToast] = useState<string | null>(null);
+  const [drawer, setDrawer] = useState<DrawerState>(null);
+
+  const showToast = useCallback((message: string) => {
+    console.log('[FinanceV2]', message);
+    setToast(message);
+    window.setTimeout(
+      () => setToast(current => (current === message ? null : current)),
+      2400,
+    );
+  }, []);
+
+  const handleAction = useCallback(
+    (label: string) => {
+      const message =
+        label.includes('（待建设）') || label.startsWith('进入 ')
+          ? label
+          : `${label}（待建设）`;
+      showToast(message);
+    },
+    [showToast],
+  );
+
+  const openAssetDrawer = useCallback((id: string) => {
+    setDrawer({ type: 'asset', id });
+  }, []);
+
+  const openStoreDrawer = useCallback((id: string) => {
+    setDrawer({ type: 'store', id });
+  }, []);
+
+  const openFinanceEvidenceDrawer = useCallback(() => {
+    setDrawer({ type: 'finance_evidence' });
+  }, []);
+
+  const openAssetChangeRequests = useCallback(() => {
+    setViewMode('assetChangeRequests');
+  }, []);
+
+  const backToOverview = useCallback(() => {
+    setViewMode('overview');
+  }, []);
+
+  const openAssetChangeDrawer = useCallback((requestId: string) => {
+    setDrawer({ type: 'asset_change', requestId });
+  }, []);
+
+  const closeDrawer = useCallback(() => setDrawer(null), []);
+
+  const drawerAsset: AssetDetail | null =
+    drawer?.type === 'asset' ? snapshot.assetDetailMap[drawer.id] ?? null : null;
+
+  const drawerFinance: FinanceDetail | null = useMemo(() => {
+    if (!drawer) return null;
+    if (drawer.type === 'finance_evidence') return snapshot.financeDetailMap['finance-evidence'] ?? null;
+    if (drawer.type === 'store') return snapshot.financeDetailMap[`finance-${drawer.id}`] ?? null;
+    return null;
+  }, [drawer, snapshot.financeDetailMap]);
+
+  const drawerAssetChange: AssetChangeDrawerDetail | null = useMemo(() => {
+    if (drawer?.type !== 'asset_change') return null;
+    return getAssetChangeDrawerDetail(assetChangeSnapshot.rows, drawer.requestId);
+  }, [drawer, assetChangeSnapshot.rows]);
+
+  const handleRiskAction = useCallback(
+    (item: AssetRiskItem) => {
+      if (item.opensAssetChangeRequests) {
+        openAssetChangeRequests();
+        return;
+      }
+      showToast(item.toastMessage);
+      if (item.relatedAssetId) openAssetDrawer(item.relatedAssetId);
+      else if (item.relatedStoreId) openStoreDrawer(item.relatedStoreId);
+    },
+    [openAssetChangeRequests, openAssetDrawer, openStoreDrawer, showToast],
+  );
+
+  const handleChangeRequest = useCallback(
+    (req: AssetChangeRequest) => {
+      openAssetChangeRequests();
+      void req;
+    },
+    [openAssetChangeRequests],
+  );
+
+  const handleSummaryCardAction = useCallback(
+    (item: AssetChangeSummaryCard) => {
+      if (item.opensAssetChangeRequests) {
+        openAssetChangeRequests();
+        return;
+      }
+      showToast(item.ctaToast);
+    },
+    [openAssetChangeRequests, showToast],
+  );
+
+  const handleQueueAction = useCallback(
+    (queue: AssetChangeQueue) => {
+      if (queue.opensAssetChangeRequests) {
+        openAssetChangeRequests();
+        return;
+      }
+      showToast(queue.toastMessage);
+    },
+    [openAssetChangeRequests, showToast],
+  );
+
+  const handlePriorityAction = useCallback(
+    (item: FinancePriorityAction) => {
+      if (item.opensAssetChangeRequests) {
+        openAssetChangeRequests();
+        return;
+      }
+      showToast(item.ctaToast);
+    },
+    [openAssetChangeRequests, showToast],
+  );
+
+  const handleCoreMetric = useCallback(
+    (metric: FinanceCoreMetric) => {
+      if (metric.opensAssetChangeRequests) {
+        openAssetChangeRequests();
+        return;
+      }
+      showToast(metric.toastMessage);
+    },
+    [openAssetChangeRequests, showToast],
+  );
+
+  const handleDetailEntry = useCallback(
+    (entry: FinanceDetailEntry) => {
+      if (entry.opensAssetChangeRequests) {
+        openAssetChangeRequests();
+        return;
+      }
+      if (entry.label === '查看财务证据链') {
+        openFinanceEvidenceDrawer();
+        return;
+      }
+      showToast(entry.toastMessage);
+    },
+    [openAssetChangeRequests, openFinanceEvidenceDrawer, showToast],
+  );
+
+  const {
+    meta,
+    filters,
+    financeHealthSummary,
+    financePriorityActions,
+    financePlainLanguage,
+    financeCoreMetrics,
+    assetRiskQueue,
+    assetChangeSummary,
+    revenueEvidenceSummary,
+    storeFinanceHealth,
+    financeDetailEntries,
+    assetChangeQueues,
+  } = snapshot;
+
+  const renderFinanceDrawer = (detail: FinanceDetail) => (
+    <>
+      <section className="met-finance-v2-drawer__section">
+        <h3 className="met-finance-v2-drawer__section-title">财务指标</h3>
+        {detail.metrics.map(row => (
+          <div key={row.label} className="met-finance-v2-drawer__row">
+            <span>{row.label}</span>
+            <span>{row.value}</span>
+          </div>
+        ))}
+      </section>
+      <section className="met-finance-v2-drawer__section">
+        <h3 className="met-finance-v2-drawer__section-title">风险判断</h3>
+        {detail.riskSummary.map(row => (
+          <div key={row.label} className="met-finance-v2-drawer__row">
+            <span>{row.label}</span>
+            <span>{row.value}</span>
+          </div>
+        ))}
+        <ul className="met-finance-v2-drawer__list">
+          {detail.suggestions.map(s => (
+            <li key={s}>{s}</li>
+          ))}
+        </ul>
+      </section>
+      <div className="met-finance-v2-drawer__actions met-v2-drawer-footer met-v2-drawer-footer--inline">
+        {detail.actions.map(action => (
+          <button
+            key={action.label}
+            type="button"
+            className="met-v2-drawer-footer-btn"
+            onClick={() => showToast(action.toastMessage)}
+          >
+            {action.label}
+          </button>
+        ))}
+      </div>
+    </>
+  );
+
+  const renderAssetDrawer = (detail: AssetDetail) => (
+    <>
+      <section className="met-finance-v2-drawer__section">
+        <h3 className="met-finance-v2-drawer__section-title">资产概览</h3>
+        {detail.overview.map(row => (
+          <div key={row.label} className="met-finance-v2-drawer__row">
+            <span>{row.label}</span>
+            <span>{row.value}</span>
+          </div>
+        ))}
+      </section>
+      <section className="met-finance-v2-drawer__section">
+        <h3 className="met-finance-v2-drawer__section-title">财务口径</h3>
+        {detail.financeMetrics.map(row => (
+          <div key={row.label} className="met-finance-v2-drawer__row">
+            <span>{row.label}</span>
+            <span>{row.value}</span>
+          </div>
+        ))}
+      </section>
+      <section className="met-finance-v2-drawer__section">
+        <h3 className="met-finance-v2-drawer__section-title">合同与证据链</h3>
+        {detail.contractEvidence.map(row => (
+          <div key={row.label} className="met-finance-v2-drawer__row">
+            <span>{row.label}</span>
+            <span className={row.status === 'missing' ? 'is-warn' : ''}>{row.value}</span>
+          </div>
+        ))}
+      </section>
+      <section className="met-finance-v2-drawer__section">
+        <h3 className="met-finance-v2-drawer__section-title">证据完整度</h3>
+        <div className="met-finance-v2-evidence-tags">
+          {detail.evidenceCompleteness.map(item => (
+            <span
+              key={item.key}
+              className={['met-finance-v2-evidence-tag', getEvidenceStatusClass(item.status)].join(' ')}
+            >
+              {item.label}：{item.statusLabel}
+            </span>
+          ))}
+        </div>
+        <div className="met-finance-v2-drawer__row">
+          <span>操作日志</span>
+          <span>{detail.operationLogStatus}</span>
+        </div>
+      </section>
+      <section className="met-finance-v2-drawer__section">
+        <h3 className="met-finance-v2-drawer__section-title">处理建议</h3>
+        <p className="met-finance-v2-drawer__suggestion">{detail.processingSuggestion.text}</p>
+        <span className={['met-finance-v2-source-tag', getSuggestionSourceClass(detail.processingSuggestion.suggestionSource)].join(' ')}>
+          {detail.processingSuggestion.suggestionSourceLabel}
+        </span>
+      </section>
+      <section className="met-finance-v2-drawer__section">
+        <h3 className="met-finance-v2-drawer__section-title">耗课与资产变更</h3>
+        <ul className="met-finance-v2-drawer__list">
+          {detail.activityRecords.map(rec => (
+            <li key={rec.label}>{rec.label}</li>
+          ))}
+        </ul>
+      </section>
+      <section className="met-finance-v2-drawer__section">
+        <h3 className="met-finance-v2-drawer__section-title">当前风险判断</h3>
+        <div className="met-finance-v2-drawer__risk-tags">
+          {detail.riskFlags.map(flag => (
+            <span
+              key={flag.label}
+              className={['met-finance-v2-risk-tag', getMetricToneClass(flag.tone)].join(' ')}
+            >
+              {flag.label}
+            </span>
+          ))}
+        </div>
+      </section>
+      <div className="met-finance-v2-drawer__actions met-v2-drawer-footer met-v2-drawer-footer--inline">
+        {detail.actions.map(action => (
+          <button
+            key={action.label}
+            type="button"
+            className="met-v2-drawer-footer-btn"
+            onClick={() => showToast(action.toastMessage)}
+          >
+            {action.label}
+          </button>
+        ))}
+      </div>
+    </>
+  );
+
+  const renderAssetChangeDrawer = (detail: AssetChangeDrawerDetail) => (
+    <>
+      <section className="met-finance-v2-drawer__section">
+        <h3 className="met-finance-v2-drawer__section-title">申请概览</h3>
+        <div className="met-finance-v2-drawer__row"><span>申请单号</span><span>{detail.requestId}</span></div>
+        <div className="met-finance-v2-drawer__row"><span>申请类型</span><span>{detail.requestTypeLabel}</span></div>
+        <div className="met-finance-v2-drawer__row">
+          <span>当前状态</span>
+          <span className={getAssetChangeStatusClass(detail.approvalStatus)}>{detail.approvalStatusLabel}</span>
+        </div>
+        <div className="met-finance-v2-drawer__row"><span>当前节点</span><span>{detail.currentNode}</span></div>
+        <div className="met-finance-v2-drawer__row"><span>当前处理人</span><span>{detail.owner}</span></div>
+        <div className="met-finance-v2-drawer__row"><span>申请时间</span><span>{detail.createdAt}</span></div>
+        <div className="met-finance-v2-drawer__row"><span>更新时间</span><span>{detail.updatedAt}</span></div>
+        <div className="met-finance-v2-drawer__row"><span>申请原因</span><span>{detail.requestReason}</span></div>
+      </section>
+
+      <section className="met-finance-v2-drawer__section">
+        <h3 className="met-finance-v2-drawer__section-title">会员与卡项</h3>
+        <div className="met-finance-v2-drawer__row"><span>会员姓名</span><span>{detail.memberName}</span></div>
+        <div className="met-finance-v2-drawer__row"><span>手机</span><span>{detail.maskedPhone}</span></div>
+        <div className="met-finance-v2-drawer__row"><span>所属门店</span><span>{detail.store}</span></div>
+        <div className="met-finance-v2-drawer__row"><span>卡项名称</span><span>{detail.cardName}</span></div>
+        <div className="met-finance-v2-drawer__row"><span>剩余点数</span><span>{detail.remainingPoints}</span></div>
+        <div className="met-finance-v2-drawer__row"><span>有效期</span><span>{detail.validUntil}</span></div>
+        <div className="met-finance-v2-drawer__row"><span>是否含赠送权益</span><span>{detail.hasGiftBenefit ? '是' : '否'}</span></div>
+        <div className="met-finance-v2-drawer__row"><span>赠送权益处理</span><span>{detail.giftBenefitNote}</span></div>
+      </section>
+
+      <section className="met-finance-v2-drawer__section">
+        <h3 className="met-finance-v2-drawer__section-title">金额 / 权益估算</h3>
+        {detail.requestType === 'refund' && detail.refundFields ? (
+          <>
+            <div className="met-finance-v2-drawer__row"><span>剩余点数</span><span>{detail.remainingPoints}</span></div>
+            <div className="met-finance-v2-drawer__row"><span>剩余金额估算</span><span>{detail.amountEstimate}</span></div>
+            <div className="met-finance-v2-drawer__row"><span>估算说明</span><span className="is-warn">{detail.amountEstimateNote}</span></div>
+            <div className="met-finance-v2-drawer__row"><span>已耗课点数</span><span>{detail.refundFields.consumedPoints}</span></div>
+            <div className="met-finance-v2-drawer__row"><span>积分扣回状态</span><span>{detail.pointsDeductStatusLabel}</span></div>
+            <div className="met-finance-v2-drawer__row"><span>手续费 / 违约金</span><span>{detail.refundFields.feeRulePlaceholder}</span></div>
+            <div className="met-finance-v2-drawer__row"><span>最终金额</span><span>{detail.refundFields.finalAmountLabel}</span></div>
+          </>
+        ) : null}
+        {detail.requestType === 'freeze' && detail.freezeFields ? (
+          <>
+            <div className="met-finance-v2-drawer__row"><span>申请冻结天数</span><span>{detail.freezeFields.freezeDays}</span></div>
+            <div className="met-finance-v2-drawer__row"><span>剩余权益</span><span>{detail.freezeFields.remainingBenefits}</span></div>
+            <div className="met-finance-v2-drawer__row"><span>冻结开始时间</span><span>{detail.freezeFields.freezeStart}</span></div>
+            <div className="met-finance-v2-drawer__row"><span>冻结结束时间</span><span>{detail.freezeFields.freezeEnd}</span></div>
+            <div className="met-finance-v2-drawer__row"><span>冻结依据</span><span>{detail.freezeFields.freezeBasis}</span></div>
+            <div className="met-finance-v2-drawer__row"><span>最终结果</span><span>{detail.freezeFields.finalResultLabel}</span></div>
+          </>
+        ) : null}
+        {detail.requestType === 'transfer' && detail.transferFields ? (
+          <>
+            <div className="met-finance-v2-drawer__row"><span>转出会员</span><span>{detail.transferFields.fromMember}</span></div>
+            <div className="met-finance-v2-drawer__row"><span>接收会员</span><span>{detail.transferFields.toMember}</span></div>
+            <div className="met-finance-v2-drawer__row"><span>转卡点数</span><span>{detail.transferFields.transferPoints}</span></div>
+            <div className="met-finance-v2-drawer__row"><span>手续费估算</span><span>{detail.transferFields.feeEstimate}</span></div>
+            <div className="met-finance-v2-drawer__row"><span>合同变更状态</span><span>{detail.transferFields.contractChangeStatus}</span></div>
+            <div className="met-finance-v2-drawer__row"><span>最终结果</span><span>{detail.transferFields.finalResultLabel}</span></div>
+          </>
+        ) : null}
+        <div className="met-finance-v2-drawer__row"><span>赠送权益计入退费</span><span className="is-warn">不计入</span></div>
+      </section>
+
+      <section className="met-finance-v2-drawer__section">
+        <h3 className="met-finance-v2-drawer__section-title">证据链 · {detail.evidenceCompleteness}</h3>
+        <div className="met-finance-v2-evidence-tags">
+          {detail.evidenceItems.map(item => (
+            <span
+              key={item.key}
+              className={['met-finance-v2-evidence-tag', getAssetChangeEvidenceDotClass(item.status)].join(' ')}
+            >
+              {item.label}：{item.statusLabel}
+            </span>
+          ))}
+        </div>
+      </section>
+
+      <section className="met-finance-v2-drawer__section">
+        <h3 className="met-finance-v2-drawer__section-title">审批状态</h3>
+        <ul className="met-finance-v2-drawer__timeline">
+          {detail.approvalSteps.map(step => (
+            <li key={step.key} className={['met-finance-v2-drawer__timeline-item', `is-${step.status}`].join(' ')}>
+              <span className="met-finance-v2-drawer__timeline-label">{step.label}</span>
+              {step.time ? <span className="met-finance-v2-drawer__timeline-time">{step.time}</span> : null}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="met-finance-v2-drawer__section">
+        <h3 className="met-finance-v2-drawer__section-title">操作日志</h3>
+        <ul className="met-finance-v2-drawer__list">
+          {detail.operationLogs.map(log => (
+            <li key={log.id}>
+              {log.time} · {log.operator} · {log.action}
+              {log.note ? ` — ${log.note}` : ''}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="met-finance-v2-drawer__section">
+        <h3 className="met-finance-v2-drawer__section-title">风险提示</h3>
+        <p className="met-finance-v2-drawer__suggestion met-finance-v2-drawer__suggestion--warn">{detail.riskReminder}</p>
+      </section>
+
+      <section className="met-finance-v2-drawer__section">
+        <h3 className="met-finance-v2-drawer__section-title">建议动作</h3>
+        <p className="met-finance-v2-drawer__suggestion">{detail.suggestedAction}</p>
+      </section>
+
+      <div className="met-finance-v2-drawer__actions met-v2-drawer-footer met-v2-drawer-footer--inline">
+        <button type="button" className="met-v2-drawer-footer-btn" onClick={() => handleAction('补充证据')}>补充证据</button>
+        <button type="button" className="met-v2-drawer-footer-btn" onClick={() => handleAction('提交复核')}>提交复核</button>
+      </div>
+    </>
+  );
+
+  const renderChangeQueue = (queue: AssetChangeQueue) => (
+    <div key={queue.id} className={`met-finance-v2-change-col is-${queue.type}`}>
+      <div className="met-finance-v2-change-col__head">
+        <h4 className="met-finance-v2-change-col__title">{queue.typeLabel}</h4>
+        <p className="met-finance-v2-change-col__summary">{queue.summary.pending}</p>
+        <p className="met-finance-v2-change-col__detail">{queue.summary.detail1}</p>
+        <p className="met-finance-v2-change-col__detail">{queue.summary.detail2}</p>
+        <p className="met-finance-v2-change-col__detail">{queue.summary.detail3}</p>
+        <button
+          type="button"
+          className="met-finance-v2-btn met-finance-v2-btn--sm"
+          onClick={() => handleQueueAction(queue)}
+        >
+          {queue.actionLabel}
+        </button>
+      </div>
+      <div className="met-finance-v2-change-col__cards">
+        {queue.requests.map(req => {
+          const isIncomplete = req.completenessScore !== '4/4';
+          return (
+          <div
+            key={req.id}
+            className={['met-finance-v2-change-card', isIncomplete ? 'is-incomplete' : ''].filter(Boolean).join(' ')}
+            role="button"
+            tabIndex={0}
+            onClick={() => handleChangeRequest(req)}
+            onKeyDown={e => { if (e.key === 'Enter') handleChangeRequest(req); }}
+          >
+            <p className="met-finance-v2-change-card__name">{req.memberName}</p>
+            <p className="met-finance-v2-change-card__meta">{req.cardName} · 剩余 {req.remainingPoints}</p>
+            <p className="met-finance-v2-change-card__reason">{req.reason}</p>
+            <div className="met-finance-v2-change-card__evidence">
+              {req.evidenceCompleteness.map(ev => (
+                <span
+                  key={ev.key}
+                  className={['met-finance-v2-evidence-dot', getEvidenceStatusClass(ev.status)].join(' ')}
+                  title={`${ev.label}：${ev.statusLabel}`}
+                >
+                  {ev.label}
+                </span>
+              ))}
+            </div>
+            <p className="met-finance-v2-change-card__score">
+              证据完整度：{req.completenessScore}
+            </p>
+            <div className="met-finance-v2-change-card__foot">
+              <span className="met-finance-v2-change-card__status">{req.status}</span>
+              <button
+                type="button"
+                className="met-finance-v2-btn met-finance-v2-btn--sm"
+                onClick={e => { e.stopPropagation(); handleChangeRequest(req); }}
+              >
+                {req.actionLabel}
+              </button>
+            </div>
+          </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  const renderStoreRow = (store: StoreFinanceRow) => (
+    <div
+      key={store.id}
+      className={[
+        'met-finance-v2-store-row',
+        store.coverageTone === 'warning' || store.coverageTone === 'danger' ? 'is-low-coverage' : '',
+      ]
+        .filter(Boolean)
+        .join(' ')}
+    >
+      <div className="met-finance-v2-store-row__identity">
+        <p className="met-finance-v2-store-row__name">{store.storeName}</p>
+        <span className={['met-finance-v2-store-status', getStoreStatusClass(store.statusLevel)].join(' ')}>
+          {store.statusLabel}
+        </span>
+      </div>
+      <div className="met-finance-v2-store-row__metrics">
+        <div className="met-finance-v2-store-metric">
+          <span className="met-finance-v2-store-metric__label">确认收入</span>
+          <span className="met-finance-v2-store-metric__value">{store.confirmedRevenue}</span>
+        </div>
+        <div className="met-finance-v2-store-metric">
+          <span className="met-finance-v2-store-metric__label">实收</span>
+          <span className="met-finance-v2-store-metric__value">{store.cashReceived}</span>
+        </div>
+        <div className="met-finance-v2-store-metric">
+          <span className="met-finance-v2-store-metric__label">预收负债</span>
+          <span className="met-finance-v2-store-metric__value">{store.prepaidLiability}</span>
+        </div>
+        <div className="met-finance-v2-store-metric">
+          <span className="met-finance-v2-store-metric__label">经营利润</span>
+          <span className={['met-finance-v2-store-metric__value', store.operatingProfitValue < 0 ? 'is-loss' : ''].filter(Boolean).join(' ')}>
+            {store.operatingProfit}
+          </span>
+        </div>
+        <div className="met-finance-v2-store-metric met-finance-v2-store-metric--coverage">
+          <span className="met-finance-v2-store-metric__label">现金安全覆盖率</span>
+          <span className={['met-finance-v2-store-metric__value', getCoverageToneClass(store.coverageTone)].join(' ')}>
+            {store.cashSafetyCoverage}
+          </span>
+          <div className="met-finance-v2-coverage-bar">
+            <div
+              className={['met-finance-v2-coverage-bar__fill', getCoverageToneClass(store.coverageTone)].join(' ')}
+              style={{ width: `${store.cashSafetyCoveragePercent}%` }}
+            />
+            <span className="met-finance-v2-coverage-bar__marker" aria-hidden />
+          </div>
+        </div>
+      </div>
+      <div className="met-finance-v2-store-row__action">
+        <div className="met-finance-v2-trend-summary">
+          <p className="met-finance-v2-trend-summary__line met-finance-v2-trend-coverage">
+            <span className="met-finance-v2-trend-summary__label">覆盖率</span>
+            <span className="met-finance-v2-trend-summary__value">
+              {store.monthlyChangeSummary.coveragePercent}，
+              <span className={getMonthlyChangeToneClass(store.monthlyChangeSummary.coverageTone)}>
+                {store.monthlyChangeSummary.coverageChange}
+              </span>
+            </span>
+          </p>
+          <p className="met-finance-v2-trend-summary__line">
+            <span className="met-finance-v2-trend-summary__label">关键变化</span>
+            <span className={['met-finance-v2-trend-key-change', getMonthlyChangeToneClass(store.monthlyChangeSummary.keyChangeTone)].join(' ')}>
+              {store.monthlyChangeSummary.keyChange}
+            </span>
+          </p>
+          <p className="met-finance-v2-trend-summary__line met-finance-v2-trend-judgement">
+            <span className="met-finance-v2-trend-summary__label">判断</span>
+            <span>{store.monthlyChangeSummary.judgement}</span>
+          </p>
+        </div>
+        <button
+          type="button"
+          className="met-finance-v2-btn met-finance-v2-btn--sm"
+          onClick={() => openStoreDrawer(store.id)}
+        >
+          {store.actionLabel}
+        </button>
+      </div>
+    </div>
+  );
+
+  const drawerHasContent = Boolean(drawerAsset || drawerFinance || drawerAssetChange);
+  const drawerTitle =
+    drawerAssetChange?.drawerTitle ?? drawerAsset?.title ?? drawerFinance?.title ?? '暂无详情';
+  const drawerSubtitle =
+    drawerAssetChange
+      ? `${drawerAssetChange.memberName} · ${drawerAssetChange.requestId}`
+      : drawerAsset?.subtitle ?? drawerFinance?.subtitle ?? (drawerHasContent ? '' : '当前记录缺少详情数据');
+
+  return (
+    <div
+      className={[
+        'met-finance-v2',
+        viewMode === 'assetChangeRequests' ? 'met-v2-density-compact' : 'met-v2-density-workbench',
+      ].join(' ')}
+    >
+      {viewMode === 'assetChangeRequests' ? (
+        <FinanceSecondaryAssetChangePage
+          onBack={backToOverview}
+          onOpenDetail={openAssetChangeDrawer}
+          onToast={showToast}
+        />
+      ) : (
+      <div className="met-finance-v2__inner">
+        <header className="met-finance-v2__header">
+          <div className="met-finance-v2__header-copy">
+            <h1>{meta.title}</h1>
+            <p>{meta.subtitle}</p>
+          </div>
+          <div className="met-finance-v2__header-actions">
+            <div className="met-finance-v2__filters">
+              <button
+                type="button"
+                className="met-finance-v2__filter-btn"
+                onClick={() => handleAction('切换门店筛选')}
+              >
+                门店：{filters.storeLabel}
+                <ChevronDown size={14} aria-hidden />
+              </button>
+              <button
+                type="button"
+                className="met-finance-v2__filter-btn"
+                onClick={() => handleAction('切换周期筛选')}
+              >
+                周期：{filters.periodLabel}
+                <ChevronDown size={14} aria-hidden />
+              </button>
+              <button
+                type="button"
+                className="met-finance-v2__filter-btn"
+                onClick={() => handleAction('切换收款类型筛选')}
+              >
+                收款类型：{filters.paymentTypeLabel}
+                <ChevronDown size={14} aria-hidden />
+              </button>
+              <button
+                type="button"
+                className="met-finance-v2__filter-btn"
+                onClick={() => handleAction('切换资产状态筛选')}
+              >
+                资产状态：{filters.assetStatusLabel}
+                <ChevronDown size={14} aria-hidden />
+              </button>
+              <button
+                type="button"
+                className="met-finance-v2__filter-btn met-finance-v2__filter-btn--ghost"
+                onClick={() => showToast('进入财务规则（待建设）')}
+              >
+                {filters.secondaryActionLabel}
+              </button>
+              <button
+                type="button"
+                className="met-finance-v2__filter-btn met-finance-v2__filter-btn--ghost"
+                onClick={() => showToast('导出财务报告（待建设）')}
+              >
+                {filters.primaryActionLabel}
+              </button>
+            </div>
+            <button
+              type="button"
+              className="met-finance-v2__detail-link"
+              onClick={() => showToast('进入收支明细二级页（待建设）')}
+            >
+              {filters.detailLinkLabel}
+            </button>
+            <button
+              type="button"
+              className="met-finance-v2__detail-link met-finance-v2__detail-link--accent"
+              onClick={openAssetChangeRequests}
+            >
+              {filters.assetChangeListLabel}
+            </button>
+          </div>
+        </header>
+
+        {/* 1. 财务与资产健康结论 */}
+        <section className="met-finance-v2-zone met-finance-v2-zone--hero">
+          <article className="met-finance-v2-panel met-finance-v2-panel--hero">
+            <div className="met-finance-v2-hero__head">
+              <h2 className="met-finance-v2-hero__headline">{financeHealthSummary.headline}</h2>
+              <span
+                className={[
+                  'met-finance-v2-status',
+                  getFinanceHealthStatusClass(financeHealthSummary.status),
+                ].join(' ')}
+              >
+                {financeHealthSummary.statusLabel}
+              </span>
+            </div>
+            <p className="met-finance-v2-hero__text">{financeHealthSummary.conclusion}</p>
+            <div className="met-finance-v2-hero__tags">
+              {financeHealthSummary.impactTags.map(tag => (
+                <span key={tag} className="met-finance-v2-tag met-finance-v2-tag--impact">{tag}</span>
+              ))}
+              <span className="met-finance-v2-tag met-finance-v2-tag--source">
+                {financeHealthSummary.sourceLabel}
+              </span>
+            </div>
+            <p className="met-finance-v2-hero__meta">
+              最近更新：{financeHealthSummary.updatedAt}
+            </p>
+            <div className="met-finance-v2-evidence-grid met-finance-v2-evidence-grid--hero">
+              {financeHealthSummary.evidenceItems.map(item => (
+                <button
+                  key={item.label}
+                  type="button"
+                  className={[
+                    'met-finance-v2-evidence-item',
+                    item.isWarning ? 'is-warning' : '',
+                    item.label.includes('退费') ? 'is-clickable' : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                  onClick={() => {
+                    if (item.label.includes('退费')) {
+                      openAssetChangeRequests();
+                    }
+                  }}
+                >
+                  <span className="met-finance-v2-evidence-item__value">{item.value}</span>
+                  <span className="met-finance-v2-evidence-item__label">{item.label}</span>
+                </button>
+              ))}
+            </div>
+            <div className="met-finance-v2-hero__actions">
+              <button
+                type="button"
+                className="met-finance-v2-btn met-finance-v2-btn--ghost"
+                onClick={() => showToast(financeHealthSummary.evidenceToastMessage)}
+              >
+                {financeHealthSummary.evidenceButtonLabel}
+              </button>
+            </div>
+          </article>
+        </section>
+
+        {/* 2. 本周财务优先动作 */}
+        <section className="met-finance-v2-zone met-finance-v2-zone--priority">
+          <header className="met-finance-v2-zone__head">
+            <h2 className="met-finance-v2-zone__title">{financePriorityActions.title}</h2>
+            <p className="met-finance-v2-zone__subtitle">{financePriorityActions.subtitle}</p>
+          </header>
+          <div className="met-finance-v2-action-queue">
+            {financePriorityActions.items.map(item => (
+              <div
+                key={item.id}
+                className={`met-finance-v2-action-item met-finance-v2-action-item--${item.priority.toLowerCase()}`}
+              >
+                <span className={['met-finance-v2-priority', getPriorityClass(item.priority)].join(' ')}>
+                  {item.priority}
+                </span>
+                <div className="met-finance-v2-action-item__main">
+                  <p className="met-finance-v2-action-item__title">{item.title}</p>
+                  <p className="met-finance-v2-action-item__meta">
+                    影响：{item.impact} · 负责人：{item.owner} · 来源：
+                    {item.sourceModules.join(' / ')}
+                  </p>
+                  <p className="met-finance-v2-action-item__action">建议动作：{item.suggestedAction}</p>
+                </div>
+                <button
+                  type="button"
+                  className="met-finance-v2-btn met-finance-v2-btn--sm met-finance-v2-btn--ghost"
+                  onClick={() => handlePriorityAction(item)}
+                >
+                  {item.ctaLabel}
+                </button>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* 3. 财务口径人话解释 */}
+        <section className="met-finance-v2-zone met-finance-v2-zone--plain">
+          <header className="met-finance-v2-zone__head">
+            <h2 className="met-finance-v2-zone__title">{financePlainLanguage.title}</h2>
+            <p className="met-finance-v2-zone__subtitle">{financePlainLanguage.subtitle}</p>
+          </header>
+          <div className="met-finance-v2-plain-grid">
+            {financePlainLanguage.cards.map(card => (
+              <article
+                key={card.id}
+                className={['met-finance-v2-plain-card', getPlainLanguageTagClass(card.tag)].join(' ')}
+              >
+                <span className="met-finance-v2-plain-card__tag">{card.title}</span>
+                <p className="met-finance-v2-plain-card__explain">{card.plainExplanation}</p>
+                <p className="met-finance-v2-plain-card__value">{card.currentValue}</p>
+                <p className="met-finance-v2-plain-card__note">{card.warningNote}</p>
+              </article>
+            ))}
+          </div>
+          <p className="met-finance-v2-coverage-alert">{financePlainLanguage.coverageAlert}</p>
+        </section>
+
+        {/* 4. 核心财务指标 */}
+        <section className="met-finance-v2-zone met-finance-v2-zone--metrics">
+          <header className="met-finance-v2-zone__head">
+            <h2 className="met-finance-v2-zone__title">{financeCoreMetrics.title}</h2>
+            <p className="met-finance-v2-zone__subtitle">{financeCoreMetrics.subtitle}</p>
+          </header>
+          <div className="met-finance-v2-core-metrics">
+            {financeCoreMetrics.items.map(metric => (
+              <button
+                key={metric.id}
+                type="button"
+                className={['met-finance-v2-core-metric', getMetricToneClass(metric.tone)].join(' ')}
+                onClick={() => handleCoreMetric(metric)}
+              >
+                <div className="met-finance-v2-core-metric__head">
+                  <span className="met-finance-v2-core-metric__title">{metric.title}</span>
+                  <span className="met-finance-v2-core-metric__status">{metric.statusLabel}</span>
+                </div>
+                <p className="met-finance-v2-core-metric__value">{metric.value}</p>
+                <p className="met-finance-v2-core-metric__change">{metric.changeLabel}</p>
+                <p className="met-finance-v2-core-metric__explain">{metric.explanation}</p>
+                <span className="met-finance-v2-core-metric__source">{metric.sourceModule}</span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {/* 5. 会员资产风险队列 */}
+        <article className="met-finance-v2-zone">
+          <header className="met-finance-v2-zone__head">
+            <h2 className="met-finance-v2-zone__title">{assetRiskQueue.title}</h2>
+            <p className="met-finance-v2-zone__subtitle">{assetRiskQueue.subtitle}</p>
+          </header>
+          <div className="met-finance-v2-risk-list">
+            {assetRiskQueue.items.map(item => (
+              <div key={item.id} className={['met-finance-v2-risk-row', `met-finance-v2-risk-row--${item.priority.toLowerCase()}`].join(' ')}>
+                <span className={['met-finance-v2-priority', getPriorityClass(item.priority)].join(' ')}>
+                  {item.priority}
+                </span>
+                <div className="met-finance-v2-risk-row__main">
+                  <p className="met-finance-v2-risk-row__title">{item.title}</p>
+                  {item.memberMasked ? (
+                    <p className="met-finance-v2-risk-row__member">{item.memberMasked}</p>
+                  ) : null}
+                  <p className="met-finance-v2-risk-row__fact">{item.fact}</p>
+                  <p className="met-finance-v2-risk-row__impact">
+                    <span className="met-finance-v2-risk-row__impact-tag">影响：{item.impact}</span>
+                    {item.amountImpact ? (
+                      <span className="met-finance-v2-risk-row__impact-tag">金额 / 权益：{item.amountImpact}</span>
+                    ) : null}
+                  </p>
+                  <div className="met-finance-v2-risk-row__meta">
+                    {item.riskType ? <span>风险类型：{item.riskType}</span> : null}
+                    {item.assetStatus ? <span>资产状态：{item.assetStatus}</span> : null}
+                    {item.evidenceCompleteness ? (
+                      <span>证据完整度：{item.evidenceCompleteness}</span>
+                    ) : null}
+                  </div>
+                  <p className="met-finance-v2-risk-row__action">{item.suggestionAction}</p>
+                </div>
+                <div className="met-finance-v2-risk-row__aside">
+                  <span className={['met-finance-v2-source-tag', getSuggestionSourceClass(item.suggestionSource)].join(' ')}>
+                    {item.suggestionSourceLabel}
+                  </span>
+                  <button
+                    type="button"
+                    className="met-finance-v2-btn met-finance-v2-btn--sm"
+                    onClick={() => handleRiskAction(item)}
+                  >
+                    {item.actionLabel}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </article>
+
+        {/* 6. 退款 / 冻结 / 转卡处理 */}
+        <article className="met-finance-v2-zone">
+          <header className="met-finance-v2-zone__head">
+            <h2 className="met-finance-v2-zone__title">{assetChangeSummary.title}</h2>
+            <p className="met-finance-v2-zone__subtitle">{assetChangeSummary.subtitle}</p>
+          </header>
+          <div className="met-finance-v2-change-summary">
+            {assetChangeSummary.items.map(item => (
+              <div key={item.id} className={`met-finance-v2-change-summary-card is-${item.type}`}>
+                <h4 className="met-finance-v2-change-summary-card__title">{item.typeLabel}</h4>
+                <p className="met-finance-v2-change-summary-card__pending">{item.pendingCount}</p>
+                <p className="met-finance-v2-change-summary-card__amount">{item.amountSummary}</p>
+                <p className="met-finance-v2-change-summary-card__risk">{item.riskNote}</p>
+                <button
+                  type="button"
+                  className="met-finance-v2-btn met-finance-v2-btn--sm"
+                  onClick={() => handleSummaryCardAction(item)}
+                >
+                  {item.ctaLabel}
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className="met-finance-v2-change-layout">
+            {assetChangeQueues.map(renderChangeQueue)}
+          </div>
+        </article>
+
+        {/* 7. 收入确认与耗课证据 */}
+        <article className="met-finance-v2-zone">
+          <header className="met-finance-v2-zone__head">
+            <h2 className="met-finance-v2-zone__title">{revenueEvidenceSummary.title}</h2>
+            <p className="met-finance-v2-zone__subtitle">{revenueEvidenceSummary.subtitle}</p>
+          </header>
+          <div className="met-finance-v2-evidence-summary">
+            {revenueEvidenceSummary.items.map(item => (
+              <div key={item.id} className="met-finance-v2-evidence-summary-item">
+                <div className="met-finance-v2-evidence-summary-item__main">
+                  <p className="met-finance-v2-evidence-summary-item__type">{item.type}</p>
+                  <p className="met-finance-v2-evidence-summary-item__count">{item.count}</p>
+                  <p className="met-finance-v2-evidence-summary-item__impact">影响：{item.impact}</p>
+                  <p className="met-finance-v2-evidence-summary-item__action">{item.suggestedAction}</p>
+                </div>
+                <button
+                  type="button"
+                  className="met-finance-v2-btn met-finance-v2-btn--sm met-finance-v2-btn--ghost"
+                  onClick={() => showToast(item.ctaToast)}
+                >
+                  {item.ctaLabel}
+                </button>
+              </div>
+            ))}
+          </div>
+        </article>
+
+        {/* 8. 门店财务健康矩阵 */}
+        <article className="met-finance-v2-zone met-finance-v2-zone--demoted">
+          <header className="met-finance-v2-zone__head">
+            <h2 className="met-finance-v2-zone__title">{storeFinanceHealth.title}</h2>
+            <p className="met-finance-v2-zone__subtitle">{storeFinanceHealth.subtitle}</p>
+          </header>
+          {storeFinanceHealth.replayNote ? (
+            <p className="met-finance-v2-replay-note">{storeFinanceHealth.replayNote}</p>
+          ) : null}
+          <div className="met-finance-v2-store-matrix">
+            {storeFinanceHealth.stores.map(renderStoreRow)}
+          </div>
+        </article>
+
+        {/* 9. 财务明细入口 */}
+        <article className="met-finance-v2-zone met-finance-v2-zone--entries">
+          <header className="met-finance-v2-zone__head">
+            <h2 className="met-finance-v2-zone__title">{financeDetailEntries.title}</h2>
+          </header>
+          <div className="met-finance-v2-detail-entries">
+            {financeDetailEntries.items.map(entry => (
+              <button
+                key={entry.id}
+                type="button"
+                className="met-finance-v2-detail-entry"
+                onClick={() => handleDetailEntry(entry)}
+              >
+                {entry.label}
+              </button>
+            ))}
+          </div>
+        </article>
+      </div>
+      )}
+
+      {drawer ? (
+        <>
+          <button type="button" className="met-finance-v2-drawer-overlay met-v2-drawer-overlay" aria-label="关闭详情" onClick={closeDrawer} />
+          <aside className="met-finance-v2-drawer met-v2-drawer-panel met-v2-drawer-panel--md" role="dialog" aria-labelledby="finance-v2-drawer-title">
+            <div className="met-finance-v2-drawer__head met-v2-drawer-header">
+              <div>
+                <h2 id="finance-v2-drawer-title" className="met-finance-v2-drawer__title met-v2-drawer-title">{drawerTitle}</h2>
+                {drawerSubtitle ? (
+                  <p className="met-finance-v2-drawer__subtitle met-v2-drawer-subtitle">{drawerSubtitle}</p>
+                ) : null}
+              </div>
+              <button type="button" className="met-finance-v2-drawer__close met-v2-drawer-close" aria-label="关闭" onClick={closeDrawer}>×</button>
+            </div>
+            <div className="met-finance-v2-drawer__body met-v2-drawer-body">
+              {drawerHasContent ? (
+                <>
+                  {drawerAssetChange ? renderAssetChangeDrawer(drawerAssetChange) : null}
+                  {drawerAsset ? renderAssetDrawer(drawerAsset) : null}
+                  {drawerFinance ? renderFinanceDrawer(drawerFinance) : null}
+                </>
+              ) : (
+                <DrawerEmptyState
+                  description="当前记录缺少详情数据，请检查 mock 配置"
+                  onClose={closeDrawer}
+                />
+              )}
+            </div>
+          </aside>
+        </>
+      ) : null}
+
+      {toast ? <div className="met-finance-v2-toast">{toast}</div> : null}
+    </div>
+  );
+};
+
+export default FinanceV2Page;

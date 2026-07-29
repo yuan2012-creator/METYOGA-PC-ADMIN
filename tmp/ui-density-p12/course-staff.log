@@ -1,0 +1,24 @@
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+
+> metyoga-第三版@0.0.0 test:course-staff-acceptance
+> node scripts/course-staff-p1-acceptance.mjs
+
+{
+  "ok": true,
+  "steps": [
+    "loaded",
+    "staff-reset",
+    "course-reset",
+    "gap-visible",
+    "navigated-staff-assign",
+    "assigned-gap",
+    "course-teacher-updated",
+    "leave-approved",
+    "pending-replacement",
+    "substitute-assigned",
+    "substitute-badge",
+    "persisted",
+    "console-clean"
+  ],
+  "candidateName": ""
+}

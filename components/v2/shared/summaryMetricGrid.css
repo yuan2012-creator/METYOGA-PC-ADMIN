@@ -1,0 +1,94 @@
+.met-v2-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  margin: 0 0 var(--met-v2-section-gap, 20px);
+}
+
+.met-v2-summary-grid--compact {
+  gap: 10px;
+  margin: 0 0 16px;
+}
+
+.met-v2-summary-card {
+  padding: 14px 16px;
+  border: 1px solid var(--met-v2-border-soft);
+  border-radius: var(--met-v2-radius-md);
+  background: var(--met-v2-surface);
+  text-align: left;
+  min-height: 96px;
+  box-sizing: border-box;
+}
+
+button.met-v2-summary-card {
+  cursor: pointer;
+  font: inherit;
+  width: 100%;
+}
+
+button.met-v2-summary-card:hover {
+  border-color: var(--met-v2-border);
+}
+
+.met-v2-summary-card--normal {
+  border-color: var(--met-v2-border-soft);
+  background: var(--met-v2-surface);
+}
+
+.met-v2-summary-card--warning {
+  border-color: #f0dfb8;
+  background: var(--met-v2-warning-bg);
+}
+
+.met-v2-summary-card--danger {
+  border-color: #f0c9c6;
+  background: var(--met-v2-danger-bg);
+}
+
+.met-v2-summary-card--success {
+  border-color: #c9e4d4;
+  background: var(--met-v2-success-bg);
+}
+
+.met-v2-summary-card--active {
+  border-color: var(--met-v2-brand);
+  box-shadow: 0 0 0 1px var(--met-v2-brand);
+}
+
+.met-v2-summary-card__value {
+  display: block;
+  font-size: var(--met-v2-font-metric, 26px);
+  font-weight: 600;
+  line-height: 1.15;
+  color: var(--met-v2-text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.met-v2-summary-card--warning .met-v2-summary-card__value {
+  color: var(--met-v2-warning);
+}
+
+.met-v2-summary-card--danger .met-v2-summary-card__value {
+  color: var(--met-v2-danger);
+}
+
+.met-v2-summary-card--success .met-v2-summary-card__value {
+  color: var(--met-v2-success);
+}
+
+.met-v2-summary-card__label {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.35;
+  color: var(--met-v2-text-secondary);
+}
+
+.met-v2-summary-card__hint {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--met-v2-text-tertiary);
+}

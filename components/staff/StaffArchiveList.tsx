@@ -1,6 +1,6 @@
 import React from 'react';
 import type { Staff } from '../../types';
-import { STAFF_FILTER_TYPES, type StaffFilterType, type StaffTab } from '../../utils/staffSelectors';
+import { STAFF_FILTER_TYPES, levelDisplay, type StaffFilterType, type StaffTab } from '../../utils/staffSelectors';
 
 type StaffModalTab = 'course' | 'member' | 'income' | 'promotion';
 
@@ -82,11 +82,13 @@ const StaffArchiveList: React.FC<StaffArchiveListProps> = (props) => {
                                     ) : <div></div>}
                                     
                                     <span className={`text-[10px] font-bold px-2 py-1 rounded tracking-wider ${
-                                        s.level === 'mentor' ? 'bg-black text-white' : 
-                                        s.level === 't3' ? 'bg-gray-900 text-white' :
+                                        s.level === 'mentor' ? 'bg-black text-white' :
+                                        s.level === 'p1' || s.level === 'p2' ? 'bg-emerald-900 text-white' :
+                                        s.level === 'g1' || s.level === 'g2' ? 'bg-slate-800 text-white' :
+                                        s.level === 't3' || s.level === 't4' || s.level === 't5' ? 'bg-gray-900 text-white' :
                                         'bg-gray-100 text-gray-500'
                                     }`}>
-                                        {s.level === 'mentor' ? 'MASTER' : s.level.toUpperCase()}
+                                        {levelDisplay(s.level)}
                                     </span>
                                 </div>
 

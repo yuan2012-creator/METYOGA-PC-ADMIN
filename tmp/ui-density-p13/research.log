@@ -1,0 +1,17 @@
+{
+  "ok": true,
+  "uiOnly": true,
+  "afterJoin": {
+    "paidCount": 4,
+    "receipt": 51200,
+    "commission": 2560,
+    "profit": 4640
+  },
+  "afterRefund": {
+    "paidCount": 3,
+    "receipt": 38400,
+    "commission": 1920,
+    "profit": -7520
+  },
+  "consoleErrors": []
+}

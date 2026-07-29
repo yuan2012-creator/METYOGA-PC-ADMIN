@@ -65,7 +65,7 @@ const MallPoints: React.FC<MallPointsProps> = ({
                       <div key={product.id} className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 group hover:shadow-md transition flex flex-col h-full">
                           <div className="h-40 bg-gray-50 rounded-xl mb-4 relative overflow-hidden flex items-center justify-center">
                               <img src={product.cover || undefined} className="w-full h-full object-cover transition duration-700 group-hover:scale-105" alt="" />
-                              <div className={`absolute top-0 right-0 px-2 py-1 text-[10px] font-bold rounded-bl-lg ${product.status === 'active' ? 'bg-black text-white' : 'bg-gray-100 text-gray-400'}`}>
+                              <div className={`absolute top-0 right-0 px-2 py-1 text-[10px] font-bold rounded-bl-lg ${product.status === 'active' ? 'bg-[var(--met-accent)] text-white' : 'bg-gray-100 text-gray-400'}`}>
                                   {product.status === 'active' ? '上架中' : '已下架'}
                               </div>
                           </div>
@@ -398,7 +398,7 @@ const MallPoints: React.FC<MallPointsProps> = ({
                                       <label className="block text-[10px] font-bold text-gray-500 uppercase mb-2">课程类型</label>
                                       <div className="flex flex-wrap gap-2">
                                           {['团课', '小班', '私教', '教培工作坊'].map(fn => (
-                                              <label key={fn} className={`flex items-center gap-1 cursor-pointer px-3 py-1.5 rounded-lg border text-xs font-medium transition ${selectedItem.functionScope?.includes(fn) ? 'bg-black text-white border-black' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'}`}>
+                                              <label key={fn} className={`flex items-center gap-1 cursor-pointer px-3 py-1.5 rounded-lg border text-xs font-medium transition ${selectedItem.functionScope?.includes(fn) ? 'bg-[var(--met-accent)] text-white border-[var(--met-accent)]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'}`}>
                                                   <input 
                                                       type="checkbox" 
                                                       checked={selectedItem.functionScope?.includes(fn)} 
@@ -420,7 +420,7 @@ const MallPoints: React.FC<MallPointsProps> = ({
                                       <label className="block text-[10px] font-bold text-gray-500 uppercase mb-2">课程流派</label>
                                       <div className="flex flex-wrap gap-2">
                                           {['瑜伽', '普拉提'].map(genre => (
-                                              <label key={genre} className={`flex items-center gap-1 cursor-pointer px-3 py-1.5 rounded-lg border text-xs font-medium transition ${selectedItem.genreScope?.includes(genre) ? 'bg-black text-white border-black' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'}`}>
+                                              <label key={genre} className={`flex items-center gap-1 cursor-pointer px-3 py-1.5 rounded-lg border text-xs font-medium transition ${selectedItem.genreScope?.includes(genre) ? 'bg-[var(--met-accent)] text-white border-[var(--met-accent)]' : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'}`}>
                                                   <input 
                                                       type="checkbox" 
                                                       checked={selectedItem.genreScope?.includes(genre)} 
@@ -479,7 +479,7 @@ const MallPoints: React.FC<MallPointsProps> = ({
                               setSelectedItem(null);
                               handleBack();
                           }}
-                          className="flex-1 bg-black text-white py-3 rounded-xl font-bold hover:opacity-90 transition shadow-lg"
+                          className="flex-1 bg-[var(--met-accent)] border border-[var(--met-accent)] text-white py-3 rounded-xl font-bold hover:opacity-90 transition shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
                       >
                           保存商品
                       </button>

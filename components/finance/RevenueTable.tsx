@@ -35,8 +35,8 @@ const RevenueTable: React.FC<RevenueTableProps> = ({
             <td className="p-4 pl-6">
               <div className={`font-mono font-bold ${order.sourceType === 'refund' ? 'text-red-600' : 'text-gray-900'}`}>{order.id}</div>
               <div className="text-xs text-gray-400">{order.date}</div>
-              {order.paymentId && <div className="text-[10px] text-gray-300">Payment: {order.paymentId}</div>}
-              {order.ledgerEntryId && <div className="text-[10px] text-gray-300">Ledger: {order.ledgerEntryId}</div>}
+              {order.paymentId && <div className="text-[10px] text-gray-300">收款流水：{order.paymentId}</div>}
+              {order.ledgerEntryId && <div className="text-[10px] text-gray-300">分录占位：{order.ledgerEntryId}</div>}
               <div className="text-[10px] text-gray-300">{order.sourceSummary}</div>
             </td>
             <td className="p-4 font-bold text-gray-900">{order.customer}</td>

@@ -60,7 +60,7 @@ const buildMallOverviewMetrics = (
             id: 'exposure',
             label: '曝光量',
             val: fallbackExposure.toLocaleString(),
-            change: 'demo',
+            change: '估算',
             status: 'neutral',
             isFallback: true,
         },
@@ -86,17 +86,17 @@ const buildMallOverviewMetrics = (
             rate: formatRate(scopedFulfilled, scopedOrders),
             status: scopedFulfilled >= scopedOrders ? 'good' : 'warning',
         },
-        renewal: { val: '-', change: 'fallback', status: 'neutral', isFallback: true },
-        cycle: { val: '-', change: 'fallback', status: 'neutral', isFallback: true },
+        renewal: { val: '-', change: '估算', status: 'neutral', isFallback: true },
+        cycle: { val: '-', change: '估算', status: 'neutral', isFallback: true },
         arpu: {
             val: closureSummary ? `¥${Math.round((closureSummary.totalOrders || 1) * 1000).toLocaleString()}` : '-',
-            change: closureSummary ? '订单口径估算' : 'fallback',
+            change: closureSummary ? '订单口径估算' : '估算',
             status: closureSummary ? 'good' : 'neutral',
             isFallback: true,
         },
-        fillRate: { val: '-', change: 'fallback', status: 'neutral', isFallback: true },
-        pointsConsumed: { val: '-', change: 'fallback', status: 'neutral', isFallback: true },
-        mixedRatio: { val: '-', change: 'fallback', status: 'neutral', isFallback: true },
+        fillRate: { val: '-', change: '估算', status: 'neutral', isFallback: true },
+        pointsConsumed: { val: '-', change: '估算', status: 'neutral', isFallback: true },
+        mixedRatio: { val: '-', change: '估算', status: 'neutral', isFallback: true },
     };
 };
 
@@ -129,13 +129,13 @@ const buildRankingData = (
     return fallbackRows.map((name, index) => {
         const estimatedSales = index === 0 ? baseCount : Math.max(baseCount - index, 0);
         const conversionBase = Math.max(estimatedSales, 1);
-        const conversion = fulfilled > 0 ? formatRate(Math.max(fulfilled - index, 0), conversionBase) : 'fallback';
+        const conversion = fulfilled > 0 ? formatRate(Math.max(fulfilled - index, 0), conversionBase) : null;
 
         return {
             id: `rank-${moduleType}-${index}`,
             name,
             val: estimatedSales.toLocaleString(),
-            sub: conversion === 'fallback' ? 'fallback 排行' : `履约率 ${conversion}`,
+            sub: conversion === null ? '估算排行' : `履约率 ${conversion}`,
             isFallback: true,
         };
     });
@@ -242,10 +242,10 @@ const MallDataOverview = ({
                 </h3>
                 <div className="flex gap-3 items-center">
                     <button 
-                        onClick={() => onDemoAction?.('AI 深度分析仍是演示入口，后续会接入真实商城漏斗数据')}
+                        onClick={() => onDemoAction?.('智能分析仍为估算口径，后续会接入真实商城漏斗数据')}
                         className="text-[10px] text-purple-600 font-bold flex items-center gap-1 hover:underline mr-2"
                     >
-                        <i className="fa-solid fa-wand-magic-sparkles"></i> AI 深度分析
+                        <i className="fa-solid fa-wand-magic-sparkles"></i> 智能分析
                     </button>
                     <select className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-xs font-bold outline-none focus:border-black transition">
                         <option>今日</option>
@@ -299,7 +299,7 @@ const MallDataOverview = ({
                         <div className="text-lg font-bold font-mono">{m.val}</div>
                         <div className={`text-[10px] font-bold mt-1 ${m.status === 'good' ? 'text-green-600' : m.status === 'warning' ? 'text-orange-500' : 'text-gray-500'}`}>
                             {m.change ? `环比 ${m.change}` : m.rate ? `${m.label === '点击量' ? '点击率' : m.label === '下单量' ? '转化率' : '履约率'} ${m.rate}` : ''}
-                            {m.isFallback && <span className="ml-1 text-gray-400">fallback</span>}
+                            {m.isFallback && <span className="ml-1 text-gray-400">估算</span>}
                         </div>
                     </div>
                 ))}
@@ -357,7 +357,7 @@ const MallDataOverview = ({
                         <span>全链路转化漏斗 {selectedProduct && <span className="text-xs font-normal text-gray-500 ml-2">({selectedProduct})</span>}</span>
                         {selectedProduct && <button onClick={() => setSelectedProduct(null)} className="text-[10px] text-gray-400 hover:text-black">重置</button>}
                     </h4>
-                    <div className="text-[10px] text-gray-400 mb-3">订单/履约来自订单-资产链路；曝光/点击为 fallback 估算。</div>
+                    <div className="text-[10px] text-gray-400 mb-3">订单/履约来自订单-资产链路；曝光/点击为估算口径。</div>
                     <div className="bg-gray-50 rounded-xl p-8 border border-gray-100 h-[320px] flex flex-col justify-center">
                         {funnelData.map((step, index) => (
                             <React.Fragment key={index}>
@@ -396,7 +396,7 @@ const MallDataOverview = ({
                     <div className="flex justify-between items-center mb-4">
                         <div>
                             <h4 className="text-sm font-bold text-gray-900 border-l-4 border-black pl-3">商品表现排行</h4>
-                            <div className="text-[10px] text-gray-400 pl-4 mt-1">fallback 排行，待接真实商品明细</div>
+                            <div className="text-[10px] text-gray-400 pl-4 mt-1">估算排行，待接真实商品明细</div>
                         </div>
                         <div className="flex bg-gray-100 rounded-lg p-0.5">
                             {([
@@ -457,7 +457,7 @@ const MallDataOverview = ({
                     {/* Search & Filter */}
                     <div className="flex flex-col gap-3 mb-4">
                         <div className="text-[10px] text-gray-400 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2">
-                            名单、浏览行为与点击频次仍为 demo fallback；订单/履约数已按当前订单-资产链路推导。
+                            名单、浏览行为与点击频次仍为估算口径；订单/履约数已按当前订单-资产链路推导。
                         </div>
                         <div className="flex gap-2">
                             <div className="flex-1 relative">

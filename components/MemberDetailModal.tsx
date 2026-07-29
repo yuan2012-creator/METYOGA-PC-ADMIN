@@ -1,43 +1,65 @@
 
-import React, { useState } from 'react';
-import { 
-  PieChart, Pie, Cell, ResponsiveContainer, 
-  BarChart, Bar, XAxis, Tooltip 
+import React, { useMemo, useState } from 'react';
+import {
+  PieChart, Pie, Cell, ResponsiveContainer,
+  BarChart, Bar, XAxis, Tooltip,
 } from 'recharts';
-import {
-  MOCK_ATTENDANCES,
-  MOCK_BOOKINGS,
-  MOCK_COURSE_SESSIONS,
-  MOCK_COURSES,
-  MOCK_FINANCE_LEDGER_ENTRIES,
-  MOCK_ORDERS,
-  MOCK_PAYMENTS,
-  MOCK_REFUNDS,
-} from '../constants';
-import {
+import type {
+  Attendance,
+  Booking,
+  Contract,
+  Course,
+  CourseSession,
+  FinanceLedgerEntry,
   Member,
   MemberAsset,
-  MemberAssetStatus,
-  TimelineEvent,
+  MockCourseConsumptionRecord,
+  Order,
+  Payment,
+  Refund,
 } from '../types';
-import {
-  buildMemberBusinessRecordSummary,
-  buildMemberDetailBusinessRecordSlots,
-  buildMemberDetailTimelineItems,
-  getMemberDetailTimelineSourceLabel,
-} from '../utils/memberDetailSelectors';
-import {
-  getMemberAssetSourceLabel,
-  getMemberLifecyclePresentation,
-  getMemberRiskPresentation,
-} from '../utils/memberPresentation';
+import { buildMemberBusinessRecordSummary } from '../utils/memberDetailSelectors';
+import { buildMemberDetailViewModel } from '../utils/memberDetailViewModel';
+import { getMemberLifecyclePresentation } from '../utils/memberPresentation';
+
+const PLACEHOLDER_ACTION_TOAST = '功能待接入，正式版本需接入权限与操作日志';
+
+type DetailMainTab =
+  | 'overview'
+  | 'assets'
+  | 'bookingAttendance'
+  | 'consumption'
+  | 'ordersContracts'
+  | 'riskFollowup';
+
+const MAIN_TABS: Array<{ id: DetailMainTab; label: string }> = [
+  { id: 'overview', label: '会员概览' },
+  { id: 'assets', label: '资产权益' },
+  { id: 'bookingAttendance', label: '预约到课' },
+  { id: 'consumption', label: '耗课记录' },
+  { id: 'ordersContracts', label: '订单合同' },
+  { id: 'riskFollowup', label: '跟进与风险' },
+];
 
 interface MemberDetailModalProps {
   member: Member;
   onClose: () => void;
+  consumptions: MockCourseConsumptionRecord[];
+  memberAssets: MemberAsset[];
+  bookings: Booking[];
+  attendances: Attendance[];
+  orders: Order[];
+  contracts: Contract[];
+  payments: Payment[];
+  refunds: Refund[];
+  ledgerEntries: FinanceLedgerEntry[];
+  courseSessions: CourseSession[];
+  courses: Course[];
+  /** 详情只读拉取中（可选，不改变原有布局，仅多一行提示） */
+  isMemberDetailLoading?: boolean;
+  /** 详情只读拉取失败（可选） */
+  memberDetailError?: string | null;
 }
-
-type TimelineTab = 'all' | 'class' | 'follow' | 'order' | 'phase';
 
 type MemberDetailToast = {
   id: number;
@@ -45,156 +67,90 @@ type MemberDetailToast = {
   tone: 'info' | 'success';
 };
 
-interface AssetCardView {
-  id: string;
-  name: string;
-  balanceText: string;
-  expiryText?: string;
-  statusLabel: string;
-  colorClass: string;
-  badgeClass: string;
-}
-
-const MEMBER_ASSET_STATUS_LABELS: Record<MemberAssetStatus, string> = {
-  inactive: '未生效',
-  effective: '使用中',
-  frozen: '冻结中',
-  expired: '已过期',
-  used_up: '已用完',
-  transferred: '已转卡',
-  upgraded: '已升级',
-  cancelled: '已取消',
-};
-
-const TIMELINE_TABS: { id: TimelineTab; label: string }[] = [
-  { id: 'all', label: '全部' },
-  { id: 'class', label: '上课' },
-  { id: 'phase', label: '成果' },
-  { id: 'order', label: '购买' },
-  { id: 'follow', label: '跟进' },
-];
-
-const formatAssetDate = (date?: string) => {
-  if (!date) return undefined;
-  return `${date.slice(0, 10)} 到期`;
-};
-
-const formatAssetBalance = (asset: MemberAsset): string => {
-  if (typeof asset.remainingAmount !== 'number') return MEMBER_ASSET_STATUS_LABELS[asset.status];
-
-  const amount = asset.remainingAmount;
-  switch (asset.balanceType) {
-    case 'value':
-      return `余 ¥${amount.toLocaleString()}`;
-    case 'points':
-      return `余 ${amount} 积分`;
-    case 'time':
-      return `余 ${amount} 天`;
-    case 'course':
-      return `余 ${amount} 课时`;
-    case 'count':
-    default:
-      return `余 ${amount} 次`;
-  }
-};
-
-const getAssetStyle = (status: MemberAssetStatus): Pick<AssetCardView, 'colorClass' | 'badgeClass'> => {
-  switch (status) {
-    case 'effective':
-      return {
-        colorClass: 'bg-gray-900 text-white',
-        badgeClass: 'bg-white/20 px-1.5 py-0.5 rounded text-[9px] backdrop-blur-md font-medium',
-      };
-    case 'frozen':
-      return {
-        colorClass: 'bg-orange-50 text-orange-900 border border-orange-100',
-        badgeClass: 'bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded text-[9px] font-bold',
-      };
-    case 'transferred':
-    case 'upgraded':
-      return {
-        colorClass: 'bg-indigo-50 text-indigo-900 border border-indigo-100',
-        badgeClass: 'bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded text-[9px] font-bold',
-      };
-    case 'expired':
-    case 'used_up':
-    case 'cancelled':
-      return {
-        colorClass: 'bg-gray-100 text-gray-500 border border-gray-200',
-        badgeClass: 'bg-white text-gray-500 px-1.5 py-0.5 rounded text-[9px] font-bold border border-gray-200',
-      };
-    case 'inactive':
-    default:
-      return {
-        colorClass: 'bg-white text-gray-700 border border-gray-200',
-        badgeClass: 'bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded text-[9px] font-bold',
-      };
-  }
-};
-
-const getAssetCards = (member: Member): AssetCardView[] => {
-  if (member.assets && member.assets.length > 0) {
-    return member.assets.map((asset) => ({
-      id: asset.id,
-      name: asset.name,
-      balanceText: formatAssetBalance(asset),
-      expiryText: formatAssetDate(asset.expiryDate),
-      statusLabel: MEMBER_ASSET_STATUS_LABELS[asset.status],
-      ...getAssetStyle(asset.status),
-    }));
-  }
-
-  // Legacy compatibility: old member detail cards remain as display fallback.
-  return member.cards.map((card, idx) => ({
-    id: `legacy-card-${idx}-${card.name}`,
-    name: card.name,
-    balanceText: card.balance,
-    expiryText: `${card.expiry} 到期`,
-    statusLabel: card.status === 'active' ? '使用中' : card.status === 'expiring' ? '即将过期' : '已过期',
-    colorClass: card.color,
-    badgeClass: card.status === 'expiring'
-      ? 'bg-red-500 text-white px-1.5 py-0.5 rounded text-[9px] font-bold'
-      : 'bg-white/20 px-1.5 py-0.5 rounded text-[9px] backdrop-blur-md font-medium',
-  }));
-};
-
-const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }) => {
-  const [activeTab, setActiveTab] = useState<TimelineTab>('all');
+const MemberDetailModal: React.FC<MemberDetailModalProps> = ({
+  member,
+  onClose,
+  consumptions,
+  memberAssets,
+  bookings,
+  attendances,
+  orders,
+  contracts,
+  payments,
+  refunds,
+  ledgerEntries,
+  courseSessions,
+  courses,
+  isMemberDetailLoading,
+  memberDetailError,
+}) => {
+  const [activeTab, setActiveTab] = useState<DetailMainTab>('overview');
   const [toast, setToast] = useState<MemberDetailToast | null>(null);
-  const stageView = getMemberLifecyclePresentation(member);
-  const riskView = getMemberRiskPresentation(member);
-  const assetCards = getAssetCards(member);
-  const assetSourceLabel = getMemberAssetSourceLabel(member);
-  const detailRecordInput = {
-    member,
-    bookings: MOCK_BOOKINGS,
-    attendances: MOCK_ATTENDANCES,
-    courseSessions: MOCK_COURSE_SESSIONS,
-    courses: MOCK_COURSES,
-    orders: MOCK_ORDERS,
-    payments: MOCK_PAYMENTS,
-    refunds: MOCK_REFUNDS,
-    ledgerEntries: MOCK_FINANCE_LEDGER_ENTRIES,
-  };
-  const timelineItems = buildMemberDetailTimelineItems(detailRecordInput);
-  const businessRecordSummary = buildMemberBusinessRecordSummary(detailRecordInput);
-  const businessRecordSlots = buildMemberDetailBusinessRecordSlots(detailRecordInput);
 
-  // --- Mock Data for Charts ---
-  const preferenceData = member.topCourses && member.topCourses.length > 0 
-    ? member.topCourses.map((c, i) => ({ name: c, value: 40 - i * 10 })) 
-    : [{ name: '暂无数据', value: 100 }];
-  
+  const vm = useMemo(
+    () => buildMemberDetailViewModel({
+      member,
+      memberAssets,
+      bookings,
+      attendances,
+      consumptions,
+      orders,
+      contracts,
+      payments,
+      refunds,
+      courseSessions,
+      courses,
+    }),
+    [
+      member,
+      memberAssets,
+      bookings,
+      attendances,
+      consumptions,
+      orders,
+      contracts,
+      payments,
+      refunds,
+      courseSessions,
+      courses,
+    ],
+  );
+
+  const recordInput = useMemo(
+    () => ({
+      member,
+      bookings,
+      attendances,
+      courseSessions,
+      courses,
+      orders,
+      payments,
+      refunds,
+      ledgerEntries,
+    }),
+    [member, bookings, attendances, courseSessions, courses, orders, payments, refunds, ledgerEntries],
+  );
+
+  const businessRecordSummary = useMemo(
+    () => buildMemberBusinessRecordSummary(recordInput),
+    [recordInput],
+  );
+
+  const stageView = getMemberLifecyclePresentation(member);
+
+  const preferenceData = member.topCourses && member.topCourses.length > 0
+    ? member.topCourses.map((c, i) => ({ name: c, value: 40 - i * 10 }))
+    : [{ name: '暂无偏好数据', value: 100 }];
+
   const PREF_COLORS = ['#1D1D1F', '#6E6E73', '#AEAEB2', '#E5E5EA'];
 
   const frequencyData = [
-      { week: 'W1', count: 1 },
-      { week: 'W2', count: 3 },
-      { week: 'W3', count: 2 },
-      { week: 'W4', count: 4 }, // Current
+    { week: '第1周', count: 1 },
+    { week: '第2周', count: 3 },
+    { week: '第3周', count: 2 },
+    { week: '第4周', count: 4 },
   ];
 
-  // --- Helpers ---
   const showToast = (message: string, tone: MemberDetailToast['tone'] = 'info') => {
     setToast({ id: Date.now(), message, tone });
     window.setTimeout(() => {
@@ -202,420 +158,550 @@ const MemberDetailModal: React.FC<MemberDetailModalProps> = ({ member, onClose }
     }, 2400);
   };
 
-  const getTimelineIcon = (type: TimelineEvent['type']) => {
-    switch (type) {
-      case 'class': return <i className="fa-solid fa-person-running text-gray-900"></i>;
-      case 'purchase': return <i className="fa-solid fa-bag-shopping text-gray-900"></i>;
-      case 'follow_up': return <i className="fa-regular fa-comment-dots text-gray-900"></i>;
-      case 'check_in': return <i className="fa-solid fa-location-dot text-gray-900"></i>;
-      case 'phase_report': return <i className="fa-solid fa-trophy text-yellow-500"></i>;
-      default: return <i className="fa-solid fa-circle text-gray-300"></i>;
-    }
-  };
+  const { overview, assets, bookingAttendanceRows, consumptionRows, orderRows, contractRows, refundRows, riskAndFollowup } = vm;
 
-  const filteredTimeline = timelineItems.filter(t => {
-      if (t.type === 'operation' || t.type === 'system') return false; 
-      if (activeTab === 'all') return true;
-      if (activeTab === 'class') return t.type === 'class' || t.type === 'check_in';
-      if (activeTab === 'follow') return t.type === 'follow_up';
-      if (activeTab === 'order') return t.type === 'purchase';
-      if (activeTab === 'phase') return t.type === 'phase_report';
-      return true;
-  });
+  const fieldCell = (label: string, value: string) => (
+    <div className="rounded-xl border border-gray-100 bg-[#FAFAFA] p-3">
+      <div className="text-[10px] font-bold uppercase tracking-wide text-gray-400">{label}</div>
+      <div className="mt-1 text-xs font-bold text-gray-900">{value}</div>
+    </div>
+  );
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity" 
+      <div
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
         onClick={onClose}
-      ></div>
+        aria-hidden
+      />
 
-      {/* Modal Content */}
-      <div className="relative w-[1100px] h-[85vh] bg-[#F5F5F7] rounded-3xl shadow-2xl overflow-hidden flex flex-col animate-fadeInUp">
-        
-        {/* --- Header --- */}
-        <div className="h-20 bg-white px-8 flex items-center justify-between border-b border-gray-200 shrink-0 z-20">
-            <div className="flex items-center gap-4">
-                <img src={member.avatar} alt={member.name} className="w-12 h-12 rounded-full object-cover border border-gray-200 shadow-sm" />
-                <div>
-                    <div className="flex items-center gap-3">
-                        <h2 className="text-xl font-bold text-gray-900">{member.name}</h2>
-                        <div className="flex items-center gap-1 bg-gray-100 px-2 py-0.5 rounded-md text-xs font-bold text-gray-600">
-                            {member.gender === 'female' ? <i className="fa-solid fa-venus text-pink-400"></i> : <i className="fa-solid fa-mars text-blue-400"></i>}
-                            <span>{member.age}岁</span>
-                        </div>
-                        <span 
-                            className="px-2 py-0.5 rounded-md text-[10px] font-bold border uppercase tracking-wider"
-                            style={{ 
-                                color: stageView.color,
-                                borderColor: stageView.color + '40',
-                                backgroundColor: stageView.bgColor
-                            }}
-                        >
-                            {stageView.label}
-                        </span>
-                        {riskView && (
-                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold bg-gray-50 ${riskView.textClass}`}>
-                                <i className={`${riskView.iconClass} mr-1`}></i>{riskView.label}
-                            </span>
-                        )}
-                    </div>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-gray-400 font-mono">
-                        <span><i className="fa-solid fa-phone mr-1"></i>{member.phone}</span>
-                        <span className="text-gray-300">|</span>
-                        <span><i className="fa-solid fa-location-dot mr-1"></i>杭州·西湖馆</span>
-                        {stageView.legacyLabel && (
-                            <>
-                                <span className="text-gray-300">|</span>
-                                <span>Legacy stage: {stageView.legacyLabel}</span>
-                            </>
-                        )}
-                    </div>
-                </div>
-            </div>
-            <div className="flex items-center gap-3">
-                <button 
-                    onClick={() => showToast('Gemini AI 正在生成会员深度洞察报告...')}
-                    className="px-4 py-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white rounded-xl text-xs font-bold hover:opacity-90 transition shadow-sm flex items-center gap-2"
+      <div className="relative flex h-[85vh] w-[1100px] max-w-[96vw] flex-col overflow-hidden rounded-3xl bg-[#F5F5F7] shadow-2xl animate-fadeInUp">
+        <div className="z-20 flex h-[72px] shrink-0 items-center justify-between border-b border-gray-200 bg-white px-6">
+          <div className="flex min-w-0 items-center gap-3">
+            <img
+              src={member.avatar}
+              alt=""
+              className="h-11 w-11 shrink-0 rounded-full border border-gray-200 object-cover shadow-sm"
+            />
+            <div className="min-w-0">
+              {isMemberDetailLoading ? (
+                <p className="mb-1 text-[11px] font-medium text-gray-500">会员详情加载中…</p>
+              ) : null}
+              {memberDetailError ? (
+                <p className="mb-1 text-[11px] font-medium text-rose-700">{memberDetailError}</p>
+              ) : null}
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="truncate text-lg font-bold text-gray-900">{overview.name}</h2>
+                <span className="flex items-center gap-1 rounded-md bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-gray-600">
+                  {member.gender === 'female' ? <i className="fa-solid fa-venus text-pink-400" /> : <i className="fa-solid fa-mars text-blue-400" />}
+                  {member.age}
+                  岁
+                </span>
+                <span
+                  className="rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+                  style={{
+                    color: stageView.color,
+                    borderColor: `${stageView.color}40`,
+                    backgroundColor: stageView.bgColor,
+                  }}
                 >
-                    <i className="fa-solid fa-wand-magic-sparkles"></i> AI 洞察
-                </button>
-                <button
-                    onClick={() => showToast('已进入会员档案编辑演示')}
-                    className="px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-bold hover:bg-gray-50 transition text-gray-700 shadow-sm"
-                >
-                    编辑档案
-                </button>
-                <button onClick={onClose} className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition text-gray-500">
-                    <i className="fa-solid fa-xmark"></i>
-                </button>
+                  {overview.lifecycleLabel}
+                </span>
+                {overview.riskTags.map(tag => (
+                  <span
+                    key={tag}
+                    className="rounded-md border border-gray-200/90 bg-gray-50/90 px-2 py-0.5 text-[10px] font-semibold text-gray-600"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+              <div className="mt-0.5 truncate text-[11px] text-gray-400">
+                <i className="fa-solid fa-phone mr-1" />
+                {overview.phoneMasked}
+              </div>
             </div>
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={() => showToast(PLACEHOLDER_ACTION_TOAST)}
+              className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-[11px] font-bold text-gray-700 shadow-sm transition hover:bg-gray-50"
+            >
+              编辑档案
+            </button>
+            <button
+              type="button"
+              onClick={() => showToast(PLACEHOLDER_ACTION_TOAST)}
+              className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-[11px] font-bold text-gray-700 shadow-sm transition hover:bg-gray-50"
+            >
+              联系会员
+            </button>
+            <button
+              type="button"
+              onClick={() => showToast(PLACEHOLDER_ACTION_TOAST)}
+              className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-[11px] font-bold text-gray-700 shadow-sm transition hover:bg-gray-50"
+            >
+              新增跟进
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-500 transition hover:bg-gray-200"
+              aria-label="关闭"
+            >
+              <i className="fa-solid fa-xmark" />
+            </button>
+          </div>
         </div>
 
-        {/* --- Body --- */}
-        <div className="flex flex-1 overflow-hidden">
-            
-            {/* LEFT COLUMN: Profile, Ops & Assets */}
-            <div className="w-[360px] bg-[#FAFAFA] border-r border-gray-200 overflow-y-auto custom-scroll p-6 flex flex-col gap-6">
-                
-                {/* 1. Basic Info */}
-                <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-200 space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <div className="text-[10px] text-gray-400 uppercase font-bold mb-1">专属管家</div>
-                            <div className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
-                                <div className="w-5 h-5 rounded-full bg-gray-100 text-[10px] flex items-center justify-center text-gray-500 font-bold">{member.manager[0]}</div>
-                                {member.manager}
-                            </div>
-                        </div>
-                        <div>
-                            <div className="text-[10px] text-gray-400 uppercase font-bold mb-1">绑定教练</div>
-                            <div className="text-sm font-bold text-gray-900 flex items-center gap-1.5">
-                                {member.privateTeachers && member.privateTeachers.length > 0 ? (
-                                    <>
-                                        <div className="w-5 h-5 rounded-full bg-black text-white text-[10px] flex items-center justify-center font-bold">{member.privateTeachers[0][0]}</div>
-                                        {member.privateTeachers[0]}
-                                        {member.privateTeachers.length > 1 && <span className="text-xs text-gray-400">+{member.privateTeachers.length - 1}</span>}
-                                    </>
-                                ) : <span className="text-gray-400 text-xs font-normal">未绑定</span>}
-                            </div>
-                        </div>
-                        <div>
-                            <div className="text-[10px] text-gray-400 uppercase font-bold mb-1">入会时间</div>
-                            <div className="text-sm font-bold text-gray-900">{member.joinDate}</div>
-                        </div>
-                        <div>
-                            <div className="text-[10px] text-gray-400 uppercase font-bold mb-1">最近到店</div>
-                            <div className="text-sm font-bold text-gray-900">{member.lastVisit}</div>
-                        </div>
-                    </div>
-                </div>
+        <div className="shrink-0 border-b border-gray-200 bg-white px-4">
+          <div className="flex gap-1 overflow-x-auto pb-0 pt-2">
+            {MAIN_TABS.map(tab => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`relative shrink-0 whitespace-nowrap px-4 py-2.5 text-xs font-bold transition ${
+                  activeTab === tab.id ? 'text-gray-900' : 'text-gray-400 hover:text-gray-600'
+                }`}
+              >
+                {tab.label}
+                {activeTab === tab.id && (
+                  <span className="absolute bottom-0 left-3 right-3 h-0.5 rounded-full bg-gray-900" />
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
 
-                {/* 2. Tags & Operations */}
-                <div>
-                    <div className="flex flex-wrap gap-2 mb-4">
-                        {member.bodyTags.map(tag => (
-                            <span key={tag} className="px-2.5 py-1 bg-white border border-gray-200 rounded-lg text-[10px] font-bold text-gray-600 shadow-sm">{tag}</span>
-                        ))}
-                        <button
-                          onClick={() => showToast('已打开会员标签补充演示')}
-                          className="px-2 py-1 border border-dashed border-gray-300 rounded-lg text-[10px] text-gray-400 hover:border-gray-400 transition"
-                        >
-                          +
-                        </button>
-                    </div>
+        <div className="custom-scroll flex-1 overflow-y-auto p-6">
+          {activeTab === 'overview' && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+                {fieldCell('会员姓名', overview.name)}
+                {fieldCell('手机号', overview.phoneMasked)}
+                {fieldCell('生命周期', overview.lifecycleLabel)}
+                {fieldCell('会员类型', overview.memberSegmentLabel)}
+                {fieldCell('来源', overview.memberSourceLabel)}
+                {fieldCell('负责人 / 管家', overview.ownerLabel)}
+                {fieldCell('专属老师', overview.teacherLabel)}
+                {fieldCell('最近到课 / 预约', overview.lastAttendanceLine)}
+                {fieldCell('最近耗课', overview.lastConsumptionLine)}
+                {fieldCell('当前主资产', overview.mainAssetLabel)}
+                {fieldCell('风险标签', overview.riskTags.join('、'))}
+                {fieldCell('下一步动作建议', overview.nextActionLabel)}
+              </div>
 
-                    {/* Action Buttons */}
-                    <div className="grid grid-cols-4 gap-2 mb-3">
-                        <button
-                          onClick={() => showToast('已进入微信触达演示')}
-                          className="flex flex-col items-center justify-center py-3 bg-white border border-gray-200 rounded-xl hover:border-gray-300 hover:bg-gray-50 transition group shadow-sm"
-                        >
-                            <i className="fa-brands fa-weixin text-lg text-green-600 mb-1 group-hover:scale-110 transition"></i>
-                            <span className="text-[10px] font-medium text-gray-500">微信</span>
-                        </button>
-                        <button
-                          onClick={() => showToast(`已准备拨打 ${member.phone}`)}
-                          className="flex flex-col items-center justify-center py-3 bg-white border border-gray-200 rounded-xl hover:border-gray-300 hover:bg-gray-50 transition group shadow-sm"
-                        >
-                            <i className="fa-solid fa-phone text-lg text-black mb-1 group-hover:scale-110 transition"></i>
-                            <span className="text-[10px] font-medium text-gray-500">电话</span>
-                        </button>
-                        <button
-                          onClick={() => showToast('已进入会员预约创建演示')}
-                          className="flex flex-col items-center justify-center py-3 bg-white border border-gray-200 rounded-xl hover:border-gray-300 hover:bg-gray-50 transition group shadow-sm"
-                        >
-                            <i className="fa-solid fa-calendar-check text-lg text-black mb-1 group-hover:scale-110 transition"></i>
-                            <span className="text-[10px] font-medium text-gray-500">预约</span>
-                        </button>
-                        <button
-                          onClick={() => showToast('已打开优惠券发放演示', 'success')}
-                          className="flex flex-col items-center justify-center py-3 bg-white border border-gray-200 rounded-xl hover:border-gray-300 hover:bg-gray-50 transition group shadow-sm"
-                        >
-                            <i className="fa-solid fa-ticket text-lg text-orange-500 mb-1 group-hover:scale-110 transition"></i>
-                            <span className="text-[10px] font-medium text-gray-500">发券</span>
-                        </button>
-                    </div>
-
-                    {/* Strategy Text */}
-                    <div className="flex items-start gap-2 px-1">
-                        <i className="fa-solid fa-lightbulb text-yellow-500 text-xs mt-0.5"></i>
-                        <p className="text-[10px] text-gray-500 leading-relaxed font-medium">
-                            <span className="text-gray-900 font-bold">运营指引：</span> {stageView.strategy}
-                        </p>
-                    </div>
-                </div>
-
-                <div className="w-full h-px bg-gray-200"></div>
-
-                {/* 3. Assets (Moved from Right) */}
-                <div>
-                    <div className="mb-3 flex items-center justify-between">
-                        <h4 className="text-xs font-bold text-gray-900 flex items-center gap-2">
-                            <i className="fa-solid fa-wallet text-gray-400"></i> 资产中心
-                        </h4>
-                        <span className="text-[9px] text-gray-400 bg-white border border-gray-200 px-2 py-0.5 rounded-full">
-                            {assetSourceLabel}
-                        </span>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-3 mb-4">
-                         <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
-                             <div className="text-[10px] text-gray-400 mb-1">累计消费 (LTV)</div>
-                             <div className="text-sm font-bold font-mono">¥{member.totalLTV.toLocaleString()}</div>
-                         </div>
-                         <div className="bg-white p-3 rounded-xl border border-gray-200 shadow-sm">
-                             <div className="text-[10px] text-gray-400 mb-1">剩余积分</div>
-                             <div className="text-sm font-bold font-mono text-black">{member.points}</div>
-                         </div>
-                    </div>
-
-                    <div className="space-y-3">
-                        {assetCards.map((card) => (
-                            <div key={card.id} className={`relative p-4 rounded-xl overflow-hidden shadow-sm ${card.colorClass} min-h-[80px] flex flex-col justify-between transition hover:shadow-md`}>
-                                <div className="flex justify-between items-start relative z-10">
-                                    <div className="font-bold text-xs tracking-wide opacity-90">{card.name}</div>
-                                    <span className={card.badgeClass}>{card.statusLabel}</span>
-                                </div>
-                                <div className="flex justify-between items-end relative z-10 mt-2">
-                                    <div className="text-[9px] opacity-70">MetYoga</div>
-                                    <div className="text-right">
-                                        <div className="text-base font-bold">{card.balanceText}</div>
-                                        {card.expiryText && <div className="text-[9px] opacity-80 font-mono">{card.expiryText}</div>}
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                         {assetCards.length === 0 && (
-                            <div className="p-4 border border-dashed border-gray-200 rounded-xl text-center text-xs text-gray-400 bg-gray-50">
-                                暂无有效会员卡
-                            </div>
-                         )}
-                    </div>
-                </div>
-
-            </div>
-
-            {/* RIGHT COLUMN: Data & Timeline */}
-            <div className="flex-1 bg-white p-8 overflow-y-auto custom-scroll flex flex-col gap-8">
-                
-                {/* 1. Visualizations */}
-                <div className="grid grid-cols-2 gap-6">
-                    {/* Preference */}
-                    <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm flex flex-col">
-                        <div className="flex justify-between items-center mb-2">
-                            <h4 className="text-sm font-bold text-gray-900">上课偏好 (Top 3)</h4>
-                        </div>
-                        <div className="flex-1 flex items-center gap-6">
-                            <div className="w-24 h-24 relative">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <PieChart>
-                                        <Pie data={preferenceData} innerRadius={28} outerRadius={40} paddingAngle={5} dataKey="value" stroke="none">
-                                            {preferenceData.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={PREF_COLORS[index % PREF_COLORS.length]} />
-                                            ))}
-                                        </Pie>
-                                    </PieChart>
-                                </ResponsiveContainer>
-                            </div>
-                            <div className="flex-1 space-y-2">
-                                {member.topCourses && member.topCourses.length > 0 ? member.topCourses.map((c, i) => (
-                                    <div key={i} className="flex items-center justify-between text-xs">
-                                        <div className="flex items-center gap-2">
-                                            <div className="w-2 h-2 rounded-full" style={{backgroundColor: PREF_COLORS[i]}}></div>
-                                            <span className="text-gray-600">{c}</span>
-                                        </div>
-                                    </div>
-                                )) : <span className="text-xs text-gray-400">暂无数据</span>}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Frequency */}
-                    <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm flex flex-col">
-                        <div className="flex justify-between items-center mb-2">
-                            <h4 className="text-sm font-bold text-gray-900">近期练习频率 (周)</h4>
-                            <div className="text-xs font-bold text-gray-900 flex items-center gap-1">
-                                <span className="text-xl font-mono">{businessRecordSummary.hasCourseDomainData ? businessRecordSummary.completedClassCount : member.totalClasses}</span> <span className="text-gray-400 font-normal">{businessRecordSummary.hasCourseDomainData ? '到课' : '累计'}</span>
-                            </div>
-                        </div>
-                        <div className="flex-1 w-full h-24">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={frequencyData}>
-                                    <XAxis dataKey="week" axisLine={false} tickLine={false} tick={{fontSize: 10, fill: '#9CA3AF'}} />
-                                    <Tooltip cursor={{fill: '#F3F4F6'}} contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', fontSize: '10px'}} />
-                                    <Bar dataKey="count" fill="#1D1D1F" radius={[4, 4, 4, 4]} barSize={16} />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </div>
-                </div>
-
-                {/* 2. Business Record Entrypoints */}
-                <div className="grid grid-cols-2 gap-4">
-                    {businessRecordSlots.map((slot) => (
-                        <div key={slot.id} className="bg-[#FAFAFA] border border-gray-100 rounded-2xl p-4 shadow-sm">
-                            <div className="flex items-start gap-3">
-                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${slot.toneClass}`}>
-                                    <i className={slot.iconClass}></i>
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                    <div className="text-sm font-bold text-gray-900">{slot.title}</div>
-                                    <div className="text-[10px] text-gray-400 mt-1 leading-relaxed">{slot.description}</div>
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-3 mt-4">
-                                {slot.metrics.map((metric) => (
-                                    <div key={`${slot.id}-${metric.label}`}>
-                                        <div className="text-[10px] text-gray-400 mb-1">{metric.label}</div>
-                                        <div className="text-xs font-bold text-gray-900 font-mono truncate">{metric.value}</div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                {/* 3. Timeline */}
-                <div className="flex-1">
-                    <div className="flex items-center justify-between mb-6 border-b border-gray-100 pb-4">
-                        <div>
-                            <h3 className="text-sm font-bold text-gray-900">全景动态追踪</h3>
-                            <p className="text-[10px] text-gray-400 mt-1">
-                                优先展示订单、预约、签到、退款链路；缺口由 Legacy timeline fallback 补充
-                            </p>
-                        </div>
-                        <div className="flex gap-4">
-                            {TIMELINE_TABS.map((tab) => (
-                                <button 
-                                    key={tab.id}
-                                    onClick={() => setActiveTab(tab.id)}
-                                    className={`text-xs font-medium transition-all relative ${
-                                        activeTab === tab.id 
-                                        ? 'text-black font-bold' 
-                                        : 'text-gray-400 hover:text-gray-600'
-                                    }`}
-                                >
-                                    {tab.label}
-                                    {activeTab === tab.id && <span className="absolute -bottom-4 left-0 right-0 h-0.5 bg-black rounded-full"></span>}
-                                </button>
+              <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+                  <h4 className="mb-2 text-sm font-bold text-gray-900">上课偏好</h4>
+                  <div className="flex items-center gap-6">
+                    <div className="h-24 w-24">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={preferenceData}
+                            innerRadius={28}
+                            outerRadius={40}
+                            paddingAngle={5}
+                            dataKey="value"
+                            stroke="none"
+                          >
+                            {preferenceData.map((_, index) => (
+                              <Cell key={`cell-${index}`} fill={PREF_COLORS[index % PREF_COLORS.length]} />
                             ))}
-                        </div>
+                          </Pie>
+                        </PieChart>
+                      </ResponsiveContainer>
                     </div>
-
-                    <div className="relative pl-6 space-y-8 before:content-[''] before:absolute before:left-[11px] before:top-2 before:bottom-0 before:w-[1px] before:bg-gray-200">
-                        {filteredTimeline.length > 0 ? filteredTimeline.map((event) => (
-                            <div key={`${event.sourceType}-${event.sourceId}`} className="relative group">
-                                <div className="absolute -left-6 top-1 w-6 h-6 rounded-full bg-white border border-gray-200 flex items-center justify-center z-10 shadow-sm text-xs">
-                                    {getTimelineIcon(event.type)}
-                                </div>
-                                
-                                <div className="flex justify-between items-start mb-1">
-                                    <div>
-                                        <div className="text-sm font-bold text-gray-900">{event.title}</div>
-                                        <div className="text-[10px] text-gray-400 mt-0.5">{getMemberDetailTimelineSourceLabel(event.sourceType)}</div>
-                                    </div>
-                                    <div className="text-xs text-gray-400 font-mono">{event.date}</div>
-                                </div>
-                                
-                                <div className="text-xs text-gray-600 leading-relaxed bg-[#FAFAFA] p-3 rounded-xl border border-gray-100 group-hover:bg-white group-hover:shadow-sm group-hover:border-gray-200 transition">
-                                    {event.content}
-                                    
-                                    {/* Images for Phase Report */}
-                                    {event.type === 'phase_report' && event.images && (
-                                        <div className="mt-3 flex gap-2">
-                                            {event.images.map((img, i) => (
-                                                <div key={i} className="w-16 h-16 rounded-lg overflow-hidden border border-gray-200">
-                                                    <img src={img} className="w-full h-full object-cover" alt="Result" />
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-
-                                    {/* Footer Info */}
-                                    {(event.staff || event.amount) && (
-                                        <div className="mt-2 pt-2 border-t border-gray-100 flex items-center gap-3">
-                                            {event.staff && <span className="text-[10px] text-gray-400 bg-white px-1.5 py-0.5 rounded border border-gray-100">{event.staff}</span>}
-                                            {event.amount && <span className={`text-[10px] font-mono font-bold ${event.amount > 0 ? 'text-black' : 'text-green-600'}`}>{event.amount > 0 ? `+¥${event.amount}` : `-¥${Math.abs(event.amount)}`}</span>}
-                                        </div>
-                                    )}
-                                </div>
+                    <div className="min-w-0 flex-1 space-y-2">
+                      {member.topCourses && member.topCourses.length > 0 ? (
+                        member.topCourses.map((c, i) => (
+                          <div key={c} className="flex items-center justify-between text-xs">
+                            <div className="flex min-w-0 items-center gap-2">
+                              <div className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: PREF_COLORS[i] }} />
+                              <span className="truncate text-gray-600">{c}</span>
                             </div>
-                        )) : (
-                            <div className="text-xs text-gray-400 py-4">暂无相关记录</div>
-                        )}
-                        
-                        <div className="pt-4 text-center">
-                            <span className="text-[10px] text-gray-300">End of Timeline</span>
-                        </div>
+                          </div>
+                        ))
+                      ) : (
+                        <span className="text-xs text-gray-400">暂未记录</span>
+                      )}
                     </div>
+                  </div>
                 </div>
 
+                <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+                  <div className="mb-2 flex items-center justify-between">
+                    <h4 className="text-sm font-bold text-gray-900">近期练习频率</h4>
+                    <div className="flex items-center gap-1 text-xs font-bold text-gray-900">
+                      <span className="font-mono text-xl">
+                        {businessRecordSummary.hasCourseDomainData
+                          ? businessRecordSummary.completedClassCount
+                          : member.totalClasses}
+                      </span>
+                      <span className="font-normal text-gray-400">
+                        {businessRecordSummary.hasCourseDomainData ? '到课节数' : '累计节数'}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="h-24 w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={frequencyData}>
+                        <XAxis dataKey="week" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#9CA3AF' }} />
+                        <Tooltip
+                          cursor={{ fill: '#F3F4F6' }}
+                          contentStyle={{
+                            borderRadius: 8,
+                            border: 'none',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                            fontSize: 10,
+                          }}
+                        />
+                        <Bar dataKey="count" fill="#1D1D1F" radius={[4, 4, 4, 4]} barSize={16} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              </div>
             </div>
-        </div>
+          )}
 
+          {activeTab === 'assets' && (
+            <div className="space-y-4">
+              {assets.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 py-12 text-center text-sm text-gray-400">
+                  暂无会员资产
+                </div>
+              ) : (
+                <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+                  <table className="w-full text-left text-xs">
+                    <thead className="border-b border-gray-100 bg-[#FAFAFA] text-[10px] font-bold uppercase tracking-wide text-gray-400">
+                      <tr>
+                        <th className="px-4 py-3">卡项 / 资产名称</th>
+                        <th className="px-4 py-3">剩余</th>
+                        <th className="px-4 py-3">有效期</th>
+                        <th className="px-4 py-3">资产状态</th>
+                        <th className="px-4 py-3">关联订单</th>
+                        <th className="px-4 py-3">关联合同</th>
+                        <th className="px-4 py-3">适用说明</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {assets.map(a => (
+                        <tr key={a.id} className="text-gray-800">
+                          <td className="px-4 py-3 font-bold">{a.name}</td>
+                          <td className="px-4 py-3 font-mono">{a.remainingDisplay}</td>
+                          <td className="px-4 py-3 font-mono text-gray-600">{a.expiryDisplay}</td>
+                          <td className="px-4 py-3">{a.statusLabel}</td>
+                          <td className="px-4 py-3 font-mono text-[11px]">{a.orderRef}</td>
+                          <td className="px-4 py-3 font-mono text-[11px]">{a.contractRef}</td>
+                          <td className="px-4 py-3 text-gray-500">{a.applicabilityDisplay}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              <p className="text-[11px] leading-relaxed text-gray-400">
+                改余额、赠送点数、冻结、转卡、退费等操作功能待接入，正式版本需审批与操作日志。
+              </p>
+            </div>
+          )}
+
+          {activeTab === 'bookingAttendance' && (
+            <div>
+              {bookingAttendanceRows.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 py-12 text-center text-sm text-gray-400">
+                  暂无预约与到课记录
+                </div>
+              ) : (
+                <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+                  <table className="w-full text-left text-xs">
+                    <thead className="border-b border-gray-100 bg-[#FAFAFA] text-[10px] font-bold uppercase tracking-wide text-gray-400">
+                      <tr>
+                        <th className="px-4 py-3">课程名称</th>
+                        <th className="px-4 py-3">上课时间</th>
+                        <th className="px-4 py-3">老师</th>
+                        <th className="px-4 py-3">预约状态</th>
+                        <th className="px-4 py-3">到课状态</th>
+                        <th className="px-4 py-3">签到 / 到课时间</th>
+                        <th className="px-4 py-3">来源</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {bookingAttendanceRows.map(row => (
+                        <tr key={row.id}>
+                          <td className="px-4 py-3 font-bold text-gray-900">{row.courseName}</td>
+                          <td className="px-4 py-3 font-mono text-gray-600">{row.sessionStartDisplay}</td>
+                          <td className="px-4 py-3">{row.teacherName}</td>
+                          <td className="px-4 py-3">{row.bookingStatusDisplay}</td>
+                          <td className="px-4 py-3">{row.attendanceStatusDisplay}</td>
+                          <td className="px-4 py-3 font-mono text-gray-600">{row.checkInOrArrivalDisplay}</td>
+                          <td className="px-4 py-3 text-gray-500">{row.sourceLine}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              <p className="mt-3 text-[11px] text-gray-400">补签、代约等功能待接入，正式版本需审批与操作日志。</p>
+            </div>
+          )}
+
+          {activeTab === 'consumption' && (
+            <div>
+              {consumptionRows.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 py-12 text-center text-sm text-gray-400">
+                  暂无耗课记录
+                </div>
+              ) : (
+                <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+                  <table className="w-full text-left text-xs">
+                    <thead className="border-b border-gray-100 bg-[#FAFAFA] text-[10px] font-bold uppercase tracking-wide text-gray-400">
+                      <tr>
+                        <th className="px-4 py-3">课程名称</th>
+                        <th className="px-4 py-3">耗课时间</th>
+                        <th className="px-4 py-3">扣减</th>
+                        <th className="px-4 py-3">来源</th>
+                        <th className="px-4 py-3">状态</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-50">
+                      {consumptionRows.map(row => (
+                        <tr key={row.id}>
+                          <td className="px-4 py-3 font-bold text-gray-900">{row.courseName}</td>
+                          <td className="px-4 py-3 font-mono text-gray-600">{row.consumedAtDisplay}</td>
+                          <td className="px-4 py-3">{row.deductDisplay}</td>
+                          <td className="px-4 py-3">{row.sourceDisplay}</td>
+                          <td className="px-4 py-3">{row.statusDisplay}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'ordersContracts' && (
+            <div className="space-y-8">
+              <section>
+                <h4 className="mb-3 text-sm font-bold text-gray-900">订单</h4>
+                {orderRows.length === 0 ? (
+                  <div className="rounded-xl border border-dashed border-gray-200 bg-gray-50 py-8 text-center text-xs text-gray-400">
+                    暂无订单记录
+                  </div>
+                ) : (
+                  <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+                    <table className="w-full text-left text-xs">
+                      <thead className="border-b border-gray-100 bg-[#FAFAFA] text-[10px] font-bold uppercase tracking-wide text-gray-400">
+                        <tr>
+                          <th className="px-4 py-3">订单编号</th>
+                          <th className="px-4 py-3">购买产品</th>
+                          <th className="px-4 py-3">支付金额</th>
+                          <th className="px-4 py-3">支付状态</th>
+                          <th className="px-4 py-3">合同名称</th>
+                          <th className="px-4 py-3">合同状态</th>
+                          <th className="px-4 py-3">签署时间</th>
+                          <th className="px-4 py-3">关联信息</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50">
+                        {orderRows.map(o => (
+                          <tr key={o.id}>
+                            <td className="px-4 py-3 font-mono font-bold">{o.orderLabel}</td>
+                            <td className="max-w-[180px] px-4 py-3 text-gray-700">{o.productSummary}</td>
+                            <td className="px-4 py-3 font-mono">{o.payAmountDisplay}</td>
+                            <td className="px-4 py-3">{o.payStatusDisplay}</td>
+                            <td className="px-4 py-3">{o.contractNameDisplay}</td>
+                            <td className="px-4 py-3">{o.contractStatusDisplay}</td>
+                            <td className="px-4 py-3 font-mono text-gray-600">{o.signedAtDisplay}</td>
+                            <td className="max-w-[160px] px-4 py-3 text-[10px] text-gray-500">{o.linksDisplay}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </section>
+
+              <section>
+                <h4 className="mb-3 text-sm font-bold text-gray-900">合同</h4>
+                {contractRows.length === 0 ? (
+                  <p className="text-xs text-gray-400">暂无独立合同记录</p>
+                ) : (
+                  <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+                    <table className="w-full text-left text-xs">
+                      <thead className="border-b border-gray-100 bg-[#FAFAFA] text-[10px] font-bold uppercase tracking-wide text-gray-400">
+                        <tr>
+                          <th className="px-4 py-3">合同名称</th>
+                          <th className="px-4 py-3">合同状态</th>
+                          <th className="px-4 py-3">签署时间</th>
+                          <th className="px-4 py-3">关联订单</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50">
+                        {contractRows.map(c => (
+                          <tr key={c.id}>
+                            <td className="px-4 py-3 font-bold">{c.titleDisplay}</td>
+                            <td className="px-4 py-3">{c.statusDisplay}</td>
+                            <td className="px-4 py-3 font-mono text-gray-600">{c.signedAtDisplay}</td>
+                            <td className="px-4 py-3 font-mono text-[11px]">{c.orderRef}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </section>
+
+              <section>
+                <h4 className="mb-3 text-sm font-bold text-gray-900">退款记录</h4>
+                {refundRows.length === 0 ? (
+                  <p className="text-xs text-gray-400">暂无退款记录</p>
+                ) : (
+                  <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+                    <table className="w-full text-left text-xs">
+                      <thead className="border-b border-gray-100 bg-[#FAFAFA] text-[10px] font-bold uppercase tracking-wide text-gray-400">
+                        <tr>
+                          <th className="px-4 py-3">金额</th>
+                          <th className="px-4 py-3">状态</th>
+                          <th className="px-4 py-3">时间</th>
+                          <th className="px-4 py-3">说明</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50">
+                        {refundRows.map(r => (
+                          <tr key={r.id}>
+                            <td className="px-4 py-3 font-mono font-bold">{r.amountDisplay}</td>
+                            <td className="px-4 py-3">{r.statusDisplay}</td>
+                            <td className="px-4 py-3 font-mono text-gray-600">{r.timeDisplay}</td>
+                            <td className="px-4 py-3 text-gray-600">{r.reasonDisplay}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </section>
+
+              <p className="text-[11px] text-gray-400">
+                创建合同、修改合同、发起退款等功能待接入，正式版本需审批与操作日志。
+              </p>
+            </div>
+          )}
+
+          {activeTab === 'riskFollowup' && (
+            <div className="space-y-6">
+              <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+                <h4 className="mb-3 text-sm font-bold text-gray-900">风险标签</h4>
+                {riskAndFollowup.riskTags.length === 1 && riskAndFollowup.riskTags[0] === '暂无明显风险' ? (
+                  <p className="text-sm text-gray-400">暂无明显风险</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {riskAndFollowup.riskTags.map(tag => (
+                      <span key={tag} className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-bold text-gray-700">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+                <h4 className="mb-3 text-sm font-bold text-gray-900">风险原因</h4>
+                {riskAndFollowup.riskReasonLines.length === 0 ? (
+                  <p className="text-sm text-gray-400">暂无明显风险</p>
+                ) : (
+                  <ul className="list-inside list-disc space-y-2 text-xs leading-relaxed text-gray-600">
+                    {riskAndFollowup.riskReasonLines.map((line, i) => (
+                      <li key={i}>{line}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                {fieldCell('下一步动作建议', riskAndFollowup.nextActionLabel)}
+                {fieldCell('负责人', riskAndFollowup.ownerLabel)}
+              </div>
+
+              <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+                <h4 className="mb-2 text-sm font-bold text-gray-900">经营指引</h4>
+                <p className="text-xs leading-relaxed text-gray-600">{riskAndFollowup.strategyHint}</p>
+              </div>
+
+              <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+                <h4 className="mb-3 text-sm font-bold text-gray-900">待跟进事项</h4>
+                {riskAndFollowup.pendingLines.length === 0 ? (
+                  <p className="text-xs text-gray-400">暂未记录</p>
+                ) : (
+                  <ul className="space-y-2 text-xs text-gray-700">
+                    {riskAndFollowup.pendingLines.map((line, i) => (
+                      <li key={i} className="flex gap-2">
+                        <span className="text-gray-300">•</span>
+                        <span>{line}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+                <h4 className="mb-3 text-sm font-bold text-gray-900">最近跟进记录</h4>
+                {riskAndFollowup.followUps.length === 0 ? (
+                  <p className="text-xs text-gray-400">暂未记录</p>
+                ) : (
+                  <div className="space-y-3">
+                    {riskAndFollowup.followUps.map(f => (
+                      <div key={f.id} className="rounded-xl border border-gray-100 bg-[#FAFAFA] p-3">
+                        <div className="flex justify-between gap-2 text-[10px] text-gray-400">
+                          <span className="font-mono">{f.dateDisplay}</span>
+                          <span>{f.staffDisplay}</span>
+                        </div>
+                        <div className="mt-1 text-xs font-bold text-gray-900">{f.title}</div>
+                        <div className="mt-1 text-xs text-gray-600">{f.content}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <p className="text-[11px] text-gray-400">
+                任务创建、短信、外呼等触达功能待接入，正式版本需接入权限与操作日志。
+              </p>
+            </div>
+          )}
+        </div>
       </div>
+
       {toast && (
         <div className="fixed top-20 right-8 z-[80] animate-fadeInUp">
-          <div className={`px-4 py-3 rounded-xl shadow-xl border text-sm font-bold flex items-center gap-3 ${
-            toast.tone === 'success'
-              ? 'bg-green-50 text-green-700 border-green-100'
-              : 'bg-white text-gray-800 border-gray-100'
-          }`}>
-            <i className={`fa-solid ${toast.tone === 'success' ? 'fa-circle-check' : 'fa-circle-info'}`}></i>
+          <div
+            className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-sm font-bold shadow-xl ${
+              toast.tone === 'success'
+                ? 'border-green-100 bg-green-50 text-green-700'
+                : 'border-gray-100 bg-white text-gray-800'
+            }`}
+          >
+            <i className={`fa-solid ${toast.tone === 'success' ? 'fa-circle-check' : 'fa-circle-info'}`} />
             {toast.message}
           </div>
         </div>
       )}
+
       <style>{`
         @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px) scale(0.98); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
+          from { opacity: 0; transform: translateY(20px) scale(0.98); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
         }
         .animate-fadeInUp {
-            animation: fadeInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          animation: fadeInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         }
+        .custom-scroll::-webkit-scrollbar { width: 5px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #D1D1D6; border-radius: 10px; }
       `}</style>
     </div>
   );

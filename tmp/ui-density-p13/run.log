@@ -1,0 +1,43 @@
+METRICS_1440 {
+  "viewport": {
+    "w": 1440,
+    "h": 900
+  },
+  "header": {
+    "h": 93,
+    "top": 40,
+    "bottom": 133
+  },
+  "kpi": {
+    "h": 67,
+    "top": 141,
+    "bottom": 208
+  },
+  "filters": {
+    "h": 44,
+    "top": 216,
+    "bottom": 260
+  },
+  "alerts": {
+    "h": 40,
+    "top": 268,
+    "bottom": 308
+  },
+  "grid": {
+    "h": 642,
+    "top": 316,
+    "bottom": 958
+  },
+  "cardCount": 44,
+  "fullyVisibleSessions": 43,
+  "sampleCardH": 72
+}
+SHOTS
+/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p13/course-week-1440x900-p13-final.png
+/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p13/course-week-1920x1080-p13-final.png
+/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p13/research-operation-1440x900-p13-final.png
+/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p13/research-finance-1440x900-p13-final.png
+CONSOLE_ERRORS [
+  'Failed to load resource: the server responded with a status of 404 (Not Found)'
+]
+P13_SHOTS_OK

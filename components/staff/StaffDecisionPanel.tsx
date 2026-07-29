@@ -5,11 +5,10 @@ import {
 } from 'recharts';
 import { MOCK_STAFF_LIST } from '../../constants';
 import type { Staff } from '../../types';
-import type { StaffMatrixItem } from '../../utils/staffSelectors';
+import type { StaffMatrixItem, StaffTab } from '../../utils/staffSelectors';
 
 const ReferenceAreaCompat = ReferenceArea as React.ComponentType<any>;
 
-type StaffTab = 'decision' | 'archives' | 'schedule';
 type StaffModalTab = 'course' | 'member' | 'income' | 'promotion';
 
 interface StaffDecision {

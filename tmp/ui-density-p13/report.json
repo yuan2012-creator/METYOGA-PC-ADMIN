@@ -1,0 +1,45 @@
+{
+  "metrics1440": {
+    "viewport": {
+      "w": 1440,
+      "h": 900
+    },
+    "header": {
+      "h": 76,
+      "top": 40,
+      "bottom": 116
+    },
+    "kpi": {
+      "h": 67,
+      "top": 124,
+      "bottom": 190
+    },
+    "filters": {
+      "h": 44,
+      "top": 198,
+      "bottom": 242
+    },
+    "alerts": {
+      "h": 40,
+      "top": 250,
+      "bottom": 290
+    },
+    "grid": {
+      "h": 642,
+      "top": 298,
+      "bottom": 940
+    },
+    "cardCount": 44,
+    "fullyVisibleSessions": 43,
+    "sampleCardH": 72
+  },
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ],
+  "results": [
+    "/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p13/course-week-1440x900-p13-final.png",
+    "/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p13/course-week-1920x1080-p13-final.png",
+    "/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p13/research-operation-1440x900-p13-final.png",
+    "/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p13/research-finance-1440x900-p13-final.png"
+  ]
+}

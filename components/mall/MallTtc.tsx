@@ -121,6 +121,7 @@ interface MallTtcProps {
   handleViewStudents: (item: MallTtcCourse) => void;
   availableVenues: string[];
   funnelData: { name: string; value: number }[];
+  onDemoAction?: (message: string) => void;
 }
 
 const MallTtc: React.FC<MallTtcProps> = ({
@@ -138,6 +139,7 @@ const MallTtc: React.FC<MallTtcProps> = ({
   handleViewStudents,
   availableVenues,
   funnelData,
+  onDemoAction,
 }) => {
   const renderTTCList = () => (
       <div className="animate-fadeIn space-y-12">
@@ -148,7 +150,7 @@ const MallTtc: React.FC<MallTtcProps> = ({
                   <div key={ttc.id} className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col group hover:shadow-md transition h-full">
                       <div className="h-40 bg-gray-200 relative overflow-hidden">
                           <img src={ttc.cover || undefined} className="w-full h-full object-cover transition duration-700 group-hover:scale-105" alt="" />
-                          <div className={`absolute top-0 right-0 px-3 py-1 text-[10px] font-bold rounded-bl-xl ${ttc.status === 'active' ? 'bg-black text-white' : 'bg-gray-100 text-gray-400'}`}>
+                          <div className={`absolute top-0 right-0 px-3 py-1 text-[10px] font-bold rounded-bl-xl ${ttc.status === 'active' ? 'bg-[var(--met-accent)] text-white' : 'bg-gray-100 text-gray-400'}`}>
                               {ttc.status === 'active' ? '招生中' : '已结课'}
                           </div>
                           <div className="absolute bottom-3 left-3 bg-black/50 backdrop-blur px-2 py-1 text-[10px] font-bold rounded text-white uppercase shadow-sm">
@@ -314,7 +316,7 @@ const MallTtc: React.FC<MallTtcProps> = ({
                           </div>
                       </div>
                       <div className="p-6 border-t border-gray-100 bg-gray-50 flex gap-4 sticky bottom-0">
-                          <button className="flex-1 bg-black text-white py-3 rounded-xl font-bold hover:opacity-90 transition shadow-lg">保存导师信息</button>
+                          <button className="flex-1 bg-[var(--met-accent)] border border-[var(--met-accent)] text-white py-3 rounded-xl font-bold hover:opacity-90 transition shadow-[0_1px_2px_rgba(0,0,0,0.04)]">保存导师信息</button>
                       </div>
                   </div>
               </div>
@@ -486,7 +488,7 @@ const MallTtc: React.FC<MallTtcProps> = ({
                           <div className="flex justify-between items-center">
                               <h4 className="text-sm font-bold text-gray-900 border-l-4 border-black pl-3">排期管理 (Cohorts)</h4>
                               <button 
-                                className="text-xs bg-black text-white px-3 py-1.5 rounded-lg font-bold hover:opacity-80"
+                                className="text-xs bg-[var(--met-accent)] border border-[var(--met-accent)] text-white px-3 py-1.5 rounded-lg font-bold hover:opacity-90"
                                 onClick={() => {
                                     const newSchedule = { 
                                         id: `s_${Date.now()}`, 
@@ -555,7 +557,7 @@ const MallTtc: React.FC<MallTtcProps> = ({
                       </div>
                   </div>
                   <div className="p-6 border-t border-gray-100 bg-gray-50 flex gap-4 sticky bottom-0">
-                      <button className="flex-1 bg-black text-white py-3 rounded-xl font-bold hover:opacity-90 transition shadow-lg">保存课程</button>
+                      <button className="flex-1 bg-[var(--met-accent)] border border-[var(--met-accent)] text-white py-3 rounded-xl font-bold hover:opacity-90 transition shadow-[0_1px_2px_rgba(0,0,0,0.04)]">保存课程</button>
                   </div>
               </div>
 
@@ -657,7 +659,7 @@ const MallTtc: React.FC<MallTtcProps> = ({
                   </div>
                   <div className="flex gap-2">
                       <button className="bg-white border border-gray-200 text-gray-600 text-xs px-4 py-2 rounded-lg font-bold hover:bg-gray-50">导出名单</button>
-                      <button className="bg-black text-white text-xs px-4 py-2 rounded-lg font-bold hover:opacity-80">+ 录入学员</button>
+                      <button className="bg-[var(--met-accent)] border border-[var(--met-accent)] text-white text-xs px-4 py-2 rounded-lg font-bold hover:opacity-90">+ 录入学员</button>
                   </div>
               </div>
               <div className="flex-1 overflow-x-auto">
@@ -690,8 +692,14 @@ const MallTtc: React.FC<MallTtcProps> = ({
                                   </td>
                                   <td className="p-4 font-mono font-bold text-gray-900">¥{st.amount.toLocaleString()}</td>
                                   <td className="p-4 text-right pr-6">
-                                      <button className="text-blue-600 hover:underline text-xs font-bold mr-3">编辑</button>
-                                      <button className="text-red-500 hover:underline text-xs font-bold">退款</button>
+                                      <button type="button" className="text-blue-600 hover:underline text-xs font-bold mr-3">编辑</button>
+                                      <button
+                                          type="button"
+                                          onClick={() => onDemoAction?.('退款流程待接入，正式版本需审批、关联订单与会员资产，并写入操作日志。')}
+                                          className="text-red-500 hover:underline text-xs font-bold"
+                                      >
+                                          退款
+                                      </button>
                                   </td>
                               </tr>
                           ))}

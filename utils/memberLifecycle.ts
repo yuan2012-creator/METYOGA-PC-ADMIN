@@ -20,9 +20,9 @@ export const MEMBER_LIFECYCLE_GROUPS: Record<'leads' | 'active' | 'churned', Mem
 
 export const MEMBER_STAGE_TO_LIFECYCLE: Record<Member['stage'], MemberLifecycleStatus> = {
   S0: 'lead',
-  S1: 'active',
-  S2: 'trial_attended',
-  S3: 'active',
+  S1: 'contacted',
+  S2: 'trial_booked',
+  S3: 'trial_attended',
   S4: 'active',
   S5: 'warning',
   S6: 'churned',
@@ -30,15 +30,19 @@ export const MEMBER_STAGE_TO_LIFECYCLE: Record<Member['stage'], MemberLifecycleS
 
 export const MEMBER_LIFECYCLE_TO_STAGE: Record<MemberLifecycleStatus, Member['stage']> = {
   lead: 'S0',
-  contacted: 'S0',
-  trial_booked: 'S0',
-  trial_attended: 'S2',
-  active: 'S3',
+  contacted: 'S1',
+  trial_booked: 'S2',
+  trial_attended: 'S3',
+  active: 'S4',
   warning: 'S5',
   inactive: 'S5',
   churned: 'S6',
-  reactivated: 'S3',
+  reactivated: 'S4',
 };
+
+/** 当 mock 未显式写入 lifecycleStatus 时，用 S0–S6 展示阶段推导 canonical 生命周期 */
+export const lifecycleStatusFromMemberStage = (stage: Member['stage']): MemberLifecycleStatus =>
+  MEMBER_STAGE_TO_LIFECYCLE[stage];
 
 const MEMBER_LIFECYCLE_LABELS: Record<MemberLifecycleStatus, string> = {
   lead: '潜在线索',
@@ -53,7 +57,7 @@ const MEMBER_LIFECYCLE_LABELS: Record<MemberLifecycleStatus, string> = {
 };
 
 export const getMemberLifecycleStatus = (member: Member): MemberLifecycleStatus => (
-  member.lifecycleStatus ?? MEMBER_STAGE_TO_LIFECYCLE[member.stage]
+  member.lifecycleStatus ?? lifecycleStatusFromMemberStage(member.stage)
 );
 
 export const getMemberStage = (

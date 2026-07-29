@@ -60,6 +60,47 @@ export type CourseSessionStatus =
   | 'cancelled'
   | 'rescheduled';
 
+/** 发布状态（可选扩展字段，与 legacy `status` 并存） */
+export type CourseSessionPublishStatus = 'draft' | 'published' | 'unpublished' | 'canceled';
+
+/** 预约开放状态（可选扩展字段） */
+export type CourseSessionBookingStatus = 'not_open' | 'bookable' | 'full' | 'closed' | 'suspended';
+
+/** 场次执行生命周期（可选扩展字段 `sessionStatus`，与 legacy `status` 并存） */
+export type CourseSessionLifecycleStatus =
+  | 'upcoming'
+  | 'in_progress'
+  | 'ended'
+  | 'pending_completion'
+  | 'completed'
+  | 'canceled'
+  | 'rescheduled'
+  | 'substitute'
+  | 'exception_pending';
+
+/** 异常分类（可选扩展字段） */
+export type CourseSessionExceptionStatus =
+  | 'none'
+  | 'booking_low'
+  | 'teacher_absent'
+  | 'attendance_conflict'
+  | 'late_cancel'
+  | 'no_show'
+  | 'room_conflict'
+  | 'teacher_conflict'
+  | 'reschedule_pending'
+  | 'substitute_pending'
+  | 'cancel_pending';
+
+/** 结算状态（可选扩展字段） */
+export type CourseSessionSettlementStatus =
+  | 'not_started'
+  | 'pending'
+  | 'consumed'
+  | 'teacher_pay_generated'
+  | 'revenue_confirmed'
+  | 'exception_hold';
+
 export type BookingStatus =
   | 'booked'
   | 'waitlisted'
@@ -111,6 +152,17 @@ export type RefundStatus =
   | 'rejected'
   | 'cancelled';
 
+/** 退款业务类型（可选，用于证据链与展示） */
+export type RefundType = 'full_refund' | 'partial_refund' | 'deposit_refund' | 'special_refund';
+
+/** 退款对会员资产的处理口径（可选，仅登记不驱动真实状态） */
+export type RefundAssetHandleType =
+  | 'void_asset'
+  | 'reduce_balance'
+  | 'freeze_asset'
+  | 'keep_asset'
+  | 'manual_review';
+
 // --- P0 Domain Objects ---
 
 export interface TimelineEvent {
@@ -142,6 +194,8 @@ export interface Member {
   avatar: string;
   gender: 'female' | 'male';
   phone: string;
+  /** 主服务门店（mock 与总部筛选对齐，数值字符串 `1`–`5`） */
+  primaryStoreId?: string;
   lifecycleStatus?: MemberLifecycleStatus;
   // Legacy compatibility: current pages and mock data still filter by S0-S6.
   stage: Stage;
@@ -170,6 +224,14 @@ export interface Member {
   timeline: TimelineEvent[];
   // Risk
   riskTag?: 'balance' | 'expiry' | 'sleep' | 'churn';
+  /** 经营视角风险标签（展示用，多条） */
+  riskTags?: string[];
+  /** 待跟进摘要（mock 演示） */
+  followUp?: string;
+  /** ISO 入会时间（可选，演示字段） */
+  joinedAt?: ISODateString;
+  /** ISO 最近到店（可选，演示字段） */
+  lastVisitedAt?: ISODateString;
 }
 
 export interface MemberAsset {
@@ -190,6 +252,8 @@ export interface MemberAsset {
   expiryDate?: ISODateString;
   createdAt?: ISODateString;
   updatedAt?: ISODateString;
+  /** 产品与合同模块内生成资产时的说明（可选，仅前端展示） */
+  mallGrantRecordNote?: string;
 }
 
 export interface Course {
@@ -211,12 +275,21 @@ export interface CourseSession {
   storeId?: string;
   roomId?: string;
   teacherId?: string;
+  /** 展示用老师姓名（与排课事件 teacher 等并存，可选） */
+  teacherName?: string;
   startAt: ISODateString;
   endAt: ISODateString;
   capacity: number;
   bookedCount?: number;
   waitlistCount?: number;
   notes?: string;
+  /** 单节对外标价估算（可选，仅前端演示归档用） */
+  price?: number;
+  publishStatus?: CourseSessionPublishStatus;
+  bookingStatus?: CourseSessionBookingStatus;
+  sessionStatus?: CourseSessionLifecycleStatus;
+  exceptionStatus?: CourseSessionExceptionStatus;
+  settlementStatus?: CourseSessionSettlementStatus;
 }
 
 export interface Booking {
@@ -310,7 +383,18 @@ export interface Staff {
   id: number;
   name: string;
   type: 'teacher' | 'butler';
-  level: 't1' | 't2' | 't3' | 't4' | 'mentor' | 'butler';
+  level:
+    | 't1'
+    | 't2'
+    | 't3'
+    | 't4'
+    | 't5'
+    | 'mentor'
+    | 'butler'
+    | 'p1'
+    | 'p2'
+    | 'g1'
+    | 'g2';
   title: string;
   intro: string; 
   rating: number;
@@ -325,6 +409,10 @@ export interface Staff {
   tags: string[];
   certs: string[];
   avatar: string;
+  /** 主排课 / 归属门店（mock，数值字符串 `1`–`5`） */
+  primaryStoreId?: string;
+  /** 可跨店上课的额外门店 */
+  secondaryStoreIds?: string[];
   followUpRate?: number;
   
   // New fields for detailed modal
@@ -359,6 +447,17 @@ export interface Staff {
   newvsRenewal: { new: number; renewal: number }; // Ratio
   
   members: { name: string; card: string; balance: string; lastContact: string; avatar: string }[];
+}
+
+/** 师资模块 mock：老师单节带课场次（前端演示；不落库；不改课程状态） */
+export interface MockStaffTeachingSessionRecord {
+  id: string;
+  teacherId: number;
+  sessionTitle: string;
+  courseType: string;
+  startAt: string;
+  headcount: number;
+  feeRuleNote?: string;
 }
 
 export interface CardProduct {
@@ -587,6 +686,207 @@ export interface Refund {
   requestedAt: ISODateString;
   approvedAt?: ISODateString;
   completedAt?: ISODateString;
+  /** 退款业务单号（可选） */
+  refundNo?: string;
+  /** 关联会员资产业务编号（与 MemberAsset.id 对齐，可选） */
+  assetId?: string;
+  memberAssetId?: string;
+  contractId?: ContractId;
+  refundType?: RefundType;
+  requestedAmount?: MoneyAmount;
+  approvedAmount?: MoneyAmount;
+  assetHandleType?: RefundAssetHandleType;
+  requestedBy?: string;
+  reviewedBy?: string;
+  processedBy?: string;
+  reviewedAt?: ISODateString;
+  refundedAt?: ISODateString;
+  rejectReason?: string;
+  operationNote?: string;
+  /** 财务分录占位关联（可选，当前不接真实入账） */
+  financeLedgerId?: string;
+}
+
+/** 退款申请抽屉只读预览数值（前端草稿，不落库、不提交） */
+export interface MallRefundRequestPreviewDto {
+  paidAmount?: number;
+  refundedAmount: number;
+  refundableAmount: number;
+  historyRefundCount: number;
+  suggestedAssetHandleType: RefundAssetHandleType;
+}
+
+/**
+ * 产品与合同模块内「退款申请草稿」（仅存页面 state，非业务 Refund、不驱动入账）。
+ */
+export interface MallRefundRequestDraft {
+  id: string;
+  orderId: OrderId;
+  assetId?: string;
+  refundType: RefundType;
+  requestedAmount: number;
+  refundReason: string;
+  assetHandleType: RefundAssetHandleType;
+  operationNote: string;
+  attachmentNote: string;
+  updatedAt: ISODateString;
+}
+
+/**
+ * 产品与合同模块内「转卡申请草稿」（仅存页面 state，非业务转卡登记、不驱动归属变更）。
+ */
+export interface MallTransferRequestDraft {
+  id: string;
+  assetId: string;
+  /** 接收方会员编号或姓名等登记用说明（前台草稿，非系统绑定） */
+  toMemberRef: string;
+  transferReason: string;
+  /** 是否同步调整合同归属：未选 / 是 / 否 */
+  syncContractReassign: '' | 'yes' | 'no';
+  feeSummary: string;
+  remark: string;
+  attachmentNote: string;
+  updatedAt: ISODateString;
+}
+
+/** 退款申请「提交前校验」结果（仅展示，不驱动真实提交） */
+export interface MallRefundRequestSubmitValidation {
+  canSubmit: boolean;
+  blockingMessages: string[];
+  warningMessages: string[];
+  confirmationMessages: string[];
+}
+
+/** 冻结申请抽屉只读辅助标记（不写入资产、不驱动冻结） */
+export interface MallFreezeRequestPreviewDto {
+  nearExpiry: boolean;
+  lowEquity: boolean;
+  hasRefundSignal: boolean;
+  missingContract: boolean;
+}
+
+/**
+ * 转卡申请抽屉只读预览（不写入资产、不驱动转卡）。
+ * `riskMessages` 可为补充说明；闸门级风险提示以 `canOpenTransferRequest` 返回值为准。
+ */
+export interface MallTransferRequestPreviewDto {
+  assetId: string;
+  orderId?: string;
+  memberId?: string;
+  memberName?: string;
+  assetName?: string;
+  assetStatusText?: string;
+  remainingSummary?: string;
+  validUntilText?: string;
+  sourceOrderSummary?: string;
+  contractSummary?: string;
+  refundSummary?: string;
+  transferRuleSummary?: string[];
+  riskMessages: string[];
+  disabledReason?: string;
+}
+
+/** 会员资产转卡记录（可选展示模型，当前不接真实数据） */
+export type AssetTransferRecordStatus =
+  | 'requested'
+  | 'reviewing'
+  | 'approved'
+  | 'rejected'
+  | 'completed'
+  | 'cancelled';
+
+export interface AssetTransferRecord {
+  id: string;
+  assetId: string;
+  fromMemberId: MemberId;
+  toMemberId: MemberId;
+  transferAmount: MoneyAmount;
+  transferFee?: MoneyAmount;
+  transferStatus: AssetTransferRecordStatus;
+  transferReason?: string;
+  requestedAt: ISODateString;
+  reviewedAt?: ISODateString;
+  completedAt?: ISODateString;
+}
+
+/** 会员资产冻结记录（可选展示模型，当前不接真实数据） */
+export type AssetFreezeRecordStatus =
+  | 'requested'
+  | 'active'
+  | 'ended'
+  | 'rejected'
+  | 'cancelled';
+
+export interface AssetFreezeRecord {
+  id: string;
+  assetId: string;
+  memberId: MemberId;
+  freezeStart: ISODateString;
+  freezeEnd?: ISODateString;
+  freezeDays?: number;
+  freezeStatus: AssetFreezeRecordStatus;
+  freezeReason?: string;
+  isValidityExtended?: boolean;
+  requestedAt: ISODateString;
+  completedAt?: ISODateString;
+}
+
+/** 课程场次 mock 耗课记录（前端演示，不落库） */
+export interface MockCourseConsumptionRecord {
+  id: string;
+  courseSessionId: CourseSessionId;
+  memberId: MemberId;
+  memberName?: string;
+  /** 列表等场景的展示用课程名；缺省时由场次解析 */
+  courseTitle?: string;
+  consumedAt: ISODateString;
+  note?: string;
+  amount?: MoneyAmount;
+}
+
+/** 课程场次 mock 老师课时费（前端演示，不落库） */
+export interface MockTeacherSessionPayRecord {
+  id: string;
+  courseSessionId: CourseSessionId;
+  teacherName?: string;
+  amount: MoneyAmount;
+  courseTypeLabel?: string;
+}
+
+/** 财务模块 mock：跨店结算核对行（前端演示；不生成真实跨店结算单；不落库） */
+export type MockCrossStoreSettlementStatus =
+  | 'pending_allocation'
+  | 'pending_confirmation'
+  | 'demo_placeholder';
+
+export interface MockCrossStoreSettlementRecord {
+  id: string;
+  sourceStoreId: string;
+  sourceStoreName: string;
+  consumeStoreId: string;
+  consumeStoreName: string;
+  memberId: MemberId;
+  orderId: OrderId;
+  courseOrConsumptionSummary: string;
+  settlementAmount: MoneyAmount;
+  status: MockCrossStoreSettlementStatus;
+}
+
+/** 财务模块 mock：经营费用支出登记（前端演示；不生成费用凭证；不落库） */
+export type MockFinanceExpenseEntryCategory =
+  | 'rent_property'
+  | 'teacher_cost'
+  | 'marketing'
+  | 'procurement'
+  | 'other_ops';
+
+export interface MockFinanceExpenseEntryRecord {
+  id: string;
+  category: MockFinanceExpenseEntryCategory;
+  storeId: string;
+  storeName: string;
+  amount: MoneyAmount;
+  occurredAt: ISODateString;
 }
 
 export interface FinanceLedgerEntry {
@@ -603,4 +903,6 @@ export interface FinanceLedgerEntry {
   orderId?: OrderId;
   description?: string;
   createdBy?: string;
+  /** 前端演示用：关联课程场次 id（可选） */
+  courseSessionId?: CourseSessionId;
 }

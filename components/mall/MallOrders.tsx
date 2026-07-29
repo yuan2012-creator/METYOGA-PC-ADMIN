@@ -20,6 +20,8 @@ interface MallOrdersProps {
   orderFilters: MallOrderFilters;
   setOrderFilters: React.Dispatch<React.SetStateAction<MallOrderFilters>>;
   onDemoAction: (message: string) => void;
+  onOpenOrderDetail: (orderId: string) => void;
+  onOpenAssetDetail?: (assetId: string) => void;
 }
 
 const MallOrders: React.FC<MallOrdersProps> = ({
@@ -32,6 +34,8 @@ const MallOrders: React.FC<MallOrdersProps> = ({
   orderFilters,
   setOrderFilters,
   onDemoAction,
+  onOpenOrderDetail,
+  onOpenAssetDetail,
 }) => {
   const renderOrders = () => {
       const detailedOrders = buildMallOrderRows({ orders, contracts, members, assetSourceLinks });
@@ -48,7 +52,7 @@ const MallOrders: React.FC<MallOrdersProps> = ({
                       <h3 className="font-bold text-gray-900">销售与订单管理</h3>
                       <div className="flex gap-2">
                           <button
-                              onClick={() => onDemoAction('订单导出已接入站内反馈，真实导出仍为后续接口能力')}
+                              onClick={() => onDemoAction('订单导出已接入站内反馈，完整导出能力仍为后续接口接入')}
                               className="px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium hover:bg-gray-50"
                           >
                               导出数据
@@ -99,6 +103,10 @@ const MallOrders: React.FC<MallOrdersProps> = ({
                           <option value="all">全部状态</option>
                           <option value="paid">已支付</option>
                           <option value="pending">待支付</option>
+                          <option value="deposit">已付定金</option>
+                          <option value="refunded">已退款</option>
+                          <option value="cancelled">已取消</option>
+                          <option value="closed">已关闭</option>
                       </select>
                   </div>
               </div>
@@ -121,7 +129,19 @@ const MallOrders: React.FC<MallOrdersProps> = ({
                       </thead>
                       <tbody className="divide-y divide-gray-50">
                           {filteredOrders.map(order => (
-                              <tr key={order.id} className="hover:bg-gray-50 transition">
+                              <tr
+                                  key={order.id}
+                                  role="button"
+                                  tabIndex={0}
+                                  onClick={() => onOpenOrderDetail(order.id)}
+                                  onKeyDown={(e) => {
+                                      if (e.key === 'Enter' || e.key === ' ') {
+                                          e.preventDefault();
+                                          onOpenOrderDetail(order.id);
+                                      }
+                                  }}
+                                  className="hover:bg-gray-50 transition cursor-pointer"
+                              >
                                   <td className="p-4 pl-6 font-mono text-xs text-gray-500">{order.id}</td>
                                   <td className="p-4">
                                       <div className="font-bold text-gray-900">{order.user}</div>
@@ -146,15 +166,46 @@ const MallOrders: React.FC<MallOrdersProps> = ({
                                   <td className="p-4">
                                       <span className={`px-2 py-1 rounded text-[10px] font-bold ${
                                           order.status === 'paid' || order.status === 'completed' ? 'text-green-600 bg-green-50' :
-                                          order.status === 'pending' || order.status === 'deposit' ? 'text-orange-600 bg-orange-50' : 'text-red-600 bg-red-50'
+                                          order.status === 'pending' || order.status === 'deposit' ? 'text-orange-600 bg-orange-50' :
+                                          order.status === 'refunded' ? 'text-red-600 bg-red-50' :
+                                          order.status === 'cancelled' || order.status === 'closed' ? 'text-gray-600 bg-gray-100' :
+                                          'text-red-600 bg-red-50'
                                       }`}>
-                                          {order.status === 'paid' ? '已支付' : order.status === 'deposit' ? '已付定金' : order.status === 'completed' ? '已完成' : '待支付'}
+                                          {order.status === 'paid'
+                                              ? '已支付'
+                                              : order.status === 'deposit'
+                                                ? '已付定金'
+                                                : order.status === 'completed'
+                                                  ? '已完成'
+                                                  : order.status === 'refunded'
+                                                    ? '已退款'
+                                                    : order.status === 'cancelled'
+                                                      ? '已取消'
+                                                      : order.status === 'closed'
+                                                        ? '已关闭'
+                                                        : '待支付'}
                                       </span>
                                   </td>
                                   <td className="p-4 text-xs text-gray-400 font-mono">{order.time}</td>
                                   <td className="p-4 text-right pr-6">
+                                      {order.linkedAssetId && onOpenAssetDetail ? (
+                                          <button
+                                              type="button"
+                                              onClick={e => {
+                                                  e.stopPropagation();
+                                                  onOpenAssetDetail(order.linkedAssetId);
+                                              }}
+                                              className="text-gray-600 hover:underline text-xs font-bold mr-3"
+                                          >
+                                              查看资产
+                                          </button>
+                                      ) : null}
                                       <button
-                                          onClick={() => onDemoAction(`${order.id}：${order.assetSourceLabel}`)}
+                                          type="button"
+                                          onClick={(e) => {
+                                              e.stopPropagation();
+                                              onOpenOrderDetail(order.id);
+                                          }}
                                           className="text-black hover:underline text-xs font-bold"
                                       >
                                           查看
@@ -165,7 +216,7 @@ const MallOrders: React.FC<MallOrdersProps> = ({
                       </tbody>
                   </table>
                   {filteredOrders.length === 0 && (
-                      <div className="text-center text-gray-400 text-xs py-12">暂无订单数据</div>
+                      <div className="text-center text-gray-400 text-xs py-12">暂无符合条件的订单</div>
                   )}
               </div>
           </div>
