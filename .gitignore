@@ -1,3 +1,6 @@
 .DS_Store
 node_modules/
 dist/
+
+# Local AI prompt migration history
+migrated_prompt_history/
