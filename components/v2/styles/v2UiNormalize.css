@@ -1,0 +1,373 @@
+/**
+ * MET YOGA PC Admin V2 — UI normalize P1.1 / P1.3 冻结
+ * Soft defaults + density scopes only. No broad !important page overrides.
+ * Module CSS owns local density; this file provides tokens helpers & shared utilities.
+ *
+ * ========== P1.3 冻结规则（2026-07）==========
+ * 1. 仅三种页面密度：dashboard / workbench / compact。禁止新增第四套 density。
+ * 2. 不再调整全局页面标题、正文、按钮、表格基础字号与 padding（以 v2DesignTokens + 本文件三套 density 为准）。
+ * 3. 新页面必须挂载其一：.met-v2-density-dashboard | .met-v2-density-workbench | .met-v2-density-compact。
+ * 4. 模块特殊样式只解决真实业务场景（如周排课首屏压缩、研学操作收口），不得另建视觉体系。
+ * 5. 内容区操作：每卡片/业务区最多 1 主操作 + 1 次操作，其余进「更多」；危险操作不得与普通操作同级平铺。
+ * 6. 明细首屏（compact）：页头≈72–88、筛选工具栏≈44–52（无大卡片）、KPI 横向摘要≈56–68、告警默认 1 条≈40–48。
+ */
+
+/* —— 扩展模块别名（仅变量，不改排版）—— */
+.met-product-rights-v2,
+.met-rc-v2,
+.met-week-schedule,
+.met-teacher-app,
+.met-asset-change,
+.met-member-list,
+.met-hblc,
+.met-card-config,
+.met-points-mall {
+  --v2-bg-page: var(--met-v2-page-bg);
+  --v2-bg-card: var(--met-v2-surface);
+  --v2-green: var(--met-v2-brand);
+  --v2-green-soft: var(--met-v2-brand-soft);
+  --v2-text-title: var(--met-v2-text-primary);
+  --v2-text-body: var(--met-v2-text-primary);
+  --v2-text-secondary: var(--met-v2-text-secondary);
+  --v2-text-muted: var(--met-v2-text-tertiary);
+  --v2-border: var(--met-v2-border);
+  --v2-shadow: var(--met-v2-card-shadow);
+  --v2-radius-card: var(--met-v2-radius-lg);
+}
+
+/* ========== 三种页面密度（显式 class，由页面根节点挂载）========== */
+
+/* 看板型：经营总览 / 今日运营 / 研学首页 */
+.met-v2-density-dashboard {
+  --met-v2-font-page-title: 28px;
+  --met-v2-font-card-title: 18px;
+  --met-v2-font-section-title: 16px;
+  --met-v2-font-body: 14px;
+  --met-v2-lh-body: 1.5;
+  --met-v2-font-caption: 13px;
+  --met-v2-lh-caption: 1.45;
+  --met-v2-font-metric: 28px;
+  --met-v2-card-padding: 24px;
+  --met-v2-table-cell-padding-y: 10px;
+  --met-v2-table-font: 13px;
+  --met-v2-table-lh: 1.45;
+}
+
+/* 工作台型：师资 / 会员 / 课程供给 */
+.met-v2-density-workbench {
+  --met-v2-font-page-title: 28px;
+  --met-v2-font-card-title: 18px;
+  --met-v2-font-section-title: 15px;
+  --met-v2-font-side-title: 15px;
+  --met-v2-font-body: 13px;
+  --met-v2-lh-body: 1.45;
+  --met-v2-font-caption: 12px;
+  --met-v2-lh-caption: 1.4;
+  --met-v2-font-metric: 26px;
+  --met-v2-card-padding: 20px;
+  --met-v2-card-padding-compact: 14px;
+  --met-v2-table-cell-padding-y: 10px;
+  --met-v2-table-cell-padding-x: 10px;
+  --met-v2-table-font: 13px;
+  --met-v2-table-lh: 1.4;
+  --met-v2-button-height-sm: 30px;
+  --met-v2-filter-height: 32px;
+}
+
+/* 明细型：周课表 / 列表 / 审批 / 财务明细 */
+.met-v2-density-compact {
+  --met-v2-font-page-title: 24px;
+  --met-v2-font-secondary-title: 24px;
+  --met-v2-font-card-title: 16px;
+  --met-v2-font-section-title: 14px;
+  --met-v2-font-body: 13px;
+  --met-v2-lh-body: 1.4;
+  --met-v2-font-caption: 12px;
+  --met-v2-lh-caption: 1.35;
+  --met-v2-font-metric: 22px;
+  --met-v2-card-padding: 16px;
+  --met-v2-card-padding-compact: 12px;
+  --met-v2-table-cell-padding-y: 8px;
+  --met-v2-table-cell-padding-x: 10px;
+  --met-v2-table-font: 13px;
+  --met-v2-table-lh: 1.35;
+  --met-v2-button-height-sm: 30px;
+  --met-v2-filter-height: 32px;
+  --met-v2-section-gap: 20px;
+}
+
+/* ========== 语义工具 class（显式使用，不扫全域）========== */
+
+.met-v2-text-nowrap {
+  white-space: nowrap;
+}
+
+.met-v2-text-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.met-v2-btn-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: nowrap;
+}
+
+.met-v2-btn-row > button,
+.met-v2-btn-nowrap {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.met-v2-table--compact {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--met-v2-table-font, 13px);
+  line-height: var(--met-v2-table-lh, 1.4);
+}
+
+.met-v2-table--compact th,
+.met-v2-table--compact td {
+  padding: var(--met-v2-table-cell-padding-y, 8px) var(--met-v2-table-cell-padding-x, 10px);
+  border-bottom: 1px solid var(--met-v2-border-soft);
+  vertical-align: middle;
+  font-size: inherit;
+  line-height: inherit;
+}
+
+.met-v2-table--compact th {
+  font-weight: 600;
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--met-v2-text-secondary);
+  background: var(--met-v2-surface-soft);
+  white-space: nowrap;
+}
+
+.met-v2-table--compact td.is-nowrap,
+.met-v2-table--compact .is-nowrap {
+  white-space: nowrap;
+}
+
+.met-v2-table--compact td.is-course {
+  max-width: 160px;
+}
+
+.met-v2-table--compact td.is-course .met-v2-text-clamp-2 {
+  font-weight: 500;
+}
+
+.met-v2-table--compact td.is-ops {
+  width: 1%;
+  min-width: 156px;
+  white-space: nowrap;
+}
+
+.met-v2-table--compact tr {
+  min-height: 48px;
+}
+
+.met-v2-risk-tags {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  gap: 4px;
+  max-width: 148px;
+}
+
+.met-v2-risk-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+  background: var(--met-v2-neutral-bg);
+  color: var(--met-v2-text-secondary);
+  white-space: nowrap;
+}
+
+.met-v2-risk-tag.is-p0 {
+  background: var(--met-v2-p0-bg);
+  color: var(--met-v2-p0);
+}
+
+.met-v2-risk-tag.is-p1 {
+  background: var(--met-v2-p1-bg);
+  color: var(--met-v2-p1);
+}
+
+.met-v2-side-task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.met-v2-side-task-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: start;
+  padding: 14px 14px;
+  border: 1px solid var(--met-v2-border-soft);
+  border-radius: var(--met-v2-radius-md);
+  background: var(--met-v2-surface);
+  min-height: 88px;
+  max-height: 110px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.met-v2-side-task-card__head {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+
+.met-v2-side-task-card__head .met-staff-v2-sev,
+.met-v2-side-task-card__head [class*='sev'] {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.met-v2-side-task-card__title {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--met-v2-text-primary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.met-v2-side-task-card__meta {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--met-v2-text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.met-v2-side-task-card__action {
+  height: 30px;
+  min-width: 72px;
+  padding: 0 12px;
+  border: 1px solid var(--met-v2-border);
+  border-radius: var(--met-v2-button-radius);
+  background: var(--met-v2-surface);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--met-v2-text-primary);
+  white-space: nowrap;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.met-v2-side-task-card__action:hover {
+  background: var(--met-v2-neutral-bg);
+}
+
+.met-v2-more {
+  position: relative;
+  display: inline-flex;
+}
+
+.met-v2-more__trigger {
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--met-v2-border);
+  border-radius: var(--met-v2-button-radius);
+  background: var(--met-v2-surface);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--met-v2-text-secondary);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.met-v2-more__menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 20;
+  min-width: 128px;
+  padding: 6px;
+  border: 1px solid var(--met-v2-border);
+  border-radius: var(--met-v2-radius-sm);
+  background: var(--met-v2-surface);
+  box-shadow: var(--met-v2-card-shadow);
+}
+
+.met-v2-more__item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 13px;
+  color: var(--met-v2-text-primary);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.met-v2-more__item:hover {
+  background: var(--met-v2-neutral-bg);
+}
+
+/* 软默认：仅语义工具按钮，不强制覆盖模块 filter-btn */
+.met-v2-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--met-v2-button-height);
+  padding: 0 16px;
+  border: 1px solid var(--met-v2-brand);
+  border-radius: var(--met-v2-button-radius);
+  background: var(--met-v2-brand);
+  color: var(--met-v2-text-inverse);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.met-v2-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--met-v2-button-height-sm);
+  padding: 0 12px;
+  border: 1px solid var(--met-v2-border);
+  border-radius: var(--met-v2-button-radius);
+  background: var(--met-v2-surface);
+  color: var(--met-v2-text-primary);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.met-v2-drawer-footer-btn--primary {
+  background: var(--met-v2-brand);
+  border-color: var(--met-v2-brand);
+  color: var(--met-v2-text-inverse);
+}
+
+.met-v2-drawer-footer-btn--danger {
+  border-color: var(--met-v2-danger);
+  color: var(--met-v2-danger);
+}

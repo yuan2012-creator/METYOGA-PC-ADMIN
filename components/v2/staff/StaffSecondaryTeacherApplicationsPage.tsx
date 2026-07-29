@@ -23,6 +23,9 @@ export interface StaffSecondaryTeacherApplicationsPageProps {
   onBack: () => void;
   onOpenDetail: (applicationId: string) => void;
   onToast: (message: string) => void;
+  /** V2.1：来自 StaffService 的真实申请；缺省回退 mock 快照 */
+  applications?: import('./domain').StaffApplication[];
+  members?: import('./domain').StaffMember[];
 }
 
 function mapTeacherApplicationSummaryToMetrics(
@@ -94,6 +97,7 @@ function ApplicationRowCard({
         .join(' ')}
       role="button"
       tabIndex={0}
+      data-testid={`staff-app-row-${row.applicationId}`}
       onClick={() => onOpenDetail(row.applicationId)}
       onKeyDown={e => {
         if (e.key === 'Enter') onOpenDetail(row.applicationId);
@@ -170,55 +174,174 @@ function ApplicationRowCard({
             >
               查看详情
             </button>
-            <button
-              type="button"
-              className="met-teacher-app__btn met-teacher-app__btn--sm met-teacher-app__btn--ghost"
-              onClick={() => onToast('通过申请（待建设）')}
-            >
-              通过 mock
-            </button>
-            <button
-              type="button"
-              className="met-teacher-app__btn met-teacher-app__btn--sm met-teacher-app__btn--ghost"
-              onClick={() => onToast('驳回申请（待建设）')}
-            >
-              驳回 mock
-            </button>
-            <button
-              type="button"
-              className="met-teacher-app__btn met-teacher-app__btn--sm met-teacher-app__btn--ghost"
-              onClick={() => onToast('要求补充材料（待建设）')}
-            >
-              要求补充材料
-            </button>
           </div>
         </div>
-      </div>
-
-      <div className="met-teacher-app__row-btns" onClick={stop}>
-        <button
-          type="button"
-          className="met-teacher-app__btn met-teacher-app__btn--sm met-teacher-app__btn--ghost"
-          onClick={() => onToast('查看涉及课程（待建设）')}
-        >
-          查看涉及课程
-        </button>
-        <button
-          type="button"
-          className="met-teacher-app__btn met-teacher-app__btn--sm met-teacher-app__btn--ghost"
-          onClick={() => onToast('查看老师档案（待建设）')}
-        >
-          查看老师档案
-        </button>
       </div>
     </article>
   );
 }
 
+const TYPE_TO_LEGACY: Record<string, TeacherApplicationType> = {
+  请假: 'leave',
+  代课: 'substitute',
+  改期: 'reschedule',
+  停课: 'reschedule',
+  补签: 'credential',
+  资料补交: 'credential',
+};
+
+const STATUS_TO_LEGACY: Record<string, TeacherApplicationRow['approvalStatus']> = {
+  草稿: 'submitted',
+  待提交: 'submitted',
+  待审批: 'pendingReview',
+  待补充: 'needMoreInfo',
+  已通过: 'approvedMock',
+  已驳回: 'rejectedMock',
+  已撤销: 'cancelled',
+  已执行: 'completedMock',
+  执行异常: 'evidencePending',
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  草稿: '草稿',
+  待提交: '待提交',
+  待审批: '待审批',
+  待补充: '待补充',
+  已通过: '已通过',
+  已驳回: '已驳回',
+  已撤销: '已撤销',
+  已执行: '已执行',
+  执行异常: '执行异常',
+};
+
+function mapServiceApplicationsToRows(
+  applications: import('./domain').StaffApplication[],
+  members: import('./domain').StaffMember[],
+): TeacherApplicationRow[] {
+  return applications.map(app => {
+    const teacher = members.find(m => m.id === app.applicantStaffId);
+    const owner = members.find(m => m.id === app.ownerStaffId);
+    const type = TYPE_TO_LEGACY[app.type] ?? 'leave';
+    const status = STATUS_TO_LEGACY[app.status] ?? 'pendingReview';
+    const evidence = Array.isArray(app.evidence) ? app.evidence : [];
+    const evidenceMissing = evidence.some(e => e.status === 'missing');
+    return {
+      applicationId: app.id,
+      applicationType: type,
+      applicationTypeLabel: app.type,
+      teacherName: teacher?.name ?? '人员关联待确认',
+      teacherLevel: teacher?.teachingLevel ?? '—',
+      store: app.storeId,
+      relatedCourse: app.relatedSessionIds?.[0] ?? '—',
+      courseType: '—',
+      relatedTime: (app.submittedAt ?? '').slice(0, 16),
+      bookedCount: 0,
+      waitlistCount: 0,
+      room: '—',
+      reason: app.reason,
+      submittedAt: (app.submittedAt ?? '').slice(0, 16),
+      updatedAt: (app.updatedAt ?? '').slice(0, 16),
+      impactLevel: app.status === '待审批' ? 'P0' : 'P1',
+      impactScope: (app.relatedSessionIds ?? []).join(', ') || '无课次',
+      materialStatus: evidenceMissing ? 'missing' : 'complete',
+      materialStatusLabel: evidenceMissing ? '待补充' : '齐全',
+      evidenceFiles: `${evidence.length} 份`,
+      substituteTeacher: app.substituteStaffId ?? '—',
+      approvalStatus: status,
+      approvalStatusLabel: STATUS_LABEL[app.status] ?? app.status,
+      currentApprover: owner?.name ?? '待指定',
+      suggestedAction: '打开详情执行真实审批',
+      operationLogs: [],
+      drawerDetail: {
+        applicationId: app.id,
+        applicationType: type,
+        applicationTypeLabel: app.type,
+        drawerTitle: `${app.type} · ${teacher?.name ?? app.applicantStaffId}`,
+        approvalStatus: status,
+        approvalStatusLabel: STATUS_LABEL[app.status] ?? app.status,
+        currentApprover: owner?.name ?? '待指定',
+        submittedAt: app.submittedAt,
+        updatedAt: app.updatedAt,
+        reason: app.reason,
+        teacherName: teacher?.name ?? '人员关联待确认',
+        teacherLevel: teacher?.teachingLevel ?? '—',
+        store: app.storeId,
+        teachableCourses: teacher?.capabilityIds?.join(', ') ?? '—',
+        weeklySessions: '—',
+        loadStatus: teacher?.availabilityStatus ?? '—',
+        relatedCourse: (app.relatedSessionIds ?? []).join(', ') || '—',
+        courseType: '—',
+        relatedTime: '—',
+        bookedCount: 0,
+        waitlistCount: 0,
+        room: '—',
+        affectsThisWeek: true,
+        needsMemberNotification: true,
+        substituteTeacher: app.substituteStaffId ?? '—',
+        conflictStatus: '—',
+        materialType: '申请材料',
+        attachmentCount: evidence.length,
+        materialCompleteness: '—',
+        reviewPoints: app.note ?? '—',
+        impactScope: (app.relatedSessionIds ?? []).join(', ') || '无课次',
+        affectsSchedulingPermission: false,
+        applicationNote: app.note ?? app.reason,
+        evidenceFiles: evidence.map(e => ({
+          id: e.id,
+          label: e.label,
+          status: e.status,
+          statusLabel: e.status,
+        })),
+        materialStatus: evidenceMissing ? 'missing' : 'complete',
+        materialStatusLabel: evidenceMissing ? '待补充' : '齐全',
+        timeline: [
+          { key: 'submit', label: '已提交', status: 'done', time: app.submittedAt },
+          {
+            key: 'review',
+            label: app.status,
+            status: app.status === '待审批' ? 'current' : 'done',
+            time: app.updatedAt,
+          },
+        ],
+        operationLogs: [],
+        riskReminder: app.executionError ?? '按 StaffService 状态机处理',
+        suggestedAction: '在详情抽屉执行通过 / 驳回 / 补充 / 指定负责人',
+      },
+    };
+  });
+}
+
 const StaffSecondaryTeacherApplicationsPage: React.FC<
   StaffSecondaryTeacherApplicationsPageProps
-> = ({ initialTab = 'all', onBack, onOpenDetail, onToast }) => {
-  const snapshot = useMemo(() => buildTeacherApplicationsSnapshot(), []);
+> = ({ initialTab = 'all', onBack, onOpenDetail, onToast, applications, members }) => {
+  const baseSnapshot = useMemo(() => buildTeacherApplicationsSnapshot(), []);
+  const serviceRows = useMemo(() => {
+    if (!applications?.length) return null;
+    return mapServiceApplicationsToRows(applications, members ?? []);
+  }, [applications, members]);
+
+  const snapshot = useMemo(() => {
+    if (!serviceRows) return baseSnapshot;
+    const pending = applications!.filter(a => a.status === '待审批').length;
+    const leave = applications!.filter(a => a.type === '请假' && a.status === '待审批').length;
+    const sub = applications!.filter(a => a.type === '代课' && a.status === '待审批').length;
+    return {
+      ...baseSnapshot,
+      rows: serviceRows,
+      summaryItems: [
+        { id: 's1', label: '全部申请', value: String(applications!.length) },
+        { id: 's2', label: '待审批', value: String(pending), isWarning: pending > 0 },
+        { id: 's3', label: '请假待办', value: String(leave), isWarning: leave > 0 },
+        { id: 's4', label: '代课待办', value: String(sub), isWarning: sub > 0 },
+      ],
+      meta: {
+        ...baseSnapshot.meta,
+        subtitle: 'StaffService 真实申请流 · 可保存、可处理、可追踪',
+        disclaimer: '状态来自统一枚举，不再显示通过 mock / 驳回 mock',
+      },
+    };
+  }, [baseSnapshot, serviceRows, applications]);
+
   const summaryMetrics = useMemo(
     () => mapTeacherApplicationSummaryToMetrics(snapshot.summaryItems),
     [snapshot.summaryItems],
@@ -297,7 +420,7 @@ const StaffSecondaryTeacherApplicationsPage: React.FC<
     snapshot.typeDescriptions[activeTab === 'all' ? 'all' : activeTab];
 
   return (
-    <div className="met-teacher-app">
+    <div className="met-teacher-app met-v2-density-compact">
       <div className="met-teacher-app__inner">
         <SecondaryPageHeader
           backLabel="返回师资与团队"

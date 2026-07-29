@@ -607,7 +607,12 @@ const FinanceV2Page: React.FC = () => {
       : drawerAsset?.subtitle ?? drawerFinance?.subtitle ?? (drawerHasContent ? '' : '当前记录缺少详情数据');
 
   return (
-    <div className="met-finance-v2">
+    <div
+      className={[
+        'met-finance-v2',
+        viewMode === 'assetChangeRequests' ? 'met-v2-density-compact' : 'met-v2-density-workbench',
+      ].join(' ')}
+    >
       {viewMode === 'assetChangeRequests' ? (
         <FinanceSecondaryAssetChangePage
           onBack={backToOverview}

@@ -167,7 +167,14 @@ const MemberV2Page: React.FC = () => {
   const riskStages = lifecycleFlow.stages.filter(stage => stage.zone === 'risk');
 
   return (
-    <div className="met-member-v2">
+    <div
+      className={[
+        'met-member-v2',
+        viewMode === 'memberList' || viewMode === 'highBalance'
+          ? 'met-v2-density-compact'
+          : 'met-v2-density-workbench',
+      ].join(' ')}
+    >
       {viewMode === 'memberList' ? (
         <MemberSecondaryMemberListPage
           onBack={backToOverview}
@@ -743,11 +750,11 @@ const MemberV2Page: React.FC = () => {
                 </div>
                 <div className="met-member-v2-drawer__row">
                   <span className="met-member-v2-drawer__row-label">手机</span>
-                  <span className="met-member-v2-drawer__row-value">{drawerDetail.phoneMasked}</span>
+                  <span className="met-member-v2-drawer__row-value met-member-v2-drawer__row-value--nowrap">{drawerDetail.phoneMasked}</span>
                 </div>
                 <div className="met-member-v2-drawer__row">
                   <span className="met-member-v2-drawer__row-label">S 阶段</span>
-                  <span className="met-member-v2-drawer__row-value">{drawerDetail.stageLabel}</span>
+                  <span className="met-member-v2-drawer__row-value met-member-v2-drawer__row-value--nowrap">{drawerDetail.stageLabel}</span>
                 </div>
                 <div className="met-member-v2-drawer__row">
                   <span className="met-member-v2-drawer__row-label">负责人</span>
@@ -755,7 +762,7 @@ const MemberV2Page: React.FC = () => {
                 </div>
                 <div className="met-member-v2-drawer__row">
                   <span className="met-member-v2-drawer__row-label">常去门店</span>
-                  <span className="met-member-v2-drawer__row-value">{drawerDetail.frequentStore}</span>
+                  <span className="met-member-v2-drawer__row-value met-member-v2-drawer__row-value--nowrap">{drawerDetail.frequentStore}</span>
                 </div>
                 <div className="met-member-v2-drawer__tags">
                   {drawerDetail.tagSummary.map(tag => (
@@ -774,11 +781,11 @@ const MemberV2Page: React.FC = () => {
                 </div>
                 <div className="met-member-v2-drawer__row">
                   <span className="met-member-v2-drawer__row-label">剩余点数 / 节数</span>
-                  <span className="met-member-v2-drawer__row-value">{drawerDetail.remaining}</span>
+                  <span className="met-member-v2-drawer__row-value met-member-v2-drawer__row-value--nowrap">{drawerDetail.remaining}</span>
                 </div>
                 <div className="met-member-v2-drawer__row">
                   <span className="met-member-v2-drawer__row-label">有效期</span>
-                  <span className="met-member-v2-drawer__row-value">{drawerDetail.validUntil}</span>
+                  <span className="met-member-v2-drawer__row-value met-member-v2-drawer__row-value--nowrap">{drawerDetail.validUntil}</span>
                 </div>
                 <div className="met-member-v2-drawer__row">
                   <span className="met-member-v2-drawer__row-label">赠送权益</span>
@@ -786,7 +793,7 @@ const MemberV2Page: React.FC = () => {
                 </div>
                 <div className="met-member-v2-drawer__row">
                   <span className="met-member-v2-drawer__row-label">积分余额</span>
-                  <span className="met-member-v2-drawer__row-value">{drawerDetail.pointsBalance}</span>
+                  <span className="met-member-v2-drawer__row-value met-member-v2-drawer__row-value--nowrap">{drawerDetail.pointsBalance}</span>
                 </div>
                 <div className="met-member-v2-drawer__row">
                   <span className="met-member-v2-drawer__row-label">合同签署状态</span>

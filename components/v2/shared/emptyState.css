@@ -11,27 +11,29 @@
 
 .met-v2-empty-state__title {
   margin: 0;
-  font-size: 16px;
+  font-size: var(--met-v2-font-section-title);
   font-weight: 600;
+  line-height: var(--met-v2-lh-card-title);
   color: var(--met-v2-text-primary);
 }
 
 .met-v2-empty-state__description {
   margin: 0;
   max-width: 28em;
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: var(--met-v2-font-body);
+  line-height: var(--met-v2-lh-body);
   color: var(--met-v2-text-secondary);
 }
 
 .met-v2-empty-state__action {
   margin-top: 4px;
-  min-height: 32px;
-  padding: 0 14px;
-  border: 1px solid var(--met-v2-border-soft);
-  border-radius: var(--met-v2-radius-sm);
+  height: var(--met-v2-button-height);
+  min-height: var(--met-v2-button-height);
+  padding: 0 16px;
+  border: 1px solid var(--met-v2-border);
+  border-radius: var(--met-v2-button-radius);
   background: var(--met-v2-surface);
-  font-size: 12px;
+  font-size: var(--met-v2-font-body);
   font-weight: 500;
   color: var(--met-v2-text-primary);
   cursor: pointer;
@@ -39,6 +41,7 @@
 
 .met-v2-empty-state__action:hover {
   border-color: var(--met-v2-border);
+  background: var(--met-v2-neutral-bg);
 }
 
 /* DrawerEmptyState reuses global .met-v2-drawer-empty from v2DesignTokens.css */

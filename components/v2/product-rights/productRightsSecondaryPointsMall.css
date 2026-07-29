@@ -6,7 +6,7 @@
 .met-points-mall__inner {
   max-width: var(--met-v2-content-max, 1440px);
   margin: 0 auto;
-  padding: 20px 24px 40px;
+  padding: var(--met-v2-page-padding);
 }
 
 /* Header: migrated to SecondaryPageHeader (components/v2/shared). Styles below kept for reference. */
@@ -44,7 +44,7 @@
 
 .met-points-mall__title {
   margin: 0;
-  font-size: 22px;
+  font-size: var(--met-v2-font-secondary-title);
   font-weight: 600;
 }
 

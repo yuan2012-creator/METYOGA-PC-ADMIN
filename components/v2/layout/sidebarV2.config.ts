@@ -3,6 +3,7 @@ import {
   CalendarCheck,
   CalendarDays,
   Gift,
+  GraduationCap,
   LayoutDashboard,
   Megaphone,
   Settings,
@@ -21,6 +22,7 @@ export type SidebarV2NavId =
   | 'finance'
   | 'product-rights'
   | 'marketing'
+  | 'research-center'
   | 'settings';
 
 export interface SidebarV2NavItem {
@@ -38,6 +40,7 @@ export const SIDEBAR_V2_NAV_ITEMS: SidebarV2NavItem[] = [
   { id: 'finance', label: '财务与资产', icon: WalletCards },
   { id: 'product-rights', label: '产品与权益', icon: Gift },
   { id: 'marketing', label: '活动与获客', icon: Megaphone },
+  { id: 'research-center', label: '研学中心', icon: GraduationCap },
   { id: 'settings', label: '系统设置', icon: Settings },
 ];
 

@@ -70,7 +70,7 @@ const TodayV2Page: React.FC = () => {
   } = snapshot;
 
   return (
-    <div className="met-today-v2">
+    <div className="met-today-v2 met-v2-density-dashboard">
       <div className="met-today-v2__inner">
         <header className="met-today-v2__header">
           <div className="met-today-v2__header-copy">

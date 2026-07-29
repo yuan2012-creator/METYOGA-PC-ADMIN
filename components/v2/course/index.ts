@@ -1,5 +1,16 @@
 export { default as CourseV2Page } from './CourseV2Page';
 export { default as CourseSecondaryWeekSchedulePage } from './CourseSecondaryWeekSchedulePage';
+export { default as CourseSessionDetailDrawer } from './CourseSessionDetailDrawer';
+export { useCourseScheduleState } from './useCourseScheduleState';
+export * from './domain';
+export * from './services';
+export * from './adapters';
+export { projectSessionToWeekCard } from './courseWeekScheduleProjection';
+export {
+  projectWeekScheduleDays,
+  recalculateSessionRisks,
+  toScheduleAssignmentProjection,
+} from './courseScheduleCalculations';
 export type {
   CourseV2Snapshot,
   CourseV2Detail,

@@ -20,6 +20,13 @@ import {
   buildWeekScheduleSnapshot,
   type NewScheduleDraft,
 } from './courseSecondaryWeekSchedule.viewModel';
+import {
+  collectLegacyIdsForCanonical,
+  resolveLegacySessionId,
+} from './domain/legacySessionIdMap';
+import CourseSessionDetailDrawer from './CourseSessionDetailDrawer';
+import { useCourseScheduleState } from './useCourseScheduleState';
+import { getDefaultStaffService } from '../staff/services/createStaffService';
 import './courseV2.css';
 import './courseSecondaryWeekSchedule.css';
 
@@ -325,9 +332,47 @@ function SessionCard({
   );
 }
 
-const CourseV2Page: React.FC = () => {
+function resolveCourseDrawerSessionId(sessionId: string): string | null {
+  if (sessionId.startsWith('cs-')) return sessionId;
+  const resolved = resolveLegacySessionId(sessionId);
+  const canonical = resolved.sessionId ?? sessionId;
+  const legacyIds = collectLegacyIdsForCanonical(canonical);
+  const csId = legacyIds.find(id => id.startsWith('cs-'));
+  return csId ?? legacyIds[0] ?? sessionId;
+}
+
+export interface CourseV2PageProps {
+  onNavigateToStaff?: (sessionId: string, mode?: 'assign' | 'replace' | 'detail') => void;
+  onOpenStaffTeacher?: (staffId: string) => void;
+  focusSessionId?: string | null;
+  onFocusConsumed?: () => void;
+}
+
+function resolveCanonicalSessionId(sessionId: string): string {
+  if (sessionId.startsWith('sess_')) return sessionId;
+  const resolved = resolveLegacySessionId(sessionId);
+  return resolved.sessionId ?? sessionId;
+}
+
+const CourseV2Page: React.FC<CourseV2PageProps> = ({
+  onNavigateToStaff,
+  onOpenStaffTeacher,
+  focusSessionId,
+  onFocusConsumed,
+}) => {
   const snapshot = useMemo(() => buildCourseV2Snapshot(), []);
   const weekScheduleSnapshot = useMemo(() => buildWeekScheduleSnapshot(), []);
+  const { service, snapshot: scheduleSnapshot, ready: scheduleReady } = useCourseScheduleState();
+  const [staffNameMap, setStaffNameMap] = useState<Map<string, string>>(new Map());
+
+  useEffect(() => {
+    getDefaultStaffService()
+      .hydrate()
+      .then(() => {
+        const members = getDefaultStaffService().getSnapshot().members;
+        setStaffNameMap(new Map(members.map(m => [m.id, m.name])));
+      });
+  }, []);
   const [pageView, setPageView] = useState<CourseV2PageViewMode>('overview');
   const [weekScheduleMode, setWeekScheduleMode] = useState<WeekScheduleInitialMode>('default');
   const [pendingNewSchedule, setPendingNewSchedule] = useState(false);
@@ -414,14 +459,26 @@ const CourseV2Page: React.FC = () => {
   );
 
   const openDrawer = useCallback((sessionId: string) => {
-    setDrawerSessionId(sessionId);
+    setDrawerSessionId(resolveCanonicalSessionId(sessionId));
   }, []);
 
   const closeDrawer = useCallback(() => setDrawerSessionId(null), []);
 
-  const drawerDetail: CourseV2Detail | null = drawerSessionId
-    ? snapshot.courseDetailMap[drawerSessionId] ?? null
-    : null;
+  useEffect(() => {
+    if (!focusSessionId || !scheduleReady) return;
+    const canonicalId = resolveCanonicalSessionId(focusSessionId);
+    setDrawerSessionId(canonicalId);
+    setPageView('weekSchedule');
+    onFocusConsumed?.();
+  }, [focusSessionId, scheduleReady, onFocusConsumed]);
+
+  const serviceSession =
+    drawerSessionId && scheduleReady ? service.getSession(drawerSessionId) : null;
+
+  const drawerDetail: CourseV2Detail | null =
+    drawerSessionId && !serviceSession
+      ? snapshot.courseDetailMap[resolveCourseDrawerSessionId(drawerSessionId) ?? ''] ?? null
+      : null;
 
   const handleSessionAction = useCallback(
     (sess: CourseV2Session, e?: React.MouseEvent) => {
@@ -449,7 +506,12 @@ const CourseV2Page: React.FC = () => {
   const ex = drawerDetail?.exceptionSummary;
 
   return (
-    <div className="met-course-v2">
+    <div
+      className={[
+        'met-course-v2',
+        pageView === 'weekSchedule' ? 'met-v2-density-compact' : 'met-v2-density-workbench',
+      ].join(' ')}
+    >
       {pageView === 'weekSchedule' ? (
         <CourseSecondaryWeekSchedulePage
           initialMode={weekScheduleMode}
@@ -457,6 +519,8 @@ const CourseV2Page: React.FC = () => {
           onOpenDetail={openDrawer}
           onOpenNewSchedule={openNewScheduleDrawer}
           onToast={showToast}
+          onNavigateToStaff={onNavigateToStaff}
+          onOpenStaffTeacher={onOpenStaffTeacher}
         />
       ) : (
       <div className="met-course-v2__inner">
@@ -855,7 +919,22 @@ const CourseV2Page: React.FC = () => {
       </div>
       )}
 
-      {drawerSessionId ? (
+      {drawerSessionId && serviceSession ? (
+        <CourseSessionDetailDrawer
+          session={serviceSession}
+          risks={scheduleSnapshot.risks}
+          scheduleChanges={scheduleSnapshot.scheduleChanges}
+          teacherChanges={scheduleSnapshot.teacherChanges}
+          operationLogs={scheduleSnapshot.operationLogs}
+          staffNameMap={staffNameMap}
+          onClose={closeDrawer}
+          onNavigateToStaff={onNavigateToStaff}
+          onOpenStaffTeacher={onOpenStaffTeacher}
+          onToast={showToast}
+        />
+      ) : null}
+
+      {drawerSessionId && !serviceSession ? (
         <>
           <button
             type="button"

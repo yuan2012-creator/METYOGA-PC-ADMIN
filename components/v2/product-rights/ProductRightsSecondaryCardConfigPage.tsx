@@ -213,7 +213,7 @@ const ProductRightsSecondaryCardConfigPage: React.FC<ProductRightsSecondaryCardC
       : snapshot.categoryDescriptions[activeTab === 'all' ? 'all' : activeTab];
 
   return (
-    <div className="met-card-config">
+    <div className="met-card-config met-v2-density-compact">
       <div className="met-card-config__inner">
         <SecondaryPageHeader
           backLabel="返回产品与权益"

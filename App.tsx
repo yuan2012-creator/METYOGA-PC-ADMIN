@@ -16,6 +16,7 @@ import { StaffV2Page } from './components/v2/staff';
 import { FinanceV2Page } from './components/v2/finance';
 import { ProductRightsV2Page } from './components/v2/product-rights';
 import { MarketingV2Page } from './components/v2/marketing';
+import { ResearchCenterV2Page } from './components/v2/research-center';
 import { SettingsV2Page } from './components/v2/settings';
 import {
   ModulePlaceholder,
@@ -31,6 +32,8 @@ import {
 } from './components/v2/types/roleView.types';
 import { MockAdminScopeProvider } from './context/MockAdminScopeContext';
 import { MOCK_ADMIN_UI_DEFAULT } from './constants/mockAdminScope';
+import './components/v2/styles/v2DesignTokens.css';
+import './components/v2/styles/v2UiNormalize.css';
 
 const SCROLLABLE_NAV_IDS = new Set([
   'dashboard',
@@ -42,6 +45,7 @@ const SCROLLABLE_NAV_IDS = new Set([
   'finance',
   'product-rights',
   'marketing',
+  'research-center',
   'settings',
 ]);
 
@@ -49,6 +53,11 @@ const App: React.FC = () => {
   const [activeNav, setActiveNav] = useState<string>(SIDEBAR_V2_DEFAULT_NAV);
   const [currentRole, setCurrentRole] = useState<V2AdminRole>(V2_DEFAULT_ROLE);
   const [roleToast, setRoleToast] = useState<string | null>(null);
+  const [crossNav, setCrossNav] = useState<{
+    target: 'course' | 'staff';
+    sessionId?: string;
+    mode?: 'assign' | 'replace' | 'detail' | null;
+  } | null>(null);
 
   const activeNavItem = findSidebarV2NavItem(activeNav);
   const isOldDashboard = activeNav === 'dashboard';
@@ -84,15 +93,43 @@ const App: React.FC = () => {
       case 'dashboard':
         return <Dashboard />;
       case 'dashboard-v2':
-        return <DashboardV2Page currentRole={currentRole} />;
+        return <DashboardV2Page currentRole={currentRole} onNavigate={handleNavigate} />;
       case 'today':
         return <TodayV2Page />;
       case 'shop':
         return <Shop />;
       case 'staff':
-        return <StaffV2Page />;
+        return (
+          <StaffV2Page
+            onNavigateToCourse={sessionId => {
+              setActiveNav('course');
+              setCrossNav({ target: 'course', sessionId, mode: 'detail' });
+            }}
+            focusSessionId={crossNav?.target === 'staff' ? crossNav.sessionId : undefined}
+            focusAssignMode={
+              crossNav?.target === 'staff' &&
+              (crossNav.mode === 'assign' || crossNav.mode === 'replace')
+                ? crossNav.mode
+                : undefined
+            }
+            onFocusConsumed={() => setCrossNav(null)}
+          />
+        );
       case 'course':
-        return <CourseV2Page />;
+        return (
+          <CourseV2Page
+            onNavigateToStaff={(sessionId, mode) => {
+              setActiveNav('staff');
+              setCrossNav({ target: 'staff', sessionId, mode: mode ?? 'detail' });
+            }}
+            onOpenStaffTeacher={staffId => {
+              setActiveNav('staff');
+              setCrossNav({ target: 'staff', sessionId: staffId, mode: 'detail' });
+            }}
+            focusSessionId={crossNav?.target === 'course' ? crossNav.sessionId : undefined}
+            onFocusConsumed={() => setCrossNav(null)}
+          />
+        );
       case 'mall':
         return <Mall />;
       case 'member':
@@ -103,6 +140,8 @@ const App: React.FC = () => {
         return <ProductRightsV2Page />;
       case 'marketing':
         return <MarketingV2Page />;
+      case 'research-center':
+        return <ResearchCenterV2Page />;
       case 'data':
         return <Data />;
       case 'investor':

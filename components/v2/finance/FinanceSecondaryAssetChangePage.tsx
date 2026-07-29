@@ -278,7 +278,7 @@ const FinanceSecondaryAssetChangePage: React.FC<FinanceSecondaryAssetChangePageP
   const typeDescription = snapshot.typeDescriptions[activeTab];
 
   return (
-    <div className="met-asset-change">
+    <div className="met-asset-change met-v2-density-compact">
       <div className="met-asset-change__inner">
         <SecondaryPageHeader
           backLabel="返回财务与资产"

@@ -234,7 +234,7 @@ const ProductRightsSecondaryPointsMallPage: React.FC<ProductRightsSecondaryPoint
       : snapshot.typeDescriptions[activeTab === 'all' ? 'all' : activeTab];
 
   return (
-    <div className="met-points-mall">
+    <div className="met-points-mall met-v2-density-compact">
       <div className="met-points-mall__inner">
         <SecondaryPageHeader
           backLabel="返回产品与权益"

@@ -1,0 +1,310 @@
+{
+  "base": "http://127.0.0.1:5173",
+  "shots": [
+    "/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p11/staff-workbench-1440x900.png",
+    "/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p11/staff-workbench-1600x1000.png",
+    "/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p11/staff-workbench-1920x1080.png",
+    "/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p11/page-dashboard-1600x1000.png",
+    "/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p11/page-staff-1600x1000.png",
+    "/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p11/page-research-1600x1000.png",
+    "/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p11/page-dashboard-1920x1080.png",
+    "/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p11/page-staff-1920x1080.png",
+    "/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p11/page-research-1920x1080.png"
+  ],
+  "staffChecks": [
+    {
+      "viewport": "1440x900",
+      "ok": true,
+      "density": "met-v2-density-workbench",
+      "h1Size": "28px",
+      "rowCount": 6,
+      "rowHeights": [
+        57,
+        57,
+        57,
+        57,
+        57,
+        57
+      ],
+      "maxRowHeight": 57,
+      "wrapCells": [],
+      "stackedOps": 0,
+      "wrappedButtons": [],
+      "todoHeights": [
+        90,
+        90,
+        90,
+        90,
+        103
+      ],
+      "maxTodoHeight": 103,
+      "sideWidth": 340,
+      "summaryHeights": [
+        96,
+        96,
+        96,
+        96
+      ]
+    },
+    {
+      "viewport": "1600x1000",
+      "ok": true,
+      "density": "met-v2-density-workbench",
+      "h1Size": "28px",
+      "rowCount": 6,
+      "rowHeights": [
+        56,
+        56,
+        56,
+        56,
+        56,
+        56
+      ],
+      "maxRowHeight": 56,
+      "wrapCells": [],
+      "stackedOps": 0,
+      "wrappedButtons": [],
+      "todoHeights": [
+        90,
+        90,
+        90,
+        90,
+        103
+      ],
+      "maxTodoHeight": 103,
+      "sideWidth": 340,
+      "summaryHeights": [
+        96,
+        96,
+        96,
+        96
+      ]
+    },
+    {
+      "viewport": "1920x1080",
+      "ok": true,
+      "density": "met-v2-density-workbench",
+      "h1Size": "28px",
+      "rowCount": 6,
+      "rowHeights": [
+        56,
+        56,
+        56,
+        56,
+        56,
+        56
+      ],
+      "maxRowHeight": 56,
+      "wrapCells": [],
+      "stackedOps": 0,
+      "wrappedButtons": [],
+      "todoHeights": [
+        90,
+        90,
+        90,
+        90,
+        103
+      ],
+      "maxTodoHeight": 103,
+      "sideWidth": 340,
+      "summaryHeights": [
+        96,
+        96,
+        96,
+        96
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "id": "dashboard",
+      "density": "met-v2-density-dashboard",
+      "h1": "经营总览",
+      "h1FontSize": "28px",
+      "overflowX": false,
+      "title": "MET YOGA Pro",
+      "shot": "/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p11/page-dashboard-1440.png"
+    },
+    {
+      "id": "today",
+      "density": "met-v2-density-dashboard",
+      "h1": "今日运营",
+      "h1FontSize": "28px",
+      "overflowX": false,
+      "title": "MET YOGA Pro",
+      "shot": "/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p11/page-today-1440.png"
+    },
+    {
+      "id": "member",
+      "density": "met-v2-density-workbench",
+      "h1": "会员经营",
+      "h1FontSize": "28px",
+      "overflowX": false,
+      "title": "MET YOGA Pro",
+      "shot": "/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p11/page-member-1440.png"
+    },
+    {
+      "id": "member-list",
+      "density": "met-v2-density-compact",
+      "h1": "会员名单",
+      "h1FontSize": "24px",
+      "overflowX": false,
+      "title": "MET YOGA Pro",
+      "shot": "/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p11/page-member-list-1440.png"
+    },
+    {
+      "id": "course",
+      "density": "met-v2-density-workbench",
+      "h1": "课程与排课",
+      "h1FontSize": "28px",
+      "overflowX": false,
+      "title": "MET YOGA Pro",
+      "shot": "/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p11/page-course-1440.png"
+    },
+    {
+      "id": "week-schedule",
+      "density": "met-v2-density-compact",
+      "h1": "完整周排课",
+      "h1FontSize": "20px",
+      "overflowX": false,
+      "title": "MET YOGA Pro",
+      "shot": "/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p11/page-week-schedule-1440.png"
+    },
+    {
+      "id": "course-session-drawer",
+      "density": "met-v2-density-compact",
+      "h1": "完整周排课",
+      "h1FontSize": "20px",
+      "overflowX": false,
+      "title": "MET YOGA Pro",
+      "shot": "/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p11/page-course-session-drawer-1440.png"
+    },
+    {
+      "id": "staff",
+      "density": "met-v2-density-workbench",
+      "h1": "团队工作台",
+      "h1FontSize": "28px",
+      "overflowX": false,
+      "title": "MET YOGA Pro",
+      "shot": "/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p11/page-staff-1440.png"
+    },
+    {
+      "id": "teacher-applications",
+      "density": "met-v2-density-compact",
+      "h1": "老师端申请审批",
+      "h1FontSize": "24px",
+      "overflowX": false,
+      "title": "MET YOGA Pro",
+      "shot": "/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p11/page-teacher-applications-1440.png"
+    },
+    {
+      "id": "assign-drawer",
+      "density": "met-v2-density-workbench",
+      "h1": "团队工作台",
+      "h1FontSize": "28px",
+      "overflowX": false,
+      "title": "MET YOGA Pro",
+      "shot": "/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p11/page-assign-drawer-1440.png"
+    },
+    {
+      "id": "teacher-profile",
+      "density": "met-v2-density-workbench",
+      "h1": "团队工作台",
+      "h1FontSize": "28px",
+      "overflowX": false,
+      "title": "MET YOGA Pro",
+      "shot": "/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p11/page-teacher-profile-1440.png"
+    },
+    {
+      "id": "finance",
+      "density": "met-v2-density-workbench",
+      "h1": "财务与资产",
+      "h1FontSize": "28px",
+      "overflowX": false,
+      "title": "MET YOGA Pro",
+      "shot": "/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p11/page-finance-1440.png"
+    },
+    {
+      "id": "product-rights",
+      "density": "met-v2-density-workbench",
+      "h1": "产品与权益",
+      "h1FontSize": "28px",
+      "overflowX": false,
+      "title": "MET YOGA Pro",
+      "shot": "/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p11/page-product-rights-1440.png"
+    },
+    {
+      "id": "marketing",
+      "density": "met-v2-density-workbench",
+      "h1": "活动与获客",
+      "h1FontSize": "28px",
+      "overflowX": false,
+      "title": "MET YOGA Pro",
+      "shot": "/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p11/page-marketing-1440.png"
+    },
+    {
+      "id": "research-operation",
+      "density": "met-v2-density-workbench",
+      "h1": "研学中心经营",
+      "h1FontSize": "28px",
+      "overflowX": false,
+      "title": "MET YOGA Pro",
+      "shot": "/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p11/page-research-operation-1440.png"
+    },
+    {
+      "id": "research-leads",
+      "density": "met-v2-density-workbench",
+      "h1": "研学中心经营",
+      "h1FontSize": "28px",
+      "overflowX": false,
+      "title": "MET YOGA Pro",
+      "shot": "/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p11/page-research-leads-1440.png"
+    },
+    {
+      "id": "research-finance-profit",
+      "density": "met-v2-density-compact",
+      "h1": "研学中心经营",
+      "h1FontSize": "24px",
+      "overflowX": false,
+      "title": "MET YOGA Pro",
+      "shot": "/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p11/page-research-finance-profit-1440.png"
+    },
+    {
+      "id": "research-finance-cash",
+      "density": "met-v2-density-compact",
+      "h1": "研学中心经营",
+      "h1FontSize": "24px",
+      "overflowX": false,
+      "title": "MET YOGA Pro",
+      "shot": "/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p11/page-research-finance-cash-1440.png"
+    },
+    {
+      "id": "research-finance-renovation",
+      "density": "met-v2-density-compact",
+      "h1": "研学中心经营",
+      "h1FontSize": "24px",
+      "overflowX": false,
+      "title": "MET YOGA Pro",
+      "shot": "/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p11/page-research-finance-renovation-1440.png"
+    },
+    {
+      "id": "research-cohort",
+      "density": "met-v2-density-compact",
+      "h1": "RYT200｜2026年7月27日班",
+      "h1FontSize": "24px",
+      "overflowX": false,
+      "title": "MET YOGA Pro",
+      "shot": "/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p11/page-research-cohort-1440.png"
+    },
+    {
+      "id": "settings",
+      "density": "met-v2-density-workbench",
+      "h1": "系统设置",
+      "h1FontSize": "28px",
+      "overflowX": false,
+      "title": "MET YOGA Pro",
+      "shot": "/Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p11/page-settings-1440.png"
+    }
+  ],
+  "failures": []
+}

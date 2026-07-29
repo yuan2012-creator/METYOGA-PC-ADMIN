@@ -11,6 +11,7 @@ export interface SummaryMetricItem {
   status?: SummaryMetricStatus;
   active?: boolean;
   onClick?: () => void;
+  testId?: string;
 }
 
 export interface SummaryMetricGridProps {
@@ -18,6 +19,7 @@ export interface SummaryMetricGridProps {
   className?: string;
   columns?: number;
   compact?: boolean;
+  'data-testid'?: string;
 }
 
 function getStatusClass(status: SummaryMetricStatus = 'normal'): string {
@@ -35,6 +37,7 @@ export const SummaryMetricGrid: React.FC<SummaryMetricGridProps> = ({
   className,
   columns,
   compact = false,
+  'data-testid': testId,
 }) => (
   <section
     className={[
@@ -46,6 +49,7 @@ export const SummaryMetricGrid: React.FC<SummaryMetricGridProps> = ({
       .join(' ')}
     style={columns ? { gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))` } : undefined}
     aria-label="状态摘要"
+    data-testid={testId}
   >
     {items.map(item => {
       const cardClassName = [
@@ -66,14 +70,14 @@ export const SummaryMetricGrid: React.FC<SummaryMetricGridProps> = ({
 
       if (item.onClick) {
         return (
-          <button key={item.id} type="button" className={cardClassName} onClick={item.onClick}>
+          <button key={item.id} type="button" className={cardClassName} data-testid={item.testId} onClick={item.onClick}>
             {content}
           </button>
         );
       }
 
       return (
-        <div key={item.id} className={cardClassName}>
+        <div key={item.id} className={cardClassName} data-testid={item.testId}>
           {content}
         </div>
       );

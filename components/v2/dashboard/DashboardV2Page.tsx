@@ -373,7 +373,10 @@ const StoreManagerDashboard: React.FC<StoreManagerDashboardProps> = ({ data, onT
   );
 };
 
-const DashboardV2Page: React.FC<{ currentRole: V2AdminRole }> = ({ currentRole }) => {
+const DashboardV2Page: React.FC<{
+  currentRole: V2AdminRole;
+  onNavigate?: (navId: string) => void;
+}> = ({ currentRole, onNavigate }) => {
   const snapshot = useMemo(() => buildDashboardV2Snapshot(), []);
   const roleProfile = useMemo(() => getV2RoleProfile(currentRole), [currentRole]);
   const [toast, setToast] = useState<string | null>(null);
@@ -387,10 +390,18 @@ const DashboardV2Page: React.FC<{ currentRole: V2AdminRole }> = ({ currentRole }
   const canSwitchDashboardView = roleProfile.canSwitchDashboardView;
 
   const showToast = useCallback((message: string) => {
+    if (message.includes('课程与排课') && onNavigate) {
+      onNavigate('course');
+      return;
+    }
+    if (message.includes('师资与团队') && onNavigate) {
+      onNavigate('staff');
+      return;
+    }
     console.log('[DashboardV2]', message);
     setToast(message);
     window.setTimeout(() => setToast(current => (current === message ? null : current)), 2400);
-  }, []);
+  }, [onNavigate]);
 
   const {
     meta,
@@ -417,7 +428,7 @@ const DashboardV2Page: React.FC<{ currentRole: V2AdminRole }> = ({ currentRole }
     : meta.filters.storeLabel;
 
   return (
-    <div className="met-dashboard-v2">
+    <div className="met-dashboard-v2 met-v2-density-dashboard">
       <div className="met-dashboard-v2__inner">
         <header className="met-dashboard-v2__header">
           <div className="met-dashboard-v2__header-copy">

@@ -4,9 +4,9 @@
 }
 
 .met-teacher-app__inner {
-  max-width: var(--met-v2-content-max, 1440px);
+  max-width: var(--met-v2-content-max, 1480px);
   margin: 0 auto;
-  padding: 20px 24px 40px;
+  padding: var(--met-v2-page-padding);
 }
 
 /* Header: migrated to SecondaryPageHeader (components/v2/shared). Styles below kept for reference. */
@@ -44,17 +44,19 @@
 
 .met-teacher-app__title {
   margin: 0;
-  font-size: 22px;
+  font-size: var(--met-v2-font-secondary-title);
   font-weight: 600;
+  line-height: 1.3;
   color: var(--met-v2-text-primary);
 }
 
 .met-teacher-app__subtitle,
 .met-teacher-app__scope,
 .met-teacher-app__desc {
-  margin: 6px 0 0;
-  font-size: 12px;
-  line-height: 1.5;
+  margin: 8px 0 0;
+  font-size: var(--met-v2-font-body);
+  font-weight: 400;
+  line-height: var(--met-v2-lh-body);
   color: var(--met-v2-text-secondary);
 }
 

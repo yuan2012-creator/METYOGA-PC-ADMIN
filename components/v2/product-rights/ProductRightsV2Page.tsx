@@ -809,7 +809,14 @@ const ProductRightsV2Page: React.FC = () => {
   );
 
   return (
-    <div className="met-product-rights-v2">
+    <div
+      className={[
+        'met-product-rights-v2',
+        pageView === 'cardConfig' || pageView === 'pointsMall'
+          ? 'met-v2-density-compact'
+          : 'met-v2-density-workbench',
+      ].join(' ')}
+    >
       {pageView === 'cardConfig' ? (
         <ProductRightsSecondaryCardConfigPage
           onBack={backToOverview}

@@ -24,14 +24,17 @@
 
 .met-product-rights-v2__header h1 {
   margin: 0;
-  font-size: 26px;
-  font-weight: 600;
+  font-size: var(--met-v2-font-page-title);
+  font-weight: var(--met-v2-weight-page-title);
+  line-height: var(--met-v2-lh-page-title);
   letter-spacing: -0.02em;
 }
 
 .met-product-rights-v2__header p {
   margin: 6px 0 0;
-  font-size: 13px;
+  font-size: var(--met-v2-font-page-subtitle);
+  font-weight: var(--met-v2-weight-page-subtitle);
+  line-height: var(--met-v2-lh-page-subtitle);
   color: var(--met-v2-text-secondary);
 }
 
@@ -70,7 +73,6 @@
   border-color: var(--met-v2-brand-soft);
   color: var(--met-v2-brand);
 }
-
 .met-product-rights-v2-guardrail-link {
   padding: 0;
   border: none;
@@ -146,7 +148,7 @@
 
 .met-product-rights-v2-zone__title {
   margin: 0;
-  font-size: 16px;
+  font-size: var(--met-v2-font-card-title);
   font-weight: 600;
 }
 

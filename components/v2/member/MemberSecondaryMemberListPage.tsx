@@ -278,7 +278,7 @@ const MemberSecondaryMemberListPage: React.FC<MemberSecondaryMemberListPageProps
   const showEmpty = displayedRows.length === 0;
 
   return (
-    <div className="met-member-list">
+    <div className="met-member-list met-v2-density-compact">
       <div className="met-member-list__inner">
         <SecondaryPageHeader
           backLabel="返回会员经营"

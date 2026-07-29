@@ -1,0 +1,127 @@
+OUT_DIR /Users/yuanxuelin/Documents/GitHub/METYOGA-PC-ADMIN/tmp/ui-density-p11
+STAFF_CHECKS [
+  {
+    "viewport": "1440x900",
+    "ok": true,
+    "density": "met-v2-density-workbench",
+    "h1Size": "28px",
+    "rowCount": 6,
+    "rowHeights": [
+      57,
+      57,
+      57,
+      57,
+      57,
+      57
+    ],
+    "maxRowHeight": 57,
+    "wrapCells": [],
+    "stackedOps": 0,
+    "wrappedButtons": [],
+    "todoHeights": [
+      90,
+      90,
+      90,
+      90,
+      103
+    ],
+    "maxTodoHeight": 103,
+    "sideWidth": 340,
+    "summaryHeights": [
+      96,
+      96,
+      96,
+      96
+    ]
+  },
+  {
+    "viewport": "1600x1000",
+    "ok": true,
+    "density": "met-v2-density-workbench",
+    "h1Size": "28px",
+    "rowCount": 6,
+    "rowHeights": [
+      56,
+      56,
+      56,
+      56,
+      56,
+      56
+    ],
+    "maxRowHeight": 56,
+    "wrapCells": [],
+    "stackedOps": 0,
+    "wrappedButtons": [],
+    "todoHeights": [
+      90,
+      90,
+      90,
+      90,
+      103
+    ],
+    "maxTodoHeight": 103,
+    "sideWidth": 340,
+    "summaryHeights": [
+      96,
+      96,
+      96,
+      96
+    ]
+  },
+  {
+    "viewport": "1920x1080",
+    "ok": true,
+    "density": "met-v2-density-workbench",
+    "h1Size": "28px",
+    "rowCount": 6,
+    "rowHeights": [
+      56,
+      56,
+      56,
+      56,
+      56,
+      56
+    ],
+    "maxRowHeight": 56,
+    "wrapCells": [],
+    "stackedOps": 0,
+    "wrappedButtons": [],
+    "todoHeights": [
+      90,
+      90,
+      90,
+      90,
+      103
+    ],
+    "maxTodoHeight": 103,
+    "sideWidth": 340,
+    "summaryHeights": [
+      96,
+      96,
+      96,
+      96
+    ]
+  }
+]
+PAGES dashboard|met-v2-density-dashboard|28px|overflow=false
+today|met-v2-density-dashboard|28px|overflow=false
+member|met-v2-density-workbench|28px|overflow=false
+member-list|met-v2-density-compact|24px|overflow=false
+course|met-v2-density-workbench|28px|overflow=false
+week-schedule|met-v2-density-compact|20px|overflow=false
+course-session-drawer|met-v2-density-compact|20px|overflow=false
+staff|met-v2-density-workbench|28px|overflow=false
+teacher-applications|met-v2-density-compact|24px|overflow=false
+assign-drawer|met-v2-density-workbench|28px|overflow=false
+teacher-profile|met-v2-density-workbench|28px|overflow=false
+finance|met-v2-density-workbench|28px|overflow=false
+product-rights|met-v2-density-workbench|28px|overflow=false
+marketing|met-v2-density-workbench|28px|overflow=false
+research-operation|met-v2-density-workbench|28px|overflow=false
+research-leads|met-v2-density-workbench|28px|overflow=false
+research-finance-profit|met-v2-density-compact|24px|overflow=false
+research-finance-cash|met-v2-density-compact|24px|overflow=false
+research-finance-renovation|met-v2-density-compact|24px|overflow=false
+research-cohort|met-v2-density-compact|24px|overflow=false
+settings|met-v2-density-workbench|28px|overflow=false
+UI_DENSITY_P11_OK

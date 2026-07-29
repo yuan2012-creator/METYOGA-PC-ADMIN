@@ -291,7 +291,7 @@ const MemberSecondaryHighBalancePage: React.FC<MemberSecondaryHighBalancePagePro
   }, [snapshot.rows, keyword, filters.risk, filters.days, filters.points, filters.follow]);
 
   return (
-    <div className="met-hblc">
+    <div className="met-hblc met-v2-density-compact">
       <div className="met-hblc__inner">
         <SecondaryPageHeader
           backLabel="返回会员经营"

@@ -403,7 +403,7 @@ const SettingsV2Page: React.FC<{ onNavigate?: (id: SidebarV2NavId) => void }> = 
     ?? (drawerHasContent ? '' : '当前记录缺少详情数据');
 
   return (
-    <div className="met-settings-v2">
+    <div className="met-settings-v2 met-v2-density-workbench">
       <div className="met-settings-v2__inner">
         <header className="met-settings-v2__header">
           <div className="met-settings-v2__header-copy">
